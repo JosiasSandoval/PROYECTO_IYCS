@@ -1,0 +1,133 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+footer {
+    display: grid;
+    grid-template-columns: 100px 2fr 1fr 1fr 2fr ; 
+    grid-template-rows: 300px 10px 20px;
+    grid-template-areas: 
+        ". info nosotros servicios contacto "
+        ". . . . . "
+        "pie pie pie pie pie";
+    background-color: #0d0d0d;
+    color: white;
+    padding: 40px 60px;
+    box-sizing: border-box;
+    line-height: 1.6;
+}
+img{
+        filter: brightness(0) invert(1);
+}
+/* -------- Áreas -------- */
+.sistema {
+    grid-area: info;
+    padding: 10px;
+}
+
+.nosotros {
+    grid-area: nosotros;
+}
+
+.servicios {
+    grid-area: servicios;
+}
+
+.contacto {
+    grid-area: contacto;
+}
+
+.pie_pagina {
+    grid-area: pie;
+    text-align: center;
+    border-top: 1px solid #333;
+    padding-top: 10px;
+    color: #aaa;
+    font-size: 14px;
+}
+
+/* -------- Logo + título -------- */
+.info {
+    display: flex;
+    align-items: center;   /* centra verticalmente */
+    gap: 10px;             /* espacio entre la imagen y el título */
+    margin-bottom: 15px;
+}
+
+.info img {
+    width: 50px;
+    height: auto;
+}
+
+.info h3 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.info p {
+    margin: 10px 0 0 0;   /* espacio arriba, cero a los lados */
+    color: #ccc;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+
+/* -------- Iconos sociales -------- */
+.iconos {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.iconos img {
+    width: 30px;
+    height: auto;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    cursor: pointer;
+}
+
+.iconos img:hover {
+    transform: scale(1.1);
+    opacity: 0.8;
+}
+
+/* -------- Enlaces -------- */
+.nosotros h3, .servicios h3, .contacto h3 {
+    margin-bottom: 15px;
+    font-size: 20px;
+    color: #fff;
+}
+
+.nosotros a, .servicios a {
+    display: block;
+    color: #bbb;
+    text-decoration: none;
+    margin: 5px 0;
+    transition: color 0.2s ease;
+}
+
+.nosotros a:hover, .servicios a:hover {
+    color: #fff;
+}
+
+/* -------- Contacto -------- */
+.contacto .dato {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+}
+
+.contacto img {
+    width: 20px;
+    height: auto;
+}
+
+.contacto p {
+    margin: 0;
+    color: #ccc;
+}
+

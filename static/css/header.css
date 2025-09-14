@@ -1,0 +1,73 @@
+*{
+    margin: 0;
+}
+header {
+    display: grid;
+    grid-template-columns: 2fr 3fr 1.5fr;
+    grid-template-rows: 100px;
+    grid-template-areas: "imagen menu acciones";
+    background-color: #A66B38;
+    font-size: 18px;
+}
+
+.imagen {
+    grid-area: imagen; 
+    justify-content: center;
+}
+
+img {
+    width: 100px;   
+    height: auto; 
+}
+
+.menu {
+    grid-area: menu;      
+    gap: 10rem;                
+}
+
+.acciones {
+    grid-area: acciones;   
+    gap: 1rem; 
+    justify-content: center;
+}
+
+.imagen, .menu, .acciones{
+    display: flex;
+    align-items: center; 
+}
+
+a {
+  text-decoration: none; 
+  color: inherit;        
+}
+
+a:hover{
+  color: white;
+  transform: scale(1.05); 
+  cursor: pointer;         
+  transition: all 0.3s ease; 
+}
+
+.acciones button {
+  border: none;          
+  padding: 0.6rem 1.2rem;  
+  font-size: 16px;      
+  border-radius: 8px;     
+  cursor: pointer;         
+  transition: all 0.3s ease; 
+}
+
+.acciones button:hover {
+  background: #F2B279; 
+  transform: scale(1.05);  
+}
+
+.acciones button:active {
+  transform: scale(0.95);  /* efecto de "clic" */
+}
+.registro{
+  background-color: white; 
+}
+.iniciar{
+    background-color: #F2C6AC; 
+}
