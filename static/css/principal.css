@@ -1,0 +1,77 @@
+.bienvenida {
+    display: flex;
+    flex-wrap: wrap; /* Permite que los elementos bajen en pantallas pequeñas */
+    align-items: center; /* Centra verticalmente los elementos */
+    justify-content: center; /* Centra horizontalmente */
+    gap: 50px; /* Espacio entre texto e imagen */
+    padding: 50px 20px; /* Ajusta el espacio interno */
+}
+
+.bienvenida .info {
+    flex: 1 1 400px; /* Permite que el texto se adapte y tenga mínimo 400px */
+    max-width: 600px; /* Limita el ancho máximo */
+}
+
+.bienvenida .info h1 {
+    font-size: 2.5rem;
+    text-align: left; /* Mejor alineación para texto largo */
+    color: #333;
+}
+
+.bienvenida img {
+    flex: 1 1 300px; /* Imagen flexible */
+    max-width: 400px; 
+    width: 100%; /* Se adapta al contenedor */
+    height: auto;}
+.funciones {
+    text-align: center;
+    margin: 40px auto;
+}
+
+.funciones h2 {
+    font-size: 2rem;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.botones {
+    display: flex;
+    flex-wrap: wrap; /* para que baje en pantallas pequeñas */
+    justify-content: center;
+    gap: 50px; /* espacio entre botones */
+}
+
+.botones button {
+    display: flex;
+    flex-direction: column; /* imagen arriba, texto abajo */
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    height: 150px;
+    background: #f5f7fb;
+    border: 2px solid #ddd;
+    border-radius: 15px;
+    padding: 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.botones button img {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 10px; /* espacio entre imagen y texto */
+}
+
+/* Efecto hover */
+.botones button:hover {
+    background: #4a90e2; /* azul suave */
+    color: #fff;
+    border-color: #4a90e2;
+    transform: translateY(-5px); /* efecto de levantar */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}

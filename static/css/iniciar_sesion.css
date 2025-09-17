@@ -1,0 +1,113 @@
+/* CSS */
+* { box-sizing: border-box;
+  font-family: Arial, sans-serial }
+
+main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: #f5f7fb;
+}
+
+/* contenedor principal: columna izquierda (form) + columna derecha (imagen) */
+.formulario {
+  display: flex;
+  gap: 40px;
+  align-items: center;      /* alinea verticalmente la imagen con el form */
+  background: #ffffff;
+  padding: 50px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(13, 30, 52, 0.06);
+}
+
+/* izquierda: todo apilado en columna y con ancho fijo para quedar parejo */
+.left {
+  width: 400px;             /* controla el ancho de la columna del form */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* estilo del título */
+.left h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #101827;
+  text-align: center;
+}
+
+/* formulario apilado */
+.left form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* labels e inputs alineados y full-width para que queden parejos */
+.left label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #263044;
+}
+
+.left input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d7dee9;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fbfdff;
+}
+
+/* botón genérico */
+.left button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* botón de iniciar sesión */
+.left button:first-of-type {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.left button:first-of-type:hover {
+  background: #0056b3;
+}
+
+/* botón de registrarse */
+.left button:last-of-type {
+  background: #e9ecef;
+  color: #0d6efd;
+}
+
+.left button:last-of-type:hover {
+  background: #d6dbe1;
+}
+
+/* link de "olvidaste contraseña" centrado */
+.left .forgot {
+  display: block;            /* ocupa todo el ancho de la columna */
+  margin-top: 6px;
+  text-align: center;        /* centra el texto */
+  text-decoration: none;
+  font-size: 13px;
+  color: #0d6efd;
+}
+
+
+/* derecha: imagen */
+.right img {
+width: 400px;
+  height: auto;
+  display: block;
+}
+

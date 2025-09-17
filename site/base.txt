@@ -1,0 +1,6 @@
+
+<body>
+    <div id="header-placeholder"></div>
+    <main></main>
+</body>
+<script src="/static/js/header.js"></script>

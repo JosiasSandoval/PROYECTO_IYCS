@@ -1,73 +1,71 @@
 *{
     margin: 0;
 }
+/* Estilos para el contenedor principal de la cabecera */
 header {
-    display: grid;
-    grid-template-columns: 2fr 3fr 1.5fr;
-    grid-template-rows: 100px;
-    grid-template-areas: "imagen menu acciones";
-    background-color: #A66B38;
-    font-size: 18px;
-}
-
-.imagen {
-    grid-area: imagen; 
-    justify-content: center;
-}
-
-img {
-    width: 100px;   
-    height: auto; 
-}
-
-.menu {
-    grid-area: menu;      
-    gap: 10rem;                
-}
-
-.acciones {
-    grid-area: acciones;   
-    gap: 1rem; 
-    justify-content: center;
-}
-
-.imagen, .menu, .acciones{
     display: flex;
-    align-items: center; 
+    justify-content: space-between; /* Alinea los elementos a los extremos */
+    align-items: center; /* Centra los elementos verticalmente */
+    padding: 10px 20px;
+    background-color: #e5e7eb;
 }
 
-a {
-  text-decoration: none; 
-  color: inherit;        
+.sistema {
+    display: flex;
+    align-items: center; /* Centra el ícono y el texto verticalmente */
+    gap: 10px; /* Espacio entre el ícono y el texto */
 }
 
-a:hover{
-  color: white;
-  transform: scale(1.05); 
-  cursor: pointer;         
-  transition: all 0.3s ease; 
+.sistema img {
+    height: 40px; /* Ajusta el tamaño del logotipo */
 }
 
-.acciones button {
-  border: none;          
-  padding: 0.6rem 1.2rem;  
-  font-size: 16px;      
-  border-radius: 8px;     
-  cursor: pointer;         
-  transition: all 0.3s ease; 
+.sistema h1 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin: 0; /* Elimina el margen por defecto del h1 */
+}
+/* Contenedor principal para los datos del usuario */
+.datos_usuario {
+  display: flex;
+  align-items: center; /* Alinea verticalmente los elementos secundarios */
+  gap: 20px; /* Espacio entre el contenedor del usuario y el icono de salida */
 }
 
-.acciones button:hover {
-  background: #F2B279; 
-  transform: scale(1.05);  
+/* Contenedor para el icono de usuario, nombre y rol */
+.info_usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Espacio entre el icono de usuario y el texto */
 }
 
-.acciones button:active {
-  transform: scale(0.95);  /* efecto de "clic" */
+.info_usuario img {
+  width: 40px; /* Tamaño del icono de usuario */
+  height: 40px;
 }
-.registro{
-  background-color: white; 
+
+/* Contenedor para el nombre y rol, apilados verticalmente */
+.texto_usuario {
+  display: flex;
+  flex-direction: column;
 }
-.iniciar{
-    background-color: #F2C6AC; 
+
+.nombUsuario {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.rol {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+/* Estilo para el icono de salida */
+.icono_salida {
+  width: 40px; /* Tamaño del icono de salida */
+  height: 40px;
+  cursor: pointer;
 }

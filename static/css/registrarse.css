@@ -1,0 +1,113 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f5f7fb;
+  padding: 20px;
+}
+
+.formulario {
+  display: flex;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(13, 30, 52, 0.08);
+  width: 1150px; /* Ajuste para acomodar la imagen */
+}
+
+.formulario form {
+  padding: 30px 40px;
+  flex: 1; /* Ocupa la mitad del espacio */
+}
+
+.formulario img {
+  border-radius: 0 12px 12px 0;
+  width: 45%; /* Ocupa la otra mitad */
+  object-fit: cover;
+}
+
+.formulario h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 24px;
+  color: #101827;
+}
+
+/* Contenedores de dos campos en fila */
+.usuario,
+.datos_personales,
+.identificacion {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* Cada campo ocupa la mitad del contenedor */
+.campo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #263044;
+}
+
+input,
+select {
+  padding: 10px 12px;
+  border: 1px solid #d7dee9;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fbfdff;
+  width: 100%;
+}
+
+.claves {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+.claves small{
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+/* Botón */
+#registro {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+  background: #0d6efd;
+  color: #fff;
+  transition: background 0.3s ease;
+}
+
+#registro:hover {
+  background: #0b5ed7;
+}
+
+/* Link centrado */
+.forgot {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #0d6efd;
+  text-decoration: none;
+}
+
+.forgot:hover {
+  text-decoration: underline;
+}
