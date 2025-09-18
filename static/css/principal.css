@@ -22,7 +22,8 @@
     flex: 1 1 300px; /* Imagen flexible */
     max-width: 400px; 
     width: 100%; /* Se adapta al contenedor */
-    height: auto;}
+    height: auto;
+}
 .funciones {
     text-align: center;
     margin: 40px auto;

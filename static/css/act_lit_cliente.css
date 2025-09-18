@@ -1,0 +1,154 @@
+* {
+    margin: 0;
+
+}
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 5fr;
+    grid-template-rows: 1fr;
+    grid-template-areas: "enlaces acto";
+    height: 100vh;
+    overflow: hidden;
+}
+aside {
+    grid-area: enlaces;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-right: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+}
+.enlaces {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.enlaces button {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 15px;
+    border: none;
+    background-color: transparent;
+    border-radius: 8px;
+    text-align: left;
+    font-size: 16px;
+    color: #495057;
+    transition: background-color 0.3s, color 0.3s;
+    cursor: pointer;
+    width: 100%;
+}
+.enlaces button:hover {
+    background-color: #e2e6ea;
+    color: #007bff;
+}
+.enlaces img {
+    width: 25px;
+    height: 25px;
+    flex-shrink: 0;
+}
+.acto {
+    grid-area: acto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+}
+.acto h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #212529;
+    text-transform: uppercase;
+}
+.contenedor-campos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    width: 100%;
+    max-width: 1400px;
+}
+.campo {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.campo img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 5px;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+.info {
+    flex-grow: 1;
+}
+.info h3 {
+    margin-bottom: 5px;
+    color: #343a40;
+}
+.info p {
+    margin-bottom: 10px;
+    color: #6c757d;
+    font-size: 14px;
+}
+.botones {
+    display: flex;
+    gap: 10px;
+}
+.botones button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.botones .reserva {
+    background-color: #007bff;
+}
+.botones .reserva:hover {
+    background-color: #0056b3;
+}
+.botones .requisitos {
+    background-color: #6c757d;
+}
+.botones .requisitos:hover {
+    background-color: #5a6268;
+}
+
+.grid.show-requisitos .acto {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none; /* Deshabilita clics en los actos mientras están ocultos */
+    transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
+}
+
+.requisitos-container.visible {
+    left: 50%;
+    transform: translate(-50%, -50%); /* Lo centra horizontalmente */
+}
+
+/* Estilos para el botón de cerrar */
+.cerrar-requisitos {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.cerrar-requisitos:hover {
+    color: #333;
+}
