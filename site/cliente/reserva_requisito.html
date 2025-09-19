@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realizar Reserva</title>
+    <link rel="stylesheet" href="/static/css/reserva_requisito.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <div class="grid">
+        <aside>
+            <div class="enlaces">
+                <button><img src="/static/img/parroquia.png" alt="">Parroquia</button>
+                <button><img src="/static/img/reserva.png" alt="">Reservas</button>
+                <button><img src="/static/img/acto.png" alt="">Actos litúrgicos</button>
+                <button><img src="/static/img/usuario.png" alt="">Perfil</button>
+                <button><img src="/static/img/pago.png" alt="">Pago</button>
+                <button><img src="/static/img/calendario.png" alt="">Calendario</button>
+                <button class="active"><img src="/static/img/requisito.png" alt="">Requisitos</button>
+                <button><img src="/static/img/reporte.png" alt="">Reportes</button>
+            </div>
+        </aside>
+        <div class="main-content">
+            <div class="reserva">
+                <div class="header-reserva">
+                    <h1>Reserva</h1>
+                    <p>Región: Lambayeque</p>
+                </div>
+                <div class="stepper">
+                    <div class="step active" data-step="0">
+                        <div class="icon-circle">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <span>Ubicación</span>
+                    </div>
+                    <div class="step active" data-step="1">
+                        <div class="icon-circle">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <span>Datos</span>
+                    </div>
+                    <div class="step active" data-step="2">
+                        <div class="icon-circle">
+                            <i class="fas fa-cross"></i>
+                        </div>
+                        <span>Actos</span>
+                    </div>
+                    <div class="step current active" data-step="3">
+                        <div class="icon-circle">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <span>Requisitos</span>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="icon-circle">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <span>Resumen</span>
+                    </div>
+                </div>
+                <div id="form-container">
+                    <div class="form-step current" data-step="3">
+                        <h3><span class="icon">📜</span> Subir requisitos del acto</h3>
+                        <div id="matrimonio-requisitos" class="requisitos-section">
+                            <div class="requisito-group">
+                                <label>Partida de bautizo de los novios (PDF)</label>
+                                <div class="file-upload">
+                                    <input type="file" id="matrimonio-bautismo-partida" name="matrimonio-bautismo-partida" accept=".pdf">
+                                </div>
+                            </div>
+                            <div class="requisito-group">
+                                <label>DNI de los novios (PDF)</label>
+                                <div class="file-upload">
+                                    <input type="file" id="matrimonio-dni" name="matrimonio-dni" accept=".pdf">
+                                </div>
+                            </div>
+                            <div class="requisito-group">
+                                <label>Constancia de confirmación (PDF)</label>
+                                <div class="file-upload">
+                                    <input type="file" id="matrimonio-confirmacion" name="matrimonio-confirmacion" accept=".pdf">
+                                </div>
+                            </div>
+                            <div class="terms-conditions">
+                                <input type="checkbox" id="terms-matrimonio">
+                                <label for="terms-matrimonio">Confirmo que los documentos son legibles y autorizo el tratamiento de mis datos personales conforme a la política de privacidad.</label>
+                            </div>
+                        </div>
+                        <div id="bautismo-requisitos" class="requisitos-section" style="display: none;">
+                            <div class="requisito-group">
+                                <label>Partida de nacimiento del bautizado (PDF)</label>
+                                <div class="file-upload">
+                                    <input type="file" id="bautismo-nacimiento-partida" name="bautismo-nacimiento-partida" accept=".pdf">
+                                </div>
+                            </div>
+                            <div class="requisito-group">
+                                <label>DNI de los padres (PDF)</label>
+                                <div class="file-upload">
+                                    <input type="file" id="bautismo-dni-padres" name="bautismo-dni-padres" accept=".pdf">
+                                </div>
+                            </div>
+                            <div class="requisito-group">
+                                <label>DNI de los padrinos (PDF)</label>
+                                <div class="file-upload">
+                                    <input type="file" id="bautismo-dni-padrinos" name="bautismo-dni-padrinos" accept=".pdf">
+                                </div>
+                            </div>
+                            <div class="terms-conditions">
+                                <input type="checkbox" id="terms-bautismo">
+                                <label for="terms-bautismo">Confirmo que los documentos son legibles y autorizo el tratamiento de mis datos personales conforme a la política de privacidad.</label>
+                            </div>
+                        </div>
+                        <div id="misa-requisitos" class="requisitos-section" style="display: none;">
+                            <p>Este acto litúrgico no requiere la subida de documentos.</p>
+                            <p>El siguiente paso será realizar el pago de la reserva.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="btn btn-prev">
+                        &lt; Atrás
+                    </button>
+                    <button class="btn btn-next">
+                        Siguiente &gt;
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/reserva.js"></script>
+</body>
+</html>

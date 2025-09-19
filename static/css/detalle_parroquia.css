@@ -17,7 +17,7 @@ body {
 
 .grid {
     display: grid;
-    grid-template-columns: 1fr 5fr;
+    grid-template-columns: 250px 5fr;
     grid-template-rows: 1fr;
     grid-template-areas: "enlaces detalle";
     flex-grow: 1;
