@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realizar Reserva</title>
+    <link rel="stylesheet" href="/static/css/reserva_1.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <div class="grid">
+        <aside>
+            <div class="enlaces">
+                <button><img src="/static/img/parroquia.png" alt="">Parroquia</button>
+                <button><img src="/static/img/reserva.png" alt="">Reservas</button>
+                <button><img src="/static/img/acto.png" alt="">Actos litúrgicos</button>
+                <button><img src="/static/img/usuario.png" alt="">Perfil</button>
+                <button><img src="/static/img/pago.png" alt="">Pago</button>
+                <button><img src="/static/img/calendario.png" alt="">Calendario</button>
+                <button><img src="/static/img/requisito.png" alt="">Requisitos</button>
+                <button><img src="/static/img/reporte.png" alt="">Reportes</button>
+            </div>
+        </aside>
+        <div class="main-content">
+            <div class="reserva">
+                <div class="header-reserva">
+                    <h1>Realizar Reserva</h1>
+                    <p>Región: Lambayeque</p>
+                </div>
+                <div class="stepper">
+                    <div class="step active" data-step="0">
+                        <div class="icon-circle">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <span>Ubicación</span>
+                    </div>
+                    <div class="step" data-step="1">
+                        <div class="icon-circle">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <span>Datos</span>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="icon-circle">
+                            <i class="fas fa-cross"></i>
+                        </div>
+                        <span>Actos</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="icon-circle">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <span>Requisitos</span>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="icon-circle">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <span>Resumen</span>
+                    </div>
+                </div>
+                <div id="form-container">
+                    <div class="form-step current" data-step="0">
+                        <h3>Seleccione Provincia / Distrito y Parroquia</h3>
+                        <div class="form-group">
+                            <select id="provincia-distrito">
+                                <option>--Seleccione--</option>
+                            </select>
+                            <select id="parroquia">
+                                <option>--Seleccione parroquia--</option>
+                            </select>
+                        </div>
+                        <div class="mapa-container">
+                            <img src="https://via.placeholder.com/500x300?text=Mapa+de+Ubicación" alt="Mapa de Ubicación">
+                            <p><a href="#">Ampliar el mapa</a></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="btn btn-prev" disabled>
+                        < Atrás
+                    </button>
+                    <button class="btn btn-next">
+                        Siguiente >
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/reserva.js"></script>
+</body>
+</html>
