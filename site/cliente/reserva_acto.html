@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realizar Reserva</title>
+    <link rel="stylesheet" href="/static/css/reserva_acto.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <div class="grid">
+        <aside>
+            <div class="enlaces">
+                <button><img src="/static/img/parroquia.png" alt="">Parroquia</button>
+                <button><img src="/static/img/reserva.png" alt="">Reservas</button>
+                <button><img src="/static/img/acto.png" alt="">Actos litúrgicos</button>
+                <button><img src="/static/img/usuario.png" alt="">Perfil</button>
+                <button><img src="/static/img/pago.png" alt="">Pago</button>
+                <button><img src="/static/img/calendario.png" alt="">Calendario</button>
+                <button><img src="/static/img/requisito.png" alt="">Requisitos</button>
+                <button><img src="/static/img/reporte.png" alt="">Reportes</button>
+            </div>
+        </aside>
+        <div class="main-content">
+            <div class="reserva">
+                <div class="header-reserva">
+                    <h1>Reserva</h1>
+                    <p>Región: Lambayeque</p>
+                </div>
+                <div class="stepper">
+                    <div class="step active" data-step="0">
+                        <div class="icon-circle">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <span>Ubicación</span>
+                    </div>
+                    <div class="step active" data-step="1">
+                        <div class="icon-circle">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <span>Datos</span>
+                    </div>
+                    <div class="step active" data-step="2">
+                        <div class="icon-circle">
+                            <i class="fas fa-cross"></i>
+                        </div>
+                        <span>Actos</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="icon-circle">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <span>Requisitos</span>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="icon-circle">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <span>Resumen</span>
+                    </div>
+                </div>
+                <div id="form-container">
+                    <div class="form-step" data-step="0">
+                        <h3>Paso de Ubicación completado</h3>
+                        <p>Los datos de ubicación ya han sido registrados.</p>
+                    </div>
+                    <div class="form-step" data-step="1">
+                        <h3><span class="icon">👤</span> Datos personales del solicitante</h3>
+                        <div class="form-personal-data">
+                            <div class="form-group">
+                                <label for="nombre-completo">Nombre completo</label>
+                                <input type="text" id="nombre-completo" name="nombre-completo">
+                            </div>
+                            <div class="form-group">
+                                <label for="tipo-documento">Documento</label>
+                                <select id="tipo-documento" name="tipo-documento">
+                                    <option>--DNI--</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="numero-documento">N° Documento</label>
+                                <input type="text" id="numero-documento" name="numero-documento">
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="direccion">Dirección</label>
+                                <input type="text" id="direccion" name="direccion">
+                            </div>
+                            <div class="form-group">
+                                <label for="telefono">Teléfono</label>
+                                <input type="tel" id="telefono" name="telefono">
+                            </div>
+                            <div class="form-group">
+                                <label for="correo-electronico">Correo electrónico</label>
+                                <input type="email" id="correo-electronico" name="correo-electronico">
+                            </div>
+                            <div class="form-group">
+                                <label for="relacion-familiar">Relación familiar</label>
+                                <select id="relacion-familiar" name="relacion-familiar">
+                                    <option>--Seleccione--</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="observaciones">Observaciones(Opcional)</label>
+                                <textarea id="observaciones" name="observaciones"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-step current" data-step="2">
+                        <h3><span class="icon">⛪</span> Acto litúrgico y programación</h3>
+                        <div class="form-act-liturgico">
+                            <div class="form-group">
+                                <label for="acto-liturgico">Acto</label>
+                                <select id="acto-liturgico" name="acto-liturgico">
+                                    <option>--Matrimonio--</option>
+                                    <option>Bautismo</option>
+                                    <option>Primera Comunión</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="fecha-acto">Fecha</label>
+                                <input type="date" id="fecha-acto" name="fecha-acto">
+                            </div>
+                            <div class="form-group">
+                                <label for="hora-acto">Horario</label>
+                                <select id="hora-acto" name="hora-acto">
+                                    <option>--Seleccione--</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="additional-inputs">
+                            </div>
+                    </div>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="btn btn-prev">
+                        < Atrás
+                    </button>
+                    <button class="btn btn-next">
+                        Siguiente >
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/reserva.js"></script>
+</body>
+</html>
