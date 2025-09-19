@@ -123,32 +123,81 @@ aside {
     background-color: #5a6268;
 }
 
-.grid.show-requisitos .acto {
-    transform: translateX(-100%);
+/* Modifica la regla .requisitos-container */
+.requisitos-container {
+    /* Mantenemos el estilo de superposición y animación */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px;
+    z-index: 10;
+    
+    /* Agrega estas propiedades para la animación de entrada */
     opacity: 0;
-    pointer-events: none; /* Deshabilita clics en los actos mientras están ocultos */
-    transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
+    transform: translate(-50%, -50%) scale(0.9);
+    transition: all 0.5s ease-in-out;
+}
+
+/* Modifica la regla .requisitos-container h2 */
+.requisitos-container h2 {
+    color: #4b4b4b;
+    font-weight: 600;
+    /* Elimina el margin-bottom para que se alinee con la imagen */
+    margin: 0;
+}
+
+/* Agrega un nuevo contenedor para el título y el ícono de cerrar */
+.requisitos-header {
+    display: flex;
+    justify-content: space-between; /* Alinea los elementos a los extremos */
+    align-items: center; /* Centra los elementos verticalmente */
+    width: 100%; /* Ocupa todo el ancho disponible */
+    margin-bottom: 25px; /* Espacio debajo del encabezado */
+}
+
+/* Estilos para el ícono de cerrar (ahora dentro del header) */
+.requisitos-header img {
+    width: 24px; /* O el tamaño que prefieras */
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.requisitos-header img:hover {
+    opacity: 1;
+}
+
+#lista-requisitos {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.requisito-item {
+    background-color: #e9ecef;
+    border-left: 4px solid #007bff;
+    padding: 15px 20px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    text-align: left;
+    color: #333;
+    font-size: 1.1em;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.requisito-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .requisitos-container.visible {
-    left: 50%;
-    transform: translate(-50%, -50%); /* Lo centra horizontalmente */
-}
-
-/* Estilos para el botón de cerrar */
-.cerrar-requisitos {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: none;
-    border: none;
-    font-size: 24px;
-    font-weight: bold;
-    color: #888;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.cerrar-requisitos:hover {
-    color: #333;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
 }
