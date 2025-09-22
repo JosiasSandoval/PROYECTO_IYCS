@@ -1,0 +1,57 @@
+  /* ===== GENERAL ===== */
+  body {
+    margin: 0;
+    padding: 0;
+    background: #f8f9fa;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  /* ===== BARRA LATERAL ===== */
+  .barra-lateral {
+    background-color: #adc5e0;
+    min-height: 100vh;
+    padding: 20px 10px;
+  }
+
+  .barra-lateral .nav-link {
+    color: #000;
+    font-size: 16px;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    padding: 10px;
+  }
+
+  .barra-lateral .nav-link:hover {
+    background-color: #c7ddf5;
+    border-radius: 5px;
+  }
+
+  /* ===== BARRA SUPERIOR ===== */
+  .barra-superior {
+    background: #adc5e0;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .info-usuario {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .texto-rol {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  /* ===== CONTENIDO GENERAL ===== */
+  .contenido {
+    padding: 30px;
+    overflow-y: auto;
+  }

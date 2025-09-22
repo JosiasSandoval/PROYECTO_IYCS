@@ -1,0 +1,285 @@
+  /* ===== GENERAL ===== */
+  body {
+    margin: 0;
+    padding: 0;
+    background: #f8f9fa;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  /* ===== BARRA LATERAL ===== */
+  .barra-lateral {
+    background-color: #adc5e0;
+    min-height: 100vh;
+    padding: 20px 10px;
+  }
+
+  .barra-lateral .nav-link {
+    color: #000;
+    font-size: 16px;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    padding: 10px;
+  }
+
+  .barra-lateral .nav-link:hover {
+    background-color: #c7ddf5;
+    border-radius: 5px;
+  }
+
+  /* ===== BARRA SUPERIOR ===== */
+  .barra-superior {
+    background: #adc5e0;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .info-usuario {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .texto-rol {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  /* ===== CONTENIDO GENERAL ===== */
+  .contenido {
+    padding: 30px;
+    overflow-y: auto;
+  }
+
+  /* ===== FORMULARIO DOCUMENTO ===== */
+  #formDocumento {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;          
+    gap: 12px;            
+    margin-bottom: 20px;
+  }
+
+  #formDocumento label {
+    font-weight: bold;
+    font-size: 16px;
+    white-space: nowrap;  
+  }
+
+  #formDocumento #inputDocumento {
+    flex-grow: 1;         
+    padding: 8px 12px;
+    font-size: 15px;
+    min-width: 300px;     
+  }
+  /* ===== BOTONES ===== */
+  .btn {
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  #btn_buscar,
+  #btn_guardar {
+    color: white;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 6px;
+    width: 42px;
+    height: 42px;
+  }
+
+  /* Colores */
+  #btn_buscar {
+    background-color: #93baea;
+  }
+  #btn_buscar:hover {
+    background-color: #7daed8;
+  }
+
+  #btn_guardar {
+    background-color: #60a5fa;
+  }
+  #btn_guardar:hover {
+    background-color: #2563eb;
+  }
+
+
+  #btn_guardar:hover {
+    background-color: #2563eb;
+  }
+
+  #btn_eliminar {
+    background-color: #f87171;
+    color: white;
+  }
+
+  #btn_eliminar:hover {
+    background-color: #dc2626;
+  }
+
+  #btn_editar {
+    background-color: #facc15;
+    color: black;
+  }
+
+  #btn_editar:hover {
+    background-color: #eab308;
+  }
+
+  #btn_usuario,
+  #btn_salir {
+    background-color: transparent;
+    border: none;
+    padding: 4px;
+  }
+
+  .btn-orange {
+    background-color: #fd7e14; 
+    color: white;
+    border: none;
+  }
+
+  .btn-orange:hover,
+  .btn-orange:focus {
+    background-color: #e8590c;
+    color: white;
+  }
+
+  /* ===== TABLA DE DOCUMENTOS ===== */
+  .tabla-documentos {
+    max-height: 60vh;
+    overflow-y: auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+  }
+
+  .table {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(160, 125, 125, 0.1);
+  }
+
+  .table th,
+  .table td {
+    vertical-align: middle;
+    text-align: start;
+    font-size: 15px;
+    padding: 10px;
+  }
+
+  .table thead {
+    background-color: #60a5fa;
+    color: white;
+  }
+
+  .table-active {
+    background-color: #bfdbfe !important;
+  }
+
+  /* Proporciones de columnas */
+  .col-id {
+    width: 5%;
+  }
+
+  .col-nombre {
+    width: 65%;
+  }
+
+  .col-abreviatura {
+    width: 10%;
+  }
+
+  .col-acciones {
+    width: 30%;
+    white-space: nowrap;
+  }
+
+  /* ===== PAGINACIÓN Y ACCIONES ===== */
+  .acciones {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  /* ===== OVERRIDES PARA FORMULARIO DOCUMENTO ===== */
+  /* Poner estas reglas después de tus reglas originales */
+  #formDocumento .row {
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Label: mantiene tu estilo pero con un poco de separación abajo */
+  #formDocumento label {
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  /* Grupo de botones a la izquierda */
+  #formDocumento .btn-group.btn-left {
+    display: flex;
+    gap: 10px;             /* mismo margen entre botones */
+    align-items: center;
+    margin-left: 0;        /* asegurar que no haya desplazamiento extra */
+  }
+
+  /* Botones pequeños y cuadrados (misma talla) */
+  #formDocumento .btn-icon {
+    padding: 6px 8px;
+    border-radius: 6px;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  /* Que las imágenes dentro se ajusten */
+  #formDocumento .btn-icon img {
+    width: 18px;
+    height: auto;
+    display: block;
+  }
+
+  /* El input ocupa el resto del espacio y no tiene margin-left grande */
+  #formDocumento #inputDocumento {
+    margin-left: 0;        /* OVERRIDE: quita el margin-left:20px que tenías */
+    max-width: none;       /* permite que flex-grow-1 ocupe el espacio */
+    padding: 8px 12px;
+    font-size: 15px;
+    box-sizing: border-box;
+  }
+
+  /* Colores / hover: reusa los tuyos pero sin margin-left intrusivo */
+  #formDocumento #btn_buscar {
+    background-color: #93baea;
+    color: white;
+    border: none;
+  }
+  #formDocumento #btn_buscar:hover { background-color: #7daed8; }
+
+  #formDocumento #btn_guardar {
+    background-color: #60a5fa;
+    color: white;
+    border: none;
+  }
+  #formDocumento #btn_guardar:hover { background-color: #2563eb; }
