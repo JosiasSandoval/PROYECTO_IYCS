@@ -1,57 +1,190 @@
-  /* ===== GENERAL ===== */
-  body {
-    margin: 0;
-    padding: 0;
-    background: #f8f9fa;
-    font-family: 'Segoe UI', sans-serif;
-  }
+/* ===== GENERAL ===== */
+body {
+  margin: 0;
+  padding: 0;
+  background: #f8f9fa;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 15px; /* tamaño base unificado */
+  color: #212529;
+}
 
-  /* ===== BARRA LATERAL ===== */
-  .barra-lateral {
-    background-color: #adc5e0;
-    min-height: 100vh;
-    padding: 20px 10px;
-  }
+/* ===== BARRA SUPERIOR ===== */
+.barra-superior {
+  background: #e5e7eb; /* gris claro */
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #d1d5db;
+}
 
-  .barra-lateral .nav-link {
-    color: #000;
-    font-size: 16px;
-    margin: 8px 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    padding: 10px;
-  }
+.titulo h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  margin: 0;
+  font-size: 15px; /* igual al resto */
+}
 
-  .barra-lateral .nav-link:hover {
-    background-color: #c7ddf5;
-    border-radius: 5px;
-  }
+.info-usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-  /* ===== BARRA SUPERIOR ===== */
-  .barra-superior {
-    background: #adc5e0;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-  }
+.datos-usuario {
+  display: flex;
+  flex-direction: column;
+  font-size: 15px; /* igualado */
+}
 
-  .info-usuario {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-  }
+.rol {
+  font-size: 13px; /* un poquito más chico como subtítulo */
+  color: #6b7280;
+}
 
-  .texto-rol {
-    font-size: 12px;
-    color: #6b7280;
-  }
+.btn-icono {
+  background-color: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+}
 
-  /* ===== CONTENIDO GENERAL ===== */
-  .contenido {
-    padding: 30px;
-    overflow-y: auto;
-  }
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.contenedor-principal {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  height: calc(100vh - 60px);
+}
+
+/* ===== BARRA LATERAL ===== */
+.barra-lateral {
+  background-color: #dbeafe; /* azul claro */
+  border-right: 1px solid #cbd5e1;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px; /* igual al resto */
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 15px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 15px; /* igualado */
+  color: #000;
+  transition: background-color 0.3s;
+}
+
+.menu a:hover {
+  background-color: #c7ddf5;
+}
+
+/* ===== CONTENIDO PRINCIPAL ===== */
+.contenido {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px; /* igualado */
+}
+
+.titulo-contenido {
+  margin-bottom: 20px;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 15px; /* igual al resto */
+}
+
+/* ===================================================== */
+/* ===== NUEVOS ESTILOS PARA PERFIL Y UBICACIÓN ===== */
+/* ===================================================== */
+
+/* ===== PERFIL (más ancho) ===== */
+.perfil-card {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 25px;
+  width: 100%; /* ocupa todo el ancho del contenido */
+}
+
+.perfil-card .perfil-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.perfil-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.perfil-info h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #111827;
+}
+
+.perfil-info p {
+  margin: 0;
+  font-size: 15px;
+  color: #374151;
+}
+
+/* ===== INPUTS EDITABLES ===== */
+.perfil-info label {
+  display: block;
+  margin-top: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  color: #374151;
+}
+
+.perfil-info input {
+  width: 100%;
+  padding: 8px 12px;
+  margin-top: 4px;
+  font-size: 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.perfil-info input:focus {
+  border-color: #2563eb; /* azul para enfoque */
+}
+
+/* ===== BOTÓN GUARDAR ===== */
+.btn-guardar {
+  margin-top: 15px;
+  padding: 10px 16px;
+  background-color: #60a5fa;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color 0.3s;
+}
+
+.btn-guardar:hover {
+  background-color: #2563eb;
+}
