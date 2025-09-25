@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistema Parroquia</title>
+
+  <!-- Bootstrap CSS completo -->
+  <link href="../../static/bootstrap-5.3.8-dist/css/bootstrap-grid.min.css" rel="stylesheet" />
+  <!-- CSS personalizado -->
+  <link rel="stylesheet" href="../../static/css/estilo_tipoDocumento.css" />
+</head>
+<body>
+
+  <!-- Barra superior (ocupa todo el ancho) -->
+  <div class="barra-superior py-2 px-4 d-flex justify-content-between align-items-center w-100">
+    <!-- Título a la izquierda -->
+    <div class="d-flex align-items-center">
+      <h3 class="fw-bold mb-0 d-flex align-items-center">
+        <img src="imagenes/iglesia-de-tyn.png" alt="icono_iglesia" width="24" class="me-2" />
+        Libook
+      </h3>
+    </div>
+
+    <!-- Info de usuario a la derecha -->
+    <div class="info-usuario d-flex align-items-center gap-3">
+      <button id="btn_usuario" class="btn p-0 border-0 bg-transparent">
+        <a href="#"><img src="imagenes/avatar.png" alt="avatar" width="32" /></a>
+      </button>
+      <div>
+        <strong>Nombre_Apellido</strong>
+        <div class="texto-rol text-muted small">Usuario</div>
+      </div>
+      <button id="btn_salir" class="btn p-0 border-0 bg-transparent">
+        <a href="#"><img src="imagenes/cerrar_sesion.png" alt="cerrar_sesion" width="32" /></a>
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenedor principal (barra lateral + contenido) -->
+  <div class="container-fluid">
+    <div class="row min-vh-100">
+
+      <!-- Barra lateral -->
+      <div class="col-md-2 barra-lateral py-4">
+        <nav class="nav flex-column">
+          <a href="#"><img src="../../static/img/inicio.png" width="20"/> Inicio</a>
+          <a href="#"><img src="../../static/img/parroquia.png" width="20"/> Parroquia</a>
+          <a href="#"><img src="../../static/img/reserva.png" width="20"/> Reservas</a>
+          <a href="#"><img src="../../static/img/acto.png" width="20"/> Actos litúrgicos</a>
+          <a href="#"><img src="../../static/img/pago.png" width="20"/> Pago</a>
+          <a href="#"><img src="../../static/img/calendario.png" width="20"/> Calendario</a>
+          <a href="#"><img src="../../static/img/requisito.png" width="20"/> Requisitos</a>
+        </nav>
+      </div>
+
+      <!-- Contenido principal -->
+      <div class="col-md-10 d-flex flex-column p-0">
+        <div class="contenido p-4 flex-grow-1 overflow-auto">
+          <h3 class="fw-bold text-center mb-4">TIPO DE DOCUMENTO</h3>
+
+          <!-- Formulario -->
+          <form id="formDocumento" class="mb-4 w-100 d-flex align-items-center">
+            <!-- Label -->
+            <label for="inputDocumento" class="fw-bold me-2">Nombre de tipo de documento:</label>
+
+            <!-- Input -->
+            <input type="text" id="inputDocumento" class="form-control me-2"
+                  placeholder="Ingrese nombre o abreviatura" />
+
+            <!-- Botones -->
+            <button type="button" id="btn_buscar" class="btn btn-secondary btn-icon me-2" title="Buscar">
+              <img src="imagenes/lupa.png" alt="Buscar" />
+            </button>
+
+            <button type="submit" id="btn_guardar" class="btn btn-primary btn-icon" title="Agregar">
+              <img src="imagenes/mas.png" alt="Agregar" />
+            </button>
+          </form>
+
+          <!-- Tabla -->
+          <div class="tabla-documentos table-responsive">
+            <table id="tablaDocumentos" class="table table-bordered table-hover align-middle text-center">
+              <thead class="table-primary">
+                <tr>
+                  <th class="col-id text-center align-middle">#</th>
+                  <th class="col-nombre">Documento</th>
+                  <th class="col-abreviatura text-center align-middle">Abreviatura</th>
+                  <th class="col-acciones text-center align-middle">Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <!-- Paginación -->
+          <div id="paginacionContainer" class="d-flex justify-content-center mt-4"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="../../static/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+  <!-- JS personalizado -->
+  <script src="../../static/js/script_tipoDocumento.js"></script>
+</body>
+</html>

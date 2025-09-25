@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="../../static/css/perfil.css"/>
+  <link rel="stylesheet" href="../static/css/perfil.css"/>
   <title>Perfil | Litbook</title>
 </head>
 <body>
@@ -49,6 +49,7 @@
        <!-- Tarjeta Perfil editable -->
       <section class="perfil-card">
         <img src="../../static/img/usuario.png" class="perfil-img" alt="foto perfil"/>
+        
         <div class="perfil-info">
           <label for="nombre">Nombre:</label>
           <input type="text" id="nombre" value="Nombre Apellido"/>
@@ -58,10 +59,23 @@
 
           <label for="telefono">Teléfono:</label>
           <input type="tel" id="telefono" value="+51 999 999 999"/>
-          
+
+          <label for="direccion">Dirección:</label>
+          <input type="text" id="direccion" value="Av. Siempre Viva 123"/>
+
+          <label for="ciudad">Ciudad:</label>
+          <input type="text" id="ciudad" value="Lima"/>
+
+          <label for="fecha_nacimiento">Fecha de Nacimiento:</label>
+          <input type="date" id="fecha_nacimiento" value="1990-01-01"/>
+
+          <label for="password">Contraseña:</label>
+          <input type="password" id="password" placeholder="••••••••"/>
+
           <button class="btn btn-guardar">Guardar Cambios</button>
         </div>
       </section>
+
       
     </main>
   </div>
