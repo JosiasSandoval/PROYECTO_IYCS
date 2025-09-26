@@ -8,39 +8,11 @@
 </head>
 <body>
   <!-- Barra superior -->
-  <div class="barra-superior">
-    <div class="titulo">
-      <h3>
-        <img src="../../static/img/logotipo_litbook.png" alt="logo" width="38"/>
-        Litbook
-      </h3>
-    </div>
-    <div class="info-usuario">
-      <img src="../../static/img/usuario.png" alt="usuario" class="avatar"/>
-      <div class="datos-usuario">
-        <strong>Nombre Apellido</strong>
-        <div class="rol">Usuario</div>
-      </div>
-      <button id="btn_salir" class="btn-icono">
-        <img src="../../static/img/salida.png" alt="salida" width="28"/>
-      </button>
-    </div>
-  </div>
-
+  <div id="header-placeholder"></div>
   <!-- Contenedor -->
   <div class="contenedor-principal">
     <!-- Barra lateral -->
-    <aside class="barra-lateral">
-      <nav class="menu">
-        <a href="#"><img src="../../static/img/inicio.png" width="20"/> Inicio</a>
-        <a href="#"><img src="../../static/img/parroquia.png" width="20"/> Parroquia</a>
-        <a href="#"><img src="../../static/img/reserva.png" width="20"/> Reservas</a>
-        <a href="#"><img src="../../static/img/acto.png" width="20"/> Actos litúrgicos</a>
-        <a href="#"><img src="../../static/img/pago.png" width="20"/> Pago</a>
-        <a href="#"><img src="../../static/img/calendario.png" width="20"/> Calendario</a>
-        <a href="#"><img src="../../static/img/requisito.png" width="20"/> Requisitos</a>
-      </nav>
-    </aside>
+    <div id="barra_lateral-placeholder"></div>
 
     <!-- Contenido -->
     <main class="contenido">
@@ -79,5 +51,7 @@
       
     </main>
   </div>
+  <script src="/static/js/header.js"></script>
+  <script src="/static/js/barra_lateral.js"></script>
 </body>
 </html>

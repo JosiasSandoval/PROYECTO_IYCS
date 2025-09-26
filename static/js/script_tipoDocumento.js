@@ -121,10 +121,12 @@ let documentos = [
   { id: 120, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
   { id: 121, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
 ];
-let documentosFiltrados = null; // <- lista filtrada temporal
+let documentosFiltrados = null;
 
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
+
+// Referencias a los modales sin Bootstrap
 const modalDetalle = crearModal();
 const modalFormulario = crearModalFormulario();
 
@@ -146,7 +148,6 @@ function existeDocumento(nombre, abreviatura, idIgnorar = null) {
 function renderTabla() {
   tabla.innerHTML = "";
 
-  // Usa la lista filtrada si existe, si no usa todos los documentos
   const lista = documentosFiltrados ?? documentos;
 
   if (ordenActual.campo) {
@@ -164,7 +165,6 @@ function renderTabla() {
   const fin = inicio + elementosPorPagina;
   const documentosPagina = lista.slice(inicio, fin);
 
-
   documentosPagina.forEach((doc, index) => {
     const esActivo = doc.estado === "activo";
     const botonColor = esActivo ? "btn-orange" : "btn-success";
@@ -172,22 +172,22 @@ function renderTabla() {
 
     const fila = document.createElement("tr");
     fila.innerHTML = `
-      <td class="col-id text-center align-middle">${inicio + index + 1}</td>
-      <td class="col-nombre text-start align-middle">${doc.nombre}</td>
-      <td class="col-abreviatura text-center align-middle">${doc.abreviatura}</td>
-      <td class="col-acciones text-center align-middle">
+      <td class="col-id">${inicio + index + 1}</td>
+      <td class="col-nombre">${doc.nombre}</td>
+      <td class="col-abreviatura">${doc.abreviatura}</td>
+      <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
           <button class="btn btn-info btn-sm" onclick="verDetalle(${doc.id})" title="Ver">
-            <img src="imagenes/ojo.png" alt="ver">
+            <img src="/static/img/ojo.png" alt="ver">
           </button>
           <button class="btn btn-warning btn-sm" onclick="editarDocumento(${doc.id})" title="Editar">
-            <img src="imagenes/lapiz.png" alt="editar">
+            <img src="/static/img/lapiz.png" alt="editar">
           </button>
           <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${doc.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
-            <img src="imagenes/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
+            <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
           </button>
           <button class="btn btn-danger btn-sm" onclick="eliminarDocumento(${doc.id})" title="Eliminar">
-            <img src="imagenes/x.png" alt="eliminar">
+            <img src="/static/img/x.png" alt="eliminar">
           </button>
         </div>
       </td>
@@ -197,6 +197,7 @@ function renderTabla() {
 
   renderPaginacion();
 }
+
 
 function renderPaginacion() {
   paginacion.innerHTML = "";
@@ -213,32 +214,46 @@ function renderPaginacion() {
     return li;
   };
 
-  ul.appendChild(crearItem(1, paginaActual === 1));
-  if (paginaActual > 3) ul.appendChild(crearItem(null, false, true, '...'));
+  // Botón "Anterior"
+  ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, '<'));
 
-  const start = Math.max(2, paginaActual - 1);
-  const end = Math.min(totalPaginas - 1, paginaActual + 1);
+  // Páginas
+  const start = Math.max(1, paginaActual - 2);
+  const end = Math.min(totalPaginas, paginaActual + 2);
 
-  for (let i = start; i <= end; i++) {
-    if (i !== 1 && i !== totalPaginas) {
-      ul.appendChild(crearItem(i, paginaActual === i));
-    }
+  if (start > 1) {
+    ul.appendChild(crearItem(1, paginaActual === 1));
+    if (start > 2) ul.appendChild(crearItem(null, false, true, '...'));
   }
 
-  if (paginaActual < totalPaginas - 3) ul.appendChild(crearItem(null, false, true, '...'));
-  if (totalPaginas > 3) ul.appendChild(crearItem(totalPaginas, paginaActual === totalPaginas));
+  for (let i = start; i <= end; i++) {
+    ul.appendChild(crearItem(i, paginaActual === i));
+  }
+
+  if (end < totalPaginas) {
+    if (end < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, '...'));
+    ul.appendChild(crearItem(totalPaginas, paginaActual === totalPaginas));
+  }
+  
+  // Botón "Siguiente"
+  ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, '>'));
+
 
   paginacion.appendChild(ul);
 }
 
+
 function cambiarPagina(pagina) {
+  if (pagina < 1 || pagina > Math.ceil(documentos.length / elementosPorPagina)) {
+    return;
+  }
   paginaActual = pagina;
   renderTabla();
 }
 
 // ----------------- AGREGAR DOCUMENTO -----------------
 document.getElementById("formDocumento").addEventListener("submit", (e) => {
-  e.preventDefault(); // evita refrescar
+  e.preventDefault();
   abrirModalFormulario("agregar");
   renderTabla();
 });
@@ -254,13 +269,10 @@ function editarDocumento(id) {
 function eliminarDocumento(id) {
   const doc = documentos.find(d => d.id === id);
   if (!doc) return;
-
-  documentoAEliminar = doc; 
-
-  const mensaje = document.getElementById('modalEliminarMensaje');
-  mensaje.textContent = `¿Está seguro de eliminar "${doc.nombre}"?`;
-
-  modalEliminar.show();
+  if (!confirm(`¿Está seguro de eliminar "${doc.nombre}"?`)) return;
+  documentos = documentos.filter(d => d.id !== id);
+  const totalPaginas = Math.ceil(documentos.length / elementosPorPagina);
+  if (paginaActual > totalPaginas) paginaActual = totalPaginas || 1;
   renderTabla();
   renderPaginacion();
 }
@@ -285,12 +297,12 @@ function verDetalle(id) {
 function crearModal() {
   const modalHTML = document.createElement("div");
   modalHTML.innerHTML = `
-    <div class="modal fade" id="modalDetalle" tabindex="-1">
+    <div class="modal" id="modalDetalle">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Detalle del documento</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <h5 class="modal-title">Detalle del Documento</h5>
+            <button type="button" class="btn-cerrar" onclick="cerrarModal('modalDetalle')">&times;</button>
           </div>
           <div class="modal-body" id="modalDetalleContenido"></div>
         </div>
@@ -298,38 +310,35 @@ function crearModal() {
     </div>
   `;
   document.body.appendChild(modalHTML);
-  return new bootstrap.Modal(document.getElementById("modalDetalle"));
+  return document.getElementById("modalDetalle");
 }
 
 // ----------------- CREAR MODAL FORMULARIO (Agregar/Editar) -----------------
 function crearModalFormulario() {
   const modalHTML = document.createElement("div");
   modalHTML.innerHTML = `
-    <div class="modal fade" id="modalFormulario" tabindex="-1">
+    <div class="modal" id="modalFormulario">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="modalFormularioTitulo"></h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <button type="button" class="btn-cerrar" onclick="cerrarModal('modalFormulario')">&times;</button>
           </div>
           <div class="modal-body">
             <form id="formModalDocumento">
 
-              <!-- Nombre -->
               <div class="mb-3">
                 <label for="modalNombre" class="form-label">Nombre del documento</label>
                 <input type="text" id="modalNombre" class="form-control" required>
               </div>
 
-              <!-- Abreviatura -->
               <div class="mb-3">
                 <label for="modalAbreviatura" class="form-label">Abreviatura</label>
                 <input type="text" id="modalAbreviatura" class="form-control" required>
               </div>
 
-              <!-- Botón Guardar -->
-              <div class="text-end">
-                <button type="submit" class="btn btn-primary" id="btnGuardar">Aceptar</button>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar"></button>
               </div>
 
             </form>
@@ -339,7 +348,22 @@ function crearModalFormulario() {
     </div>
   `;
   document.body.appendChild(modalHTML);
-  return new bootstrap.Modal(document.getElementById("modalFormulario"));
+  return document.getElementById("modalFormulario");
+}
+
+// Nueva función para abrir y cerrar modales
+function abrirModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('activo');
+  }
+}
+
+function cerrarModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.remove('activo');
+  }
 }
 
 // ----------------- ABRIR MODAL FORMULARIO ----------------- 
@@ -349,16 +373,22 @@ function abrirModalFormulario(modo, doc = null) {
   const inputAbreviatura = document.getElementById("modalAbreviatura");
   const botonGuardar = document.getElementById("btnGuardar");
   const form = document.getElementById("formModalDocumento");
-
-  // Reset
+  const modalFooter = document.querySelector("#modalFormulario .modal-footer");
+  
+  // Limpiar y resetear
+  modalFooter.innerHTML = "";
   inputNombre.disabled = false;
   inputAbreviatura.disabled = false;
-  botonGuardar.classList.remove("d-none");
 
   if (modo === "agregar") {
-    titulo.textContent = "Agregar documento";
+    titulo.textContent = "Agregar Documento";
     inputNombre.value = "";
     inputAbreviatura.value = "";
+    
+    botonGuardar.textContent = "Aceptar";
+    botonGuardar.type = "submit";
+    botonGuardar.classList.remove("d-none");
+    modalFooter.appendChild(botonGuardar);
 
     form.onsubmit = (e) => {
       e.preventDefault();
@@ -371,12 +401,7 @@ function abrirModalFormulario(modo, doc = null) {
         return;
       }
 
-      const duplicado = documentos.some(d =>
-        d.nombre.toLowerCase() === nombre.toLowerCase() ||
-        d.abreviatura.toLowerCase() === abreviatura.toLowerCase()
-      );
-
-      if (duplicado) {
+      if (existeDocumento(nombre, abreviatura)) {
         alert("Ya existe un documento con ese nombre o abreviatura");
         return;
       }
@@ -388,14 +413,19 @@ function abrirModalFormulario(modo, doc = null) {
         estado: "activo"
       });
 
-      modalFormulario.hide();
+      cerrarModal('modalFormulario');
       renderTabla();
     };
 
   } else if (modo === "editar" && doc) {
-    titulo.textContent = "Editar documento";
+    titulo.textContent = "Editar Documento";
     inputNombre.value = doc.nombre;
     inputAbreviatura.value = doc.abreviatura;
+
+    botonGuardar.textContent = "Aceptar";
+    botonGuardar.type = "submit";
+    botonGuardar.classList.remove("d-none");
+    modalFooter.appendChild(botonGuardar);
 
     form.onsubmit = (e) => {
       e.preventDefault();
@@ -408,41 +438,42 @@ function abrirModalFormulario(modo, doc = null) {
         return;
       }
 
-      const nombreDuplicado = documentos.some(d =>
-        d.nombre.toLowerCase() === nombre.toLowerCase() && d.id !== doc.id
-      );
-
-      if (nombreDuplicado) {
-        alert("Ya existe un documento con ese nombre");
+      if (existeDocumento(nombre, abreviatura, doc.id)) {
+        alert("Ya existe un documento con ese nombre o abreviatura");
         return;
       }
 
-      // Actualiza el documento
       doc.nombre = nombre;
       doc.abreviatura = abreviatura;
 
-      modalFormulario.hide();
+      cerrarModal('modalFormulario');
       renderTabla();
     };
 
   } else if (modo === "ver" && doc) {
-    titulo.textContent = "Detalle del documento";
+    titulo.textContent = "Detalle del Documento";
     inputNombre.value = doc.nombre;
     inputAbreviatura.value = doc.abreviatura;
 
     inputNombre.disabled = true;
     inputAbreviatura.disabled = true;
 
-    botonGuardar.classList.remove("d-none");
+    const botonCerrar = document.createElement("button");
+    botonCerrar.textContent = "Cerrar";
+    botonCerrar.type = "button";
+    botonCerrar.className = "btn btn-modal btn-modal-secondary";
+    botonCerrar.onclick = () => cerrarModal('modalFormulario');
+    modalFooter.appendChild(botonCerrar);
 
     form.onsubmit = (e) => {
-      e.preventDefault();
-      modalFormulario.hide();
+      e.preventDefault(); // Evita el envío del formulario
+      cerrarModal('modalFormulario'); 
     };
   }
 
-  modalFormulario.show();
+  abrirModal('modalFormulario');
 }
+
 
 // ----------------- ORDENAMIENTO -----------------
 document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
@@ -451,7 +482,6 @@ document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
     let campo;
     if (index === 1) campo = "nombre";
     else if (index === 2) campo = "abreviatura";
-    
     else return;
 
     if (ordenActual.campo === campo) {

@@ -1,71 +1,112 @@
-*{
-    margin: 0;
+/* ===== BASE ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
-/* Estilos para el contenedor principal de la cabecera */
-header {
-    display: flex;
-    justify-content: space-between; /* Alinea los elementos a los extremos */
-    align-items: center; /* Centra los elementos verticalmente */
-    padding: 10px 20px;
-    background-color: #e5e7eb;
+html, body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: #f8f9fa;
+  color: #111827;
+}
+img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
 }
 
-.sistema {
-    display: flex;
-    align-items: center; /* Centra el ícono y el texto verticalmente */
-    gap: 10px; /* Espacio entre el ícono y el texto */
-}
-
-.sistema img {
-    height: 40px; /* Ajusta el tamaño del logotipo */
-}
-
-.sistema h1 {
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
-    margin: 0; /* Elimina el margen por defecto del h1 */
-}
-/* Contenedor principal para los datos del usuario */
-.datos_usuario {
+/* ===== BARRA SUPERIOR ===== */
+.barra-superior {
+  background: #adc5e0;
+  padding: 10px 20px;
   display: flex;
-  align-items: center; /* Alinea verticalmente los elementos secundarios */
-  gap: 20px; /* Espacio entre el contenedor del usuario y el icono de salida */
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05);
 }
 
-/* Contenedor para el icono de usuario, nombre y rol */
-.info_usuario {
+/* Título */
+.titulo-left {
   display: flex;
   align-items: center;
-  gap: 10px; /* Espacio entre el icono de usuario y el texto */
+  gap: 8px;
 }
-
-.info_usuario img {
-  width: 40px; /* Tamaño del icono de usuario */
+.titulo-left h3 {
+  margin: 0;
+  font-weight: bold;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+}
+.titulo-left h3 img {
+  width: 40px;
   height: 40px;
+  object-fit: contain;
 }
 
-/* Contenedor para el nombre y rol, apilados verticalmente */
-.texto_usuario {
+/* Info de usuario */
+.info-usuario {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+.info-usuario a {
+  text-decoration: none;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+}
+.info-usuario img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.user-text {
   display: flex;
   flex-direction: column;
+  line-height: 1.2;
+}
+.texto-rol {
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
-.nombUsuario {
-  margin: 0;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.rol {
-  margin: 0;
-  font-size: 12px;
-  color: #666;
-}
-
-/* Estilo para el icono de salida */
-.icono_salida {
-  width: 40px; /* Tamaño del icono de salida */
-  height: 40px;
+/* Botones */
+.btn-icon {
+  background: transparent;
+  border: none;
+  padding: 0;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-icon:hover {
+  background-color: #cfe2f3;
+  border-radius: 4px;
+}
+.btn-icon:focus {
+  outline: 2px solid;
+  color: #adc5e0;
+  outline-offset: 2px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 520px) {
+  .barra-superior {
+    padding: 8px 12px;
+  }
+  .titulo-left h3 {
+    font-size: 1rem;
+  }
+  .user-text {
+    display: none;
+  }
 }

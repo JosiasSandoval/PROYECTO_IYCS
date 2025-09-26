@@ -1,0 +1,63 @@
+/* ===== BASE ===== */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: #f8f9fa;
+  color: #111827;
+}
+img {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ===== BARRA LATERAL ===== */
+.barra-lateral {
+  background-color: #adc5e0;
+  width: 220px;            
+  min-height: 100vh;       
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu-item {
+  color: #000;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  padding: 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.menu-item img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.menu-item:hover {
+  background-color: #c7ddf5;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .barra-lateral {
+    width: 180px;
+    padding: 15px 8px;
+  }
+  .menu-item {
+    font-size: 14px;
+    padding: 8px;
+  }
+}
