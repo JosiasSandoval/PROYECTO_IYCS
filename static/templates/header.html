@@ -1,17 +1,38 @@
-<link rel="stylesheet" href="/static/css/header.css">
-<header>
-    <div class="sistema">
-        <img src="/static/img/logotipo_litbook.png" alt="">
-        <h1>Litbook</h1>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Header - Litbook</title>
+  <link rel="stylesheet" href="/static/css/header.css">
+</head>
+<body>
+  <!-- Barra superior -->
+  <div class="barra-superior">
+    <!-- Título a la izquierda -->
+    <div class="titulo-left">
+      <h3>
+        <img src="/static/img/logotipo_litbook.png" alt="icono_iglesia" />
+        Litbook
+      </h3>
     </div>
-   <div class="datos_usuario">
-  <div class="info_usuario">
-    <img src="/static/img/usuario.png" alt="Icono de usuario">
-    <div class="texto_usuario">
-      <h2 class="nombUsuario">#####</h2>
-      <p class="rol">######</p>
+
+    <!-- Info de usuario a la derecha -->
+    <div class="info-usuario">
+      <button id="btn_usuario" class="btn-icon" aria-label="Perfil">
+        <a href="#"><img src="/static/img/usuario.png" alt="usuario" /></a>
+      </button>
+
+      <div class="user-text">
+        <strong>Nombre_Apellido</strong>
+        <div class="texto-rol">Usuario</div>
+      </div>
+
+      <button id="btn_salir" class="btn-icon" aria-label="Salir">
+        <a href="#"><img src="/static/img/salida.png" alt="salida" /></a>
+      </button>
     </div>
   </div>
-  <img src="/static/img/salida.png" alt="Icono de salida" class="icono_salida">
-   </div>
-</header>
+</body>
+</html>
+

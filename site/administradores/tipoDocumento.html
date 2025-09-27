@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LITBOOK</title>
+    <link rel="stylesheet" href="/static/css/estilo_tipoDocumento.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="grid">
+        <div id="barra_lateral-placeholder"></div>
+          
+        <!-- Contenido principal -->
+        <div class="contenido-principal">
+          <div class="contenido">
+            <h3 class="titulo-seccion">TIPO DE DOCUMENTO</h3>
+
+            <!-- Formulario -->
+            <form id="formDocumento">
+              <!-- Label -->
+              <label for="inputDocumento">Nombre de tipo de documento:</label>
+
+              <!-- Input -->
+              <input type="text" id="inputDocumento" placeholder="Ingrese nombre o abreviatura" />
+
+              <!-- Botones -->
+              <button type="button" id="btn_buscar" class="btn-icon" title="Buscar">
+                <img src="/static/img/lupa.png" alt="Buscar" />
+              </button>
+
+              <button type="submit" id="btn_guardar" class="btn-icon" title="Agregar">
+                <img src="/static/img/mas.png" alt="Agregar" />
+              </button>
+            </form>
+
+            <!-- Tabla -->
+            <div class="tabla-documentos">
+              <table id="tablaDocumentos">
+                <thead>
+                  <tr>
+                    <th class="col-id">#</th>
+                    <th class="col-nombre">Documento</th>
+                    <th class="col-abreviatura">Abreviatura</th>
+                    <th class="col-acciones">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+
+            <!-- Paginación -->
+            <div id="paginacionContainer"></div>
+          </div>
+        </div>
+    </main>
+</body>
+<script src="/static/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/header.js"></script>
+<script src="/static/js/barra_lateral.js"></script>
+<script src="/static/js/script_tipoDocumento.js"></script>
+</html>
