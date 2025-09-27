@@ -74,22 +74,22 @@ main {
 }
 
 /* botón de iniciar sesión */
-.left button:first-of-type {
+.inicio:first-of-type {
   background: #0d6efd;
   color: #fff;
 }
 
-.left button:first-of-type:hover {
+.inicio:first-of-type:hover {
   background: #0056b3;
 }
 
 /* botón de registrarse */
-.left button:last-of-type {
+.left a button:last-of-type {
   background: #e9ecef;
   color: #0d6efd;
 }
 
-.left button:last-of-type:hover {
+.left a button:last-of-type:hover {
   background: #d6dbe1;
 }
 

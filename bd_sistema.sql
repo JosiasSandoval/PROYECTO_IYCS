@@ -56,10 +56,10 @@ CREATE TABLE USUARIO (
     emailUsuario VARCHAR(100) not null,
     direccionUsua VARCHAR(150),
     telefono CHAR(9) not null,
-    claveUsuario CHAR(12) not null,
+    claveUsuario CHAR(8) not null,
     idTipoDocumento INT not null,
     idTipoUsua INT not null,
-    idCargo INT,
+    idCargo INT not null,
     FOREIGN KEY (idTipoDocumento) REFERENCES TIPO_DOCUMENTO(idTipoDocumento),
     FOREIGN KEY (idTipoUsua) REFERENCES TIPO_USUARIO(idTipoUsua),
     FOREIGN KEY (idCargo) REFERENCES CARGO(idCargo)

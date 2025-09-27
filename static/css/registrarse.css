@@ -71,7 +71,7 @@ select {
   width: 100%;
 }
 
-.claves {
+.claves,.email {
   display: flex;
   flex-direction: column;
   margin-bottom: 20px;
