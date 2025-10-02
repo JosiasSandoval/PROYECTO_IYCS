@@ -1,9 +1,15 @@
-from app.bd_sistema import bd_conexion
+from app.bd_sistema import obtener_conexion
 
-def registrar_feligres(apellido, nombre, celular,direccion,tipo,documento,correo,clave):
-    conexion=bd_conexion()
-    with conexion.cursor() as cursor:
-        cursor.execute("insert into usuario(nombUsuario,apelUsuario,numDocumento,emailUsuario,direccionUsua,telefono,claveUsuario,idTipoDocumento,idTipoUsua,idCargo)values (%s,%s,%s,%s,%s,%s,%s,%s,1,1)",(nombre,apellido,documento,correo,direccion,celular,clave,tipo),),
-    conexion.commit()
-    conexion.close()
+def verificar_usuario(email, clave):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute(
+                "SELECT idUsuario FROM usuario WHERE emailUsuario=%s AND claveUsuario=%s",
+                (email, clave)
+            )
+            usuario_encontrado = cursor.fetchone()
+        return usuario_encontrado is not None
+    finally:
+        conexion.close()
 

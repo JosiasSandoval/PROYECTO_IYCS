@@ -9,68 +9,81 @@
 <body>
     <main>
         <div class="formulario">
-            <form action="ruta" method="post">
-                            <h1>REGISTRATE</h1>
-<!-- Usuario -->
-<div class="usuario">
-  <div class="campo">
-    <label for="apellido">Apellidos:</label>
-    <input type="text" id="apellido" name="apellido">
-  </div>
-  <div class="campo">
-    <label for="nombre">Nombres:</label>
-    <input type="text" id="nombre" name="nombre">
-  </div>
-</div>
+            <form action="/registrar_feligres" id="formulario" method="post">
+                <h1>REGISTRATE</h1>
+              <!-- Usuario -->
+              <div class="usuario">
+                <div class="campo">
+                  <label for="apellido">Apellidos:</label>
+                  <input type="text" id="apellido" name="apellido">
+                </div>
+                <div class="campo">
+                  <label for="nombre">Nombres:</label>
+                  <input type="text" id="nombre" name="nombre">
+                </div>
+              </div>
 
-<!-- Datos personales -->
-<div class="datos_personales">
-  <div class="campo">
-    <label for="telefono">Número de teléfono</label>
-    <input type="text" id="telefono" name="telefono">
-  </div>
-  <div class="campo">
-    <label for="direccion">Dirección</label>
-    <input type="text" id="direccion" name="direccion">
-  </div>
-</div>
+              <!-- Datos personales -->
+              <div class="datos_personales">
+                <div class="campo">
+                  <label for="telefono">Número de teléfono</label>
+                  <input type="text" id="telefono" name="telefono">
+                </div>
+                <div class="campo">
+                  <label for="direccion">Dirección</label>
+                  <input type="text" id="direccion" name="direccion">
+                </div>
+              </div>
 
-<!-- Identificación -->
-<div class="identificacion">
-  <div class="campo">
-    <label for="tipo-doc">Tipo de documento</label>
-    <select id="tipo-doc" name="tipo-doc">
-      <option value="dni">DNI</option>
-    </select>
-  </div>
-  <div class="campo">
-    <label for="documento">Número de documento</label>
-    <input type="text" id="documento" name="documento">
-  </div>
-</div>
-<div class="email">
-  <label for="email">Correo electronico</label>
-  <input type="text" id="email" name="email">
-</div>
-<!-- Claves -->
-<div class="claves">
-  <label for="clave">Contraseña</label>
-  <input type="password" id="clave" name="contraseña">
-  <small>La contraseña debe tener al menos 8 caracteres con letras, números y caracteres especiales.</small>
-  <label for="confirmacion">Confirmar contraseña</label>
-  <input type="password" id="confirmacion" name="confirmacion">
-</div>
+              <!-- Identificación -->
+              <div class="identificacion">
+                <div class="campo">
+                  <label for="tipo-doc">Tipo de documento</label>
+                  <select id="tipo-doc" name="tipo-doc">
+                    <option value="dni">DNI</option>
+                  </select>
+                </div>
+                <div class="campo">
+                  <label for="documento">Número de documento</label>
+                  <input type="text" id="documento" name="documento">
+                </div>
+              </div>
+              <div class="email">
+                <label for="email">Correo electronico</label>
+                <input type="text" id="email" name="email">
+              </div>
+              <!-- Claves -->
+              <div class="claves">
+                <label for="clave">Contraseña</label>
+                <input type="password" id="clave" name="contraseña">
+                <small>La contraseña debe tener al menos 8 caracteres con letras, números y caracteres especiales.</small>
+                <label for="confirmacion">Confirmar contraseña</label>
+                <input type="password" id="confirmacion" name="confirmacion">
+              </div>
 
-<!-- Botón -->
-<button id="registro">Registrarse</button>
+              <!-- Botón -->
+              <button id="registro" type="submit">Registrarse</button>
 
-<!-- Link -->
-<a class="forgot" href="/">¿Ya tienes una cuenta? Inicia Sesión</a>
+              <!-- Link -->
+              <a class="forgot" href="/">¿Ya tienes una cuenta? Inicia Sesión</a>
 
             </form>
                     <img src="/static/img/misa.webp" alt="">
         </div>
-
+        <div id="modal_registro" class="modal">
+            <div class="modal-contenido">               
+                <div class="modal-header">
+                    <div class="modal-icono-contenedor">
+                        <img id="modal-icono" src="" >
+                    </div>
+                    <h2 id="modal-titulo"></h2> 
+                </div>
+                <p id="modal_mensaje"></p>
+                
+                <button id="modal-cerrar" class="btn-modal-cerrar">Aceptar</button>
+            </div>
+        </div>
     </main>
 </body>
+<script src="/static/js/registrarse.js"></script>
 </html>
