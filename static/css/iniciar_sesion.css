@@ -111,3 +111,132 @@ width: 400px;
   display: block;
 }
 
+/* --- Estilos para el MODAL (Ventana Superpuesta) --- */
+
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.65); /* Fondo un poco más opaco */
+    backdrop-filter: blur(5px); /* Un poco más de desenfoque */
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.modal.activo {
+    display: flex; /* 👈 Esto hace visible el modal */
+    justify-content: center; /* 👈 Centrado horizontal */
+    align-items: center; /* 👈 Centrado vertical */
+}
+
+.modal-contenido {
+    background-color: #ffffff;
+    /* QUITADO: margin: 10% auto; (Flexbox se encarga de centrar) */
+    padding: 30px 40px; /* Padding ajustado para más espacio lateral */
+    border-radius: 16px; /* Bordes más suaves */
+    box-shadow: 0 15px 35px rgba(0,0,0,0.25); /* Sombra más profunda y limpia */
+    max-width: 400px;
+    width: 90%; /* Asegura que funcione bien en móviles */
+    text-align: center;
+    border: none;
+    animation: fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Animación más "elástica" */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); } /* Inicia más pequeño */
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Contenido del Encabezado (Icono y Título) */
+.modal-header {
+    margin-bottom: 20px;
+}
+
+.modal-contenido h2 {
+    font-size: 26px; /* Título más prominente */
+    margin-top: 15px;
+    font-weight: 800; /* Más audaz */
+    color: #101827;
+    letter-spacing: -0.5px; /* Ajuste tipográfico */
+}
+
+/* --- Estilos para el MENSAJE --- */
+#modal_mensaje {
+    font-size: 16px;
+    color: #475467;
+    line-height: 1.5;
+    margin-bottom: 25px;
+    font-weight: 500;
+}
+
+/* --- Estilos del Ícono (Contenedor y Colores) --- */
+
+.modal-icono-contenedor {
+    width: 60px; /* Tamaño del círculo ligeramente más pequeño */
+    height: 60px;
+    border-radius: 50%; 
+    margin: 0 auto 15px; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: none; /* Quitamos la sombra del contenedor para que se vea más plano */
+    border: none; /* Quitamos el border del contenedor */
+    
+    /* CAMBIO: Usamos el SVG o PNG como un ícono de color completo sin círculo de fondo si la imagen ya lo tiene */
+}
+
+/* Si tu imagen ya es un ícono de color (como el "X" rojo en tu imagen), estos estilos son mejores: */
+.modal-icono-contenedor img {
+    width: 100%; /* Ajusta al 100% del contenedor (60px) */
+    max-width: 60px; 
+    max-height: 60px;
+    object-fit: contain;
+}
+
+/* Colores para Iconos: se añaden con JS según el 'tipo' */
+
+/* CONFIRMACIÓN (success) */
+.modal-icono-contenedor.success {
+    /* Si tienes un ícono de círculo con check, déjalo así. Si no, usa el color de fondo para darle estética */
+    background-color: #e6ffed; 
+    /* border: 1px solid #155724; */ /* Quitamos el borde grueso */
+}
+
+/* ADVERTENCIA */
+.modal-icono-contenedor.advertencia {
+    background-color: #fff4e5;
+    /* border: 1px solid #856404; */
+}
+
+/* RECHAZO (error) */
+.modal-icono-contenedor.error,
+.modal-icono-contenedor.rechazo {
+    background-color: #fcebeb;
+    /* border: 1px solid #721c24; */
+}
+
+
+/* Estilos para el botón de cerrar */
+.btn-modal-cerrar {
+    background: #0d6efd;
+    color: white;
+    border: none;
+    padding: 12px 20px; /* Botón un poco más alto */
+    border-radius: 8px; /* Bordes más curvos */
+    cursor: pointer;
+    font-weight: 700; /* Más audaz */
+    font-size: 16px; /* Letra más legible */
+    margin-top: 25px; /* Más espacio sobre el botón */
+    transition: background 0.3s ease, transform 0.1s ease;
+    width: 100%;
+    max-width: 200px; 
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3); /* Sombra sutil al botón */
+}
+
+.btn-modal-cerrar:hover {
+    background: #0b5ed7;
+    transform: translateY(-1px);
+}
