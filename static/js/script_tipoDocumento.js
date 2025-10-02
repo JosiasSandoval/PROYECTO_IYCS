@@ -338,7 +338,7 @@ function crearModalFormulario() {
               </div>
 
               <div class="modal-footer">
-                <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar"></button>
+                <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar">Aceptar</button>
               </div>
 
             </form>
@@ -458,17 +458,10 @@ function abrirModalFormulario(modo, doc = null) {
     inputNombre.disabled = true;
     inputAbreviatura.disabled = true;
 
-    const botonCerrar = document.createElement("button");
-    botonCerrar.textContent = "Cerrar";
-    botonCerrar.type = "button";
-    botonCerrar.className = "btn btn-modal btn-modal-secondary";
-    botonCerrar.onclick = () => cerrarModal('modalFormulario');
-    modalFooter.appendChild(botonCerrar);
-
-    form.onsubmit = (e) => {
-      e.preventDefault(); // Evita el envío del formulario
-      cerrarModal('modalFormulario'); 
-    };
+    botonGuardar.textContent = "Aceptar";
+    botonGuardar.type = "submit";
+    botonGuardar.classList.remove("d-none");
+    modalFooter.appendChild(botonGuardar);
   }
 
   abrirModal('modalFormulario');
