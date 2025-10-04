@@ -8,7 +8,7 @@ body {
   margin: 0;
   padding: 0;
   background: #f8f9fa;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: Arial, sans-serif;
   color: #212529;
 }
 
@@ -112,7 +112,7 @@ body {
 }
 #formDocumento #inputDocumento {
   flex-grow: 1;
-  padding: 8px 12px;
+  padding: 12px 12px;
   font-size: 15px;
   min-width: 300px;
   border: 1px solid #ced4da;
@@ -245,9 +245,8 @@ body {
 .tabla-documentos th,
 .tabla-documentos td {
   vertical-align: middle;
-  text-align: start;
   font-size: 15px;
-  padding: 10px;
+  padding: 8px;
   border: 1px solid #dee2e6;
 }
 .tabla-documentos thead {
@@ -269,14 +268,19 @@ body {
   width: 5%;
 }
 .col-nombre {
-  width: 65%;
+  width: 20%;
   text-align: left;
 }
-.col-abreviatura {
-  width: 10%;
+.col-fechaRegistro {
+  width: 15%;
+  text-align: center;
+}
+.col-descripcion {
+  width: 40%;
+  white-space: nowrap;
 }
 .col-acciones {
-  width: 30%;
+  width: 20%;
   white-space: nowrap;
 }
 

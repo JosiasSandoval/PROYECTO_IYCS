@@ -1,7 +1,7 @@
 // ================== VARIABLES GLOBALES ==================
-let actos = [];
-let actosFiltrados = null;
-let actoEditandoId = null;
+let requisitos = [];
+let requisitosFiltrados = null;
+let requisitosEditandoId = null;
 
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
@@ -22,7 +22,7 @@ let ordenActual = { campo: null, ascendente: true };
 function renderTabla() {
   tabla.innerHTML = "";
 
-  const lista = actosFiltrados ?? actos;
+  const lista = requisitosFiltrados ?? requisitos;
 
   if (ordenActual.campo) {
     lista.sort((a, b) => {
@@ -37,30 +37,31 @@ function renderTabla() {
 
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const fin = inicio + elementosPorPagina;
-  const actosPagina = lista.slice(inicio, fin);
+  const requisitosPagina = lista.slice(inicio, fin);
 
-  actosPagina.forEach((acto, index) => {
-    const esActivo = acto.estado === "activo";
+  requisitosPagina.forEach((req, index) => {
+    const esActivo = req.estado === "activo";
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
 
     const fila = document.createElement("tr");
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
-      <td class="col-nombre">${acto.nombre}</td>
-      <td class="col-precio">${acto.precio}</td>
+      <td class="col-nombre">${req.nombre}</td>
+      <td class="col-fechaRegistro">${req.f_registro}</td>
+      <td class="col-descripcion">${req.descripcion}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="verActo(${acto.id})" title="Ver">
+          <button class="btn btn-info btn-sm" onclick="verRequisito(${req.id})" title="Ver">
             <img src="/static/img/ojo.png" alt="ver">
           </button>
-          <button class="btn btn-warning btn-sm" onclick="editarActo(${acto.id})" title="Editar">
+          <button class="btn btn-warning btn-sm" onclick="editarRequisito(${req.id})" title="Editar">
             <img src="/static/img/lapiz.png" alt="editar">
           </button>
-          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${acto.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
+          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${req.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
             <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
           </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarActo(${acto.id})" title="Eliminar">
+          <button class="btn btn-danger btn-sm" onclick="eliminarRequisito(${req.id})" title="Eliminar">
             <img src="/static/img/x.png" alt="eliminar">
           </button>
         </div>
@@ -75,7 +76,7 @@ function renderTabla() {
 // ================== PAGINACIÓN ==================
 function renderPaginacion() {
   paginacion.innerHTML = "";
-  const totalPaginas = Math.ceil(actos.length / elementosPorPagina);
+  const totalPaginas = Math.ceil(requisitos.length / elementosPorPagina);
   if (totalPaginas <= 1) return;
 
   const ul = document.createElement("ul");
@@ -113,47 +114,48 @@ function renderPaginacion() {
 }
 
 function cambiarPagina(pagina) {
-  if (pagina < 1 || pagina > Math.ceil(actos.length / elementosPorPagina)) return;
+  if (pagina < 1 || pagina > Math.ceil(requisitos.length / elementosPorPagina)) return;
   paginaActual = pagina;
   renderTabla();
 }
 
 // ================== CRUD ==================
-function agregarActo(nombre, precio) {
-  actos.push({
+function agregarRequisito(nombre, f_registro, descripcion) {
+  requisitos.push({
     id: Date.now(),
     nombre,
-    precio,
+    f_registro,
+    descripcion,
     estado: "activo",
   });
   renderTabla();
 }
 
-function editarActo(id) {
-  const acto = actos.find((a) => a.id === id);
-  if (!acto) return;
-  abrirModalFormulario("editar", acto);
+function editarRequisito(id) {
+  const req = requisitos.find((r) => r.id === id);
+  if (!req) return;
+  abrirModalFormulario("editar", req);
 }
 
-function eliminarActo(id) {
-  const acto = actos.find((a) => a.id === id);
-  if (!acto) return;
-  if (!confirm(`¿Seguro que deseas eliminar el acto litúrgico "${acto.nombre}"?`)) return;
-  actos = actos.filter((a) => a.id !== id);
+function eliminarRequisito(id) {
+  const req = requisitos.find((r) => r.id === id);
+  if (!req) return;
+  if (!confirm(`¿Seguro que deseas eliminar el requisito "${req.nombre}"?`)) return;
+  requisitos = requisitos.filter((r) => r.id !== id);
   renderTabla();
 }
 
 function darDeBaja(id) {
-  const acto = actos.find((a) => a.id === id);
-  if (!acto) return;
-  acto.estado = acto.estado === "activo" ? "inactivo" : "activo";
+  const req = requisitos.find((r) => r.id === id);
+  if (!req) return;
+  req.estado = req.estado === "activo" ? "inactivo" : "activo";
   renderTabla();
 }
 
-function verActo(id) {
-  const acto = actos.find((a) => a.id === id);
-  if (!acto) return;
-  abrirModalFormulario("ver", acto);
+function verRequisito(id) {
+  const req = requisitos.find((r) => r.id === id);
+  if (!req) return;
+  abrirModalFormulario("ver", req);
 }
 
 // ================== MODALES ==================
@@ -164,7 +166,7 @@ function crearModal() {
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Detalle del Acto Litúrgico</h5>
+            <h5 class="modal-title">Detalle del Requisito</h5>
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalDetalle')">&times;</button>
           </div>
           <div class="modal-body" id="modalDetalleContenido"></div>
@@ -187,16 +189,21 @@ function crearModalFormulario() {
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalFormulario')">&times;</button>
           </div>
           <div class="modal-body">
-            <form id="formModalActo">
+            <form id="formModalRequisito">
 
               <div class="mb-3">
-                <label for="modalNombre" class="form-label">Nombre del Acto Litúrgico</label>
+                <label for="modalNombre" class="form-label">Nombre del requisito</label>
                 <input type="text" id="modalNombre" class="form-control" required>
               </div>
 
               <div class="mb-3">
-                <label for="modalPrecio" class="form-label">Precio</label>
-                <input type="number" id="modalPrecio" class="form-control" required>
+                <label for="modalFechaRegistro" class="form-label">Fecha registro</label>
+                <input type="date" id="modalFechaRegistro" class="form-control" required>
+              </div>
+
+              <div class="mb-3">
+                <label for="modalDescripcion" class="form-label">Descripción</label>
+                <input type="text" id="modalDescripcion" class="form-control" required>
               </div>
 
               <div class="modal-footer">
@@ -223,50 +230,58 @@ function cerrarModal(id) {
   if (modal) modal.classList.remove("activo");
 }
 
-function abrirModalFormulario(modo, acto = null) {
+function abrirModalFormulario(modo, req = null) {
   const titulo = document.getElementById("modalFormularioTitulo");
   const inputNombre = document.getElementById("modalNombre");
-  const inputPrecio = document.getElementById("modalPrecio");
+  const inputFechaRegistro = document.getElementById("modalFechaRegistro");
+  const inputDescripcion = document.getElementById("modalDescripcion");
   const botonGuardar = document.getElementById("btnGuardar");
-  const form = document.getElementById("formModalActo");
+  const form = document.getElementById("formModalRequisito");
   const modalFooter = document.querySelector("#modalFormulario .modal-footer");
 
   modalFooter.innerHTML = "";
   inputNombre.disabled = false;
-  inputPrecio.disabled = false;
+  inputFechaRegistro.disabled = false;
+  inputDescripcion.disabled = false;
 
   if (modo === "agregar") {
-    titulo.textContent = "Agregar Acto Litúrgico";
+    titulo.textContent = "Agregar requisito";
     inputNombre.value = "";
-    inputPrecio.value = "";
+    inputFechaRegistro.value = "";
+    inputDescripcion.value = "";
 
     modalFooter.appendChild(botonGuardar);
     form.onsubmit = (e) => {
       e.preventDefault();
-      agregarActo(inputNombre.value.trim(), inputPrecio.value.trim());
+      agregarRequisito(inputNombre.value.trim(), inputFechaRegistro.value.trim(), inputDescripcion.value.trim());
       cerrarModal("modalFormulario");
     };
-  } else if (modo === "editar" && acto) {
-    titulo.textContent = "Editar Acto Litúrgico";
-    inputNombre.value = acto.nombre;
-    inputPrecio.value = acto.precio;
+  } else if (modo === "editar" && req) {
+    titulo.textContent = "Editar requisito";
+    inputNombre.value = req.nombre;
+    inputFechaRegistro.value = req.f_registro;
+    inputDescripcion.value = req.descripcion;
 
     modalFooter.appendChild(botonGuardar);
     form.onsubmit = (e) => {
       e.preventDefault();
-      acto.nombre = inputNombre.value.trim();
-      acto.precio = inputPrecio.value.trim();
+      req.nombre = inputNombre.value.trim();
+      req.f_registro = inputFechaRegistro.value.trim();
+      req.descripcion = inputDescripcion.value.trim();
       cerrarModal("modalFormulario");
       renderTabla();
     };
-  } else if (modo === "ver" && acto) {
-    titulo.textContent = "Detalle del Acto Litúrgico";
-    inputNombre.value = acto.nombre;
-    inputPrecio.value = acto.precio;
+  } else if (modo === "ver" && req) {
+    titulo.textContent = "Detalle del requisito";
+    inputNombre.value = req.nombre;
+    inputFechaRegistro.value = req.f_registro;
+    inputDescripcion.value = req.descripcion;
     inputNombre.disabled = true;
-    inputPrecio.disabled = true;
+    inputFechaRegistro.disabled = true;
+    inputDescripcion.disabled = true;
 
     modalFooter.appendChild(botonGuardar);
+    botonGuardar.textContent = "Cerrar";
     botonGuardar.onclick = () => cerrarModal("modalFormulario");
   }
 
@@ -274,15 +289,15 @@ function abrirModalFormulario(modo, acto = null) {
 }
 
 // ================== BUSQUEDA ==================
-const inputActo = document.getElementById("inputDocumento");
+const inputRequisito = document.getElementById("inputDocumento");
 const btnBuscar = document.getElementById("btn_buscar");
 
 btnBuscar.addEventListener("click", () => {
-  const termino = inputActo.value.trim().toLowerCase();
-  actosFiltrados =
+  const termino = inputRequisito.value.trim().toLowerCase();
+  requisitosFiltrados =
     termino === ""
       ? null
-      : actos.filter((a) => a.nombre.toLowerCase().includes(termino));
+      : requisitos.filter((r) => r.nombre.toLowerCase().includes(termino));
   paginaActual = 1;
   renderTabla();
 });
@@ -294,10 +309,10 @@ document.getElementById("formDocumento").addEventListener("submit", (e) => {
 });
 
 // ================== DATOS DE EJEMPLO ==================
-actos = [
-  { id: 1, nombre: "Misa Dominical", precio: "50", estado: "activo" },
-  { id: 2, nombre: "Bautizo", precio: "80", estado: "activo" },
-  { id: 3, nombre: "Matrimonio", precio: "200", estado: "activo" },
+requisitos = [
+  { id: 1, nombre: "Partida de Nacimiento", f_registro: "2025-10-01", descripcion: "Documento legal de nacimiento", estado: "activo" },
+  { id: 2, nombre: "Certificado de Bautismo", f_registro: "2025-10-02", descripcion: "Requisito para sacramentos", estado: "activo" },
+  { id: 3, nombre: "DNI", f_registro: "2025-10-03", descripcion: "Documento nacional de identidad", estado: "activo" },
 ];
 
 renderTabla();
