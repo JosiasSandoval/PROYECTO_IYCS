@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link rel="stylesheet" href="/static/css/admin_actoLiturgico.css">
-    <title>LITBOOK | Parroquias</title>
+     <link rel="stylesheet" href="/static/css/admin_requisito.css">
+    <title>LITBOOK | Requisito</title>
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -12,14 +12,14 @@
         <div id="barra_lateral_administrador-placeholder"></div>
         <div class="contenido-principal">
             <div class="contenido">   
-            <h3 class="titulo-seccion">PARROQUIA</h3>
+            <h3 class="titulo-seccion">REQUISITO</h3>
               <!--Busqueda-->
               <form id="formDocumento">
                 <!-- Label -->
-                <label for="inputDocumento">Nombre de parroquias:</label>
+                <label for="inputDocumento">Nombre del Requisito:</label>
 
                 <!-- Input -->
-                <input type="text" id="inputDocumento" placeholder="Ingrese nombre de acto liturgico"/>
+                <input type="text" id="inputDocumento" placeholder="Ingrese nombre del requisito"/>
 
                 <!-- Botones -->
                 <button type="button" id="btn_buscar" class="btn-icon" title="Buscar">
@@ -38,13 +38,9 @@
                   <tr>
                     <th class="col-id">#</th>
                     <th class="col-nombre">Nombre</th>
-                    <th class="col- descripcion">Descripcion</th>
-                    <th class="col-historiaDescripcion">Historia</th>
-                    <th class="col-ruc">RUC</th>
-                    <th class="col-direccion">direccion</th>
-                    <th class="col-contacto">contacto</th>
-                    <th class="col-latParroquia">latParroquia</th>
-                    <th class="col-logParroquia">logParroquia</th>
+                    <th class="col-fechaRegistro">Fecha de registro</th>
+                    <th class="col-descripcion">Descripcion</th>
+                    <th class="col-acciones">Acciones</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -55,6 +51,6 @@
         </div>
     <script src="/static/js/barra_lateral_administrador.js"></script>
     <script src="/static/js/header.js"></script>
-    <script src="/static/js/admin_actoLiturgico.js"></script>
+    <script src="/static/js/admin_requisito.js"></script>
 </body>
 </html>
