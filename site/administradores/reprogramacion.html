@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" href="/static/css/admin_reprogramacion.css">
+    <title>LITBOOK | Reprogramacion</title>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="grid">
+        <div id="barra_lateral_administrador-placeholder"></div>
+        <div class="contenido-principal">
+            <div class="contenido">   
+            <h3 class="titulo-seccion">Reprogramacion</h3>
+              <!--Busqueda-->
+              <form id="formDocumento">
+                <!-- Label -->
+                <label for="inputDocumento">ID de la reprogramacion:</label>
+
+                <!-- Input -->
+                <input type="text" id="inputDocumento" placeholder="Ingrese id de la reprogramacion"/>
+
+                <!-- Botones -->
+                <button type="button" id="btn_buscar" class="btn-icon" title="Buscar">
+                    <img src="/static/img/lupa.png" alt="Buscar" />
+                </button>
+
+                <button type="submit" id="btn_guardar" class="btn-icon" title="Agregar">
+                    <img src="/static/img/mas.png" alt="Agregar" />
+                </button>
+            </form>
+
+            <!--Tabla-->
+            <div class="tabla-documentos">
+              <table id="tablaDocumentos">
+                <thead>
+                  <tr>
+                    <th class="col-id">#</th>
+                    <th class="col-fechaAnterior">Fecha anterior</th>
+                    <th class="col-horaAnterior">Hora anterior</th>
+                    <th class="col-fechaNueva">Fecha nueva</th>
+                    <th class="col-horaNueva">Hora nueva</th>
+                    <th class="col-motivo">Motivo</th>
+                    <th class="col-usuarioReprogramo">Usuario reprogramo</th>
+                    <th class="col-acciones">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div id="paginacionContainer"></div>
+        </div>
+        </div>
+    <script src="/static/js/barra_lateral_administrador.js"></script>
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/admin_reprogramacion.js"></script>
+</body>
+</html>

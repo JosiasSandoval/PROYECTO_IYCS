@@ -172,7 +172,7 @@ CREATE TABLE REPROGRAMACION (
     f_nueva DATE not null,
     h_nueva DATE not null,
     motivo VARCHAR(255) not null,
-    reprogramacion DATE not null,
+    reprogramacion DATE  null,
     usuario_reprogramo INT not null,
     idReserva INT not null,
     FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva),
