@@ -1,34 +1,34 @@
 -- TABLAS DE UBICACIÓN
 CREATE TABLE PROVINCIA (
-    idProvincia INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombProvincia VARCHAR(100) not null,
-    latProvincia decimal(9,6) not null,
-    logProvincia decimal(9,6) not null
+    idProvincia INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombProvincia VARCHAR(100) NOT NULL,
+    latProvincia DECIMAL(9,6) NOT NULL,
+    logProvincia DECIMAL(9,6) NOT NULL
 );
 
 CREATE TABLE DISTRITO (
-    idDistrito INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombDistrito VARCHAR(100) not null,
-    latDistrito  decimal(9,6) not null,
-    logDistrito  decimal(9,6) not null,
-    idProvincia INT not null,
+    idDistrito INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombDistrito VARCHAR(100) NOT NULL,
+    latDistrito DECIMAL(9,6) NOT NULL,
+    logDistrito DECIMAL(9,6) NOT NULL,
+    idProvincia INT NOT NULL,
     FOREIGN KEY (idProvincia) REFERENCES PROVINCIA(idProvincia)
 );
 
 -- TABLAS DE PARROQUIA
 CREATE TABLE PARROQUIA (
-    idParroquia INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombParroquia VARCHAR(120) not null,
-    descripcionBreve VARCHAR(255) not null,
-    historiaParroquia VARCHAR(255) not null,
-    ruc INT UNIQUE not null,
-    contacto INT not null,
-    f_creacion DATE not null,
-    direccion VARCHAR(100) not null,
+    idParroquia INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombParroquia VARCHAR(120) NOT NULL,
+    descripcionBreve VARCHAR(255) NOT NULL,
+    historiaParroquia VARCHAR(255) NOT NULL,
+    ruc BIGINT UNIQUE NOT NULL, -- Cambiado de INT a BIGINT
+    contacto BIGINT NOT NULL,   -- También conviene BIGINT para teléfonos
+    f_creacion DATE NOT NULL,
+    direccion VARCHAR(100) NOT NULL,
     latParroquia DECIMAL(9,6) NOT NULL,
-    logParroquia DECIMAL(9,6) NOT NULL
-    estadoParroquia boolean not null,
-    idDistrito INT not null,
+    logParroquia DECIMAL(9,6) NOT NULL,
+    estadoParroquia BOOLEAN NOT NULL,
+    idDistrito INT NOT NULL,
     FOREIGN KEY (idDistrito) REFERENCES DISTRITO(idDistrito)
 );
 
