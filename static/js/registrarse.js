@@ -41,10 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const datos = Object.fromEntries(formData.entries());
 
         const camposRequeridos = [
-            'apellido',
             'nombre',
+            'apePaterno',
+            'apeMaterno',
             'telefono',
+            'sexo',
             'direccion',
+            'tipo-doc',
             'documento',
             'email',
             'contraseña',
@@ -71,10 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         // --- FIN: VALIDACIÓN DE CAMPOS VACÍOS ---
-        const telefonoInput=document.getElementById('telefono')
-        const documentoInput = document.getElementById('documento');
-        const documentoValor = datos['documento'].trim();
-        const telefonoValor=datos['telefono'].trim()
+    const telefonoInput = document.getElementById('telefono');
+    const documentoInput = document.getElementById('documento');
+    const documentoValor = datos['documento'] ? datos['documento'].trim() : '';
+    const telefonoValor = datos['telefono'] ? datos['telefono'].trim() : '';
 
         // Utilizamos una expresión regular para verificar si el valor contiene CUALQUIER COSA que NO sea un dígito (0-9).
         // ^\d+$ significa: inicia (^) con dígitos (\d+), y finaliza ($). Es decir, solo dígitos.
@@ -106,9 +109,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const contieneMinuscula = /[a-z]/;
         const contieneNumero = /[0-9]/;
 
-        if (clave.length < 8 || !contieneMayuscula.test(clave) || !contieneMinuscula.test(clave) || !contieneNumero.test(clave) || !caracteresEspeciales.test(clave)) {
+        if (clave.length < 12 || !contieneMayuscula.test(clave) || !contieneMinuscula.test(clave) || !contieneNumero.test(clave) || !caracteresEspeciales.test(clave)) {
             marcarError(claveInput);
-            mostrarMensaje("La contraseña debe tener al menos 8 caracteres, incluyendo mayúsculas, minúsculas, números y un carácter especial.", 'advertencia');
+            mostrarMensaje("La contraseña debe tener al menos 12 caracteres, incluyendo mayúsculas, minúsculas, números y un carácter especial.", 'advertencia');
             return;
         }
 
