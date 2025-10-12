@@ -1,214 +1,269 @@
--- TABLAS DE UBICACIÓN
-CREATE TABLE PROVINCIA (
-    idProvincia INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    nombProvincia VARCHAR(100) NOT NULL,
-    latProvincia DECIMAL(9,6) NOT NULL,
-    logProvincia DECIMAL(9,6) NOT NULL
+CREATE TABLE USUARIO (
+    idUsuario INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    clave VARCHAR(255) NOT NULL,   
+    estadoCuenta BOOLEAN NOT NULL
 );
 
-CREATE TABLE DISTRITO (
-    idDistrito INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    nombDistrito VARCHAR(100) NOT NULL,
-    latDistrito DECIMAL(9,6) NOT NULL,
-    logDistrito DECIMAL(9,6) NOT NULL,
-    idProvincia INT NOT NULL,
-    FOREIGN KEY (idProvincia) REFERENCES PROVINCIA(idProvincia)
-);
-
--- TABLAS DE PARROQUIA
-CREATE TABLE PARROQUIA (
-    idParroquia INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    nombParroquia VARCHAR(120) NOT NULL,
-    descripcionBreve VARCHAR(255) NOT NULL,
-    historiaParroquia VARCHAR(255) NOT NULL,
-    ruc BIGINT UNIQUE NOT NULL, -- Cambiado de INT a BIGINT
-    contacto BIGINT NOT NULL,   -- También conviene BIGINT para teléfonos
-    f_creacion DATE NOT NULL,
-    direccion VARCHAR(100) NOT NULL,
-    latParroquia DECIMAL(9,6) NOT NULL,
-    logParroquia DECIMAL(9,6) NOT NULL,
-    estadoParroquia BOOLEAN NOT NULL,
-    idDistrito INT NOT NULL,
-    FOREIGN KEY (idDistrito) REFERENCES DISTRITO(idDistrito)
-);
-
--- TABLAS DE USUARIO
 CREATE TABLE TIPO_DOCUMENTO (
-    idTipoDocumento INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombDocumento VARCHAR(100) not null
+    idTipoDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombDocumento VARCHAR(100) NOT NULL,
+    abreviatura CHAR(3) NOT NULL,
+    estadoDocumento BOOLEAN NOT NULL
+); 
+
+CREATE TABLE FELIGRES (
+    idFeligres INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    numDocFel VARCHAR(30) NOT NULL UNIQUE,
+    nombFel VARCHAR(50) NOT NULL,
+    apePatFel VARCHAR(30) NOT NULL,
+    apeMatFel VARCHAR(30) NOT NULL,
+    f_nacimiento DATE NOT NULL,
+    sexoFel CHAR(1) NOT NULL,
+    direccionFel VARCHAR(150) NOT NULL,
+    telefonoFel CHAR(9) NOT NULL,
+    idTipoDocumento INT NOT NULL,
+    idUsuario INT NOT NULL,
+    CONSTRAINT fk_feligres_tipodoc FOREIGN KEY (idTipoDocumento) REFERENCES TIPO_DOCUMENTO(idTipoDocumento),
+    CONSTRAINT fk_feligres_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario)
+);
+
+CREATE TABLE PERSONAL (
+    idPersonal INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    numDocPers VARCHAR(30) NOT NULL UNIQUE,
+    nombPers VARCHAR(100) NOT NULL,
+    apePatPers VARCHAR(30) NOT NULL,
+    apeMatPers VARCHAR(30) NOT NULL,
+    sexoPers CHAR(1) NOT NULL,
+    direccionPers VARCHAR(150) NOT NULL,
+    telefonoPers CHAR(9) NOT NULL,
+    idTipoDocumento INT NOT NULL,
+    idUsuario INT NOT NULL,
+    CONSTRAINT fk_personal_tipodoc FOREIGN KEY (idTipoDocumento) REFERENCES TIPO_DOCUMENTO(idTipoDocumento),
+    CONSTRAINT fk_personal_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario)
+);
+
+CREATE TABLE AUDITORIA (
+    idAuditoria INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    fechaHora DATETIME NOT NULL,
+    nombreTabla VARCHAR(50) NOT NULL,
+    tipoAccion VARCHAR(10) NOT NULL,
+    idRegistroAfectado INT NOT NULL,
+    nombreCampo VARCHAR(50) NULL,
+    valorAnterior VARCHAR(255) NULL,
+    valorNuevo VARCHAR(255) NULL,
+    idUsuario INT NOT NULL,
+    CONSTRAINT fk_auditoria_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario)
+);
+
+CREATE TABLE ROL (
+    idRol INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombRol VARCHAR(30) NOT NULL,
+    estadoRol BOOLEAN NOT NULL
+);
+
+CREATE TABLE ROL_USUARIO (
+    idRol INT NOT NULL,
+    idUsuario INT NOT NULL,
+    PRIMARY KEY (idRol, idUsuario),
+    CONSTRAINT fk_rolusuario_rol FOREIGN KEY (idRol) REFERENCES ROL(idRol),
+    CONSTRAINT fk_rolusuario_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario)
+);
+
+CREATE TABLE PERMISO (
+    idPermiso INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombAccion VARCHAR(50) NOT NULL,
+    nombTabla VARCHAR(50) NOT NULL,
+    descripcionPermiso VARCHAR(255) NULL,
+    estadoPermiso BOOLEAN NOT NULL
+);
+
+CREATE TABLE ROL_PERMISO (
+    idPermiso INT NOT NULL,
+    idRol INT NOT NULL,
+    PRIMARY KEY (idPermiso, idRol),
+    CONSTRAINT fk_rolpermiso_permiso FOREIGN KEY (idPermiso) REFERENCES PERMISO(idPermiso),
+    CONSTRAINT fk_rolpermiso_rol FOREIGN KEY (idRol) REFERENCES ROL(idRol)
+);
+
+CREATE TABLE DISPONIBILIDAD_HORARIOS (
+    idDisponibilidad INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    diaSemana VARCHAR(20) NOT NULL,
+    horaInicio TIME NOT NULL,
+    horaFin TIME NOT NULL,
+    f_especifica DATE NULL,
+    recurrente BOOLEAN NOT NULL,
+    idUsuario INT NOT NULL,
+    CONSTRAINT fk_disp_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario)
 );
 
 CREATE TABLE CARGO (
-    idCargo INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombCargo VARCHAR(255) not null
+    idCargo INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombCargo VARCHAR(30) NOT NULL,
+    estadoCargo BOOLEAN NOT NULL
 );
 
-CREATE TABLE TIPO_USUARIO (
-    idTipoUsua INT PRIMARY KEY AUTO_INCREMENT not null,
-    nomTipoUsua VARCHAR(100) not null
-);
-
-CREATE TABLE USUARIO (
-    idUsuario INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombUsuario VARCHAR(100) not null,
-    apelUsuario VARCHAR(100) not null,
-    numDocumento INT UNIQUE not null,
-    emailUsuario VARCHAR(100) not null,
-    direccionUsua VARCHAR(150),
-    telefono CHAR(9) not null,
-    claveUsuario CHAR(8) not null,
-    idTipoDocumento INT not null,
-    idTipoUsua INT not null,
-    idCargo INT not null,
-    FOREIGN KEY (idTipoDocumento) REFERENCES TIPO_DOCUMENTO(idTipoDocumento),
-    FOREIGN KEY (idTipoUsua) REFERENCES TIPO_USUARIO(idTipoUsua),
-    FOREIGN KEY (idCargo) REFERENCES CARGO(idCargo)
+CREATE TABLE PARROQUIA (
+    idParroquia INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombParroquia VARCHAR(100) NOT NULL,
+    descripcionBreve VARCHAR(255) NULL,
+    historiaParroquia VARCHAR(255) NULL,
+    ruc VARCHAR(30) NOT NULL UNIQUE,
+    telefonoContacto VARCHAR(100) NOT NULL,
+    infoAdicional VARCHAR(255) NULL,
+    horaAtencionInicial TIME NOT NULL,
+    horaAtencionFinal TIME NOT NULL,
+    f_creacion DATE NOT NULL,
+    direccion VARCHAR(150) NULL,
+    latParroquia DECIMAL(9,6) NULL,
+    logParroquia DECIMAL(9,6) NULL,
+    estadoParroquia BOOLEAN NOT NULL
 );
 
 CREATE TABLE PARROQUIA_USUARIO (
-    idParroquiaUsuario INT PRIMARY KEY AUTO_INCREMENT not null,
-    f_inicio DATE not null,
-    f_fin DATE,
-    estadoUsu boolean not null,
-    idUsuario INT not null,
-    idParroquia INT not null,
-    FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario),
-    FOREIGN KEY (idParroquia) REFERENCES PARROQUIA(idParroquia)
+    idParroquiaUsuario INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    f_inicio DATE NOT NULL,
+    f_fin DATE NULL,
+    vigencia BOOLEAN NOT NULL,
+    idParroquia INT NOT NULL,
+    idCargo INT NOT NULL,
+    idUsuario INT NOT NULL,
+    CONSTRAINT fk_pu_parroquia FOREIGN KEY (idParroquia) REFERENCES PARROQUIA(idParroquia),
+    CONSTRAINT fk_pu_cargo FOREIGN KEY (idCargo) REFERENCES CARGO(idCargo),
+    CONSTRAINT fk_pu_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario)
 );
 
--- TABLAS DE RESERVAS Y ACTOS
+CREATE TABLE GALERIA_PARROQUIA (
+    idGaleria INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    imagen VARCHAR(255) NOT NULL,
+    idParroquia INT NOT NULL,
+    CONSTRAINT fk_galeria_parroquia FOREIGN KEY (idParroquia) REFERENCES PARROQUIA(idParroquia)
+);
+
+CREATE TABLE EVENTO (
+    idEvento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombEvento VARCHAR(150) NOT NULL,
+    f_inicio DATE NOT NULL,
+    f_fin DATE NULL,
+    estadoEvento BOOLEAN NOT NULL
+);
+
+CREATE TABLE EVENTO_PARROQUIA (
+    idEvento INT NOT NULL,
+    idParroquia INT NOT NULL,
+    PRIMARY KEY (idEvento, idParroquia),
+    CONSTRAINT fk_eventop_evento FOREIGN KEY (idEvento) REFERENCES EVENTO(idEvento),
+    CONSTRAINT fk_eventop_parroquia FOREIGN KEY (idParroquia) REFERENCES PARROQUIA(idParroquia)
+);
+
 CREATE TABLE ACTO_LITURGICO (
-    idActo INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombActo VARCHAR(100) not null,
-    precio DECIMAL(9,2) not null,
-    estadoActo boolean not null,
-    idParroquia INT not null,
-    FOREIGN KEY (idParroquia) REFERENCES PARROQUIA(idParroquia)
+    idActo INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombActo VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(255) NULL,
+    costoBase DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    estadoActo BOOLEAN NOT NULL,
+    imgActo VARCHAR(255) NULL,
+    idParroquia INT NOT NULL,
+    CONSTRAINT fk_acto_parroquia FOREIGN KEY (idParroquia) REFERENCES PARROQUIA(idParroquia)
 );
 
-CREATE TABLE RESERVA(
-    idReserva INT PRIMARY KEY AUTO_INCREMENT not null,
-    dirigido VARCHAR(150) not null
-    f_reserva DATE not null,
-    f_acto DATE not null,
-    relacionFamiliar VARCHAR(100) not null,
-    observaciones VARCHAR(255) not null,
-    idUsuario INT not null,
-    idActo INT not null,
-    FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario),
-    FOREIGN KEY (idActo) REFERENCES ACTO_LITURGICO(idActo)
-);
-
-CREATE TABLE PARTICIPANTES_ACTO (
-    idParticipante INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombParticipante VARCHAR(150) not null,
-    rol VARCHAR(150) not null,
-    idActo INT not null,
-    FOREIGN KEY (idActo) REFERENCES ACTO_LITURGICO(idActo)
-);
-
--- TABLAS DE REQUISITOS Y DOCUMENTOS
-CREATE TABLE REQUISITOS (
-    idRequisito INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombRequisito VARCHAR(100) not null,
-    f_requisito DATE not null,
-    descripcion VARCHAR(255) not null
+CREATE TABLE REQUISITO (
+    idRequisito INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombRequisito VARCHAR(100) NOT NULL,
+    f_requisito DATE NULL,
+    descripcion VARCHAR(255) NULL,
+    estadoRequisito BOOLEAN NOT NULL
 );
 
 CREATE TABLE ACTO_REQUISITO (
-    idActo INT not null,
-    idRequisito INT not null,
-    obligatorio boolean not null,
+    idActo INT NOT NULL,
+    idRequisito INT NOT NULL,
+    obligatorio BOOLEAN NOT NULL,
     PRIMARY KEY (idActo, idRequisito),
-    FOREIGN KEY (idActo) REFERENCES ACTO_LITURGICO(idActo),
-    FOREIGN KEY (idRequisito) REFERENCES REQUISITOS(idRequisito)
+    CONSTRAINT fk_actoreq_acto FOREIGN KEY (idActo) REFERENCES ACTO_LITURGICO(idActo),
+    CONSTRAINT fk_actoreq_requisito FOREIGN KEY (idRequisito) REFERENCES REQUISITO(idRequisito)
+);
+
+CREATE TABLE RESERVA (
+    idReserva INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    cliente VARCHAR(100) NOT NULL,
+    f_reserva DATE NOT NULL,
+    h_reserva TIME NOT NULL,
+    observaciones VARCHAR(255) NULL,
+    estadoReserva VARCHAR(50) NOT NULL,
+    motivoCancelacion VARCHAR(255) NULL,
+    numReprogramaciones INT NOT NULL,
+    estadoReprogramado BOOLEAN NOT NULL,
+    idActo INT NOT NULL,
+    idPersonal INT NOT NULL,
+    idFeligres INT NOT NULL,
+    CONSTRAINT fk_reserva_acto FOREIGN KEY (idActo) REFERENCES ACTO_LITURGICO(idActo),
+    CONSTRAINT fk_reserva_personal FOREIGN KEY (idPersonal) REFERENCES PERSONAL(idPersonal),
+    CONSTRAINT fk_reserva_feligres FOREIGN KEY (idFeligres) REFERENCES FELIGRES(idFeligres)
 );
 
 CREATE TABLE DOCUMENTO_REQUISITO (
-    idDocumento INT PRIMARY KEY AUTO_INCREMENT not null,
-    rutaArchivo varchar(255) not null,
-    tipoArchivo VARCHAR(50) not null,
-    f_subido DATE not null,
-    idReserva INT not null,
-    idRequisito INT not null,
-    FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva),
-    FOREIGN KEY (idRequisito) REFERENCES REQUISITOS(idRequisito)
+    idDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    rutaArchivo VARCHAR(255) NOT NULL,
+    tipoArchivo VARCHAR(100) NULL,
+    f_subido DATETIME NOT NULL,
+    idReserva INT NOT NULL,
+    idRequisito INT NOT NULL,
+    CONSTRAINT fk_docreq_reserva FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva),
+    CONSTRAINT fk_docreq_requisito FOREIGN KEY (idRequisito) REFERENCES REQUISITO(idRequisito)
 );
 
--- TABLAS DE PAGOS Y DESCUENTOS
-CREATE TABLE METODO_PAGO(
-    idMetodo INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombMetodo VARCHAR(150) not null
+CREATE TABLE PARTICIPANTES_ACTO (
+    idParticipante INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombParticipante VARCHAR(100) NOT NULL,
+    rol VARCHAR(30) NOT NULL,
+    idActo INT NOT NULL,
+    CONSTRAINT fk_part_acto FOREIGN KEY (idActo) REFERENCES ACTO_LITURGICO(idActo)
 );
 
 CREATE TABLE DESCUENTO (
-    idDescuento INT PRIMARY KEY AUTO_INCREMENT not null,
-    porcentaje DECIMAL(4,2) not null,
-    f_inicio DATE not null,
-    f_fin DATE not null,
-    codicion INT not null,
-    activo boolean not null
+    idDescuento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    porcentaje DECIMAL(5,2) NOT NULL,
+    f_inicio DATE NOT NULL,
+    f_fin DATE NULL,
+    condicion VARCHAR(255) NULL,
+    estadoDescuento BOOLEAN NOT NULL 
 );
 
-CREATE TABLE PAGO(
-    idPago INT PRIMARY KEY AUTO_INCREMENT not null,
-    monto DECIMAL(9,2) not null,
-    f_pago DATE,
-    numTarjeta INT not null,
-    estadoPago VARCHAR(100) not null,
-    idMetodo INT not null,
-    idDescuento INT not null,
-    idReserva INT not null,
-    FOREIGN KEY (idMetodo) REFERENCES METODO_PAGO(idMetodo),
-    FOREIGN KEY (idDescuento) REFERENCES DESCUENTO(idDescuento),
-    FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva)
+CREATE TABLE METODO_PAGO (
+    idMetodo INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombMetodo VARCHAR(50) NOT NULL,
+    estadoMetodo BOOLEAN NOT NULL
 );
 
--- TABLAS DE REPROGRAMACIÓN
-CREATE TABLE REPROGRAMACION (
-    idReprogramacion INT PRIMARY KEY AUTO_INCREMENT not null,
-    f_anterior DATE not null,
-    h_anterior DATE not null,
-    f_nueva DATE not null,
-    h_nueva DATE not null,
-    motivo VARCHAR(255) not null,
-    reprogramacion DATE  null,
-    usuario_reprogramo INT not null,
-    idReserva INT not null,
-    FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva),
-    FOREIGN KEY (usuario_reprogramo) REFERENCES USUARIO(idUsuario)
+CREATE TABLE PAGO (
+    idPago INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    montoTotal DECIMAL(6,2) NOT NULL,
+    f_transaccion DATETIME NOT NULL,
+    numTarjeta VARCHAR(30) NULL,
+    estadoPago VARCHAR(50) NOT NULL,
+    idMetodo INT NOT NULL,
+    idReserva INT NOT NULL,
+    CONSTRAINT fk_pago_metodo FOREIGN KEY (idMetodo) REFERENCES METODO_PAGO(idMetodo),
+    CONSTRAINT fk_pago_reserva FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva)
 );
 
--- TABLAS DE HORARIOS Y DÍAS
-CREATE TABLE DIA (
-    idDia INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombDia VARCHAR(10) not null
+CREATE TABLE APLICACION_DESCUENTO (
+    idDescuento INT NOT NULL,
+    idPago INT NOT NULL,
+    montoDescuento DECIMAL(5,2) NOT NULL,
+    f_aplicacion DATE NOT NULL,
+    PRIMARY KEY (idDescuento, idPago),
+    CONSTRAINT fk_aplic_desc_fkdesc FOREIGN KEY (idDescuento) REFERENCES DESCUENTO(idDescuento),
+    CONSTRAINT fk_aplic_desc_fkpago FOREIGN KEY (idPago) REFERENCES PAGO(idPago)
 );
 
-CREATE TABLE HORARIO(
-    idHorario INT PRIMARY KEY AUTO_INCREMENT not null,
-    f_inicio DATE not null,
-    f_fin DATE not null,
-    nombServicio VARCHAR(150) not null,
-    idDia INT not null,
-    idParroquia INT not null,
-    FOREIGN KEY (idDia) REFERENCES DIA(idDia),
-    FOREIGN KEY (idParroquia) REFERENCES PARROQUIA(idParroquia)
-);
-
--- TABLAS DE POLÍTICAS
-CREATE TABLE POLITICAS (
-    idPolitica INT PRIMARY KEY AUTO_INCREMENT not null,
-    nombPolitica VARCHAR(150) not null,
-    descripcion VARCHAR(255) not null,
-    valorDias INT not null,
-    estadoPolitica boolean not null
-);
-
-CREATE TABLE ACTO_LITURGICO_POLITICAS (
-    idActo INT not null,
-    idPolitica INT not null,
-    PRIMARY KEY (idActo, idPolitica),
-    FOREIGN KEY (idActo) REFERENCES ACTO_LITURGICO(idActo),
-    FOREIGN KEY (idPolitica) REFERENCES POLITICAS(idPolitica)
+CREATE TABLE CONFIGURACION (
+    idConfiguracion INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombClave VARCHAR(150) NOT NULL,
+    unidad VARCHAR(50) NOT NULL,
+    valor VARCHAR(30) NOT NULL,
+    descripcion VARCHAR(255) NULL,
+    idActo INT NOT NULL,
+    CONSTRAINT fk_config_acto FOREIGN KEY (idActo) REFERENCES ACTO_LITURGICO(idActo)
 );

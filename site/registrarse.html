@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LITBOOK | Registro de Usuario</title>
+    <!-- Asegúrate de que esta ruta sea correcta: /static/css/registrarse.css -->
     <link rel="stylesheet" href="/static/css/registrarse.css">
 </head>
 <body>
@@ -11,79 +12,109 @@
         <div class="formulario">
             <form action="/registrar_feligres" id="formulario" method="post">
                 <h1>CREAR CUENTA</h1>
-              <!-- Usuario -->
-              <div class="usuario">
-                <div class="campo">
-                  <label for="apellido">Apellidos:</label>
-                  <input type="text" id="apellido" name="apellido">
-                </div>
-                <div class="campo">
-                  <label for="nombre">Nombres:</label>
-                  <input type="text" id="nombre" name="nombre">
-                </div>
-              </div>
 
-              <!-- Datos personales -->
-              <div class="datos_personales">
+                <!-- NOMBRES (Ancho completo) -->
                 <div class="campo">
-                  <label for="telefono">Número de teléfono</label>
-                  <input type="text" id="telefono" name="telefono">
+                    <label for="nombre">Nombres:</label>
+                    <input type="text" id="nombre" name="nombre" required>
                 </div>
+
+                <!-- APELLIDOS (2 columnas) -->
+                <div class="apellidos">
+                    <div class="campo">
+                        <label for="apePaterno">Apellido paterno:</label>
+                        <input type="text" id="apePaterno" name="apePaterno" required>
+                    </div>
+                    <div class="campo">
+                        <label for="apeMaterno">Apellido materno:</label>
+                        <input type="text" id="apeMaterno" name="apeMaterno" required>
+                    </div>
+                </div>
+
+                <!-- DATOS PERSONALES (3 columnas: Teléfono, Sexo, Fecha) -->
+                <!-- Clase corregida a 'datos_personales' para coincidir con el CSS optimizado -->
+                <div class="datos_personales">
+                    <div class="campo">
+                        <label for="telefono">Número de teléfono:</label>
+                        <input type="tel" id="telefono" name="telefono" required>
+                    </div>
+                    <div class="campo">
+                        <label for="sexo">Sexo:</label>
+                        <select id="sexo" name="sexo" required>
+                            <option value="">Seleccione</option>
+                            <option value="Masculino">Masculino</option>
+                            <option value="Femenino">Femenino</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="fecha">Fecha de nacimiento:</label>
+                        <input type="date" id="fecha" name="fecha" required> 
+                    </div>
+                </div>
+
+                <!-- DIRECCIÓN (Ancho completo) -->
                 <div class="campo">
-                  <label for="direccion">Dirección</label>
-                  <input type="text" id="direccion" name="direccion">
+                    <label for="direccion">Dirección:</label>
+                    <input type="text" id="direccion" name="direccion" required>
                 </div>
-              </div>
 
-              <!-- Identificación -->
-              <div class="identificacion">
+                <!-- IDENTIFICACIÓN (2 columnas) -->
+                <div class="identificacion">
+                    <div class="campo">
+                        <label for="tipo-doc">Tipo de documento:</label>
+                        <select id="tipo-doc" name="tipo-doc" required>
+                            <option value="">Seleccione</option>
+                            <option value="DNI">DNI</option>
+                            <option value="Carnet de Extranjería">Carnet de Extranjería</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="documento">Número de documento:</label>
+                        <input type="text" id="documento" name="documento" required>
+                    </div>
+                </div>
+
+                <!-- CORREO ELECTRÓNICO (Ancho completo) -->
                 <div class="campo">
-                  <label for="tipo-doc">Tipo de documento</label>
-                  <select id="tipo-doc" name="tipo-doc">
-                    <option value="dni">DNI</option>
-                  </select>
+                    <label for="email">Correo electrónico:</label>
+                    <input type="email" id="email" name="email" required>
                 </div>
-                <div class="campo">
-                  <label for="documento">Número de documento</label>
-                  <input type="text" id="documento" name="documento">
+
+                <!-- CLAVES (2 columnas) -->
+                <div class="claves">
+                    <div class="campo">
+                        <label for="clave">Contraseña:</label>
+                        <input type="password" id="clave" name="contraseña" required minlength="8">
+                        <small>La contraseña debe tener al menos 12 caracteres con letras, números y símbolos.</small>
+                    </div>
+                    <div class="campo">
+                        <label for="confirmacion">Confirmar contraseña:</label>
+                        <input type="password" id="confirmacion" name="confirmacion" required minlength="8">
+                    </div>
                 </div>
-              </div>
-              <div class="email">
-                <label for="email">Correo electronico</label>
-                <input type="text" id="email" name="email">
-              </div>
-              <!-- Claves -->
-              <div class="claves">
-                <label for="clave">Contraseña</label>
-                <input type="password" id="clave" name="contraseña">
-                <small>La contraseña debe tener al menos 8 caracteres con letras, números y caracteres especiales.</small>
-                <label for="confirmacion">Confirmar contraseña</label>
-                <input type="password" id="confirmacion" name="confirmacion">
-              </div>
 
-              <!-- Botón -->
-              <button id="registro" type="submit">Registrarse</button>
-
-              <!-- Link -->
-              <a class="forgot" href="/">¿Ya tienes una cuenta? Inicia Sesión</a>
-
+                <button id="registro" type="submit">Registrarse</button>
+                <a class="forgot" href="/">¿Ya tienes una cuenta? Inicia Sesión</a>
             </form>
-                    <img src="/static/img/misa.webp" alt="">
+
+            <img src="/static/img/misa.webp" alt="Sacerdote celebrando una misa, imagen decorativa de fondo.">
         </div>
+
+        <!-- ESTRUCTURA BASE DEL MODAL DE REGISTRO -->
         <div id="modal_registro" class="modal">
-            <div class="modal-contenido">               
+            <div class="modal-contenido">
                 <div class="modal-header">
                     <div class="modal-icono-contenedor">
-                        <img id="modal-icono" src="" >
+                        <img id="modal-icono" src="">
                     </div>
-                    <h2 id="modal-titulo"></h2> 
+                    <h2 id="modal-titulo"></h2>
                 </div>
                 <p id="modal_mensaje"></p>
-                
                 <button id="modal-cerrar" class="btn-modal-cerrar">Aceptar</button>
             </div>
         </div>
     </main>
+
+    <script src="/static/js/registrarse.js"></script>
 </body>
-<script src="/static/js/registrarse.js"></script>
 </html>

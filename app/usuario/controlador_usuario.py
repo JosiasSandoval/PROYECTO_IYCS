@@ -5,7 +5,7 @@ def verificar_usuario(email, clave):
     try:
         with conexion.cursor() as cursor:
             cursor.execute(
-                "SELECT idUsuario FROM usuario WHERE emailUsuario=%s AND claveUsuario=%s",
+                "SELECT idUsuario FROM usuario WHERE email=%s AND clave=%s",
                 (email, clave)
             )
             usuario_encontrado = cursor.fetchone()

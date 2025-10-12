@@ -6,32 +6,33 @@
     <title>LITBOOK | Parroquia</title>
     <link rel="stylesheet" href="/static/css/parroquia_cliente.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
 </head>
 <body>
     <div id="header-placeholder"></div>
     <main class="grid">
         <div id="barra_lateral-placeholder"></div>
-        <div id="mapa">
+        
+        <div id="mapa"> 
             <h2>ENCUENTRA TU PARROQUIA</h2>
-            <div id="gps"></div>
-        </div>
-        <div class="detalle">
-           <!--
-            <img src="" alt="">
-            <div class="datos">
-                <h2>Nombre de la parroquia</h2>
-                <p>Descripcion breve de la parroquia</p>
+            <div class="consulta">
+                <label for="input-parroquia">Nombre de la parroquia:</label>
+                <div class="input-group">
+                    <input type="text" id="input-parroquia" placeholder="Ej. San Roque">
+                    <button id="btn-buscar">Buscar</button>
+                </div>
             </div>
-            <div class="botones_detalle">
-                <button type="submit" class="mas">Más informacion</button>
-                <button type="submit" class="reserva">Realizar reserva</button>
-            </div> 
-           -->
+            <div id="gps"></div> 
         </div>
+        
+        <div class="detalle">
+            </div>
     </main>
 </body>
     <script src="/static/js/header.js"></script>
     <script src="/static/js/barra_lateral.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="mapa.js"></script> 
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="/static/js/mapa.js"></script> 
 </html>

@@ -10,7 +10,7 @@ def crear_app():
     
     # Construye la ruta a la carpeta 'site'
     template_dir = os.path.join(base_dir, '..', 'site')
-    
+
     # Construye la ruta a la carpeta 'static'
     static_dir = os.path.join(base_dir, '..', 'static')
     
@@ -30,12 +30,12 @@ def crear_app():
     def registrar():
         return render_template('registrarse.html')
     
-    @app.route('/api')
+    @app.route('/principal')
     def principal():
         return render_template('pagina_principal.html')
     
-    @app.route('/api/mapa')
+    @app.route('/mapa')
     def parroquia():
-        return render_template('parroquia_cliente.html')
+        return render_template('cliente/parroquia_cliente.html')
     return app
 
