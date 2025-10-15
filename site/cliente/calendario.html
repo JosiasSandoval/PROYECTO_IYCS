@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LITBOOK | Calendario</title>
     <link rel="stylesheet" href="/static/css/calendario.css">
+
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -12,10 +15,23 @@
         <div id="barra_lateral-placeholder"></div>
         <div class="calendario">
             <h2>PARTICIPE EN NUESTRAS FECHAS ESPECIALES</h2>
-            <div class="fechas"></div>
+
+            <div class="acciones-calendario">
+                <a href="{{ url_for('parroquia_cliente') }}"><button type="button" class="btn-regresar">Regresar mapa</button></a>
+                <a href="{{ url_for('reserva_cliente') }}"><button type="button" class="btn-reserva">Realizar reserva</button></a>
+            </div>
+            <div class="fechas">
+                </div>
         </div>
     </main>
+
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/barra_lateral.js"></script>
+
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+    <!-- Tu script personalizado -->
+    <script src="/static/js/calendario.js"></script>
 </body>
-<script src="/static/js/header.js"></script>
-<script src="/static/js/barra_lateral.js"></script>
 </html>

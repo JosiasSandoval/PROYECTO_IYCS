@@ -1,135 +1,174 @@
-// --- CONFIGURACIÓN DE RUTAS Y CONSTANTES ---
-const API_URL = '/api/parroquia/datos'; 
-const GEOJSON_URL = '/static/data/peru_distrital_simple.geojson'; 
-const DEPARTAMENTO_FILTRO = 'LAMBAYEQUE'; 
+// --- CONFIGURACIÓN GENERAL ---
+const API_URL = '/api/parroquia/datos';
+const GEOJSON_URL = '/static/data/peru_distrital_simple.geojson';
+const DEPARTAMENTO_FILTRO = 'LAMBAYEQUE';
 
-// LÍMITES para centrar y bloquear la vista solo en Lambayeque
-const BOUNDS_LAMBAYEQUE = [
+const mapBounds = [
     [-7.5, -80.8], // Suroeste
     [-5.8, -79.0]  // Noreste
 ];
-const COORDENADAS_CENTRALES = [-6.6, -79.8]; 
-// Ajustamos el zoom a 10.0 para un mejor encuadre inicial
-const NIVEL_ZOOM_INICIAL = 10.0; 
+const mapCenter = [-6.6, -79.8];
+const zoomInicial = 10;
 
-// Inicialización del mapa
-// Usamos el ID 'gps' y configuramos los límites de la vista
-const map = L.map('gps', {
-    maxBounds: BOUNDS_LAMBAYEQUE, 
-    // Mantenemos el minZoom en 9.5 para flexibilidad si es necesario
-    minZoom: 9.5 
-}).setView(COORDENADAS_CENTRALES, NIVEL_ZOOM_INICIAL);
+// --- ICONOS ---
+const ChurchIcon = L.icon({
+    iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-icon.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34]
+});
 
-// Asegura que el límite se aplique al arrastrar
-map.setMaxBounds(BOUNDS_LAMBAYEQUE); 
+const ChurchIconHighlight = L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+    iconSize: [50, 50],
+    iconAnchor: [25, 50],
+    popupAnchor: [0, -50]
+});
 
-// Grupo para la agrupación de marcadores (clustering)
-let markerClusterGroup = L.markerClusterGroup(); 
+let map, markerClusterGroup, markersByName = {};
 
-// Añade la capa base de OpenStreetMap
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
+// --- FUNCIÓN AUXILIAR ---
+const normalizar = txt => (txt || '').trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, ''); // quita tildes
 
-// 🛑 FUNCIÓN CLAVE: Forzar el reajuste del tamaño del mapa
-function ajustarMapaAlContenedor() {
-    // Usamos un pequeño retraso para asegurar que la grilla CSS esté estable
-    setTimeout(() => {
-        map.invalidateSize();
-        console.log("Mapa ajustado al contenedor: invalidateSize aplicado.");
-    }, 300);
+// --- INICIALIZACIÓN DEL MAPA ---
+function initMap() {
+    map = L.map('gps', {
+        maxBounds: mapBounds,
+        minZoom: 9.5
+    }).setView(mapCenter, zoomInicial);
+
+    map.setMaxBounds(mapBounds);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    markerClusterGroup = L.markerClusterGroup().addTo(map);
 }
 
-
-// --- FUNCIONES DE ESTILO (Colorea por Provincia) ---
-function stylePolygons(feature) {
-    const provincia = feature.properties.NOMBPROV; 
-    let color;
-    
-    if (provincia === 'CHICLAYO') {
-        color = '#4CAF50'; // Verde
-    } else if (provincia === 'FERREÑAFE') {
-        color = '#E91E63'; // Rosado
-    } else if (provincia === 'LAMBAYEQUE') {
-        color = '#FFEB3B'; // Amarillo
-    } else {
-        color = '#3388ff';
-    }
-
-    return {
-        fillColor: color,
-        weight: 1.5,
-        opacity: 1,
-        color: 'white', 
-        fillOpacity: 0.7 
-    };
-}
-
-
-// --- 3. CARGA DE LÍMITES GEOGRÁFICOS (GeoJSON de Distritos) ---
+// --- CARGAR LÍMITES DEPARTAMENTALES ---
 async function cargarLimitesGeograficos() {
     try {
-        const response = await fetch(GEOJSON_URL);
-        if (!response.ok) {
-            throw new Error(`Error al cargar el GeoJSON: ${response.status}. Revisa si el archivo está en /static/data/`);
-        }
-        
-        const limitesGeoJson = await response.json();
+        const resp = await fetch(GEOJSON_URL);
+        const data = await resp.json();
 
-        L.geoJSON(limitesGeoJson, {
-            filter: function(feature, layer) {
-                return feature.properties.NOMBDEP === DEPARTAMENTO_FILTRO; 
+        L.geoJSON(data, {
+            filter: f => f.properties.NOMBDEP === DEPARTAMENTO_FILTRO,
+            style: f => {
+                const colores = {
+                    CHICLAYO: '#4CAF50',
+                    'FERREÑAFE': '#E91E63',
+                    LAMBAYEQUE: '#FFEB3B'
+                };
+                return {
+                    fillColor: colores[f.properties.NOMBPROV] || '#3388ff',
+                    weight: 1.5,
+                    color: 'white',
+                    fillOpacity: 0.7
+                };
             },
-            style: stylePolygons, 
-            onEachFeature: function (feature, layer) {
-                const nombreDistrito = feature.properties.NOMBDIST;
-                const nombreProvincia = feature.properties.NOMBPROV;
-                layer.bindPopup(`<b>Distrito:</b> ${nombreDistrito}<br><b>Provincia:</b> ${nombreProvincia}`);
+            onEachFeature: (f, layer) => {
+                layer.bindPopup(
+                    `<b>Distrito:</b> ${f.properties.NOMBDIST}<br><b>Provincia:</b> ${f.properties.NOMBPROV}`
+                );
             }
         }).addTo(map);
 
-        cargarParroquias(); 
-        
-        // 🛑 LLAMADA CLAVE: Esto solucionará el problema del "cuadrado descuadrado"
-        ajustarMapaAlContenedor(); 
-
-    } catch (error) {
-        console.error("Error al cargar los límites GeoJSON:", error);
+        setTimeout(() => map.invalidateSize(), 300);
+    } catch (e) {
+        console.error("Error al cargar GeoJSON:", e);
     }
 }
 
-
-// --- 4. CARGA DE MARCADORES CON CLUSTERING ---
+// --- CARGAR PARROQUIAS DESDE API ---
 async function cargarParroquias() {
-    markerClusterGroup.clearLayers();
-
     try {
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}. ¿Está tu ruta /api/parroquia/datos funcionando?`);
-        }
-        
-        const data = await response.json();
-        
-        data.datos.forEach(p => {
-            const popupContent = `
-                <b>${p.nombParroquia}</b><br>
-                Distrito: ${p.nombDistrito}<br>
-                Descripción: ${p.descripcionBreve}
-            `;
-            const marker = L.marker([p.latParroquia, p.logParroquia]).bindPopup(popupContent);
-            
+        markerClusterGroup.clearLayers();
+        markersByName = {};
+
+        const resp = await fetch(API_URL);
+        const { datos } = await resp.json();
+        if (!Array.isArray(datos)) throw new Error("Formato de datos inválido");
+
+        datos.forEach(p => {
+            if (!p.latParroquia || !p.logParroquia) return;
+
+            const popup = `
+                <div style="font-family: Arial, sans-serif; max-width: 250px;">
+                    <h4 style="color:#007bff;margin:0">${p.nombParroquia}</h4>
+                    <p style="color:#555;font-style:italic">${p.descripcionBreve || 'Sin descripción breve.'}</p>
+                    <hr>
+                    <p><strong>Dirección:</strong> ${p.direccion || 'No disponible'}</p>
+                    <p><strong>Teléfono:</strong> ${p.telefonoContacto || 'No disponible'}</p>
+                    <p><strong>Horario:</strong> ${p.horaAtencionInicial || ''} - ${p.horaAtencionFinal || 'Cerrado'}</p>
+                    <button onclick="mostrarDetallesParroquia('${p.idParroquia || ''}')"
+                        style="background:#007bff;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
+                        Ver Detalles
+                    </button>
+                    <button onclick="mostrarCalendarioParroquia('${p.idParroquia || ''}')"
+                        style="background:#00a135;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
+                        Ver calendario
+                    </button>
+                </div>`;
+
+            const marker = L.marker([p.latParroquia, p.logParroquia], { icon: ChurchIcon })
+                .bindPopup(popup);
+
             markerClusterGroup.addLayer(marker);
+            markersByName[normalizar(p.nombParroquia)] = marker;
         });
-
-        if (!map.hasLayer(markerClusterGroup)) {
-            map.addLayer(markerClusterGroup);
-        }
-
-    } catch (error) {
-        console.error("No se pudo cargar la información de las parroquias:", error);
+    } catch (e) {
+        console.error("Error al cargar parroquias:", e);
     }
 }
 
-// Inicia el proceso
-cargarLimitesGeograficos();
+// --- BUSCAR PARROQUIA ---
+function buscarParroquia(nombre) {
+    const marker = markersByName[normalizar(nombre)];
+    if (!marker) {
+        alert("No se encontró la parroquia.");
+        console.warn("Disponibles:", Object.keys(markersByName));
+        return;
+    }
+
+    const originalIcon = marker.options.icon;
+    marker.setIcon(ChurchIconHighlight);
+    map.setView(marker.getLatLng(), 16, { animate: true });
+    marker.openPopup();
+    setTimeout(() => marker.setIcon(originalIcon), 1200);
+}
+
+
+// --- DETALLES ---
+function mostrarDetallesParroquia(id) {
+    console.log(`Ver detalles de parroquia ID: ${id}`);
+
+    // Guardamos el ID en localStorage
+    localStorage.setItem('idParroquiaSeleccionada', id);
+
+    // Redirigimos correctamente a la página dentro de la carpeta "site"
+    window.location.href = '/cliente/detalle_parroquia';
+}
+
+function mostrarCalendarioParroquia(id) {
+    console.log('Ver calendario de parroquia ID:${id}');
+    localStorage.setItem('idParroquiaSeleccionada',id);
+    window.location.href='/cliente/calendario';
+}
+
+
+// --- INICIALIZACIÓN ---
+document.addEventListener('DOMContentLoaded', async () => {
+    initMap();
+    await cargarLimitesGeograficos();
+    await cargarParroquias();
+
+    const input = document.getElementById('input-parroquia');
+    const boton = document.getElementById('btn-buscar');
+
+    if (input && boton) {
+        boton.addEventListener('click', () => buscarParroquia(input.value));
+        input.addEventListener('keydown', e => e.key === 'Enter' && buscarParroquia(input.value));
+    }
+});
+

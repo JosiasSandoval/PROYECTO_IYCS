@@ -86,11 +86,11 @@ CREATE TABLE ROL_PERMISO (
     CONSTRAINT fk_rolpermiso_rol FOREIGN KEY (idRol) REFERENCES ROL(idRol)
 );
 
-CREATE TABLE DISPONIBILIDAD_HORARIOS (
+CREATE TABLE DISPONIBILIDAD_HORARIO (
     idDisponibilidad INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     diaSemana VARCHAR(20) NOT NULL,
-    horaInicio TIME NOT NULL,
-    horaFin TIME NOT NULL,
+    horaInicioDis TIME NOT NULL,
+    horaFinDis TIME NOT NULL,
     f_especifica DATE NULL,
     recurrente BOOLEAN NOT NULL,
     idUsuario INT NOT NULL,
@@ -144,6 +144,8 @@ CREATE TABLE EVENTO (
     idEvento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     nombEvento VARCHAR(150) NOT NULL,
     f_inicio DATE NOT NULL,
+    horaInicioEvento time NOT NULL,
+    horaFinEvento time NOT NULL,
     f_fin DATE NULL,
     estadoEvento BOOLEAN NOT NULL
 );
