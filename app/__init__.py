@@ -1,4 +1,5 @@
 import os
+import calendar
 from flask import Flask, render_template
 from app.tipo_documento.route_tipo_documento import tipoDocumento_bp
 from app.auth.route_auth import auth_bp
@@ -34,8 +35,27 @@ def crear_app():
     def principal():
         return render_template('pagina_principal.html')
     
-    @app.route('/mapa')
-    def parroquia():
+    @app.route('/cliente/parroquia')
+    def parroquia_cliente():
         return render_template('cliente/parroquia_cliente.html')
+
+    @app.route('/cliente/detalle_parroquia')
+    def detalle_parroquia():
+        return render_template('cliente/detalle_parroquia.html')
+
+    @app.route('/cliente/reserva')
+    def reserva_cliente():
+        return render_template('cliente/reserva_ubicacion.html')
+    
+    @app.route('/cliente/calendario')
+    def calendario_cliente():
+        return render_template('cliente/calendario.html')
+    
+    #Administrador
+    @app.route('/admi/tipo_documento')
+    def tipo_documento_admi():
+        return render_template('administradores/tipoDocumento.html')
     return app
+
+
 
