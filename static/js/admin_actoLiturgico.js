@@ -294,10 +294,38 @@ document.getElementById("formDocumento").addEventListener("submit", (e) => {
 });
 
 // ================== DATOS DE EJEMPLO ==================
-actos = [
+ actos = [
   { id: 1, nombre: "Misa Dominical", precio: "50", estado: "activo" },
   { id: 2, nombre: "Bautizo", precio: "80", estado: "activo" },
   { id: 3, nombre: "Matrimonio", precio: "200", estado: "activo" },
+  { id: 4, nombre: "Primera Comunión", precio: "120", estado: "activo" },
+  { id: 5, nombre: "Confirmación", precio: "100", estado: "activo" },
+  { id: 6, nombre: "Misa de Difuntos", precio: "60", estado: "activo" },
+  { id: 7, nombre: "Misa de Acción de Gracias", precio: "70", estado: "activo" },
+  { id: 8, nombre: "Confesión", precio: "30", estado: "activo" },
+  { id: 9, nombre: "Unción de los Enfermos", precio: "90", estado: "activo" },
+  { id: 10, nombre: "Misa de Bodas de Plata", precio: "150", estado: "activo" },
+  { id: 11, nombre: "Misa de Bodas de Oro", precio: "180", estado: "activo" },
+  { id: 12, nombre: "Retiro Espiritual", precio: "100", estado: "activo" },
+  { id: 13, nombre: "Adoración al Santísimo", precio: "40", estado: "activo" },
+  { id: 14, nombre: "Rosario Comunitario", precio: "25", estado: "activo" },
+  { id: 15, nombre: "Novena de San José", precio: "35", estado: "activo" },
+  { id: 16, nombre: "Misa por el Año Nuevo", precio: "70", estado: "activo" },
+  { id: 17, nombre: "Misa de Navidad", precio: "90", estado: "activo" },
+  { id: 18, nombre: "Misa de Nochebuena", precio: "100", estado: "activo" },
+  { id: 19, nombre: "Misa de Pascua", precio: "95", estado: "activo" },
+  { id: 20, nombre: "Bendición de Hogar", precio: "60", estado: "activo" },
+  { id: 21, nombre: "Bendición de Vehículos", precio: "40", estado: "activo" },
+  { id: 22, nombre: "Misa por los Estudiantes", precio: "50", estado: "activo" },
+  { id: 23, nombre: "Misa de Graduación", precio: "120", estado: "activo" },
+  { id: 24, nombre: "Misa por los Enfermos", precio: "55", estado: "activo" },
+  { id: 25, nombre: "Misa Vocacional", precio: "60", estado: "activo" },
+  { id: 26, nombre: "Misa por la Familia", precio: "65", estado: "activo" },
+  { id: 27, nombre: "Misa de Quinceañera", precio: "140", estado: "activo" },
+  { id: 28, nombre: "Via Crucis", precio: "30", estado: "activo" },
+  { id: 29, nombre: "Procesión del Corpus Christi", precio: "110", estado: "activo" },
+  { id: 30, nombre: "Catequesis Pre-bautismal", precio: "50", estado: "activo" }
 ];
+
 
 renderTabla();

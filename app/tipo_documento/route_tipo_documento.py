@@ -74,7 +74,10 @@ def busqueda_documento(busqueda):
 def eliminar_tipo(id):
     numero=verificar_relacion_tipo_documento(id)
     if numero>0:
-        return jsonify({'mensaje':'El tipo de documento está relacionado con otras tablas'}),200
+        return jsonify({'error': 'No se puede eliminar el tipo de documento porque está relacionado con otras tablas. Por favor, revise las dependencias.'}),409
     else:
-        eliminar_tipo_documento(id)
-        return jsonify({'mensaje':'Tipo de documento eliminado correctamente'}),200
+        try:
+            eliminar_tipo_documento(id)
+            return jsonify({'mensaje':'Tipo de documento eliminado correctamente'}),200
+        except Exception as e:
+            return jsonify({'error':f'Error al eliminar el tipo de documento: {str(e)}'}),500

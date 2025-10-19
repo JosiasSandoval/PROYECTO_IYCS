@@ -105,18 +105,22 @@ def verificar_relacion_tipo_documento(idTipo):
                     SELECT idTipoDocumento FROM personal WHERE idTipoDocumento = %s
                 ) AS usados;
             ''', (idTipo, idTipo))
-            
-
             resultado = cursor.fetchone()
             return resultado[0] if resultado else 0
-
+    except Exception as e:
+        print(f"Error al verificar relaciones del tipo de documento: {e}")
+        return 0
     finally:
         conexion.close()
 
-
 def eliminar_tipo_documento(idTipo):
-    conexion=obtener_conexion()
-    with conexion.cursor() as cursor:
-        cursor.execute('DELETE FROM tipo_documento where idTipoDocumento=%s',(idTipo,))
-        conexion.commit()
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute('DELETE FROM tipo_documento where idTipoDocumento=%s', (idTipo,))
+            conexion.commit()
+    except Exception as e:
+        print(f"Error al eliminar el tipo de documento: {e}")
+        raise
+    finally:
         conexion.close()

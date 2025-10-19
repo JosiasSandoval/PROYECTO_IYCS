@@ -250,3 +250,12 @@ aside {
     cursor: not-allowed;
     color: #999;
 }
+/* Contenedor Leaflet Map */
+#gps {
+    width: 100%; 
+    /* Mantenemos la altura ajustada */
+    height: calc(100vh - 500px); 
+    border-radius: 10px; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); 
+    min-height: 100px;
+}

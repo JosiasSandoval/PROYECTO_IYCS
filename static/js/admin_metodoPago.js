@@ -1,34 +1,63 @@
-// ================== VARIABLES GLOBALES ==================
-let metodos = [];
-let metodosFiltrados = null;
-let metodoEditandoId = null;
-
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
 
-// Referencias a los modales sin Bootstrap
-const modalDetalle = crearModal();
-const modalFormulario = crearModalFormulario();
+const modalDetalle = crearModal();            
+const modalFormulario = crearModalFormulario(); 
 
+let metodos = [];           
+let metodosFiltrados = null;
 let paginaActual = 1;
 const elementosPorPagina = 10;
-
-// Variable de ordenamiento
 let ordenActual = { campo: null, ascendente: true };
 
-// ================== FUNCIONES ==================
+function normalizar(met) {
+  const id = met.idMetodo;                   // Campo de la BD
+  const nombre = met.nombMetodo ?? "";       // Campo de la BD
+  const estado = met.estadoMetodo === true || met.estadoMetodo === 1; // Booleano
+  return { id, nombre, estado };
+}
 
-// Renderizar tabla
+
+const manejarSolicitud = async (url, opciones = {}, mensajeError = "Error") => {
+  try {
+    const res = await fetch(url, opciones);
+    if (!res.ok) throw new Error(mensajeError);
+    return await res.json();
+  } catch (err) {
+    console.error(mensajeError, err);
+    alert(mensajeError);
+    throw err;
+  }
+};
+
+const cargarMetodos = async () => {
+  try {
+    const data = await manejarSolicitud("/api/pago/metodo", {}, "Error al obtener metodos de pago");
+    console.log("Datos recibidos de la API:", data); // 🔹 para depuración
+    metodos = Array.isArray(data) ? data.map(normalizar) : [];
+    metodosFiltrados = null;
+    paginaActual = 1;
+    renderTabla();
+  } catch (err) {
+    console.error("Error cargando metodos de pago:", err);
+  }
+};
+
+function existeMetodo(nombre, idIgnorar = null) {
+  return metodos.some(doc =>
+    doc.nombre.toLowerCase() === nombre.toLowerCase() && doc.id !== idIgnorar
+  );
+}
+
 function renderTabla() {
   tabla.innerHTML = "";
-
   const lista = metodosFiltrados ?? metodos;
 
   if (ordenActual.campo) {
     lista.sort((a, b) => {
       const campo = ordenActual.campo;
-      const valorA = a[campo] ? a[campo].toString().toLowerCase() : "";
-      const valorB = b[campo] ? b[campo].toString().toLowerCase() : "";
+      const valorA = (a[campo] || "").toString().toLowerCase();
+      const valorB = (b[campo] || "").toString().toLowerCase();
       if (valorA < valorB) return ordenActual.ascendente ? -1 : 1;
       if (valorA > valorB) return ordenActual.ascendente ? 1 : -1;
       return 0;
@@ -37,29 +66,29 @@ function renderTabla() {
 
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const fin = inicio + elementosPorPagina;
-  const metodosPagina = lista.slice(inicio, fin);
+  const documentosPagina = lista.slice(inicio, fin);
 
-  metodosPagina.forEach((metodo, index) => {
-    const esActivo = metodo.estado === "activo";
+  documentosPagina.forEach((doc, index) => {
+    const esActivo = doc.estado === true || doc.estado === "activo";
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
 
     const fila = document.createElement("tr");
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
-      <td class="col-nombre">${metodo.nombre}</td>
+      <td class="col-nombre">${escapeHtml(doc.nombre)}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="verMetodo(${metodo.id})" title="Ver">
+          <button class="btn btn-info btn-sm" onclick="verDetalle(${doc.id})" title="Ver">
             <img src="/static/img/ojo.png" alt="ver">
           </button>
-          <button class="btn btn-warning btn-sm" onclick="editarMetodo(${metodo.id})" title="Editar">
+          <button class="btn btn-warning btn-sm" onclick="editarMetodo(${doc.id})" title="Editar">
             <img src="/static/img/lapiz.png" alt="editar">
           </button>
-          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${metodo.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
+          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${doc.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
             <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
           </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarMetodo(${metodo.id})" title="Eliminar">
+          <button class="btn btn-danger btn-sm" onclick="eliminarMetodo(${doc.id})" title="Eliminar">
             <img src="/static/img/x.png" alt="eliminar">
           </button>
         </div>
@@ -71,16 +100,19 @@ function renderTabla() {
   renderPaginacion();
 }
 
-// ================== PAGINACIÓN ==================
-function renderPaginacion() {
+const escapeHtml = text =>
+  String(text || "").replace(/[&<>]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
+
+const renderPaginacion = () => {
   paginacion.innerHTML = "";
-  const totalPaginas = Math.ceil(metodos.length / elementosPorPagina);
+  const total = (metodosFiltrados ?? metodos).length;
+  const totalPaginas = Math.ceil(total / elementosPorPagina);
   if (totalPaginas <= 1) return;
 
   const ul = document.createElement("ul");
   ul.className = "pagination";
 
-  const crearItem = (numero, activo = false, disabled = false, texto = null) => {
+  const crearItem = (numero, activo, disabled, texto) => {
     const li = document.createElement("li");
     li.className = `page-item ${activo ? "active" : ""} ${disabled ? "disabled" : ""}`;
     li.innerHTML = `<button class="page-link" onclick="cambiarPagina(${numero})">${texto || numero}</button>`;
@@ -88,73 +120,111 @@ function renderPaginacion() {
   };
 
   ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, "<"));
-
-  const start = Math.max(1, paginaActual - 2);
-  const end = Math.min(totalPaginas, paginaActual + 2);
-
-  if (start > 1) {
+  const range = [Math.max(1, paginaActual - 2), Math.min(totalPaginas, paginaActual + 2)];
+  if (range[0] > 1) {
     ul.appendChild(crearItem(1, paginaActual === 1));
-    if (start > 2) ul.appendChild(crearItem(null, false, true, "..."));
+    if (range[0] > 2) ul.appendChild(crearItem(null, false, true, "..."));
   }
-
-  for (let i = start; i <= end; i++) {
-    ul.appendChild(crearItem(i, paginaActual === i));
-  }
-
-  if (end < totalPaginas) {
-    if (end < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, "..."));
+  for (let i = range[0]; i <= range[1]; i++) ul.appendChild(crearItem(i, paginaActual === i));
+  if (range[1] < totalPaginas) {
+    if (range[1] < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, "..."));
     ul.appendChild(crearItem(totalPaginas, paginaActual === totalPaginas));
   }
-
   ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, ">"));
-
   paginacion.appendChild(ul);
-}
+};
 
 function cambiarPagina(pagina) {
-  if (pagina < 1 || pagina > Math.ceil(metodos.length / elementosPorPagina)) return;
+  const total = Math.ceil((metodosFiltrados ?? metodos).length / elementosPorPagina);
+  if (pagina < 1 || pagina > total) return;
   paginaActual = pagina;
   renderTabla();
 }
 
-// ================== CRUD ==================
-function agregarMetodo(nombre) {
-  metodos.push({
-    id: Date.now(),
-    nombre,
-    estado: "activo",
-  });
-  renderTabla();
+const agregarMetodo = nombre => manejarSolicitud(
+  "/api/pago/agregar_metodo",
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre }),
+  },
+  "Error al agregar metodo"
+).then(() => cargarMetodos());
+
+const actualizarMetodoAPI = (id, nombre) => manejarSolicitud(
+  `/api/pago/actualizar_metodo/${id}`,
+  {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombMetodo: nombre }),
+  },
+  "Error al actualizar metodo"
+).then(() => cargarMetodos());
+
+const eliminarMetodo = async id => {
+  if (!confirm("¿Está seguro de eliminar este metodo de pago?")) return;
+  try {
+    const res = await fetch(`/api/pago/eliminar_metodo/${id}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) alert(data.error || "Error al eliminar el cargo");
+    else alert(data.mensaje || "Metodo de pagoeliminado correctamente");
+    cargarMetodos();
+  } catch (err) {
+    console.error("Error al eliminar metodo de pago", err);
+    alert("Error inesperado al eliminar el metodo de pago");
+  }
+};
+
+async function darDeBaja(id) {
+  try {
+    const doc = metodos.find(d => d.id === id);
+    if (!doc) return alert("Metodo de pago no encontrado");
+    const nuevoEstado = !doc.estado;
+    const res = await fetch(`/api/pago/cambiar_estado_metodo/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado: nuevoEstado })
+    });
+    if (!res.ok) throw new Error("Error al cambiar estado");
+    const data = await res.json();
+    doc.estado = data.nuevo_estado === true;
+    renderTabla();
+  } catch (err) {
+    console.error(err);
+    alert("Error al actualizar estado");
+  }
 }
 
-function editarMetodo(id) {
-  const metodo = metodos.find((m) => m.id === id);
-  if (!metodo) return;
-  abrirModalFormulario("editar", metodo);
-}
+// ===== BÚSQUEDA CORREGIDA =====
+const inputMetodo = document.getElementById("inputDocumento");
+const btnBuscar = document.getElementById("btn_buscar");
 
-function eliminarMetodo(id) {
-  const metodo = metodos.find((m) => m.id === id);
-  if (!metodo) return;
-  if (!confirm(`¿Seguro que deseas eliminar el método de pago "${metodo.nombre}"?`)) return;
-  metodos = metodos.filter((m) => m.id !== id);
-  renderTabla();
-}
+btnBuscar.addEventListener("click", async () => {
+  const termino = inputMetodo.value.trim(); // ✅ corregido
+  if (termino === "") {
+    metodosFiltrados = null;
+    paginaActual = 1;
+    renderTabla();
+    return;
+  }
+  try {
+    const res = await fetch(`/api/pago/busqueda_metodo/${encodeURIComponent(termino)}`);
+    if (res.status === 404) {
+      metodosFiltrados = [];
+      renderTabla();
+      return;
+    }
+    if (!res.ok) throw new Error("Error en búsqueda");
+    const data = await res.json();
+    metodosFiltrados = Array.isArray(data) ? data.map(normalizar) : [normalizar(data)];
+    paginaActual = 1;
+    renderTabla();
+  } catch (err) {
+    console.error(err);
+    alert("Error al buscar metodo de pago");
+  }
+});
 
-function darDeBaja(id) {
-  const metodo = metodos.find((m) => m.id === id);
-  if (!metodo) return;
-  metodo.estado = metodo.estado === "activo" ? "inactivo" : "activo";
-  renderTabla();
-}
-
-function verMetodo(id) {
-  const metodo = metodos.find((m) => m.id === id);
-  if (!metodo) return;
-  abrirModalFormulario("ver", metodo);
-}
-
-// ================== MODALES ==================
 function crearModal() {
   const modalHTML = document.createElement("div");
   modalHTML.innerHTML = `
@@ -162,7 +232,7 @@ function crearModal() {
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Detalle del método de pago</h5>
+            <h5 class="modal-title">Detalle del Metodo de pago</h5>
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalDetalle')">&times;</button>
           </div>
           <div class="modal-body" id="modalDetalleContenido"></div>
@@ -185,17 +255,14 @@ function crearModalFormulario() {
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalFormulario')">&times;</button>
           </div>
           <div class="modal-body">
-            <form id="formModalMetodo">
-
+            <form id="formModalDocumento">
               <div class="mb-3">
-                <label for="modalNombre" class="form-label">Nombre del método de pago</label>
+                <label for="modalNombre" class="form-label">Nombre del metodo de pago</label>
                 <input type="text" id="modalNombre" class="form-control" required>
               </div>
-
               <div class="modal-footer">
                 <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar">Aceptar</button>
               </div>
-
             </form>
           </div>
         </div>
@@ -206,85 +273,86 @@ function crearModalFormulario() {
   return document.getElementById("modalFormulario");
 }
 
-function abrirModal(id) {
-  const modal = document.getElementById(id);
-  if (modal) modal.classList.add("activo");
+function abrirModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.add('activo');
 }
 
-function cerrarModal(id) {
-  const modal = document.getElementById(id);
-  if (modal) modal.classList.remove("activo");
+function cerrarModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.remove('activo');
 }
 
-function abrirModalFormulario(modo, metodo = null) {
+function abrirModalFormulario(modo, doc = null) {
   const titulo = document.getElementById("modalFormularioTitulo");
   const inputNombre = document.getElementById("modalNombre");
   const botonGuardar = document.getElementById("btnGuardar");
-  const form = document.getElementById("formModalMetodo");
+  const form = document.getElementById("formModalDocumento");
   const modalFooter = document.querySelector("#modalFormulario .modal-footer");
 
+  form.onsubmit = null;
+  botonGuardar.onclick = null;
   modalFooter.innerHTML = "";
+  botonGuardar.textContent = "Aceptar";
+  botonGuardar.type = "submit";
+  botonGuardar.classList.remove("d-none");
+  modalFooter.appendChild(botonGuardar);
   inputNombre.disabled = false;
 
   if (modo === "agregar") {
-    titulo.textContent = "Agregar Método de Pago";
+    titulo.textContent = "Agregar metodo de pago";
     inputNombre.value = "";
-
-    modalFooter.appendChild(botonGuardar);
-    form.onsubmit = (e) => {
+    form.onsubmit = e => {
       e.preventDefault();
-      agregarMetodo(inputNombre.value.trim());
-      cerrarModal("modalFormulario");
+      const nombre = inputNombre.value.trim();
+      if (!nombre) return alert("Complete todos los campos");
+      if (existeMetodo(nombre)) return alert("Ya existe un metodo de pago con ese nombre");
+      agregarMetodo(nombre).then(() => cerrarModal("modalFormulario"));
     };
-  } else if (modo === "editar" && metodo) {
-    titulo.textContent = "Editar Método de Pago";
-    inputNombre.value = metodo.nombre;
-
-    modalFooter.appendChild(botonGuardar);
-    form.onsubmit = (e) => {
+  } else if (modo === "editar" && doc) {
+    titulo.textContent = "Editar metodo de metodo de pago";
+    inputNombre.value = doc.nombre;
+    form.onsubmit = e => {
       e.preventDefault();
-      metodo.nombre = inputNombre.value.trim();
-      cerrarModal("modalFormulario");
-      renderTabla();
+      const nombre = inputNombre.value.trim();
+      if (!nombre) return alert("Complete todos los campos");
+      if (existeMetodo(nombre, doc.id)) return alert("Ya existe un metodo de pago con ese nombre");
+      actualizarMetodoAPI(doc.id, nombre).then(() => cerrarModal("modalFormulario"));
     };
-  } else if (modo === "ver" && metodo) {
-    titulo.textContent = "Detalle del Método de Pago";
-    inputNombre.value = metodo.nombre;
+  } else if (modo === "ver" && doc) {
+    titulo.textContent = "Detalle del metodo de pago";
+    inputNombre.value = doc.nombre;
     inputNombre.disabled = true;
-
-    modalFooter.appendChild(botonGuardar);
-    botonGuardar.onclick = () => cerrarModal("modalFormulario");
+    botonGuardar.onclick = e => { e.preventDefault(); cerrarModal("modalFormulario"); };
   }
 
   abrirModal("modalFormulario");
 }
 
-// ================== BUSQUEDA ==================
-const inputMetodo = document.getElementById("inputDocumento");
-const btnBuscar = document.getElementById("btn_buscar");
+function editarMetodo(id) {
+  const doc = metodos.find(d => d.id === id);
+  if (doc) abrirModalFormulario("editar", doc);
+}
 
-btnBuscar.addEventListener("click", () => {
-  const termino = inputMetodo.value.trim().toLowerCase();
-  metodosFiltrados =
-    termino === ""
-      ? null
-      : metodos.filter((m) => m.nombre.toLowerCase().includes(termino));
-  paginaActual = 1;
-  renderTabla();
+function verDetalle(id) {
+  const doc = metodos.find(d => d.id === id);
+  if (doc) abrirModalFormulario("ver", doc);
+}
+
+document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
+  th.style.cursor = "pointer";
+  th.addEventListener("click", () => {
+    let campo;
+    if (index === 1) campo = "nombre";
+    else return;
+    if (ordenActual.campo === campo) ordenActual.ascendente = !ordenActual.ascendente;
+    else { ordenActual.campo = campo; ordenActual.ascendente = true; }
+    renderTabla();
+  });
 });
 
-// ================== EVENTO FORM PRINCIPAL ==================
-document.getElementById("formDocumento").addEventListener("submit", (e) => {
-  e.preventDefault();
-  abrirModalFormulario("agregar");
-});
+// ===== Botón agregar =====
+document.getElementById("btn_guardar").addEventListener("click", () => abrirModalFormulario("agregar"));
 
-// ================== DATOS DE EJEMPLO ==================
-metodos = [
-  { id: 1, nombre: "Efectivo", estado: "activo" },
-  { id: 2, nombre: "Tarjeta de Crédito", estado: "activo" },
-  { id: 3, nombre: "Transferencia Bancaria", estado: "activo" },
-  { id: 4, nombre: "Yape / Plin", estado: "activo" },
-];
-
-renderTabla();
+// ===== Carga inicial =====
+cargarMetodos();
