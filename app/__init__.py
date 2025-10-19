@@ -5,6 +5,8 @@ from app.tipo_documento.route_tipo_documento import tipoDocumento_bp
 from app.auth.route_auth import auth_bp
 from app.usuario.route_usuario import usuario_bp
 from app.parroquia.route_parroquia import parroquia_bp
+from app.cargo.route_cargo import cargo_bp
+from app.pago_metodo.route_pago_metodo import pago_bp
 def crear_app():
     # Obtiene la ruta absoluta de la carpeta 'app'
     base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -22,7 +24,9 @@ def crear_app():
     app.register_blueprint(auth_bp,url_prefix='/api/auth')
     app.register_blueprint(usuario_bp,url_prefix='/api/usuario')
     app.register_blueprint(parroquia_bp,url_prefix='/api/parroquia')
-
+    app.register_blueprint(cargo_bp,url_prefix='/api/cargo')
+    app.register_blueprint(pago_bp,url_prefix='/api/pago')
+    
     @app.route("/")
     def iniciar_sesion():
         return render_template('iniciar_sesion.html')
@@ -55,6 +59,21 @@ def crear_app():
     @app.route('/admi/tipo_documento')
     def tipo_documento_admi():
         return render_template('administradores/tipoDocumento.html')
+    
+    @app.route('/admi/cargo')
+    def cargo_admi():
+        return render_template('administradores/cargo.html')
+    
+    @app.route('/admi/parroquia')
+    def parroquia_admi():
+        return render_template('administradores/parroquia_admi.html')
+    
+    @app.route('/admi/metodo_pago')
+    def metodo_pago_admi():
+        return render_template('administradores/metodo_pago.html')
+    @app.route('/cliente/reserva_ubi')
+    def reserva_ubicacion():
+        return render_template('cliente/reserva_ubicacion.html')
     return app
 
 

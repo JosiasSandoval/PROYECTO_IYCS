@@ -90,6 +90,13 @@ async function cargarParroquias() {
         const { datos } = await resp.json();
         if (!Array.isArray(datos)) throw new Error("Formato de datos inválido");
 
+        // --- INICIO: MODIFICACIÓN PARA RESERVA_UBICACION ---
+        const parroquiaSelect = document.getElementById('parroquia');
+        if (parroquiaSelect) {
+            parroquiaSelect.innerHTML = '<option value="">--Seleccione parroquia--</option>';
+        }
+        // --- FIN: MODIFICACIÓN ---
+
         datos.forEach(p => {
             if (!p.latParroquia || !p.logParroquia) return;
 
@@ -116,6 +123,13 @@ async function cargarParroquias() {
 
             markerClusterGroup.addLayer(marker);
             markersByName[normalizar(p.nombParroquia)] = marker;
+
+            // --- INICIO: MODIFICACIÓN PARA RESERVA_UBICACION ---
+            if (parroquiaSelect) {
+                const option = new Option(p.nombParroquia, p.nombParroquia);
+                parroquiaSelect.add(option);
+            }
+            // --- FIN: MODIFICACIÓN ---
         });
     } catch (e) {
         console.error("Error al cargar parroquias:", e);
@@ -163,6 +177,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await cargarLimitesGeograficos();
     await cargarParroquias();
 
+    // --- INICIO: MODIFICACIÓN PARA SOPORTAR AMBAS PÁGINAS ---
+    // Para la página parroquia_cliente.html (búsqueda por input)
     const input = document.getElementById('input-parroquia');
     const boton = document.getElementById('btn-buscar');
 
@@ -170,5 +186,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         boton.addEventListener('click', () => buscarParroquia(input.value));
         input.addEventListener('keydown', e => e.key === 'Enter' && buscarParroquia(input.value));
     }
-});
 
+    // Para la página reserva_ubicacion.html (búsqueda por select)
+    const parroquiaSelect = document.getElementById('parroquia');
+    if (parroquiaSelect) {
+        parroquiaSelect.addEventListener('change', (e) => {
+            if (e.target.value) buscarParroquia(e.target.value);
+        });
+    }
+    // --- FIN: MODIFICACIÓN ---
+
+    // --- INICIO: MODIFICACIÓN PARA MAPA RESPONSIVE ---
+    // Función para evitar llamadas excesivas durante el redimensionamiento
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+        };
+    }
+
+    // Llama a invalidateSize cuando la ventana cambia de tamaño para que el mapa se ajuste
+    window.addEventListener('resize', debounce(() => {
+        if (map) map.invalidateSize({ animate: true });
+    }, 250)); // 250ms de espera
+});

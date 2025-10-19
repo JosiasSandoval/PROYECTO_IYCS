@@ -28,24 +28,32 @@ function normalizar(doc) {
   return { id, nombre, abreviatura, estado };
 }
 
+// Función genérica para manejar solicitudes a la API
+const manejarSolicitud = async (url, opciones, mensajeError) => {
+  try {
+    const res = await fetch(url, opciones);
+    if (!res.ok) throw new Error(mensajeError);
+    return await res.json();
+  } catch (err) {
+    console.error(mensajeError, err);
+    alert(mensajeError);
+    throw err;
+  }
+};
 
 /* ==========================
    CARGAR DOCUMENTOS DESDE API
    ========================== */
-async function cargarDocumentos() {
-  try {
-    const res = await fetch("/api/tipoDocumento/");
-    if (!res.ok) throw new Error("Error al obtener documentos");
-    const data = await res.json();
-    documentos = Array.isArray(data) ? data.map(normalizar) : [];
-    documentosFiltrados = null;
-    paginaActual = 1;
-    renderTabla();
-  } catch (err) {
-    console.error("Error al cargar documentos:", err);
-    alert("No se pudieron cargar los tipos de documento. Revisa la consola.");
-  }
-}
+const cargarDocumentos = async () => {
+  documentos = await manejarSolicitud(
+    "/api/tipoDocumento/",
+    {},
+    "Error al obtener documentos"
+  ).then((data) => (Array.isArray(data) ? data.map(normalizar) : []));
+  documentosFiltrados = null;
+  paginaActual = 1;
+  renderTabla();
+};
 
 /* ==========================
    EXISTE DOCUMENTO (misma lógica que tenías)
@@ -114,17 +122,12 @@ function renderTabla() {
   renderPaginacion();
 }
 
-function escapeHtml(text) {
-  return String(text || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
+const escapeHtml = (text) => String(text || "").replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
 
 /* ==========================
    PAGINACIÓN (idéntica)
    ========================== */
-function renderPaginacion() {
+const renderPaginacion = () => {
   paginacion.innerHTML = "";
   const total = (documentosFiltrados ?? documentos).length;
   const totalPaginas = Math.ceil(total / elementosPorPagina);
@@ -133,33 +136,31 @@ function renderPaginacion() {
   const ul = document.createElement("ul");
   ul.className = "pagination";
 
-  const crearItem = (numero, activo = false, disabled = false, texto = null) => {
+  const crearItem = (numero, activo, disabled, texto) => {
     const li = document.createElement("li");
     li.className = `page-item ${activo ? "active" : ""} ${disabled ? "disabled" : ""}`;
     li.innerHTML = `<button class="page-link" onclick="cambiarPagina(${numero})">${texto || numero}</button>`;
     return li;
   };
 
-  ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, '<'));
+  ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, "<"));
 
-  const start = Math.max(1, paginaActual - 2);
-  const end = Math.min(totalPaginas, paginaActual + 2);
-
-  if (start > 1) {
+  const range = [Math.max(1, paginaActual - 2), Math.min(totalPaginas, paginaActual + 2)];
+  if (range[0] > 1) {
     ul.appendChild(crearItem(1, paginaActual === 1));
-    if (start > 2) ul.appendChild(crearItem(null, false, true, '...'));
+    if (range[0] > 2) ul.appendChild(crearItem(null, false, true, "..."));
   }
 
-  for (let i = start; i <= end; i++) ul.appendChild(crearItem(i, paginaActual === i));
+  for (let i = range[0]; i <= range[1]; i++) ul.appendChild(crearItem(i, paginaActual === i));
 
-  if (end < totalPaginas) {
-    if (end < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, '...'));
+  if (range[1] < totalPaginas) {
+    if (range[1] < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, "..."));
     ul.appendChild(crearItem(totalPaginas, paginaActual === totalPaginas));
   }
 
-  ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, '>'));
+  ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, ">"));
   paginacion.appendChild(ul);
-}
+};
 
 function cambiarPagina(pagina) {
   const total = Math.ceil((documentosFiltrados ?? documentos).length / elementosPorPagina);
@@ -172,51 +173,45 @@ function cambiarPagina(pagina) {
    ACCIONES: agregar, editar, eliminar, estado
    (llaman a la API y luego recargan)
    ========================== */
-function agregarDocumento(nombre, abreviatura) {
-  return fetch("/api/tipoDocumento/agregar", {
+const agregarDocumento = (nombre, abreviatura) => manejarSolicitud(
+  "/api/tipoDocumento/agregar",
+  {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nombre, abreviatura })
-  })
-    .then(res => {
-      if (!res.ok) throw new Error("Error al agregar");
-      return res.json();
-    })
-    .then(() => cargarDocumentos())
-    .catch(err => { console.error(err); alert("Error al agregar documento"); });
-}
+    body: JSON.stringify({ nombre, abreviatura }),
+  },
+  "Error al agregar documento"
+).then(() => cargarDocumentos());
 
-function actualizarDocumentoAPI(id, nombre, abreviatura) {
-  return fetch(`/api/tipoDocumento/actualizar/${id}`, {
+const actualizarDocumentoAPI = (id, nombre, abreviatura) => manejarSolicitud(
+  `/api/tipoDocumento/actualizar/${id}`,
+  {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nombre, abreviatura })
-  })
-    .then(res => {
-      if (!res.ok) throw new Error("Error al actualizar");
-      return res.json();
-    })
-    .then(() => cargarDocumentos())
-    .catch(err => { console.error(err); alert("Error al actualizar documento"); });
-}
+    body: JSON.stringify({ nombre, abreviatura }),
+  },
+  "Error al actualizar documento"
+).then(() => cargarDocumentos());
 
-function eliminarDocumento(id) {
+const eliminarDocumento = async (id) => {
   if (!confirm("¿Está seguro de eliminar este documento?")) return;
+  try {
+    const res = await fetch(`/api/tipoDocumento/eliminar/${id}`, { method: "DELETE" });
+    const data = await res.json();
 
-  fetch(`/api/tipoDocumento/eliminar/${id}`, { method: "DELETE" })
-    .then(res => {
-      if (!res.ok) throw new Error("Error al eliminar");
-      return res.json();
-    })
-    .then(data => {
-      alert(data.mensaje);
-      cargarDocumentos(); // vuelve a cargar la tabla o lista
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Error al eliminar documento");
-    });
-}
+    if (!res.ok) {
+      // Mostrar mensaje de error específico del servidor
+      alert(data.error || "Error al eliminar el documento");
+      return;
+    }
+
+    alert(data.mensaje || "Documento eliminado correctamente");
+    cargarDocumentos();
+  } catch (err) {
+    console.error("Error al eliminar documento", err);
+    alert("Error inesperado al eliminar el documento");
+  }
+};
 
 /* ==========================
    CAMBIO DE ESTADO (optimizado)
@@ -267,9 +262,6 @@ async function darDeBaja(id) {
     alert("Error al actualizar estado");
   }
 }
-
-
-
 
 /* ==========================
    BÚSQUEDA
@@ -379,6 +371,14 @@ function abrirModalFormulario(modo, doc = null) {
   const form = document.getElementById("formModalDocumento");
   const modalFooter = document.querySelector("#modalFormulario .modal-footer");
 
+  // --- INICIO DE LA SOLUCIÓN ---
+// 1. Limpia cualquier evento de envío que el formulario tuviera antes.
+form.onsubmit = null;
+
+// 2. Limpia cualquier evento de clic que el botón tuviera antes.
+botonGuardar.onclick = null;
+// --- FIN DE LA SOLUCIÓN ---
+
   // reset footer (mantener boton)
   modalFooter.innerHTML = "";
   botonGuardar.textContent = "Aceptar";
@@ -421,16 +421,18 @@ if (modo === "agregar") {
       actualizarDocumentoAPI(doc.id, nombre, abreviatura)
         .then(() => cerrarModal("modalFormulario"));
     };
-
-  } else if (modo === "ver" && doc) {
+  } else  if (modo === "ver" && doc) {
     titulo.textContent = "Detalle del Documento";
     inputNombre.value = doc.nombre;
     inputAbreviatura.value = doc.abreviatura;
     inputNombre.disabled = true;
     inputAbreviatura.disabled = true;
 
-    // botón Aceptar simplemente cierra
-    botonGuardar.onclick = function () { cerrarModal("modalFormulario"); };
+    // Asegúrate de que el botón "Aceptar" solo cierre el modal
+    botonGuardar.onclick = function (e) {
+      e.preventDefault(); // Evitar cualquier acción predeterminada
+      cerrarModal("modalFormulario");
+    };
   }
 
   abrirModal("modalFormulario");
@@ -449,6 +451,7 @@ function verDetalle(id) {
   const doc = documentos.find(d => d.id === id);
   if (!doc) return;
   abrirModalFormulario("ver", doc);
+  renderTabla();
 }
 
 /* ==========================

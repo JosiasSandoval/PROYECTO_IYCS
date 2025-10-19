@@ -6,6 +6,9 @@
     <title>LITBOOK | Realizar Reserva</title>
     <link rel="stylesheet" href="/static/css/reserva_ubicacion.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -60,10 +63,9 @@
                                 <option>--Seleccione parroquia--</option>
                             </select>
                         </div>
-                        <div class="mapa-container">
-                            <img src="https://via.placeholder.com/500x300?text=Mapa+de+Ubicación" alt="Mapa de Ubicación">
-                            <p><a href="#">Ampliar el mapa</a></p>
-                        </div>
+                    <div id="mapa"> 
+                        <div id="gps"></div> 
+                    </div> 
                     </div>
                 </div>
                 <div class="navigation-buttons">
@@ -80,5 +82,8 @@
     <script src="/static/js/header.js"></script>
     <script src="/static/js/reserva.js"></script>
     <script src="/static/js/barra_lateral.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="/static/js/mapa.js"></script>
 </body>
 </html>
