@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recuperar Contraseña - Sistema Litúrgico</title>
+  <link rel="stylesheet" href="/static/css/recuperar_clave.css">
+</head>
+<body>
+<main>
+  <div class="formulario">
+    <!-- izquierda: formulario -->
+    <div class="left">
+      <h1>Recuperar Contraseña</h1>
+
+      <!-- Paso 1: correo -->
+      <form class="form-correo">
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" placeholder="Ingresa tu correo" required>
+        <button type="submit" class="inicio">Enviar enlace de recuperación</button>
+      </form>
+
+      <p class="mensaje">Si tu correo existe, recibirás un enlace con un código para recuperar tu contraseña.</p>
+
+      <!-- Paso 2: código -->
+      <div class="codigo-container">
+        <label>Ingresa el código recibido:</label>
+        <div class="codigo-boxes">
+          <input type="text" maxlength="1">
+          <input type="text" maxlength="1">
+          <input type="text" maxlength="1">
+          <input type="text" maxlength="1">
+          <input type="text" maxlength="1">
+          <input type="text" maxlength="1">
+        </div>
+        <button class="inicio">Verificar código</button>
+      </div>
+
+      <!-- Paso 3: cambiar contraseña -->
+      <div class="cambiar-pass">
+        <label>Nueva contraseña</label>
+        <input type="password" placeholder="Nueva contraseña">
+        <label>Confirmar contraseña</label>
+        <input type="password" placeholder="Confirmar contraseña">
+        <button class="inicio">Cambiar contraseña</button>
+      </div>
+
+      <div class="info">
+        <a href="login.html">Volver al inicio de sesión</a>
+      </div>
+    </div>
+
+    <!-- derecha: imagen (opcional) -->
+    <div class="right">
+      <img src="/static/img/logotipo_litbook.png" alt="Imagen Litúrgica">
+    </div>
+  </div>
+</main>
+</body>
+</html>

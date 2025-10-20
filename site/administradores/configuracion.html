@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/admin_configuracion.css">
+    <title>LITBOOK | Configuración</title>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="grid">
+        <div id="barra_lateral_administrador-placeholder"></div>
+        <div class="contenido-principal">
+            <div class="contenido">   
+                <h3 class="titulo-seccion">Configuración</h3>
+                <!--Busqueda-->
+                <form id="formDocumento">
+                    <label for="inputDocumento">ID de la configuración:</label>
+                    <input type="text" id="inputDocumento" placeholder="Ingrese id de la configuración"/>
+                    
+                    <button type="button" id="btn_buscar" class="btn-icon" title="Buscar">
+                        <img src="/static/img/lupa.png" alt="Buscar" />
+                    </button>
+
+                    <button type="submit" id="btn_guardar" class="btn-icon" title="Agregar">
+                        <img src="/static/img/mas.png" alt="Agregar" />
+                    </button>
+                </form>
+
+                <!--Tabla-->
+                <div class="tabla-documentos">
+                    <table id="tablaDocumentos">
+                        <thead>
+                            <tr>
+                                <th class="col-id">#</th>
+                                <th class="col-nombClave">Nombre Clave</th>
+                                <th class="col-unidad">Unidad</th>
+                                <th class="col-valor">Valor</th>
+                                <th class="col-acciones">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="paginacionContainer"></div>
+            </div>
+        </div>
+    </main>
+    <script src="/static/js/barra_lateral_administrador.js"></script>
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/admin_configuracion.js"></script>
+</body>
+</html>

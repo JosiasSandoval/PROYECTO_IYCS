@@ -1,7 +1,6 @@
 // ================== VARIABLES GLOBALES ==================
-let reprogramaciones = [];
-let reprogramacionesFiltradas = null;
-let reprogramacionEditandoId = null;
+let parroquiaPersonal = [];
+let parroquiaPersonalFiltrada = null;
 
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
@@ -19,38 +18,35 @@ const elementosPorPagina = 10;
 function renderTabla() {
   tabla.innerHTML = "";
 
-  const lista = reprogramacionesFiltradas ?? reprogramaciones;
-
+  const lista = parroquiaPersonalFiltrada ?? parroquiaPersonal;
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const fin = inicio + elementosPorPagina;
   const datosPagina = lista.slice(inicio, fin);
 
-  datosPagina.forEach((rep, index) => {
-    const esActivo = rep.estado === "activo";
+  datosPagina.forEach((reg, index) => {
+    const esActivo = reg.estado === "activo";
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
 
     const fila = document.createElement("tr");
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
-      <td class="col-fechaAnterior">${rep.fechaAnterior}</td>
-      <td class="col-horaAnterior">${rep.horaAnterior}</td>
-      <td class="col-fechaNueva">${rep.fechaNueva}</td>
-      <td class="col-horaNueva">${rep.horaNueva}</td>
-      <td class="col-motivo">${rep.motivo}</td>
-      <td class="col-usuarioReprogramo">${rep.usuarioReprogramo}</td>
+      <td class="col-usuario">${reg.usuario}</td>
+      <td class="col-cargo">${reg.cargo}</td>
+      <td class="col-fechaInicio">${reg.fechaInicio}</td>
+      <td class="col-fechaFin">${reg.fechaFin || "-"}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="verReprogramacion(${rep.id})" title="Ver">
+          <button class="btn btn-info btn-sm" onclick="verRegistro(${reg.id})" title="Ver">
             <img src="/static/img/ojo.png" alt="ver">
           </button>
-          <button class="btn btn-warning btn-sm" onclick="editarReprogramacion(${rep.id})" title="Editar">
+          <button class="btn btn-warning btn-sm" onclick="editarRegistro(${reg.id})" title="Editar">
             <img src="/static/img/lapiz.png" alt="editar">
           </button>
-          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${rep.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
+          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${reg.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
             <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
           </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarReprogramacion(${rep.id})" title="Eliminar">
+          <button class="btn btn-danger btn-sm" onclick="eliminarRegistro(${reg.id})" title="Eliminar">
             <img src="/static/img/x.png" alt="eliminar">
           </button>
         </div>
@@ -65,7 +61,7 @@ function renderTabla() {
 // ================== PAGINACIÓN ==================
 function renderPaginacion() {
   paginacion.innerHTML = "";
-  const totalPaginas = Math.ceil(reprogramaciones.length / elementosPorPagina);
+  const totalPaginas = Math.ceil(parroquiaPersonal.length / elementosPorPagina);
   if (totalPaginas <= 1) return;
 
   const ul = document.createElement("ul");
@@ -92,51 +88,49 @@ function renderPaginacion() {
 }
 
 function cambiarPagina(pagina) {
-  if (pagina < 1 || pagina > Math.ceil(reprogramaciones.length / elementosPorPagina)) return;
+  if (pagina < 1 || pagina > Math.ceil(parroquiaPersonal.length / elementosPorPagina)) return;
   paginaActual = pagina;
   renderTabla();
 }
 
 // ================== CRUD ==================
-function agregarReprogramacion(fechaAnterior, horaAnterior, fechaNueva, horaNueva, motivo, usuarioReprogramo) {
-  reprogramaciones.push({
+function agregarRegistro(usuario, cargo, fechaInicio, fechaFin) {
+  parroquiaPersonal.push({
     id: Date.now(),
-    fechaAnterior,
-    horaAnterior,
-    fechaNueva,
-    horaNueva,
-    motivo,
-    usuarioReprogramo,
+    usuario,
+    cargo,
+    fechaInicio,
+    fechaFin,
     estado: "activo",
   });
   renderTabla();
 }
 
-function editarReprogramacion(id) {
-  const rep = reprogramaciones.find((r) => r.id === id);
-  if (!rep) return;
-  abrirModalFormulario("editar", rep);
+function editarRegistro(id) {
+  const reg = parroquiaPersonal.find((r) => r.id === id);
+  if (!reg) return;
+  abrirModalFormulario("editar", reg);
 }
 
-function eliminarReprogramacion(id) {
-  const rep = reprogramaciones.find((r) => r.id === id);
-  if (!rep) return;
-  if (!confirm(`¿Seguro que deseas eliminar la reprogramación con ID ${rep.id}?`)) return;
-  reprogramaciones = reprogramaciones.filter((r) => r.id !== id);
+function eliminarRegistro(id) {
+  const reg = parroquiaPersonal.find((r) => r.id === id);
+  if (!reg) return;
+  if (!confirm(`¿Seguro que deseas eliminar el registro con ID ${reg.id}?`)) return;
+  parroquiaPersonal = parroquiaPersonal.filter((r) => r.id !== id);
   renderTabla();
 }
 
 function darDeBaja(id) {
-  const rep = reprogramaciones.find((r) => r.id === id);
-  if (!rep) return;
-  rep.estado = rep.estado === "activo" ? "inactivo" : "activo";
+  const reg = parroquiaPersonal.find((r) => r.id === id);
+  if (!reg) return;
+  reg.estado = reg.estado === "activo" ? "inactivo" : "activo";
   renderTabla();
 }
 
-function verReprogramacion(id) {
-  const rep = reprogramaciones.find((r) => r.id === id);
-  if (!rep) return;
-  abrirModalFormulario("ver", rep);
+function verRegistro(id) {
+  const reg = parroquiaPersonal.find((r) => r.id === id);
+  if (!reg) return;
+  abrirModalFormulario("ver", reg);
 }
 
 // ================== MODALES ==================
@@ -147,7 +141,7 @@ function crearModal() {
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Detalle de la Reprogramación</h5>
+            <h5 class="modal-title">Detalle del Registro</h5>
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalDetalle')">&times;</button>
           </div>
           <div class="modal-body" id="modalDetalleContenido"></div>
@@ -170,30 +164,22 @@ function crearModalFormulario() {
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalFormulario')">&times;</button>
           </div>
           <div class="modal-body">
-            <form id="formModalReprogramacion">
+            <form id="formModalRegistro">
               <div class="mb-3">
-                <label for="modalFechaAnterior" class="form-label">Fecha anterior</label>
-                <input type="date" id="modalFechaAnterior" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="modalHoraAnterior" class="form-label">Hora anterior</label>
-                <input type="time" id="modalHoraAnterior" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="modalFechaNueva" class="form-label">Fecha nueva</label>
-                <input type="date" id="modalFechaNueva" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="modalHoraNueva" class="form-label">Hora nueva</label>
-                <input type="time" id="modalHoraNueva" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="modalMotivo" class="form-label">Motivo</label>
-                <input type="text" id="modalMotivo" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="modalUsuario" class="form-label">Usuario que reprogramó</label>
+                <label for="modalUsuario" class="form-label">Usuario</label>
                 <input type="text" id="modalUsuario" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="modalCargo" class="form-label">Cargo</label>
+                <input type="text" id="modalCargo" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="modalFechaInicio" class="form-label">Fecha Inicio</label>
+                <input type="date" id="modalFechaInicio" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="modalFechaFin" class="form-label">Fecha Fin</label>
+                <input type="date" id="modalFechaFin" class="form-control">
               </div>
               <div class="modal-footer">
                 <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar">Aceptar</button>
@@ -218,70 +204,58 @@ function cerrarModal(id) {
   if (modal) modal.classList.remove("activo");
 }
 
-function abrirModalFormulario(modo, rep = null) {
+function abrirModalFormulario(modo, reg = null) {
   const titulo = document.getElementById("modalFormularioTitulo");
   const inputs = {
-    fechaAnterior: document.getElementById("modalFechaAnterior"),
-    horaAnterior: document.getElementById("modalHoraAnterior"),
-    fechaNueva: document.getElementById("modalFechaNueva"),
-    horaNueva: document.getElementById("modalHoraNueva"),
-    motivo: document.getElementById("modalMotivo"),
     usuario: document.getElementById("modalUsuario"),
+    cargo: document.getElementById("modalCargo"),
+    fechaInicio: document.getElementById("modalFechaInicio"),
+    fechaFin: document.getElementById("modalFechaFin"),
   };
   const botonGuardar = document.getElementById("btnGuardar");
-  const form = document.getElementById("formModalReprogramacion");
+  const form = document.getElementById("formModalRegistro");
   const modalFooter = document.querySelector("#modalFormulario .modal-footer");
 
   modalFooter.innerHTML = "";
   Object.values(inputs).forEach((input) => (input.disabled = false));
 
   if (modo === "agregar") {
-    titulo.textContent = "Agregar Reprogramación";
+    titulo.textContent = "Agregar Registro";
     Object.values(inputs).forEach((input) => (input.value = ""));
     modalFooter.appendChild(botonGuardar);
     form.onsubmit = (e) => {
       e.preventDefault();
-      agregarReprogramacion(
-        inputs.fechaAnterior.value.trim(),
-        inputs.horaAnterior.value.trim(),
-        inputs.fechaNueva.value.trim(),
-        inputs.horaNueva.value.trim(),
-        inputs.motivo.value.trim(),
-        inputs.usuario.value.trim()
+      agregarRegistro(
+        inputs.usuario.value.trim(),
+        inputs.cargo.value.trim(),
+        inputs.fechaInicio.value.trim(),
+        inputs.fechaFin.value.trim()
       );
       cerrarModal("modalFormulario");
     };
-  } else if (modo === "editar" && rep) {
-    titulo.textContent = "Editar Reprogramación";
-    inputs.fechaAnterior.value = rep.fechaAnterior;
-    inputs.horaAnterior.value = rep.horaAnterior;
-    inputs.fechaNueva.value = rep.fechaNueva;
-    inputs.horaNueva.value = rep.horaNueva;
-    inputs.motivo.value = rep.motivo;
-    inputs.usuario.value = rep.usuarioReprogramo;
-
+  } else if (modo === "editar" && reg) {
+    titulo.textContent = "Editar Registro";
+    inputs.usuario.value = reg.usuario;
+    inputs.cargo.value = reg.cargo;
+    inputs.fechaInicio.value = reg.fechaInicio;
+    inputs.fechaFin.value = reg.fechaFin;
     modalFooter.appendChild(botonGuardar);
     form.onsubmit = (e) => {
       e.preventDefault();
-      rep.fechaAnterior = inputs.fechaAnterior.value.trim();
-      rep.horaAnterior = inputs.horaAnterior.value.trim();
-      rep.fechaNueva = inputs.fechaNueva.value.trim();
-      rep.horaNueva = inputs.horaNueva.value.trim();
-      rep.motivo = inputs.motivo.value.trim();
-      rep.usuarioReprogramo = inputs.usuario.value.trim();
+      reg.usuario = inputs.usuario.value.trim();
+      reg.cargo = inputs.cargo.value.trim();
+      reg.fechaInicio = inputs.fechaInicio.value.trim();
+      reg.fechaFin = inputs.fechaFin.value.trim();
       cerrarModal("modalFormulario");
       renderTabla();
     };
-  } else if (modo === "ver" && rep) {
-    titulo.textContent = "Detalle de la Reprogramación";
-    inputs.fechaAnterior.value = rep.fechaAnterior;
-    inputs.horaAnterior.value = rep.horaAnterior;
-    inputs.fechaNueva.value = rep.fechaNueva;
-    inputs.horaNueva.value = rep.horaNueva;
-    inputs.motivo.value = rep.motivo;
-    inputs.usuario.value = rep.usuarioReprogramo;
+  } else if (modo === "ver" && reg) {
+    titulo.textContent = "Detalle del Registro";
+    inputs.usuario.value = reg.usuario;
+    inputs.cargo.value = reg.cargo;
+    inputs.fechaInicio.value = reg.fechaInicio;
+    inputs.fechaFin.value = reg.fechaFin;
     Object.values(inputs).forEach((input) => (input.disabled = true));
-
     modalFooter.appendChild(botonGuardar);
     botonGuardar.onclick = () => cerrarModal("modalFormulario");
   }
@@ -295,8 +269,8 @@ const btnBuscar = document.getElementById("btn_buscar");
 
 btnBuscar.addEventListener("click", () => {
   const termino = inputBuscar.value.trim().toLowerCase();
-  reprogramacionesFiltradas =
-    termino === "" ? null : reprogramaciones.filter((r) => r.id.toString().includes(termino));
+  parroquiaPersonalFiltrada =
+    termino === "" ? null : parroquiaPersonal.filter((r) => r.id.toString().includes(termino));
   paginaActual = 1;
   renderTabla();
 });
@@ -308,10 +282,12 @@ document.getElementById("formDocumento").addEventListener("submit", (e) => {
 });
 
 // ================== DATOS DE EJEMPLO ==================
-reprogramaciones = [
-  { id: 1, fechaAnterior: "2025-09-10", horaAnterior: "10:00", fechaNueva: "2025-09-12", horaNueva: "11:00", motivo: "Fallo técnico", usuarioReprogramo: "Cardenal", estado: "activo" },
-  { id: 2, fechaAnterior: "2025-09-15", horaAnterior: "09:00", fechaNueva: "2025-09-16", horaNueva: "09:30", motivo: "Solicitud del cliente", usuarioReprogramo: "Parroco", estado: "activo" },
-  { id: 3, fechaAnterior: "2025-09-20", horaAnterior: "14:00", fechaNueva: "2025-09-21", horaNueva: "13:00", motivo: "Cambio de sala", usuarioReprogramo: "Secretaria", estado: "inactivo" },
+parroquiaPersonal = [
+  { id: 1, usuario: "Jose Sandoval", cargo: "Cardenal", fechaInicio: "2025-01-01", fechaFin: "2025-12-31", estado: "activo" },
+  { id: 2, usuario: "Juana Saavedra", cargo: "Secretaria", fechaInicio: "2025-02-01", fechaFin: "2025-11-30", estado: "activo" },
+  { id: 3, usuario: "Pedro Ruiz", cargo: "Diacono", fechaInicio: "2025-03-15", fechaFin: null, estado: "inactivo" },
+  { id: 4, usuario: "Susana Lopez", cargo: "Sacerdote", fechaInicio: "2025-04-01", fechaFin: "2025-10-31", estado: "activo" },
+  { id: 5, usuario: "Juan Perez", cargo: "Asistente", fechaInicio: "2025-05-01", fechaFin: null, estado: "activo" },
 ];
 
 renderTabla();

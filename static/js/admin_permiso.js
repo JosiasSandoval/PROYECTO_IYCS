@@ -1,7 +1,15 @@
 // ================== VARIABLES GLOBALES ==================
-let descuentos = [];
-let descuentosFiltrados = null;
-let descuentoEditandoId = null;
+let permisos = [
+  { idPermiso: 1, nombAccion: "Crear", nombTabla: "Usuarios", estado: "activo" },
+  { idPermiso: 2, nombAccion: "Editar", nombTabla: "Usuarios", estado: "activo" },
+  { idPermiso: 3, nombAccion: "Eliminar", nombTabla: "Usuarios", estado: "inactivo" },
+  { idPermiso: 4, nombAccion: "Ver", nombTabla: "Reprogramaciones", estado: "activo" },
+  { idPermiso: 5, nombAccion: "Agregar", nombTabla: "Permisos", estado: "activo" },
+  { idPermiso: 6, nombAccion: "Editar", nombTabla: "Permisos", estado: "inactivo" },
+];
+
+let permisosFiltrados = null;
+let permisoEditandoId = null;
 
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
@@ -19,36 +27,34 @@ const elementosPorPagina = 10;
 function renderTabla() {
   tabla.innerHTML = "";
 
-  const lista = descuentosFiltrados ?? descuentos;
+  const lista = permisosFiltrados ?? permisos;
 
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const fin = inicio + elementosPorPagina;
-  const descuentosPagina = lista.slice(inicio, fin);
+  const datosPagina = lista.slice(inicio, fin);
 
-  descuentosPagina.forEach((desc, index) => {
-    const esActivo = desc.estado === "activo";
+  datosPagina.forEach((perm, index) => {
+    const esActivo = perm.estado === "activo" || perm.estado === undefined;
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
 
     const fila = document.createElement("tr");
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
-      <td class="col-porcentaje">${desc.porcentaje}%</td>
-      <td class="col-fechaInicio">${desc.fechaInicio}</td>
-      <td class="col-fechaFin">${desc.fechaFin}</td>
-      <td class="col-condicion">${desc.condicion}</td>
+      <td class="col-accion">${perm.nombAccion}</td>
+      <td class="col-tabla">${perm.nombTabla}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="verDescuento(${desc.id})" title="Ver">
+          <button class="btn btn-info btn-sm" onclick="verPermiso(${perm.idPermiso})" title="Ver">
             <img src="/static/img/ojo.png" alt="ver">
           </button>
-          <button class="btn btn-warning btn-sm" onclick="editarDescuento(${desc.id})" title="Editar">
+          <button class="btn btn-warning btn-sm" onclick="editarPermiso(${perm.idPermiso})" title="Editar">
             <img src="/static/img/lapiz.png" alt="editar">
           </button>
-          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${desc.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
+          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${perm.idPermiso})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
             <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
           </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarDescuento(${desc.id})" title="Eliminar">
+          <button class="btn btn-danger btn-sm" onclick="eliminarPermiso(${perm.idPermiso})" title="Eliminar">
             <img src="/static/img/x.png" alt="eliminar">
           </button>
         </div>
@@ -63,7 +69,7 @@ function renderTabla() {
 // ================== PAGINACIÓN ==================
 function renderPaginacion() {
   paginacion.innerHTML = "";
-  const totalPaginas = Math.ceil(descuentos.length / elementosPorPagina);
+  const totalPaginas = Math.ceil(permisos.length / elementosPorPagina);
   if (totalPaginas <= 1) return;
 
   const ul = document.createElement("ul");
@@ -90,49 +96,48 @@ function renderPaginacion() {
 }
 
 function cambiarPagina(pagina) {
-  if (pagina < 1 || pagina > Math.ceil(descuentos.length / elementosPorPagina)) return;
+  if (pagina < 1 || pagina > Math.ceil(permisos.length / elementosPorPagina)) return;
   paginaActual = pagina;
   renderTabla();
 }
 
 // ================== CRUD ==================
-function agregarDescuento(porcentaje, fechaInicio, fechaFin, condicion) {
-  descuentos.push({
-    id: Date.now(),
-    porcentaje,
-    fechaInicio,
-    fechaFin,
-    condicion,
-    estado: "activo",
+function agregarPermiso(nombAccion, nombTabla) {
+  permisos.push({
+    idPermiso: Date.now(),
+    nombAccion,
+    nombTabla,
+    estado: "activo"
   });
   renderTabla();
 }
 
-function editarDescuento(id) {
-  const desc = descuentos.find((d) => d.id === id);
-  if (!desc) return;
-  abrirModalFormulario("editar", desc);
+function editarPermiso(id) {
+  const perm = permisos.find((p) => p.idPermiso === id);
+  if (!perm) return;
+  abrirModalFormulario("editar", perm);
 }
 
-function eliminarDescuento(id) {
-  const desc = descuentos.find((d) => d.id === id);
-  if (!desc) return;
-  if (!confirm(`¿Seguro que deseas eliminar el descuento con ${desc.porcentaje}%?`)) return;
-  descuentos = descuentos.filter((d) => d.id !== id);
+function eliminarPermiso(id) {
+  const perm = permisos.find((p) => p.idPermiso === id);
+  if (!perm) return;
+  if (!confirm(`¿Seguro que deseas eliminar el permiso con ID ${perm.idPermiso}?`)) return;
+  permisos = permisos.filter((p) => p.idPermiso !== id);
   renderTabla();
 }
 
+// ================== BOTÓN DAR DE BAJA ==================
 function darDeBaja(id) {
-  const desc = descuentos.find((d) => d.id === id);
-  if (!desc) return;
-  desc.estado = desc.estado === "activo" ? "inactivo" : "activo";
+  const perm = permisos.find((p) => p.idPermiso === id);
+  if (!perm) return;
+  perm.estado = perm.estado === "activo" ? "inactivo" : "activo";
   renderTabla();
 }
 
-function verDescuento(id) {
-  const desc = descuentos.find((d) => d.id === id);
-  if (!desc) return;
-  abrirModalFormulario("ver", desc);
+function verPermiso(id) {
+  const perm = permisos.find((p) => p.idPermiso === id);
+  if (!perm) return;
+  abrirModalFormulario("ver", perm);
 }
 
 // ================== MODALES ==================
@@ -143,7 +148,7 @@ function crearModal() {
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Detalle del Descuento</h5>
+            <h5 class="modal-title">Detalle del Permiso</h5>
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalDetalle')">&times;</button>
           </div>
           <div class="modal-body" id="modalDetalleContenido"></div>
@@ -166,22 +171,14 @@ function crearModalFormulario() {
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalFormulario')">&times;</button>
           </div>
           <div class="modal-body">
-            <form id="formModalDescuento">
+            <form id="formModalPermiso">
               <div class="mb-3">
-                <label for="modalPorcentaje" class="form-label">Porcentaje</label>
-                <input type="number" id="modalPorcentaje" class="form-control" required>
+                <label for="modalAccion" class="form-label">Acción</label>
+                <input type="text" id="modalAccion" class="form-control" required>
               </div>
               <div class="mb-3">
-                <label for="modalFechaInicio" class="form-label">Fecha Inicio</label>
-                <input type="date" id="modalFechaInicio" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="modalFechaFin" class="form-label">Fecha Fin</label>
-                <input type="date" id="modalFechaFin" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="modalCondicion" class="form-label">Condición</label>
-                <input type="text" id="modalCondicion" class="form-control" required>
+                <label for="modalTabla" class="form-label">Tabla</label>
+                <input type="text" id="modalTabla" class="form-control" required>
               </div>
               <div class="modal-footer">
                 <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar">Aceptar</button>
@@ -206,68 +203,45 @@ function cerrarModal(id) {
   if (modal) modal.classList.remove("activo");
 }
 
-function abrirModalFormulario(modo, desc = null) {
+function abrirModalFormulario(modo, perm = null) {
   const titulo = document.getElementById("modalFormularioTitulo");
-  const inputPorcentaje = document.getElementById("modalPorcentaje");
-  const inputInicio = document.getElementById("modalFechaInicio");
-  const inputFin = document.getElementById("modalFechaFin");
-  const inputCond = document.getElementById("modalCondicion");
+  const inputs = {
+    accion: document.getElementById("modalAccion"),
+    tabla: document.getElementById("modalTabla"),
+  };
   const botonGuardar = document.getElementById("btnGuardar");
-  const form = document.getElementById("formModalDescuento");
+  const form = document.getElementById("formModalPermiso");
   const modalFooter = document.querySelector("#modalFormulario .modal-footer");
 
   modalFooter.innerHTML = "";
-  inputPorcentaje.disabled = false;
-  inputInicio.disabled = false;
-  inputFin.disabled = false;
-  inputCond.disabled = false;
+  Object.values(inputs).forEach((input) => (input.disabled = false));
 
   if (modo === "agregar") {
-    titulo.textContent = "Agregar Descuento";
-    inputPorcentaje.value = "";
-    inputInicio.value = "";
-    inputFin.value = "";
-    inputCond.value = "";
-
+    titulo.textContent = "Agregar Permiso";
+    Object.values(inputs).forEach((input) => (input.value = ""));
     modalFooter.appendChild(botonGuardar);
     form.onsubmit = (e) => {
       e.preventDefault();
-      agregarDescuento(
-        inputPorcentaje.value.trim(),
-        inputInicio.value.trim(),
-        inputFin.value.trim(),
-        inputCond.value.trim()
-      );
+      agregarPermiso(inputs.accion.value.trim(), inputs.tabla.value.trim());
       cerrarModal("modalFormulario");
     };
-  } else if (modo === "editar" && desc) {
-    titulo.textContent = "Editar Descuento";
-    inputPorcentaje.value = desc.porcentaje;
-    inputInicio.value = desc.fechaInicio;
-    inputFin.value = desc.fechaFin;
-    inputCond.value = desc.condicion;
-
+  } else if (modo === "editar" && perm) {
+    titulo.textContent = "Editar Permiso";
+    inputs.accion.value = perm.nombAccion;
+    inputs.tabla.value = perm.nombTabla;
     modalFooter.appendChild(botonGuardar);
     form.onsubmit = (e) => {
       e.preventDefault();
-      desc.porcentaje = inputPorcentaje.value.trim();
-      desc.fechaInicio = inputInicio.value.trim();
-      desc.fechaFin = inputFin.value.trim();
-      desc.condicion = inputCond.value.trim();
+      perm.nombAccion = inputs.accion.value.trim();
+      perm.nombTabla = inputs.tabla.value.trim();
       cerrarModal("modalFormulario");
       renderTabla();
     };
-  } else if (modo === "ver" && desc) {
-    titulo.textContent = "Detalle del Descuento";
-    inputPorcentaje.value = desc.porcentaje;
-    inputInicio.value = desc.fechaInicio;
-    inputFin.value = desc.fechaFin;
-    inputCond.value = desc.condicion;
-    inputPorcentaje.disabled = true;
-    inputInicio.disabled = true;
-    inputFin.disabled = true;
-    inputCond.disabled = true;
-
+  } else if (modo === "ver" && perm) {
+    titulo.textContent = "Detalle del Permiso";
+    inputs.accion.value = perm.nombAccion;
+    inputs.tabla.value = perm.nombTabla;
+    Object.values(inputs).forEach((input) => (input.disabled = true));
     modalFooter.appendChild(botonGuardar);
     botonGuardar.onclick = () => cerrarModal("modalFormulario");
   }
@@ -281,10 +255,8 @@ const btnBuscar = document.getElementById("btn_buscar");
 
 btnBuscar.addEventListener("click", () => {
   const termino = inputBuscar.value.trim().toLowerCase();
-  descuentosFiltrados =
-    termino === ""
-      ? null
-      : descuentos.filter((d) => d.id.toString().includes(termino));
+  permisosFiltrados =
+    termino === "" ? null : permisos.filter((p) => p.idPermiso.toString().includes(termino));
   paginaActual = 1;
   renderTabla();
 });
@@ -295,11 +267,5 @@ document.getElementById("formDocumento").addEventListener("submit", (e) => {
   abrirModalFormulario("agregar");
 });
 
-// ================== DATOS DE EJEMPLO ==================
-descuentos = [
-  { id: 1, porcentaje: 10, fechaInicio: "2025-10-01", fechaFin: "2025-10-10", condicion: "Clientes nuevos", estado: "activo" },
-  { id: 2, porcentaje: 20, fechaInicio: "2025-10-05", fechaFin: "2025-10-15", condicion: "Compras mayores a $100", estado: "activo" },
-  { id: 3, porcentaje: 15, fechaInicio: "2025-09-25", fechaFin: "2025-10-05", condicion: "Temporada", estado: "inactivo" },
-];
-
+// ================== RENDER INICIAL ==================
 renderTabla();
