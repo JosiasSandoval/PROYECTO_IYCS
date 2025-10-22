@@ -124,3 +124,25 @@ def eliminar_tipo_documento(idTipo):
         raise
     finally:
         conexion.close()
+
+def busqueda_tipo_documento(busqueda):
+    conexion=obtener_conexion()
+    try:
+        resultados=[]
+        with conexion.cursor()as cursor:
+            cursor.execute("SELECT idTipoDocumento, nombDocumento,abreviatura,estadoDocumento FROM TIPO_DOCUMENTO where nombDocumento=%s or abreviatura=%s",(busqueda,busqueda))
+            resultados=cursor.fetchall()
+            for fila in resultados:
+                resultados.append({
+                    'id':fila[0],
+                    'nombre':fila[1],
+                    'abreviatura':fila[2],
+                    'estado':fila[3]
+                })
+            return resultados
+    except Exception as e:
+        print(f'Error en la busqueda de datos:{e}')
+        return []
+    finally:
+        if conexion:
+            conexion.close()

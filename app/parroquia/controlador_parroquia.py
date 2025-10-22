@@ -179,10 +179,10 @@ def cambiar_estado_parroquia(idParroquia):
             cursor.execute("UPDATE PARROQUIA SET estadoParroquia=%s WHERE idParroquia=%s",
                            (nuevo_estado, idParroquia))
         conexion.commit()
-        return {'ok': True, 'nuevo_estado': nuevo_estado}
+        return True
     except Exception as e:
         print(f'Error al cambiar estado de la parroquia: {e}')
-        return {'ok': False, 'mensaje': str(e)}
+        return False
     finally:
         if conexion:
             conexion.close()
