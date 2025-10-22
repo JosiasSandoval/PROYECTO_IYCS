@@ -8,11 +8,7 @@ from app.rol_permiso.controlador_rol_permiso import (
     eliminar_rol,
     verificar_relacion_rol,
     get_listar_permiso,
-    cambiar_estado_permiso,
-    eliminar_permiso_revocado,
-    agregar_rol_permiso,
-    asignar_permiso_usuario,
-    revocar_permiso_usuario
+    agregar_rol_permiso
 )
 
 rol_bp=Blueprint('rol',__name__)
@@ -82,37 +78,7 @@ def listar_permiso():
     resultados=get_listar_permiso()
     return jsonify(resultados),200
 
-@permiso_bp.route('/',methods=['GET'])
-def listar_permiso():
-    try:
-        datos=get_listar_permiso()
-        return jsonify({'datos':datos})
-    except Exception as e:
-        print(f'Error al listar los permisos: {e}')
-        return jsonify({'datos':[]}),500
 
-@permiso_bp.route('/cambiar_estado/<int:idPermiso>/<int:idUsuario>',methods=['PUT'])
-def cambiar_estado_permiso_usuario(idPermiso,idUsuario):
-    resultado=cambiar_estado_permiso(idPermiso,idUsuario)
-    if resultado['ok']:
-        return jsonify({
-            'ok':True,
-            'mensaje':'Estado cambiado correctamente',
-            'nuevo_estado':resultado['nuevo_estado']
-        })
-    else:
-        return jsonify({'ok':False,'mensaje':resultado['mensaje']}),400
-
-@permiso_bp.route('/eliminar_permiso/<int:idPermiso>/<int:idUsuario>',methods=['DELETE'])
-def eliminar_permiso_usuario(idPermiso,idUsuario):
-    resultado=eliminar_permiso_revocado(idUsuario,idPermiso)
-    if resultado['ok']:
-        return jsonify({
-            'ok':True,
-            'mensaje':'Permiso revocado correctamente'
-        })
-    else:
-        return jsonify({'error':'No se puede eliminar el permiso revocado al usuario'}),400
 
 @permiso_bp.route('/agregar_rol_permiso',methods=['POST'])
 def agregar_rol_permiso_usuario():
@@ -127,30 +93,5 @@ def agregar_rol_permiso_usuario():
         print(f'Error al agregar permiso al usuario: {e}')
         return jsonify({'ok':False,'mensaje':'Error interno'}),500
 
-@permiso_bp.route('/asignar_permiso_usuario',methods=['POST'])
-def asignar_permiso_usuario_rol():
-    try:
-        datos=request.get_json()
-        asignar_permiso_usuario(
-            datos.get('idUsuario'),
-            datos.get('idPermiso')
-        )
-        return jsonify({'ok':True,'mensaje':'Permiso asignado correctamente'})
-    except Exception as e:
-        print(f'Error al agregar permiso al usuario: {e}')
-        return jsonify({'ok':False,'mensaje':'Error interno'}),500
-
-@permiso_bp.route('/revocar_permiso_usuario',methods=['POST'])
-def revocar_permiso_usuario_rol():
-    try:
-        datos=request.get_json()
-        revocar_permiso_usuario(
-            datos.get('idUsuario'),
-            datos.get('idPermiso')
-        )
-        return jsonify({'ok':True,'mensaje':'Permiso revocado correctamente'})
-    except Exception as e:
-        print(f'Error al agregar permiso al usuario: {e}')
-        return jsonify({'ok':False,'mensaje':'Error interno'}),500
 
 
