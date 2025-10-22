@@ -93,3 +93,93 @@ INSERT INTO METODO_PAGO (nombMetodo, estadoMetodo) VALUES
 ('Pago en Línea', TRUE),
 ('Billetera Digital', TRUE),
 ('Cheque', TRUE);
+
+--Rol y permiso:
+INSERT INTO ROL (idRol, nombRol, estadoRol) VALUES
+(1, 'Administrador', true),
+(2, 'Sacerdote', true),
+(3, 'Secretaria', true),
+(4, 'Feligres', true),
+(5, 'Invitado', true);
+
+INSERT INTO PERMISO (nombAccion, nombTabla, descripcionPermiso, estadoPermiso) VALUES
+('crear_usuario', 'USUARIO', 'Registrar nuevo usuario', TRUE),
+('editar_usuario', 'USUARIO', 'Editar usuario', TRUE),
+('desactivar_usuario', 'USUARIO', 'Cambiar estado de cuenta', TRUE),
+('listar_usuarios', 'USUARIO', 'Ver lista de usuarios', TRUE),
+('asignar_rol', 'ROL_USUARIO', 'Asignar roles a usuarios', TRUE),
+('ver_roles', 'ROL', 'Ver todos los roles y permisos', TRUE),
+('crear_parroquia', 'PARROQUIA', 'Registrar parroquia', TRUE),
+('editar_parroquia', 'PARROQUIA', 'Editar información parroquial', TRUE),
+('ver_parroquia', 'PARROQUIA', 'Ver información de parroquia', TRUE),
+('gestionar_personal', 'PARROQUIA_PERSONAL', 'Asignar personal a parroquia', TRUE),
+('ver_galeria', 'GALERIA_PARROQUIA', 'Ver galería de parroquia', TRUE),
+('subir_imagen', 'GALERIA_PARROQUIA', 'Subir imágenes de galería', TRUE),
+('crear_acto', 'ACTO_LITURGICO', 'Registrar nuevo acto litúrgico', TRUE),
+('editar_acto', 'ACTO_LITURGICO', 'Modificar un acto', TRUE),
+('eliminar_acto', 'ACTO_LITURGICO', 'Eliminar un acto', TRUE),
+('ver_actos', 'ACTO_LITURGICO', 'Listar actos disponibles', TRUE),
+('configurar_requisitos', 'ACTO_REQUISITO', 'Asignar requisitos a actos', TRUE),
+('crear_reserva', 'RESERVA', 'Registrar una nueva reserva', TRUE),
+('editar_reserva', 'RESERVA', 'Modificar una reserva', TRUE),
+('eliminar_reserva', 'RESERVA', 'Cancelar reserva', TRUE),
+('confirmar_reserva', 'RESERVA', 'Aprobar reserva (por el párroco)', TRUE),
+('listar_reservas', 'RESERVA', 'Ver todas las reservas', TRUE),
+('reprogramar_reserva', 'RESERVA', 'Cambiar fecha o personal asignado', TRUE),
+('ver_detalle_reserva', 'RESERVA', 'Consultar detalles completos', TRUE),
+('ver_historial_reserva', 'AUDITORIA_RESERVA', 'Ver auditoría de reservas', TRUE),
+('registrar_pago', 'PAGO', 'Registrar pago de una reserva', TRUE),
+('ver_pagos', 'PAGO', 'Consultar pagos realizados', TRUE),
+('anular_pago', 'PAGO', 'Cancelar pago registrado', TRUE),
+('configurar_metodos_pago', 'METODO_PAGO', 'Gestionar métodos de pago', TRUE),
+('subir_documento', 'DOCUMENTO_REQUISITO', 'Subir documentos de requisitos', TRUE),
+('revisar_documentos', 'DOCUMENTO_REQUISITO', 'Revisar cumplimiento de requisitos', TRUE),
+('aprobar_documentos', 'DOCUMENTO_REQUISITO', 'Validar documentos cargados', TRUE),
+('ver_documentos', 'DOCUMENTO_REQUISITO', 'Ver documentos subidos', TRUE),
+('configurar_disponibilidad', 'DISPONIBILIDAD_HORARIO', 'Establecer horarios del personal', TRUE),
+('ver_disponibilidad', 'DISPONIBILIDAD_HORARIO', 'Consultar disponibilidad', TRUE),
+('registrar_excepcion', 'EXCEPCIONPERSONAL', 'Registrar ausencia o permiso especial', TRUE),
+('ver_configuracion', 'CONFIGURACION', 'Ver configuración general', TRUE),
+('editar_configuracion', 'CONFIGURACION', 'Cambiar parámetros del sistema', TRUE),
+('ver_auditorias', 'AUDITORIA_USUARIO', 'Visualizar registros de auditoría', TRUE);
+--Administrador(Todo los permisos)
+INSERT INTO ROL_PERMISO (idPermiso, idRol)
+SELECT idPermiso, 1 FROM PERMISO WHERE estadoPermiso = TRUE;
+--Sacerdote
+INSERT INTO ROL_PERMISO (idPermiso, idRol)
+VALUES
+(7,2),(8,2),(9,2),
+(10,2),
+(11,2),(12,2),
+(13,2),(14,2),(15,2),(16,2),
+(17,2),
+(18,2),(19,2),(20,2),(21,2),(22,2),(23,2),(24,2),(25,2),
+(26,2),(27,2),(28,2),
+(30,2),(31,2),(32,2),(33,2),
+(34,2),(35,2),(36,2),
+(37,2);
+--Secretaria
+INSERT INTO ROL_PERMISO (idPermiso, idRol)
+VALUES
+(4,3),
+(9,3),
+(11,3),(12,3),
+(13,3),(14,3),(16,3),
+(18,3),(19,3),(20,3),(22,3),(23,3),(24,3),
+(26,3),(27,3),(28,3),
+(30,3),(31,3),(33,3),
+(34,3),(35,3);
+--Feligres
+INSERT INTO ROL_PERMISO (idPermiso, idRol)
+VALUES
+(9,4),
+(11,4),
+(16,4),
+(18,4),(19,4),(22,4),(23,4),(24,4),(25,4),
+(30,4),(33,4);
+--Invitado
+INSERT INTO ROL_PERMISO (idPermiso, idRol)
+VALUES
+(9,5),
+(11,5),
+(16,5);
