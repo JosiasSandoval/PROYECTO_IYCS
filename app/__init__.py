@@ -84,6 +84,10 @@ def crear_app():
     def rol_admi():
         return render_template('administradores/rol_permiso.html')
 
+    @app.route('/admi/feligres')
+    def feligres_admi():
+        return render_template('administradores/usuario_feligres.html')
+    
     return app
 
 

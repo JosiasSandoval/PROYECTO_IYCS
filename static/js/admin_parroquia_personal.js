@@ -1,52 +1,98 @@
-// ================== VARIABLES GLOBALES ==================
-let parroquiaPersonal = [];
-let parroquiaPersonalFiltrada = null;
-
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
 
-// Modales
-const modalDetalle = crearModal();
-const modalFormulario = crearModalFormulario();
+const modalDetalle = crearModal();            
+const modalFormulario = crearModalFormulario(); 
 
+let roles = [];           
+let rolesFiltrados = null;
 let paginaActual = 1;
 const elementosPorPagina = 10;
+let ordenActual = { campo: null, ascendente: true };
 
-// ================== FUNCIONES ==================
+function normalizar(doc) {
+  const id = doc.id ?? doc.idRol ?? doc.id_Rol ?? null;
+  const nombre = doc.nombre ?? doc.nombRol ?? doc.nomb_rol ?? "";
+  let estado = false;
+  if (
+    doc.estado === 1 || doc.estado === "1" || doc.estado === true || 
+    doc.estado === "activo" || doc.estadoRol === true || doc.estadoRol === 1
+  ) {
+    estado = true;
+  }
+  return { id, nombre, estado };
+}
 
-// Renderizar tabla
+const manejarSolicitud = async (url, opciones = {}, mensajeError = "Error") => {
+  try {
+    const res = await fetch(url, opciones);
+    if (!res.ok) throw new Error(mensajeError);
+    return await res.json();
+  } catch (err) {
+    console.error(mensajeError, err);
+    alert(mensajeError);
+    throw err;
+  }
+};
+
+const cargarRoles = async () => {
+  try {
+    const data = await manejarSolicitud("/api/rol/", {}, "Error al obtener cargos");
+    rol = Array.isArray(data) ? data.map(normalizar) : [];
+    rolFiltrados = null;
+    paginaActual = 1;
+    renderTabla();
+  } catch (err) {
+    console.error("Error cargando cargos:", err);
+  }
+};
+
+function existeCargo(nombre, idIgnorar = null) {
+  return cargos.some(doc =>
+    doc.nombre.toLowerCase() === nombre.toLowerCase() && doc.id !== idIgnorar
+  );
+}
+
 function renderTabla() {
   tabla.innerHTML = "";
+  const lista = cargosFiltrados ?? cargos;
 
-  const lista = parroquiaPersonalFiltrada ?? parroquiaPersonal;
+  if (ordenActual.campo) {
+    lista.sort((a, b) => {
+      const campo = ordenActual.campo;
+      const valorA = (a[campo] || "").toString().toLowerCase();
+      const valorB = (b[campo] || "").toString().toLowerCase();
+      if (valorA < valorB) return ordenActual.ascendente ? -1 : 1;
+      if (valorA > valorB) return ordenActual.ascendente ? 1 : -1;
+      return 0;
+    });
+  }
+
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const fin = inicio + elementosPorPagina;
-  const datosPagina = lista.slice(inicio, fin);
+  const documentosPagina = lista.slice(inicio, fin);
 
-  datosPagina.forEach((reg, index) => {
-    const esActivo = reg.estado === "activo";
+  documentosPagina.forEach((doc, index) => {
+    const esActivo = doc.estado === true || doc.estado === "activo";
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
 
     const fila = document.createElement("tr");
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
-      <td class="col-usuario">${reg.usuario}</td>
-      <td class="col-cargo">${reg.cargo}</td>
-      <td class="col-fechaInicio">${reg.fechaInicio}</td>
-      <td class="col-fechaFin">${reg.fechaFin || "-"}</td>
+      <td class="col-nombre">${escapeHtml(doc.nombre)}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="verRegistro(${reg.id})" title="Ver">
+          <button class="btn btn-info btn-sm" onclick="verDetalle(${doc.id})" title="Ver">
             <img src="/static/img/ojo.png" alt="ver">
           </button>
-          <button class="btn btn-warning btn-sm" onclick="editarRegistro(${reg.id})" title="Editar">
+          <button class="btn btn-warning btn-sm" onclick="editarCargo(${doc.id})" title="Editar">
             <img src="/static/img/lapiz.png" alt="editar">
           </button>
-          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${reg.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
+          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${doc.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
             <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
           </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarRegistro(${reg.id})" title="Eliminar">
+          <button class="btn btn-danger btn-sm" onclick="eliminarCargo(${doc.id})" title="Eliminar">
             <img src="/static/img/x.png" alt="eliminar">
           </button>
         </div>
@@ -58,16 +104,19 @@ function renderTabla() {
   renderPaginacion();
 }
 
-// ================== PAGINACIÓN ==================
-function renderPaginacion() {
+const escapeHtml = text =>
+  String(text || "").replace(/[&<>]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
+
+const renderPaginacion = () => {
   paginacion.innerHTML = "";
-  const totalPaginas = Math.ceil(parroquiaPersonal.length / elementosPorPagina);
+  const total = (cargosFiltrados ?? cargos).length;
+  const totalPaginas = Math.ceil(total / elementosPorPagina);
   if (totalPaginas <= 1) return;
 
   const ul = document.createElement("ul");
   ul.className = "pagination";
 
-  const crearItem = (numero, activo = false, disabled = false, texto = null) => {
+  const crearItem = (numero, activo, disabled, texto) => {
     const li = document.createElement("li");
     li.className = `page-item ${activo ? "active" : ""} ${disabled ? "disabled" : ""}`;
     li.innerHTML = `<button class="page-link" onclick="cambiarPagina(${numero})">${texto || numero}</button>`;
@@ -75,65 +124,109 @@ function renderPaginacion() {
   };
 
   ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, "<"));
-
-  const start = Math.max(1, paginaActual - 2);
-  const end = Math.min(totalPaginas, paginaActual + 2);
-
-  for (let i = start; i <= end; i++) {
-    ul.appendChild(crearItem(i, paginaActual === i));
+  const range = [Math.max(1, paginaActual - 2), Math.min(totalPaginas, paginaActual + 2)];
+  if (range[0] > 1) {
+    ul.appendChild(crearItem(1, paginaActual === 1));
+    if (range[0] > 2) ul.appendChild(crearItem(null, false, true, "..."));
   }
-
+  for (let i = range[0]; i <= range[1]; i++) ul.appendChild(crearItem(i, paginaActual === i));
+  if (range[1] < totalPaginas) {
+    if (range[1] < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, "..."));
+    ul.appendChild(crearItem(totalPaginas, paginaActual === totalPaginas));
+  }
   ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, ">"));
   paginacion.appendChild(ul);
-}
+};
 
 function cambiarPagina(pagina) {
-  if (pagina < 1 || pagina > Math.ceil(parroquiaPersonal.length / elementosPorPagina)) return;
+  const total = Math.ceil((cargosFiltrados ?? cargos).length / elementosPorPagina);
+  if (pagina < 1 || pagina > total) return;
   paginaActual = pagina;
   renderTabla();
 }
 
-// ================== CRUD ==================
-function agregarRegistro(usuario, cargo, fechaInicio, fechaFin) {
-  parroquiaPersonal.push({
-    id: Date.now(),
-    usuario,
-    cargo,
-    fechaInicio,
-    fechaFin,
-    estado: "activo",
-  });
-  renderTabla();
+const agregarCargo = nombre => manejarSolicitud(
+  "/api/cargo/agregar",
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre }),
+  },
+  "Error al agregar cargo"
+).then(() => cargarCargos());
+
+const actualizarCargoAPI = (id, nombre) => manejarSolicitud(
+  `/api/cargo/actualizar/${id}`,
+  {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombCargo: nombre }),
+  },
+  "Error al actualizar cargo"
+).then(() => cargarCargos());
+
+const eliminarCargo = async id => {
+  if (!confirm("¿Está seguro de eliminar este cargo?")) return;
+  try {
+    const res = await fetch(`/api/cargo/eliminar/${id}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) alert(data.error || "Error al eliminar el cargo");
+    else alert(data.mensaje || "Cargo eliminado correctamente");
+    cargarCargos();
+  } catch (err) {
+    console.error("Error al eliminar cargo", err);
+    alert("Error inesperado al eliminar el cargo");
+  }
+};
+
+async function darDeBaja(id) {
+  try {
+    const doc = cargos.find(d => d.id === id);
+    if (!doc) return alert("Cargo no encontrado");
+    const nuevoEstado = !doc.estado;
+    const res = await fetch(`/api/cargo/cambiar_estado/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado: nuevoEstado })
+    });
+    if (!res.ok) throw new Error("Error al cambiar estado");
+    const data = await res.json();
+    doc.estado = data.nuevo_estado === true;
+    renderTabla();
+  } catch (err) {
+    console.error(err);
+    alert("Error al actualizar estado");
+  }
 }
 
-function editarRegistro(id) {
-  const reg = parroquiaPersonal.find((r) => r.id === id);
-  if (!reg) return;
-  abrirModalFormulario("editar", reg);
-}
+const inputCargo = document.getElementById("inputDocumento");
+const btnBuscar = document.getElementById("btn_buscar");
+btnBuscar.addEventListener("click", async () => {
+  const termino = inputCargo.value.trim();
+  if (termino === "") {
+    cargosFiltrados = null;
+    paginaActual = 1;
+    renderTabla();
+    return;
+  }
+  try {
+    const res = await fetch(`/api/cargo/busqueda_cargo/${encodeURIComponent(termino)}`);
+    if (res.status === 404) {
+      cargosFiltrados = [];
+      renderTabla();
+      return;
+    }
+    if (!res.ok) throw new Error("Error en búsqueda");
+    const data = await res.json();
+    cargosFiltrados = Array.isArray(data) ? data.map(normalizar) : [normalizar(data)];
+    paginaActual = 1;
+    renderTabla();
+  } catch (err) {
+    console.error(err);
+    alert("Error al buscar cargo");
+  }
+});
 
-function eliminarRegistro(id) {
-  const reg = parroquiaPersonal.find((r) => r.id === id);
-  if (!reg) return;
-  if (!confirm(`¿Seguro que deseas eliminar el registro con ID ${reg.id}?`)) return;
-  parroquiaPersonal = parroquiaPersonal.filter((r) => r.id !== id);
-  renderTabla();
-}
-
-function darDeBaja(id) {
-  const reg = parroquiaPersonal.find((r) => r.id === id);
-  if (!reg) return;
-  reg.estado = reg.estado === "activo" ? "inactivo" : "activo";
-  renderTabla();
-}
-
-function verRegistro(id) {
-  const reg = parroquiaPersonal.find((r) => r.id === id);
-  if (!reg) return;
-  abrirModalFormulario("ver", reg);
-}
-
-// ================== MODALES ==================
 function crearModal() {
   const modalHTML = document.createElement("div");
   modalHTML.innerHTML = `
@@ -141,7 +234,7 @@ function crearModal() {
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Detalle del Registro</h5>
+            <h5 class="modal-title">Detalle del Cargo</h5>
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalDetalle')">&times;</button>
           </div>
           <div class="modal-body" id="modalDetalleContenido"></div>
@@ -164,22 +257,10 @@ function crearModalFormulario() {
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalFormulario')">&times;</button>
           </div>
           <div class="modal-body">
-            <form id="formModalRegistro">
+            <form id="formModalDocumento">
               <div class="mb-3">
-                <label for="modalUsuario" class="form-label">Usuario</label>
-                <input type="text" id="modalUsuario" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="modalCargo" class="form-label">Cargo</label>
-                <input type="text" id="modalCargo" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="modalFechaInicio" class="form-label">Fecha Inicio</label>
-                <input type="date" id="modalFechaInicio" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="modalFechaFin" class="form-label">Fecha Fin</label>
-                <input type="date" id="modalFechaFin" class="form-control">
+                <label for="modalNombre" class="form-label">Nombre del cargo</label>
+                <input type="text" id="modalNombre" class="form-control" required>
               </div>
               <div class="modal-footer">
                 <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar">Aceptar</button>
@@ -194,100 +275,84 @@ function crearModalFormulario() {
   return document.getElementById("modalFormulario");
 }
 
-function abrirModal(id) {
-  const modal = document.getElementById(id);
-  if (modal) modal.classList.add("activo");
+function abrirModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.add('activo');
 }
 
-function cerrarModal(id) {
-  const modal = document.getElementById(id);
-  if (modal) modal.classList.remove("activo");
+function cerrarModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.remove('activo');
 }
 
-function abrirModalFormulario(modo, reg = null) {
+function abrirModalFormulario(modo, doc = null) {
   const titulo = document.getElementById("modalFormularioTitulo");
-  const inputs = {
-    usuario: document.getElementById("modalUsuario"),
-    cargo: document.getElementById("modalCargo"),
-    fechaInicio: document.getElementById("modalFechaInicio"),
-    fechaFin: document.getElementById("modalFechaFin"),
-  };
+  const inputNombre = document.getElementById("modalNombre");
   const botonGuardar = document.getElementById("btnGuardar");
-  const form = document.getElementById("formModalRegistro");
+  const form = document.getElementById("formModalDocumento");
   const modalFooter = document.querySelector("#modalFormulario .modal-footer");
 
+  form.onsubmit = null;
+  botonGuardar.onclick = null;
   modalFooter.innerHTML = "";
-  Object.values(inputs).forEach((input) => (input.disabled = false));
+  botonGuardar.textContent = "Aceptar";
+  botonGuardar.type = "submit";
+  botonGuardar.classList.remove("d-none");
+  modalFooter.appendChild(botonGuardar);
+  inputNombre.disabled = false;
 
   if (modo === "agregar") {
-    titulo.textContent = "Agregar Registro";
-    Object.values(inputs).forEach((input) => (input.value = ""));
-    modalFooter.appendChild(botonGuardar);
-    form.onsubmit = (e) => {
+    titulo.textContent = "Agregar cargo";
+    inputNombre.value = "";
+    form.onsubmit = e => {
       e.preventDefault();
-      agregarRegistro(
-        inputs.usuario.value.trim(),
-        inputs.cargo.value.trim(),
-        inputs.fechaInicio.value.trim(),
-        inputs.fechaFin.value.trim()
-      );
-      cerrarModal("modalFormulario");
+      const nombre = inputNombre.value.trim();
+      if (!nombre) return alert("Complete todos los campos");
+      if (existeCargo(nombre)) return alert("Ya existe un cargo con ese nombre");
+      agregarCargo(nombre).then(() => cerrarModal("modalFormulario"));
     };
-  } else if (modo === "editar" && reg) {
-    titulo.textContent = "Editar Registro";
-    inputs.usuario.value = reg.usuario;
-    inputs.cargo.value = reg.cargo;
-    inputs.fechaInicio.value = reg.fechaInicio;
-    inputs.fechaFin.value = reg.fechaFin;
-    modalFooter.appendChild(botonGuardar);
-    form.onsubmit = (e) => {
+  } else if (modo === "editar" && doc) {
+    titulo.textContent = "Editar cargo";
+    inputNombre.value = doc.nombre;
+    form.onsubmit = e => {
       e.preventDefault();
-      reg.usuario = inputs.usuario.value.trim();
-      reg.cargo = inputs.cargo.value.trim();
-      reg.fechaInicio = inputs.fechaInicio.value.trim();
-      reg.fechaFin = inputs.fechaFin.value.trim();
-      cerrarModal("modalFormulario");
-      renderTabla();
+      const nombre = inputNombre.value.trim();
+      if (!nombre) return alert("Complete todos los campos");
+      if (existeCargo(nombre, doc.id)) return alert("Ya existe un cargo con ese nombre");
+      actualizarCargoAPI(doc.id, nombre).then(() => cerrarModal("modalFormulario"));
     };
-  } else if (modo === "ver" && reg) {
-    titulo.textContent = "Detalle del Registro";
-    inputs.usuario.value = reg.usuario;
-    inputs.cargo.value = reg.cargo;
-    inputs.fechaInicio.value = reg.fechaInicio;
-    inputs.fechaFin.value = reg.fechaFin;
-    Object.values(inputs).forEach((input) => (input.disabled = true));
-    modalFooter.appendChild(botonGuardar);
-    botonGuardar.onclick = () => cerrarModal("modalFormulario");
+  } else if (modo === "ver" && doc) {
+    titulo.textContent = "Detalle del cargo";
+    inputNombre.value = doc.nombre;
+    inputNombre.disabled = true;
+    botonGuardar.onclick = e => { e.preventDefault(); cerrarModal("modalFormulario"); };
   }
 
   abrirModal("modalFormulario");
 }
 
-// ================== BUSQUEDA ==================
-const inputBuscar = document.getElementById("inputDocumento");
-const btnBuscar = document.getElementById("btn_buscar");
+function editarCargo(id) {
+  const doc = cargos.find(d => d.id === id);
+  if (doc) abrirModalFormulario("editar", doc);
+}
 
-btnBuscar.addEventListener("click", () => {
-  const termino = inputBuscar.value.trim().toLowerCase();
-  parroquiaPersonalFiltrada =
-    termino === "" ? null : parroquiaPersonal.filter((r) => r.id.toString().includes(termino));
-  paginaActual = 1;
-  renderTabla();
+function verDetalle(id) {
+  const doc = cargos.find(d => d.id === id);
+  if (doc) abrirModalFormulario("ver", doc);
+}
+
+document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
+  th.style.cursor = "pointer";
+  th.addEventListener("click", () => {
+    let campo;
+    if (index === 1) campo = "nombre";
+    else return;
+    if (ordenActual.campo === campo) ordenActual.ascendente = !ordenActual.ascendente;
+    else { ordenActual.campo = campo; ordenActual.ascendente = true; }
+    renderTabla();
+  });
 });
 
-// ================== EVENTO FORM PRINCIPAL ==================
-document.getElementById("formDocumento").addEventListener("submit", (e) => {
-  e.preventDefault();
-  abrirModalFormulario("agregar");
-});
+document.getElementById("btn_guardar").addEventListener("click", () => abrirModalFormulario("agregar"));
 
-// ================== DATOS DE EJEMPLO ==================
-parroquiaPersonal = [
-  { id: 1, usuario: "Jose Sandoval", cargo: "Cardenal", fechaInicio: "2025-01-01", fechaFin: "2025-12-31", estado: "activo" },
-  { id: 2, usuario: "Juana Saavedra", cargo: "Secretaria", fechaInicio: "2025-02-01", fechaFin: "2025-11-30", estado: "activo" },
-  { id: 3, usuario: "Pedro Ruiz", cargo: "Diacono", fechaInicio: "2025-03-15", fechaFin: null, estado: "inactivo" },
-  { id: 4, usuario: "Susana Lopez", cargo: "Sacerdote", fechaInicio: "2025-04-01", fechaFin: "2025-10-31", estado: "activo" },
-  { id: 5, usuario: "Juan Perez", cargo: "Asistente", fechaInicio: "2025-05-01", fechaFin: null, estado: "activo" },
-];
-
-renderTabla();
+cargarCargos();

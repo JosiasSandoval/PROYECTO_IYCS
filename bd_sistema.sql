@@ -11,7 +11,7 @@ CREATE TABLE USUARIO (
 CREATE TABLE TIPO_DOCUMENTO (
     idTipoDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     nombDocumento VARCHAR(100) NOT NULL,
-    abreviatura CHAR(3) NOT NULL,
+    abreviatura VARCHAR(10) NOT NULL,
     estadoDocumento BOOLEAN NOT NULL
 );
 
@@ -104,6 +104,7 @@ CREATE TABLE ROL_USUARIO (
 
 CREATE TABLE PERMISO (
     idPermiso INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    tipoOperacion ENUM('INSERT', 'DELETE', 'UPDATE','STATE_CHANGE', 'SELECT') NOT NULL, 
     nombAccion VARCHAR(50) NOT NULL,
     nombTabla VARCHAR(50) NOT NULL,
     descripcionPermiso VARCHAR(255) NULL,
@@ -123,7 +124,7 @@ CREATE TABLE ROL_PERMISO (
 -- =========================
 CREATE TABLE CARGO (
     idCargo INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    nombCargo VARCHAR(30) NOT NULL,
+    nombCargo VARCHAR(100) NOT NULL,
     estadoCargo BOOLEAN NOT NULL
 );
 
@@ -133,10 +134,10 @@ CREATE TABLE PARROQUIA (
     historiaParroquia VARCHAR(255) NULL,
     descripcionBreve VARCHAR(255) NULL,
     f_creacion DATE NOT NULL,
-    ruc VARCHAR(30) NOT NULL UNIQUE,
+    ruc VARCHAR(50) NOT NULL,
     telefonoContacto VARCHAR(100) NOT NULL,
     email VARCHAR(100)NOT NULL,
-    direccion VARCHAR(150) NULL,
+    direccion VARCHAR(150) NOT NULL,
     color CHAR(7) NOT NULL,
     latParroquia DECIMAL(9,6) NULL,
     logParroquia DECIMAL(9,6) NULL,
