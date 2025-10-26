@@ -420,3 +420,32 @@ body {
   transform: none;
   box-shadow: none;
 }
+
+#modalPermisos .modal-dialog {
+  max-width: 500px;        /* mismo ancho que el modalFormulario */
+  margin: 1.5rem auto;     /* centrado vertical */
+}
+
+#modalPermisos .modal-content {
+  max-height: 80vh;        /* altura máxima relativa al viewport */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;        /* evita que se desborde fuera del modal */
+}
+
+#modalPermisos .modal-body {
+  overflow-y: auto;        /* scroll vertical si hay muchos permisos */
+  padding: 1rem;
+}
+
+#modalPermisos .modal-header,
+#modalPermisos .modal-footer {
+  padding: 0.75rem 1rem;
+}
+
+#modalPermisos .btn-cerrar {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+}

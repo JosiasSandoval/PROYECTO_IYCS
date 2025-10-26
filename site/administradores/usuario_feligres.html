@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link rel="stylesheet" href="/static/css/admin_tipoUsuario.css">
-    <title>LITBOOK | Tipo de usario</title>
+     <link rel="stylesheet" href="/static/css/admin_usuario_feligres.css">
+    <title>LITBOOK | FELIGRES</title>
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -12,21 +12,21 @@
         <div id="barra_lateral_administrador-placeholder"></div>
         <div class="contenido-principal">
             <div class="contenido">   
-            <h3 class="titulo-seccion">Tipo de Usuario</h3>
+            <h3 class="titulo-seccion">Usuario</h3>
               <!--Busqueda-->
               <form id="formDocumento">
                 <!-- Label -->
-                <label for="inputDocumento">Nombre del tipo de usario:</label>
+                <label for="inputDocumento">Nombre del Usuario:</label>
 
                 <!-- Input -->
-                <input type="text" id="inputDocumento" placeholder="Ingrese nombre del tipo de usario"/>
+                <input type="text" id="inputDocumento" placeholder="Ingrese nombre del feligres"/>
 
                 <!-- Botones -->
                 <button type="button" id="btn_buscar" class="btn-icon" title="Buscar">
                     <img src="/static/img/lupa.png" alt="Buscar" />
                 </button>
 
-                <button type="submit" id="btn_guardar" class="btn-icon" title="Agregar">
+                <button type="button" id="btn_guardar" class="btn-icon" title="Agregar">
                     <img src="/static/img/mas.png" alt="Agregar" />
                 </button>
             </form>
@@ -37,7 +37,9 @@
                 <thead>
                   <tr>
                     <th class="col-id">#</th>
-                    <th class="col-nombre">Nombre</th>
+                    <th class="col-nombre">Nombre completo</th>
+                    <th class="col-numDocumento">Numero de documento</th>
+                    <th class="col-correo">Correo electronico</th>
                     <th class="col-acciones">Acciones</th>
                   </tr>
                 </thead>
@@ -49,6 +51,6 @@
         </div>
     <script src="/static/js/barra_lateral_administrador.js"></script>
     <script src="/static/js/header.js"></script>
-    <script src="/static/js/admin_tipoUsuario.js"></script>
+    <script src="/static/js/admin_usuario_feligres.js"></script>
 </body>
 </html>
