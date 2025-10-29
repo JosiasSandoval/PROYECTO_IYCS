@@ -1,18 +1,5 @@
 from app.bd_sistema import obtener_conexion
 
-def verificar_usuario(email, clave):
-    conexion = obtener_conexion()
-    try:
-        with conexion.cursor() as cursor:
-            cursor.execute(
-                "SELECT idUsuario FROM usuario WHERE email=%s AND clave=%s",
-                (email, clave)
-            )
-            usuario_encontrado = cursor.fetchone()
-        return usuario_encontrado is not None
-    finally:
-        conexion.close()
-
 def cambiar_estado_cuenta(idUsuario):
     conexion = obtener_conexion()
     try:
@@ -34,7 +21,7 @@ def cambiar_estado_cuenta(idUsuario):
         conexion.close()
 
 
-#Administrador:
+#Administrador-feligres:
 def get_usuario_feligres():
     conexion = obtener_conexion()
     try:
@@ -82,62 +69,6 @@ def get_usuario_feligres():
     except Exception as e:
         print(f"Error al listar los usuarios: {e}")
         return []
-    finally:
-        if conexion:
-            conexion.close()
-
-def get_usuario_personal():
-    conexion = obtener_conexion()
-    try:
-        resultados=[]
-        with conexion.cursor() as cursor:
-            cursor.execute("""
-                    SELECT 
-                        us.idUsuario,
-                        us.email,
-                        us.clave,
-                        us.estadoCuenta,
-                        pe.numDocPers,
-                        ti.nombDocumento,
-                        pe.nombPers,
-                        pe.apePatPers,
-                        pe.apeMatPers,
-                        pe.sexoPers,
-                        pe.direccionPers,
-                        pe.telefonoPers,
-                        ca.nombCargo,
-                        r.nombRol,
-                        pa.nombParroquia
-                    FROM usuario us
-                    INNER JOIN rol_usuario rs ON us.idUsuario = rs.idRolUsuario
-                    INNER JOIN personal pe ON us.idUsuario=pe.idUsuario
-                    INNER JOIN parroquia_personal pp ON pp.idPersonal=pe.idPersonal
-                    INNER JOIN cargo ca ON pp.idCargo=ca.idCargo
-                    INNER JOIN parroquia pa ON pa.idParroquia=pp.idParroquia
-                    INNER JOIN rol r ON rs.idRol = r.idRol
-                    INNER JOIN tipo_documento ti ON pe.idTipoDocumento = ti.idTipoDocumento
-                           """)
-            resultados=cursor.fetchall()
-            for fila in resultados:
-                resultados.append({
-                    'id':fila[0],
-                    'email':fila[1],
-                    'estadoCuenta':fila[2],
-                    'numDocPers':fila[3],
-                    'nombDocumento':fila[4],
-                    'nombPers':fila[5],
-                    'apePatPers':fila[6],
-                    'apeMatPers':fila[7],
-                    'sexoPers':fila[8],
-                    'direccionPers':fila[9],
-                    'telefonoPers':fila[10],
-                    'nombCargo':fila[11],
-                    'nombParroquia':fila[12]
-                })
-            return resultados
-    except Exception as e:
-        print(f"Error al listar los usuarios: {e}")
-        return[]
     finally:
         if conexion:
             conexion.close()
@@ -270,8 +201,6 @@ def eliminar_usuario_feligres(idUsuario):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            # Eliminar relaciones de rol
-            cursor.execute("DELETE FROM rol_usuario WHERE idRolUsuario=%s", (idUsuario,))
             # Eliminar datos de feligres
             cursor.execute("DELETE FROM feligres WHERE idUsuario=%s", (idUsuario,))
             # Eliminar usuario

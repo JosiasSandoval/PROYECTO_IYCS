@@ -54,25 +54,27 @@
                 </div>
                 <div id="form-container">
                     <div class="form-step current" data-step="0">
-                        <h3>Seleccione Provincia / Distrito y Parroquia</h3>
-                        <div class="form-group">
-                            <select id="provincia-distrito">
-                                <option>--Seleccione--</option>
-                            </select>
-                            <select id="parroquia">
-                                <option>--Seleccione parroquia--</option>
-                            </select>
+                        <h3>Seleccione su parroquia</h3>
+
+                        <!-- Usamos la misma estructura de input-group que en parroquia_cliente -->
+                    <div class="consulta">
+                        <label for="input-parroquia">Nombre de la parroquia:</label>
+                        <div class="input-group">
+                            <input type="text" id="input-parroquia" placeholder="Ej. San Roque">
+                            <button id="btn-buscar">Buscar</button>
                         </div>
-                    <div id="mapa"> 
-                        <div id="gps"></div> 
-                    </div> 
+                        <ul id="sugerencias" class="sugerencias-lista"></ul>
+                    </div>
+                        <div id="mapa"> 
+                            <div id="gps"></div> 
+                        </div> 
                     </div>
                 </div>
                 <div class="navigation-buttons">
                     <button class="btn btn-prev" disabled>
                         < Atrás
                     </button>
-                    <button class="btn btn-next">
+                    <button class="btn btn-siguiente">
                         Siguiente >
                     </button>
                 </div>
@@ -80,7 +82,6 @@
         </div>
     </div>
     <script src="/static/js/header.js"></script>
-    <script src="/static/js/reserva.js"></script>
     <script src="/static/js/barra_lateral.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
