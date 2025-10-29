@@ -345,6 +345,7 @@ INSERT INTO PARROQUIA_PERSONAL (f_inicio, f_fin, vigenciaParrPers, idParroquia, 
 ('2021-10-12', NULL, TRUE, 14, 14, 14),
 ('2019-09-30', NULL, TRUE, 15, 15, 15);
 
+
 INSERT INTO ROL_USUARIO (idRol, idUsuario) VALUES
 (4, 1),
 (4, 2),
@@ -439,3 +440,44 @@ INSERT INTO REQUISITO (nombRequisito, f_requisito, descripcion, estadoRequisito)
 ('Acta de Defunción', NULL, 'Documento civil que acredita el fallecimiento de la persona.', TRUE),
 ('Petición Familiar', NULL, 'Solicitud formal de la familia para la celebración de la Misa (no es estrictamente un requisito canónico, sino administrativo).', TRUE);
 
+-- MISAS con días, horas y límite de personas
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion)
+VALUES 
+-- Días y horas
+('MISA_MARTES', 'DIA', 'MARTES', 'Misa los martes', 1),
+('MISA_MARTES_18', 'HORA', '18:00', 'Misa martes 6 pm', 1),
+('MISA_MARTES_19', 'HORA', '19:00', 'Misa martes 7 pm', 1),
+('MISA_MARTES_20', 'HORA', '20:00', 'Misa martes 8 pm', 1),
+('MISA_MARTES_21', 'HORA', '21:00', 'Misa martes 9 pm', 1),
+('MISA_MIERCOLES', 'DIA', 'MIERCOLES', 'Misa los miércoles', 1),
+('MISA_MIERCOLES_18', 'HORA', '18:00', 'Misa miércoles 6 pm', 1),
+('MISA_MIERCOLES_19', 'HORA', '19:00', 'Misa miércoles 7 pm', 1),
+('MISA_MIERCOLES_20', 'HORA', '20:00', 'Misa miércoles 8 pm', 1),
+('MISA_MIERCOLES_21', 'HORA', '21:00', 'Misa miércoles 9 pm', 1),
+('MISA_JUEVES', 'DIA', 'JUEVES', 'Misa los jueves', 1),
+('MISA_JUEVES_18', 'HORA', '18:00', 'Misa jueves 6 pm', 1),
+('MISA_JUEVES_19', 'HORA', '19:00', 'Misa jueves 7 pm', 1),
+('MISA_JUEVES_20', 'HORA', '20:00', 'Misa jueves 8 pm', 1),
+('MISA_JUEVES_21', 'HORA', '21:00', 'Misa jueves 9 pm', 1),
+('MISA_DOMINGO', 'DIA', 'DOMINGO', 'Misa dominical', 1),
+('MISA_DOMINGO_09', 'HORA', '09:00', 'Misa domingo 9 am', 1),
+-- Cantidad límite
+('MISA_LIMITE', 'CANTIDAD', '50', 'Límite de misas que se hacen al día', 1);
+
+-- MATRIMONIOS con días, horarios y dirección, ciclo expresado en días
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion)
+VALUES 
+('MATRIMONIO_CICLO', 'DIA', '90-180', 'Matrimonios programados cada 3 a 6 meses (~90 a 180 días)', 1),
+('MATRIMONIO_VIERNES', 'DIA', 'VIERNES', 'Matrimonios viernes', 1),
+('MATRIMONIO_VIERNES_HORARIO', 'HORA', '10:00-14:00', 'Matrimonios viernes de 10 am a 2 pm', 1),
+('MATRIMONIO_SABADO', 'DIA', 'SABADO', 'Matrimonios sábado', 1),
+('MATRIMONIO_SABADO_HORARIO', 'HORA', '12:00-17:00', 'Matrimonios sábado de 12 pm a 5 pm', 1),
+('MATRIMONIO_DOMINGO', 'DIA', 'DOMINGO', 'Matrimonios domingo', 1),
+('MATRIMONIO_DOMINGO_HORARIO', 'HORA', '09:00-13:00', 'Matrimonios domingo de 9 am a 1 pm', 1);
+
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion)
+VALUES
+('BAUTIZO_SABADO', 'DIA', 'SABADO', 'Bautizos sábado', 1),
+('BAUTIZO_SABADO_HORARIO', 'HORA', '10:00-13:00', 'Bautizos sábado 10 am a 1 pm', 1),
+('BAUTIZO_DOMINGO', 'DIA', 'DOMINGO', 'Bautizos domingo', 1),
+('BAUTIZO_DOMINGO_HORARIO', 'HORA', '11:00-13:00', 'Bautizos domingo 11 am a 1 pm', 1);
