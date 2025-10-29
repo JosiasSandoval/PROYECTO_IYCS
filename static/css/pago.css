@@ -1,0 +1,210 @@
+/*
+  ESTILOS GLOBALES DE LAYOUT GRID
+  Asume que el header (arriba) ya está manejado y se enfoca en
+  colocar el contenido principal (.funciones) al lado de la barra lateral.
+*/
+.grid {
+  display: grid;
+  /* Definición de la estructura de la cuadrícula: 250px para la barra, el resto para el contenido */
+  grid-template-columns: 250px 1fr; 
+  /* Nombres de área para facilitar la ubicación */
+  grid-template-areas: "sidebar main-content"; 
+  min-height: 100vh;
+}
+
+#barra_lateral-placeholder {
+  grid-area: sidebar;
+  /* (Aquí irían los estilos específicos de tu barra lateral: background, fixed/sticky, etc.) */
+}
+
+/* === SECCIÓN DE PAGO (Contenedor .funciones) === */
+.funciones {
+  grid-area: main-content; /* Coloca la sección de pago en el área principal */
+  max-width: 1100px; /* Ancho máximo para el contenido principal */
+  margin: 60px auto; /* Centra el contenido horizontalmente y añade espacio vertical */
+  padding: 0 20px;
+}
+
+.funciones h2 {
+  font-size: 2rem;
+  text-align: center;
+  color: #333;
+  margin-top: 30px;
+  margin-bottom: 30px; 
+  font-weight: 700;
+}
+
+/* === Contenedor de Formulario y Resumen (.contenedor-pago) === */
+.contenedor-pago {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* Centra el formulario y el resumen */
+  gap: 50px; 
+}
+
+/* === Formulario de pago (.formulario-pago) === */
+.formulario-pago {
+  background: #f5f7fb;
+  border-radius: 15px;
+  padding: 30px;
+  width: 400px; 
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  text-align: left;
+  order: 1; 
+  flex-shrink: 0; 
+}
+
+.formulario-pago label {
+  font-weight: 600;
+  color: #333;
+  margin-top: 5px;
+}
+
+.formulario-pago input {
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box; 
+}
+
+.formulario-pago input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 6px rgba(74,144,226,0.3);
+}
+
+.fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px; 
+}
+
+.fila > div {
+  flex: 1; 
+}
+
+.btn-pagar {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-pagar:hover {
+  background: #357abd;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+}
+
+/* === Resumen del pago (.resumen-pago) === */
+.resumen-pago {
+  background: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 15px;
+  padding: 30px;
+  width: 350px; 
+  text-align: left;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  order: 2;
+  flex-shrink: 0; 
+}
+
+.resumen-pago h3 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.4rem;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+.resumen-pago p {
+  margin: 10px 0;
+  color: #444;
+  display: flex;
+  justify-content: space-between;
+}
+
+.resumen-pago hr {
+  border: 0;
+  height: 1px;
+  background: #ddd;
+  margin: 15px 0;
+}
+
+.resumen-pago strong {
+  color: #000;
+}
+
+.resumen-pago span {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #4a90e2;
+}
+
+
+/* === Responsive (Ajustes para Tablets y Móviles) === */
+
+@media (max-width: 992px) {
+  /* En pantallas más pequeñas, apilamos la barra lateral y el contenido */
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-areas: 
+      "sidebar"
+      "main-content";
+  }
+  
+  .funciones {
+    margin: 40px auto; 
+  }
+}
+
+@media (max-width: 768px) {
+  .contenedor-pago {
+    flex-direction: column; /* Apilar formulario y resumen verticalmente */
+    align-items: center; 
+    gap: 30px; 
+  }
+  
+  .formulario-pago,
+  .resumen-pago {
+    width: 90%; 
+    max-width: 450px;
+    padding: 25px;
+  }
+  
+  /* Reordenación: Formulario arriba (1), Resumen abajo (2) */
+  .formulario-pago {
+    order: 1; 
+  }
+  .resumen-pago {
+    order: 2; 
+  }
+}
+
+@media (max-width: 480px) {
+  .funciones h2 {
+    font-size: 1.8rem;
+  }
+  .formulario-pago label {
+    font-size: 0.95rem;
+  }
+  .formulario-pago input {
+    font-size: 0.95rem;
+    padding: 10px;
+  }
+  .btn-pagar {
+    font-size: 1rem;
+    padding: 12px;
+  }
+}

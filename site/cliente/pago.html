@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pago Seguro</title>
+  <link rel="stylesheet" href="/static/css/pago.css" />
+</head>
+<body>
+  <div id="header-placeholder"></div>
+    <main class="grid">
+        <div id="barra_lateral-placeholder"></div>
+
+    <div class="funciones">
+        <h2>Detalles del Pago</h2>
+
+        <div class="contenedor-pago">
+        <!-- Formulario -->
+        <form class="formulario-pago">
+            <label for="nombre">Nombre en la tarjeta</label>
+            <input type="text" id="nombre" placeholder="Ej. Juan Pérez" required>
+
+            <label for="numero">Número de tarjeta</label>
+            <input type="text" id="numero" placeholder="XXXX XXXX XXXX XXXX" maxlength="19" required>
+
+            <div class="fila">
+            <div>
+                <label for="exp">Fecha de expiración</label>
+                <input type="text" id="exp" placeholder="MM/AA" maxlength="5" required>
+            </div>
+            <div>
+                <label for="cvv">CVV</label>
+                <input type="password" id="cvv" placeholder="123" maxlength="3" required>
+            </div>
+            </div>
+
+
+            <button type="submit" class="btn-pagar">Pagar Ahora</button>
+        </form>
+
+        <!-- Resumen -->
+        <div class="resumen-pago">
+            <h3>Resumen del Pedido</h3>
+            <p><strong>Producto:</strong> Reserva bautizo</p>
+            <p><strong>Duración:</strong> 1 año</p>
+            <p><strong>Total:</strong> <span>S/ 120.00</span></p>
+            <hr>
+            <p style="font-size: 0.9rem; color: #666;">* Incluye impuestos y cargos de servicio.</p>
+        </div>
+        </div>
+    </div>
+    
+</body>
+<script src="/static/js/header.js"></script>
+<script src="/static/js/barra_lateral.js"></script>
+</html>
