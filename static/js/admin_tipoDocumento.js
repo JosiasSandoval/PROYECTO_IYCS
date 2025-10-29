@@ -1,150 +1,74 @@
-let documentos = [
-  { id: 1, nombre: "Documento Nacional de Identidad", abreviatura: "DNI", estado: "activo" },
-  { id: 2, nombre: "Pasaporte", abreviatura: "PASS", estado: "activo" },
-  { id: 3, nombre: "Licencia de Conducir", abreviatura: "LDC", estado: "activo" },
-  { id: 4, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 5, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 6, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 7, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 8, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 9, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 10, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 11, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 12, nombre: "Documento Nacional de Identidad", abreviatura: "DNI", estado: "activo" },
-  { id: 13, nombre: "Pasaporte", abreviatura: "PASS", estado: "activo" },
-  { id: 14, nombre: "Licencia de Conducir", abreviatura: "LDC", estado: "activo" },
-  { id: 15, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 16, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 17, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 18, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 19, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 20, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 21, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 22, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 23, nombre: "Documento Nacional de Identidad", abreviatura: "DNI", estado: "activo" },
-  { id: 24, nombre: "Pasaporte", abreviatura: "PASS", estado: "activo" },
-  { id: 25, nombre: "Licencia de Conducir", abreviatura: "LDC", estado: "activo" },
-  { id: 26, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 27, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 28, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 29, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 30, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 31, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 32, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 33, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 34, nombre: "Documento Nacional de Identidad", abreviatura: "DNI", estado: "activo" },
-  { id: 35, nombre: "Pasaporte", abreviatura: "PASS", estado: "activo" },
-  { id: 36, nombre: "Licencia de Conducir", abreviatura: "LDC", estado: "activo" },
-  { id: 37, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 38, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 39, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 40, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 41, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 42, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 43, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 44, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 45, nombre: "Documento Nacional de Identidad", abreviatura: "DNI", estado: "activo" },
-  { id: 46, nombre: "Pasaporte", abreviatura: "PASS", estado: "activo" },
-  { id: 47, nombre: "Licencia de Conducir", abreviatura: "LDC", estado: "activo" },
-  { id: 48, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 49, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 50, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 51, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 52, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 53, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 54, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 55, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 56, nombre: "Documento Nacional de Identidad", abreviatura: "DNI", estado: "activo" },
-  { id: 57, nombre: "Pasaporte", abreviatura: "PASS", estado: "activo" },
-  { id: 58, nombre: "Licencia de Conducir", abreviatura: "LDC", estado: "activo" },
-  { id: 59, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 60, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 61, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 62, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 63, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 64, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 65, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 66, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 67, nombre: "Documento Nacional de Identidad", abreviatura: "DNI", estado: "activo" },
-  { id: 68, nombre: "Pasaporte", abreviatura: "PASS", estado: "activo" },
-  { id: 69, nombre: "Licencia de Conducir", abreviatura: "LDC", estado: "activo" },
-  { id: 70, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 71, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 72, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 73, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 74, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 75, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 76, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 77, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 78, nombre: "Documento Nacional de Identidad", abreviatura: "DNI", estado: "activo" },
-  { id: 79, nombre: "Pasaporte", abreviatura: "PASS", estado: "activo" },
-  { id: 80, nombre: "Licencia de Conducir", abreviatura: "LDC", estado: "activo" },
-  { id: 81, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 82, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 83, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 84, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 85, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 86, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 87, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 88, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 89, nombre: "Documento Nacional de Identidad", abreviatura: "DNI", estado: "activo" },
-  { id: 90, nombre: "Pasaporte", abreviatura: "PASS", estado: "activo" },
-  { id: 91, nombre: "Licencia de Conducir", abreviatura: "LDC", estado: "activo" },
-  { id: 92, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 93, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 94, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 95, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 96, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 97, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 98, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 99, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 100, nombre: "Documento Nacional de Identidad", abreviatura: "DNI", estado: "activo" },
-  { id: 101, nombre: "Pasaporte", abreviatura: "PASS", estado: "activo" },
-  { id: 102, nombre: "Licencia de Conducir", abreviatura: "LDC", estado: "activo" },
-  { id: 103, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 104, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 105, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 106, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 107, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 108, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 109, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 110, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 111, nombre: "Documento Nacional de Identidad", abreviatura: "DNI", estado: "activo" },
-  { id: 112, nombre: "Pasaporte", abreviatura: "PASS", estado: "activo" },
-  { id: 113, nombre: "Licencia de Conducir", abreviatura: "LDC", estado: "activo" },
-  { id: 114, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 115, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 116, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 117, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-  { id: 118, nombre: "Cédula", abreviatura: "CED", estado: "activo" },
-  { id: 119, nombre: "Carnet", abreviatura: "CRN", estado: "activo" },
-  { id: 120, nombre: "Partida de Nacimiento", abreviatura: "PDN", estado: "activo" },
-  { id: 121, nombre: "Certificado", abreviatura: "CERT", estado: "activo" },
-];
-let documentosFiltrados = null;
-
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
 
-// Referencias a los modales sin Bootstrap
-const modalDetalle = crearModal();
-const modalFormulario = crearModalFormulario();
+const modalDetalle = crearModal();            // crea y añade modal detalle al DOM (igual diseño)
+const modalFormulario = crearModalFormulario(); // crea y añade modal formulario al DOM (igual diseño)
 
+let documentos = [];           // se llenará desde la API
+let documentosFiltrados = null;
 let paginaActual = 1;
 const elementosPorPagina = 10;
-
-// Variable de ordenamiento
 let ordenActual = { campo: null, ascendente: true };
 
+/* -------------------------
+   Normalizar un documento (soporta distintos formatos de API)
+   ------------------------- */
+function normalizar(doc) {
+  const id = doc.id ?? doc.idTipoDocumento ?? doc.id_tipo_documento ?? null;
+  const nombre = doc.nombre ?? doc.nombDocumento ?? doc.nomb_documento ?? "";
+  const abreviatura = doc.abreviatura ?? doc.abrev ?? "";
+
+  let estado = false;
+
+  // Detecta correctamente: 1, "1", true, "activo"
+  if (doc.estado === 1 || doc.estado === "1" || doc.estado === true || doc.estado === "activo" || doc.estadoDocumento === true || doc.estadoDocumento === 1) {
+    estado = true;
+  }
+
+  return { id, nombre, abreviatura, estado };
+}
+
+// Función genérica para manejar solicitudes a la API
+const manejarSolicitud = async (url, opciones, mensajeError) => {
+  try {
+    const res = await fetch(url, opciones);
+    if (!res.ok) throw new Error(mensajeError);
+    return await res.json();
+  } catch (err) {
+    console.error(mensajeError, err);
+    alert(mensajeError);
+    throw err;
+  }
+};
+
+/* ==========================
+   CARGAR DOCUMENTOS DESDE API
+   ========================== */
+const cargarDocumentos = async () => {
+  documentos = await manejarSolicitud(
+    "/api/tipoDocumento/",
+    {},
+    "Error al obtener documentos"
+  ).then((data) => (Array.isArray(data) ? data.map(normalizar) : []));
+  documentosFiltrados = null;
+  paginaActual = 1;
+  renderTabla();
+};
+
+/* ==========================
+   EXISTE DOCUMENTO (misma lógica que tenías)
+   ========================== */
 function existeDocumento(nombre, abreviatura, idIgnorar = null) {
   return documentos.some(doc =>
     ((doc.nombre.toLowerCase() === nombre.toLowerCase()) ||
-    (doc.abreviatura.toLowerCase() === abreviatura.toLowerCase())) &&
+     (doc.abreviatura.toLowerCase() === abreviatura.toLowerCase())) &&
     doc.id !== idIgnorar
   );
 }
 
-// Renderizar tabla
+/* ==========================
+   RENDER TABLA (IDÉNTICO VISUAL)
+   ========================== */
 function renderTabla() {
   tabla.innerHTML = "";
 
@@ -153,8 +77,8 @@ function renderTabla() {
   if (ordenActual.campo) {
     lista.sort((a, b) => {
       const campo = ordenActual.campo;
-      const valorA = a[campo] ? a[campo].toString().toLowerCase() : "";
-      const valorB = b[campo] ? b[campo].toString().toLowerCase() : "";
+      const valorA = (a[campo] || "").toString().toLowerCase();
+      const valorB = (b[campo] || "").toString().toLowerCase();
       if (valorA < valorB) return ordenActual.ascendente ? -1 : 1;
       if (valorA > valorB) return ordenActual.ascendente ? 1 : -1;
       return 0;
@@ -166,15 +90,15 @@ function renderTabla() {
   const documentosPagina = lista.slice(inicio, fin);
 
   documentosPagina.forEach((doc, index) => {
-    const esActivo = doc.estado === "activo";
+    const esActivo = doc.estado === true || doc.estado === "activo";
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
 
     const fila = document.createElement("tr");
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
-      <td class="col-nombre">${doc.nombre}</td>
-      <td class="col-abreviatura">${doc.abreviatura}</td>
+      <td class="col-nombre">${escapeHtml(doc.nombre)}</td>
+      <td class="col-abreviatura">${escapeHtml(doc.abreviatura)}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
           <button class="btn btn-info btn-sm" onclick="verDetalle(${doc.id})" title="Ver">
@@ -198,102 +122,182 @@ function renderTabla() {
   renderPaginacion();
 }
 
+const escapeHtml = (text) => String(text || "").replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
 
-function renderPaginacion() {
+/* ==========================
+   PAGINACIÓN (idéntica)
+   ========================== */
+const renderPaginacion = () => {
   paginacion.innerHTML = "";
-  const totalPaginas = Math.ceil(documentos.length / elementosPorPagina);
+  const total = (documentosFiltrados ?? documentos).length;
+  const totalPaginas = Math.ceil(total / elementosPorPagina);
   if (totalPaginas <= 1) return;
 
   const ul = document.createElement("ul");
   ul.className = "pagination";
 
-  const crearItem = (numero, activo = false, disabled = false, texto = null) => {
+  const crearItem = (numero, activo, disabled, texto) => {
     const li = document.createElement("li");
     li.className = `page-item ${activo ? "active" : ""} ${disabled ? "disabled" : ""}`;
     li.innerHTML = `<button class="page-link" onclick="cambiarPagina(${numero})">${texto || numero}</button>`;
     return li;
   };
 
-  // Botón "Anterior"
-  ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, '<'));
+  ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, "<"));
 
-  // Páginas
-  const start = Math.max(1, paginaActual - 2);
-  const end = Math.min(totalPaginas, paginaActual + 2);
-
-  if (start > 1) {
+  const range = [Math.max(1, paginaActual - 2), Math.min(totalPaginas, paginaActual + 2)];
+  if (range[0] > 1) {
     ul.appendChild(crearItem(1, paginaActual === 1));
-    if (start > 2) ul.appendChild(crearItem(null, false, true, '...'));
+    if (range[0] > 2) ul.appendChild(crearItem(null, false, true, "..."));
   }
 
-  for (let i = start; i <= end; i++) {
-    ul.appendChild(crearItem(i, paginaActual === i));
-  }
+  for (let i = range[0]; i <= range[1]; i++) ul.appendChild(crearItem(i, paginaActual === i));
 
-  if (end < totalPaginas) {
-    if (end < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, '...'));
+  if (range[1] < totalPaginas) {
+    if (range[1] < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, "..."));
     ul.appendChild(crearItem(totalPaginas, paginaActual === totalPaginas));
   }
-  
-  // Botón "Siguiente"
-  ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, '>'));
 
-
+  ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, ">"));
   paginacion.appendChild(ul);
-}
-
+};
 
 function cambiarPagina(pagina) {
-  if (pagina < 1 || pagina > Math.ceil(documentos.length / elementosPorPagina)) {
-    return;
-  }
+  const total = Math.ceil((documentosFiltrados ?? documentos).length / elementosPorPagina);
+  if (pagina < 1 || pagina > total) return;
   paginaActual = pagina;
   renderTabla();
 }
 
-// ----------------- AGREGAR DOCUMENTO -----------------
-document.getElementById("formDocumento").addEventListener("submit", (e) => {
-  e.preventDefault();
-  abrirModalFormulario("agregar");
-  renderTabla();
+/* ==========================
+   ACCIONES: agregar, editar, eliminar, estado
+   (llaman a la API y luego recargan)
+   ========================== */
+const agregarDocumento = (nombre, abreviatura) => manejarSolicitud(
+  "/api/tipoDocumento/agregar",
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre, abreviatura }),
+  },
+  "Error al agregar documento"
+).then(() => cargarDocumentos());
+
+const actualizarDocumentoAPI = (id, nombre, abreviatura) => manejarSolicitud(
+  `/api/tipoDocumento/actualizar/${id}`,
+  {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre, abreviatura }),
+  },
+  "Error al actualizar documento"
+).then(() => cargarDocumentos());
+
+const eliminarDocumento = async (id) => {
+  if (!confirm("¿Está seguro de eliminar este documento?")) return;
+  try {
+    const res = await fetch(`/api/tipoDocumento/eliminar/${id}`, { method: "DELETE" });
+    const data = await res.json();
+
+    if (!res.ok) {
+      // Mostrar mensaje de error específico del servidor
+      alert(data.error || "Error al eliminar el documento");
+      return;
+    }
+
+    alert(data.mensaje || "Documento eliminado correctamente");
+    cargarDocumentos();
+  } catch (err) {
+    console.error("Error al eliminar documento", err);
+    alert("Error inesperado al eliminar el documento");
+  }
+};
+
+/* ==========================
+   CAMBIO DE ESTADO (optimizado)
+   ========================== */
+async function darDeBaja(id) {
+  try {
+    // Buscar el documento actual
+    const doc = documentos.find(d => d.id === id);
+    if (!doc) return alert("Documento no encontrado");
+
+    // Determinar el nuevo estado (toggle)
+    const nuevoEstado = doc.estado === true || doc.estado === "activo" ? false : true;
+
+    // Llamar a la API
+    const res = await fetch(`/api/tipoDocumento/cambiar_estado/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado: nuevoEstado })
+    });
+
+    if (!res.ok) throw new Error("Error al cambiar estado");
+    const data = await res.json();
+
+    // Actualizar estado local
+    doc.estado = data.nuevo_estado === true || nuevoEstado === true;
+
+    // Actualizar visualmente la fila sin recargar toda la tabla
+    const fila = [...tabla.querySelectorAll("tr")].find(tr => tr.innerText.includes(doc.nombre));
+    if (fila) {
+      const btn = fila.querySelector(".btn-orange, .btn-success");
+      const img = btn.querySelector("img");
+
+      if (doc.estado) {
+        btn.classList.remove("btn-success");
+        btn.classList.add("btn-orange");
+        btn.title = "Dar de baja";
+        img.style.transform = "";
+      } else {
+        btn.classList.remove("btn-orange");
+        btn.classList.add("btn-success");
+        btn.title = "Dar de alta";
+        img.style.transform = "rotate(180deg)";
+      }
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Error al actualizar estado");
+  }
+}
+
+/* ==========================
+   BÚSQUEDA
+   ========================== */
+const inputDocumento = document.getElementById("inputDocumento");
+const btnBuscar = document.getElementById("btn_buscar");
+btnBuscar.addEventListener("click", async () => {
+  const termino = inputDocumento.value.trim();
+  if (termino === "") {
+    documentosFiltrados = null;
+    paginaActual = 1;
+    renderTabla();
+    return;
+  }
+  try {
+    const res = await fetch(`/api/tipoDocumento/busqueda_documento/${encodeURIComponent(termino)}`);
+    if (res.status === 404) {
+      documentosFiltrados = [];
+      renderTabla();
+      return;
+    }
+    if (!res.ok) throw new Error("Error en búsqueda");
+    const data = await res.json();
+    documentosFiltrados = Array.isArray(data) ? data.map(normalizar) : [normalizar(data)];
+    paginaActual = 1;
+    renderTabla();
+  } catch (err) {
+    console.error(err);
+    alert("Error al buscar documento");
+  }
 });
 
-// ----------------- EDITAR DOCUMENTO -----------------
-function editarDocumento(id) {
-  const doc = documentos.find(d => d.id === id);
-  if (!doc) return;
-  abrirModalFormulario("editar", doc);
-}
-
-// ----------------- ELIMINAR -----------------
-function eliminarDocumento(id) {
-  const doc = documentos.find(d => d.id === id);
-  if (!doc) return;
-  if (!confirm(`¿Está seguro de eliminar "${doc.nombre}"?`)) return;
-  documentos = documentos.filter(d => d.id !== id);
-  const totalPaginas = Math.ceil(documentos.length / elementosPorPagina);
-  if (paginaActual > totalPaginas) paginaActual = totalPaginas || 1;
-  renderTabla();
-  renderPaginacion();
-}
-
-// ----------------- DAR DE BAJA/ALTA -----------------
-function darDeBaja(id) {
-  const doc = documentos.find(d => d.id === id);
-  if (!doc) return;
-  doc.estado = doc.estado === "activo" ? "inactivo" : "activo";
-  renderTabla();
-}
-
-// ----------------- VER DETALLE -----------------
-function verDetalle(id) {
-  const doc = documentos.find(d => d.id === id);
-  if (!doc) return;
-  abrirModalFormulario("ver", doc);
-}
-
-
-// ----------------- CREAR MODAL DETALLE -----------------
+/* ==========================
+   MODALES: crearModal() y crearModalFormulario()
+   (USAN EXACTAMENTE TU MARKUP ORIGINAL)
+   ========================== */
 function crearModal() {
   const modalHTML = document.createElement("div");
   modalHTML.innerHTML = `
@@ -313,7 +317,6 @@ function crearModal() {
   return document.getElementById("modalDetalle");
 }
 
-// ----------------- CREAR MODAL FORMULARIO (Agregar/Editar) -----------------
 function crearModalFormulario() {
   const modalHTML = document.createElement("div");
   modalHTML.innerHTML = `
@@ -326,21 +329,17 @@ function crearModalFormulario() {
           </div>
           <div class="modal-body">
             <form id="formModalDocumento">
-
               <div class="mb-3">
                 <label for="modalNombre" class="form-label">Nombre del documento</label>
                 <input type="text" id="modalNombre" class="form-control" required>
               </div>
-
               <div class="mb-3">
                 <label for="modalAbreviatura" class="form-label">Abreviatura</label>
                 <input type="text" id="modalAbreviatura" class="form-control" required>
               </div>
-
               <div class="modal-footer">
                 <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar">Aceptar</button>
               </div>
-
             </form>
           </div>
         </div>
@@ -351,22 +350,19 @@ function crearModalFormulario() {
   return document.getElementById("modalFormulario");
 }
 
-// Nueva función para abrir y cerrar modales
 function abrirModal(modalId) {
   const modal = document.getElementById(modalId);
-  if (modal) {
-    modal.classList.add('activo');
-  }
+  if (modal) modal.classList.add('activo');
 }
 
 function cerrarModal(modalId) {
   const modal = document.getElementById(modalId);
-  if (modal) {
-    modal.classList.remove('activo');
-  }
+  if (modal) modal.classList.remove('activo');
 }
 
-// ----------------- ABRIR MODAL FORMULARIO ----------------- 
+/* ==========================
+   abrirModalFormulario: maneja modos agregar/editar/ver (igual UI)
+   ========================== */
 function abrirModalFormulario(modo, doc = null) {
   const titulo = document.getElementById("modalFormularioTitulo");
   const inputNombre = document.getElementById("modalNombre");
@@ -374,101 +370,93 @@ function abrirModalFormulario(modo, doc = null) {
   const botonGuardar = document.getElementById("btnGuardar");
   const form = document.getElementById("formModalDocumento");
   const modalFooter = document.querySelector("#modalFormulario .modal-footer");
-  
-  // Limpiar y resetear
+
+  // --- INICIO DE LA SOLUCIÓN ---
+// 1. Limpia cualquier evento de envío que el formulario tuviera antes.
+form.onsubmit = null;
+
+// 2. Limpia cualquier evento de clic que el botón tuviera antes.
+botonGuardar.onclick = null;
+// --- FIN DE LA SOLUCIÓN ---
+
+  // reset footer (mantener boton)
   modalFooter.innerHTML = "";
+  botonGuardar.textContent = "Aceptar";
+  botonGuardar.type = "submit";
+  botonGuardar.classList.remove("d-none");
+  modalFooter.appendChild(botonGuardar);
+
   inputNombre.disabled = false;
   inputAbreviatura.disabled = false;
 
-  if (modo === "agregar") {
-    titulo.textContent = "Agregar Documento";
-    inputNombre.value = "";
-    inputAbreviatura.value = "";
-    
-    botonGuardar.textContent = "Aceptar";
-    botonGuardar.type = "submit";
-    botonGuardar.classList.remove("d-none");
-    modalFooter.appendChild(botonGuardar);
+if (modo === "agregar") {
+  titulo.textContent = "Agregar Documento";
+  inputNombre.value = "";
+  inputAbreviatura.value = "";
 
-    form.onsubmit = (e) => {
-      e.preventDefault();
+  form.onsubmit = function (e) {
+    e.preventDefault();
+    const nombre = inputNombre.value.trim();
+    const abreviatura = inputAbreviatura.value.trim();
+    if (!nombre || !abreviatura) return alert("Complete todos los campos");
+    if (existeDocumento(nombre, abreviatura)) return alert("Ya existe un documento con ese nombre o abreviatura");
+    agregarDocumento(nombre, abreviatura)
+      .then(() => cerrarModal("modalFormulario"));
+  };
 
-      const nombre = inputNombre.value.trim();
-      const abreviatura = inputAbreviatura.value.trim();
-
-      if (!nombre || !abreviatura) {
-        alert("Complete todos los campos");
-        return;
-      }
-
-      if (existeDocumento(nombre, abreviatura)) {
-        alert("Ya existe un documento con ese nombre o abreviatura");
-        return;
-      }
-
-      documentos.push({
-        id: Date.now(),
-        nombre,
-        abreviatura,
-        estado: "activo"
-      });
-
-      cerrarModal('modalFormulario');
-      renderTabla();
-    };
-
-  } else if (modo === "editar" && doc) {
+  // 👉 Esta línea faltaba
+  abrirModal("modalFormulario");
+} else if (modo === "editar" && doc) {
     titulo.textContent = "Editar Documento";
     inputNombre.value = doc.nombre;
     inputAbreviatura.value = doc.abreviatura;
 
-    botonGuardar.textContent = "Aceptar";
-    botonGuardar.type = "submit";
-    botonGuardar.classList.remove("d-none");
-    modalFooter.appendChild(botonGuardar);
-
-    form.onsubmit = (e) => {
+    form.onsubmit = function (e) {
       e.preventDefault();
-
       const nombre = inputNombre.value.trim();
       const abreviatura = inputAbreviatura.value.trim();
+      if (!nombre || !abreviatura) return alert("Complete todos los campos");
+      if (existeDocumento(nombre, abreviatura, doc.id)) return alert("Ya existe un documento con ese nombre o abreviatura");
 
-      if (!nombre || !abreviatura) {
-        alert("Complete todos los campos");
-        return;
-      }
-
-      if (existeDocumento(nombre, abreviatura, doc.id)) {
-        alert("Ya existe un documento con ese nombre o abreviatura");
-        return;
-      }
-
-      doc.nombre = nombre;
-      doc.abreviatura = abreviatura;
-
-      cerrarModal('modalFormulario');
-      renderTabla();
+      actualizarDocumentoAPI(doc.id, nombre, abreviatura)
+        .then(() => cerrarModal("modalFormulario"));
     };
-
-  } else if (modo === "ver" && doc) {
+  } else  if (modo === "ver" && doc) {
     titulo.textContent = "Detalle del Documento";
     inputNombre.value = doc.nombre;
     inputAbreviatura.value = doc.abreviatura;
-
     inputNombre.disabled = true;
     inputAbreviatura.disabled = true;
 
-    botonGuardar.textContent = "Aceptar";
-    botonGuardar.type = "submit";
-    botonGuardar.classList.remove("d-none");
-    modalFooter.appendChild(botonGuardar);
+    // Asegúrate de que el botón "Aceptar" solo cierre el modal
+    botonGuardar.onclick = function (e) {
+      e.preventDefault(); // Evitar cualquier acción predeterminada
+      cerrarModal("modalFormulario");
+    };
   }
 
-  abrirModal('modalFormulario');
+  abrirModal("modalFormulario");
 }
 
+/* ==========================
+   funciones usadas por botones (mantengo nombres)
+   ========================== */
+function editarDocumento(id) {
+  const doc = documentos.find(d => d.id === id);
+  if (!doc) return;
+  abrirModalFormulario("editar", doc);
+}
 
-// ----------------- ORDENAMIENTO -----------------
+function verDetalle(id) {
+  const doc = documentos.find(d => d.id === id);
+  if (!doc) return;
+  abrirModalFormulario("ver", doc);
+  renderTabla();
+}
+
+/* ==========================
+   ORDENAMIENTO (igual)
+   ========================== */
 document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
   th.style.cursor = "pointer";
   th.addEventListener("click", () => {
@@ -487,26 +475,11 @@ document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
   });
 });
 
-// ---BUSCAR
-const inputDocumento = document.getElementById("inputDocumento");
-const btnBuscar = document.getElementById("btn_buscar");
+/* ==========================
+   INICIALIZAR
+   ========================== */
+cargarDocumentos();
 
-btnBuscar.addEventListener("click", function () {
-  const termino = inputDocumento.value.trim().toLowerCase();
-
-  if (termino === "") {
-    documentosFiltrados = null; // mostrar todos
-  } else {
-    documentosFiltrados = documentos.filter(
-      (doc) =>
-        doc.nombre.toLowerCase().includes(termino) ||
-        doc.abreviatura.toLowerCase().includes(termino)
-    );
-  }
-
-  paginaActual = 1;
-  renderTabla();
+document.getElementById("btn_guardar").addEventListener("click", () => {
+  abrirModalFormulario("agregar");
 });
-
-
-renderTabla();

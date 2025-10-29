@@ -14,39 +14,48 @@
 
         <main>
             <div class="detalle">
-                <h2>Conoce la parroquia <span id="nombre">#####</span></h2>
+                <h2>Conoce la parroquia <span id="nombre"></span></h2>
+                
                 <div class="izquierda">
-                    <div class="historia">
+                    
+                    <div class="historia campo-largo">
                         <h2>Historia</h2>
-                        <p id="historia">#################</p>
+                        <p id="historia"></p>
                     </div>
+
+
+                    <div class="ruc">
+                        <h2>RUC:</h2>
+                        <p id="ruc"></p>
+                    </div>
+                    
                     <div class="sacerdotes">
                         <h2>Sacerdotes:</h2>
-                        <ul id="lista-sacerdotes">
-                        </ul>
+                        <ul id="lista-sacerdotes"></ul>
                     </div>
+                    
                     <div class="actos">
                         <h2>Actos litúrgicos:</h2>
-                        <ul id="lista-actos">
-                        </ul>
+                        <ul id="lista-actos"></ul>
                     </div>
+                    
                     <div class="contactos">
                         <h2>Contactos:</h2>
-                        <p id="contacto">#################</p>
+                        <p id="contacto"></p>
                     </div>
-                    <div class="horario">
-                        <h2>Horarios de atención:</h2>
-                        <p id="horario">#################</p>
+
+                    <div class="direccion campo-largo">
+                        <h2>Dirección:</h2>
+                        <p id="ubicacion"></p>
                     </div>
-                    <div class="direccion">
-                        <h2>Ubicación:</h2>
-                        <p id="ubicacion">##############</p>
-                    </div>
+                    
                 </div>
+                
                 <div class="derecha">
-                    <img src="############" alt="">
-                    <button type="submit">Realice su reserva</button>
-                    <button type="submit">Regresar mapa</button>
+                    <img id="imagen" alt="Imagen de la parroquia"> 
+                    <a href="{{ url_for('reserva_cliente') }}"><button type="button" class="reserva">Realizar reserva</button></a>
+                    <a href="{{ url_for('calendario_cliente') }}"><button type="button" class="calendario">Ver calendario</button></a>
+                    <a href="{{ url_for('parroquia_cliente') }}"><button type="button" class="mapa">Regresar mapa</button></a>
                 </div>
             </div>
         </main>
@@ -54,4 +63,5 @@
 </body>
 <script src="/static/js/header.js"></script>
 <script src="/static/js/barra_lateral.js"></script>
+<script src="/static/js/parroquia.js"></script>
 </html>

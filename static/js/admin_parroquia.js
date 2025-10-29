@@ -92,8 +92,7 @@ function renderTabla() {
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
       <td class="col-nombre">${escapeHtml(par.nombre)}</td>
-      <td class="col-historiaDescripcion">${escapeHtml(par.historiaParroquia)}</td>
-      <td class="col-">${escapeHtml(par.nombre)}</td>
+      <td class="col-direccion">${escapeHtml(par.direccion)}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
           <button class="btn btn-info btn-sm" onclick="verDetalle(${par.id})" title="Ver">

@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\Jhosep\Documents\CICLO7\Ingenia y calidad de software\PROYECTO_IYCS-main\venv"
+VIRTUAL_ENV="C:\Users\Jhosep\Downloads\PROYECTO_IYCS-main\PROYECTO_IYCS-main\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

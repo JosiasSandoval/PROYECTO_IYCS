@@ -61,6 +61,10 @@
     transition: all 0.3s ease;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
+a {
+  text-decoration: none; /* ❌ quita el subrayado */
+  color: inherit;        /* usa el color del texto del elemento padre */
+}
 
 .botones button img {
     width: 50px;
