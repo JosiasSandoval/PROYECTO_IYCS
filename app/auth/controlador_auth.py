@@ -36,3 +36,21 @@ def registrar_usuario_y_feligres(nombFel, apePaFel, apeMaFel, numDocFel, f_nacim
         if conexion:
             conexion.close()
 
+
+def verificar_usuario(email, clave):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute(
+                "SELECT idUsuario FROM usuario WHERE email=%s AND clave=%s",
+                (email, clave)
+            )
+            usuario = cursor.fetchone()
+        
+        if usuario:
+            return usuario[0]  # accedemos por índice
+        else:
+            return None
+    finally:
+        conexion.close()
+

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/lista_reporte.css">
+    <title>LITBOOK | Configuración</title>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="grid">
+        <div id="barra_lateral_administrador-placeholder"></div>
+        <div class="contenido-principal">
+            <div class="contenido">   
+
+                <!-- ===== LISTA DE REPORTES ===== -->
+                <h3 class="titulo-seccion">Reportes</h3>
+
+                <ul class="lista-reportes">
+                    <li>
+                        <span>Reporte de Reservas</span>
+                        <div>
+                            <button onclick="generarReporteReservas()">Ver</button>
+                            <button onclick="descargarPDF('reservas')">Descargar PDF</button>
+                        </div>
+                    </li>
+                    <li>
+                        <span>Reporte de Actos Litúrgicos</span>
+                        <div>
+                            <button onclick="generarReporteActosLiturgicos()">Ver</button>
+                            <button onclick="descargarPDF('actos_liturgicos')">Descargar PDF</button>
+                        </div>
+                    </li>
+                    <li>
+                        <span>Reporte de Usuarios Frecuentes</span>
+                        <div>
+                            <button onclick="generarReporteUsuariosFrecuentes()">Ver</button>
+                            <button onclick="descargarPDF('usuarios_frecuentes')">Descargar PDF</button>
+                        </div>
+                    </li>
+                    <li>
+                        <span>Reporte de Requisitos Entregados/Incompletos</span>
+                        <div>
+                            <button onclick="generarReporteRequisitos()">Ver</button>
+                            <button onclick="descargarPDF('requisitos')">Descargar PDF</button>
+                        </div>
+                    </li>
+                    <li>
+                        <span>Reporte de Pagos</span>
+                        <div>
+                            <button onclick="generarReportePagos()">Ver</button>
+                            <button onclick="descargarPDF('pagos')">Descargar PDF</button>
+                        </div>
+                    </li>
+                </ul>
+
+                <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #ddd;">
+
+
+            </div>
+        </div>
+    </main>
+    <script src="/static/js/barra_lateral_administrador.js"></script>
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/lista_reporte.js"></script>
+</body>
+</html>

@@ -19,29 +19,35 @@
         <div class="funciones">
             <h2>MENÚ DE OPCIONES</h2>
             <div class="botones">
+            <a href="{{ url_for('parroquia_cliente') }}">
+                <button>
+                    <img src="{{ url_for('static', filename='img/parroquia.png') }}" alt="">
+                    Parroquia
+                </button>
+            </a>
+            <a href="{{ url_for('reserva_cliente') }}">
+                <button>
+                    <img src="{{ url_for('static', filename='img/reserva.png') }}" alt="">
+                    Reservas
+                </button>
+            </a>
             <button>
-                <img src="/static/img/parroquia.png">
-                Parroquia</button>
-            <button>
-                <img src="/static/img/reserva.png" alt="">
-                Reservas</button>
-            <button>
-                <img src="/static/img/acto.png" alt="">
+                <img src="{{ url_for('static', filename='img/acto.png') }}" alt="">
                 Acto litúrgicos</button>
             <button>
-                <img src="/static/img/usuario.png" alt="">
+                <img src="{{ url_for('static', filename='img/usuario.png') }}" alt="">
                 Usuarios</button>
             <button>
-                <img src="/static/img/pago.png" alt="">
+                <img src="{{ url_for('static', filename='img/pago.png') }}" alt="">
                 Pago</button>
             <button>
-                <img src="/static/img/calendario.png" alt="">
+                <img src="{{ url_for('static', filename='img/calendario.png') }}" alt="">
                 Calendario</button>
             <button>
-                <img src="/static/img/requisito.png" alt="">
+                <img src="{{ url_for('static', filename='img/requisito.png') }}" alt="">
                 Requisitos</button>
             <button>
-                <img src="/static/img/reporte.png" alt="">
+                <img src="{{ url_for('static', filename='img/reporte.png') }}" alt="">
                 Reportes</button>
             </div>
         </div>
