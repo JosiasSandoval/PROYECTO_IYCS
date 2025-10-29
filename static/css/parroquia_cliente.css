@@ -267,3 +267,22 @@ aside {
     background-color: #1e7e34;
     transform: translateY(-1px);
 } 
+.sugerencias-lista {
+    position: absolute;
+    background: #fff;
+    border: 1px solid #ccc;
+    width: 78.5%;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    z-index: 999;
+}
+.sugerencia-item {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+.sugerencia-item:hover {
+    background: #f0f0f0;
+}

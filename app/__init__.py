@@ -1,6 +1,6 @@
 import os
 import calendar
-from flask import Flask, render_template
+from flask import Flask, render_template,redirect,session,url_for
 from app.tipo_documento.route_tipo_documento import tipoDocumento_bp
 from app.auth.route_auth import auth_bp
 from app.usuario.route_usuario import usuario_bp
@@ -41,7 +41,10 @@ def crear_app():
     
     @app.route('/principal')
     def principal():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
         return render_template('pagina_principal.html')
+
     
     @app.route('/cliente/parroquia')
     def parroquia_cliente():
@@ -53,8 +56,33 @@ def crear_app():
 
     @app.route('/cliente/reserva')
     def reserva_cliente():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
         return render_template('cliente/reserva_ubicacion.html')
     
+    @app.route('/cliente/reserva_acto')
+    def reserva_acto():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
+        return render_template('cliente/reserva_acto.html')
+    
+    @app.route('/cliente/reserva_datos')
+    def reserva_datos():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
+        return render_template('cliente/reserva_datos.html')
+    @app.route('/cliente/reserva_requisito')
+    def reserva_requisito():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
+        return render_template('cliente/reserva_requisito.html')
+    
+    @app.route('/cliente/reserva_resumen')
+    def reserva_resumen():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
+        return render_template('cliente/reserva_resumen.html')
+
     @app.route('/cliente/calendario')
     def calendario_cliente():
         return render_template('cliente/calendario.html')
@@ -88,6 +116,10 @@ def crear_app():
     def feligres_admi():
         return render_template('administradores/usuario_feligres.html')
     
+    @app.route('/admi/personal')
+    def personal_admi():    
+        return render_template('administradores/usuario_personal.html')
+
     return app
 
 

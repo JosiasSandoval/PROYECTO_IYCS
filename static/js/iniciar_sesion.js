@@ -6,74 +6,64 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalIcono = document.getElementById('modal-icono');   
     
     function cerrarModal() {
-        if (modal) {
-            modal.classList.remove('activo');
-        }
+        if (modal) modal.classList.remove('activo');
     }
 
     function mostrarMensaje(texto, tipo) {
-        if (!modalMensaje || !modal || !modalTitulo || !modalIcono) {
-            console.error("Faltan elementos del modal.");
-            return;
-        }
+        if (!modal || !modalMensaje || !modalTitulo || !modalIcono) return;
 
         modalMensaje.textContent = texto;
 
-        if (tipo === 'success') {
-            modalTitulo.textContent = 'Bienvenido al sistema Litbook';
-            modalIcono.src = '/static/img/confirmacion.png';
-        } else if (tipo === 'error') {
-            modalTitulo.textContent = 'Error';
-            modalIcono.src = '/static/img/rechazo.png';
-        }else if(tipo === 'advertencia'){
-            modalTitulo.textContent = 'Advertencia';
-            modalIcono.src = '/static/img/advertencia.png'; 
+        switch(tipo) {
+            case 'success':
+                modalTitulo.textContent = 'Bienvenido al sistema Litbook';
+                modalIcono.src = '/static/img/confirmacion.png';
+                break;
+            case 'error':
+                modalTitulo.textContent = 'Error';
+                modalIcono.src = '/static/img/rechazo.png';
+                break;
+            case 'advertencia':
+                modalTitulo.textContent = 'Advertencia';
+                modalIcono.src = '/static/img/advertencia.png';
+                break;
         }
 
-        modal.classList.add('activo'); 
-
-        if (tipo === 'error') {
-             setTimeout(cerrarModal, 5000);
-        }
+        modal.classList.add('activo');
+        setTimeout(cerrarModal, tipo === 'error' ? 5000 : 1000);
     }
 
-    if (!login) {
-        return;
-    }
+    if (!login) return;
 
     login.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const formData = new FormData(login); 
-        try {
-            const response = await fetch('/api/usuario/verificar_usuario', {
-                method: 'POST',
-                body: formData 
-            });
-            
-            if (response.redirected) {
-                mostrarMensaje("¡Inicio de sesión exitoso!", 'success');
-                
-                setTimeout(() => {
-                    cerrarModal();
-                    window.location.href = response.url;
-                }, 1000);
+        const formData = {
+            email: login.email.value.trim(),
+            clave: login.clave.value.trim()
+        };
 
+        try {
+            const response = await fetch('/api/auth/verificar_usuario', {  // CORREGIDO
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                mostrarMensaje("¡Inicio de sesión exitoso!", 'success');
+                setTimeout(() => {
+                    window.location.href = '/principal'; // Pantalla principal
+                }, 1000);
             } else {
-                let data;
-                try {
-                    data = await response.json();
-                } catch (jsonError) {
-                    data = { error: `Error ${response.status}: Respuesta del servidor no válida.` };
-                }
-                
                 mostrarMensaje(data.error || "Fallo desconocido al iniciar sesión.", 'error');
             }
-            
+
         } catch (error) {
             console.error('Error de conexión:', error);
             mostrarMensaje("No se pudo conectar con el servidor. El API podría estar inactivo.", 'error');
         }
     });
 });
-

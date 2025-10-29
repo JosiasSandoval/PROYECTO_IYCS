@@ -377,4 +377,65 @@ INSERT INTO ROL_USUARIO (idRol, idUsuario) VALUES
 (3, 29),
 (3, 30);
 
+INSERT INTO ACTO_LITURGICO (nombActo, descripcion, costoBase, estadoActo, imgActo) VALUES
+('Misa Individual', 'Celebración de la Eucaristía solicitada para una intención particular (difuntos, acción de gracias, etc.).', 100.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/1717714486912590687_0'),
+('Misa Comunitaria', 'Celebración de la Eucaristía con múltiples intenciones, abierta a la comunidad de la parroquia.', 50.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/5719853306317319414_0'),
+('Bautismo Comunitario', 'Sacramento de Bautismo celebrado en grupo, en fechas y horarios fijos.', 150.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
+('Bautismo Individual', 'Sacramento de Bautismo celebrado de forma privada, fuera de los horarios comunes.', 250.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
+('Matrimonio (Normal)', 'Sacramento del Matrimonio de dos feligreses propios de la parroquia.', 300.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
+('Matrimonio (Traslado)', 'Sacramento del Matrimonio de feligreses externos que solicitan realizarlo en esta parroquia.', 500.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
+('Confirmación', 'Sacramento que perfecciona la gracia bautismal y confiere el Espíritu Santo.', 100.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/818614702535729351_0'),
+('Misa de Exequias', 'Celebración litúrgica por el eterno descanso del difunto. (Sujeta a horarios).', 200.00, TRUE, 'https://ejemplo.com/imagen_funeral_catolico.jpg'),
+('Unción de Enfermos', 'Sacramento para confortar y dar fortaleza espiritual a los enfermos graves.', 0.00, TRUE, 'https://ejemplo.com/imagen_uncion_enfermos.jpg'),
+('Adoración Eucarística', 'Exposición y adoración del Santísimo Sacramento. Generalmente gratuita.', 0.00, TRUE, 'https://ejemplo.com/imagen_adoracion_eucaristica.jpg');
+
+INSERT INTO ACTO_PARROQUIA (idActo, idParroquia) VALUES
+(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10), (1, 11), (1, 12), (1, 13), (1, 14), (1, 15), (1, 16), (1, 17), (1, 18), (1, 19), (1, 20), (1, 21), (1, 22), (1, 23),
+(2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (2, 8), (2, 9), (2, 10), (2, 11), (2, 12), (2, 13), (2, 14), (2, 15), (2, 16), (2, 17), (2, 18), (2, 19), (2, 20), (2, 21), (2, 22), (2, 23),
+(3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (3, 12), (3, 13), (3, 14), (3, 15), (3, 16), (3, 17), (3, 18), (3, 19), (3, 20), (3, 21), (3, 22), (3, 23),
+(4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7), (4, 8), (4, 9), (4, 10), (4, 11), (4, 12), (4, 13), (4, 14), (4, 15), (4, 16), (4, 17), (4, 18), (4, 19), (4, 20), (4, 21), (4, 22), (4, 23),
+(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7), (5, 8), (5, 9), (5, 10), (5, 11), (5, 12), (5, 13), (5, 14), (5, 15), (5, 16), (5, 17), (5, 18), (5, 19), (5, 20), (5, 21), (5, 22), (5, 23),
+(6, 1), (6, 2), (6, 3), (6, 4), (6, 5), (6, 6), (6, 7), (6, 8), (6, 9), (6, 10), (6, 11), (6, 12), (6, 13), (6, 14), (6, 15), (6, 16), (6, 17), (6, 18), (6, 19), (6, 20), (6, 21), (6, 22), (6, 23);
+
+INSERT INTO REQUISITO (nombRequisito, f_requisito, descripcion, estadoRequisito) VALUES
+-- *******************************************************************
+-- Requisitos para BAUTISMO (Comunitario/Individual)
+-- *******************************************************************
+('Acta de Nacimiento', NULL, 'Documento oficial que certifica el nacimiento del niño(a).', TRUE),
+('Consentimiento de Padres', NULL, 'Declaración firmada de ambos padres o tutores legales.', TRUE),
+('Catequesis Prebautismal', NULL, 'Constancia de asistencia a la charla de preparación de padres y padrinos.', TRUE),
+('Padrinos Confirmados', NULL, 'Los padrinos deben ser católicos, estar confirmados y llevar una vida congruente con la fe.', TRUE),
+('Documentos de Padrinos', NULL, 'Copia del acta de Confirmación y, si están casados, del acta de Matrimonio Eclesiástico.', TRUE),
+
+-- *******************************************************************
+-- Requisitos para CONFIRMACIÓN
+-- *******************************************************************
+('Acta de Bautismo', NULL, 'Certificado que acredita la recepción del sacramento del Bautismo.', TRUE),
+('Acta de Primera Comunión', NULL, 'Certificado de haber recibido previamente la Eucaristía.', TRUE),
+('Catequesis de Confirmación', NULL, 'Comprobante de haber asistido y aprobado el curso de catequesis (usualmente 1-2 años).', TRUE),
+('Confesión Previa', '2025-10-25', 'Haber recibido el sacramento de la Penitencia (Confesión) días antes de la ceremonia.', TRUE),
+
+-- *******************************************************************
+-- Requisitos para MATRIMONIO (Normal/Traslado)
+-- *******************************************************************
+('Acta de Bautismo Actualizada (Novios)', NULL, 'Certificado reciente (no mayor a 6 meses) de Bautismo de ambos contrayentes.', TRUE),
+('Acta de Confirmación (Novios)', NULL, 'Certificado de haber recibido el sacramento de la Confirmación.', TRUE),
+('Acta de Primera Comunión (Novios)', NULL, 'Certificado de haber recibido la Primera Comunión.', TRUE),
+('Pláticas Prematrimoniales', NULL, 'Constancia de asistencia al curso prematrimonial impartido por la Diócesis.', TRUE),
+('Proclamas Matrimoniales', NULL, 'Comprobante de la publicación de las amonestaciones en las parroquias de origen.', TRUE),
+('Fotocopia Cédula/DNI', NULL, 'Copia de identificación de los novios, padrinos y testigos.', TRUE),
+('Licencia de Traslado', NULL, 'Documento que permite celebrar el matrimonio en una parroquia diferente a la de domicilio (solo para Matrimonio Traslado).', TRUE),
+
+-- *******************************************************************
+-- Requisitos para PRIMERA COMUNIÓN
+-- *******************************************************************
+('Acta de Bautismo', NULL, 'Certificado que acredita la recepción del sacramento del Bautismo.', TRUE),
+('Catequesis Eucarística', NULL, 'Comprobante de haber asistido y aprobado el curso de catequesis (usualmente 2 años).', TRUE),
+('Edad Mínima', NULL, 'Haber cumplido la edad requerida (ej. 8 años) y tener uso de razón.', TRUE),
+
+-- *******************************************************************
+-- Requisitos para MISA DE EXEQUIAS
+-- *******************************************************************
+('Acta de Defunción', NULL, 'Documento civil que acredita el fallecimiento de la persona.', TRUE),
+('Petición Familiar', NULL, 'Solicitud formal de la familia para la celebración de la Misa (no es estrictamente un requisito canónico, sino administrativo).', TRUE);
 

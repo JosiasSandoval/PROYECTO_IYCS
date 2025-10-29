@@ -183,9 +183,14 @@ CREATE TABLE ACTO_LITURGICO (
     descripcion VARCHAR(255) NULL,
     costoBase DECIMAL(8,2) NOT NULL DEFAULT 0.00,
     estadoActo BOOLEAN NOT NULL,
-    imgActo VARCHAR(255) NULL,
+    imgActo VARCHAR(255) NOT NULL
+);
+CREATE TABLE ACTO_PARROQUIA(
+    idActoParroquia INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    idActo INT NOT NULL,
     idParroquia INT NOT NULL,
-    CONSTRAINT fk_acto_parroquia FOREIGN KEY (idParroquia) REFERENCES PARROQUIA(idParroquia)
+    CONSTRAINT fk_actoparroquia_acto FOREIGN KEY (idActo) REFERENCES ACTO_LITURGICO(idActo),
+    CONSTRAINT fk_parroquia_acto FOREIGN KEY (idParroquia) REFERENCES PARROQUIA(idParroquia)
 );
 
 CREATE TABLE REQUISITO (
