@@ -93,6 +93,7 @@ function renderTabla() {
       <td class="col-id">${inicio + index + 1}</td>
       <td class="col-nombre">${escapeHtml(par.nombre)}</td>
       <td class="col-direccion">${escapeHtml(par.direccion)}</td>
+      <td class="col-ruc">${escapeHtml(par.ruc)}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
           <button class="btn btn-info btn-sm" onclick="verDetalle(${par.id})" title="Ver">
@@ -245,22 +246,25 @@ btnBuscar.addEventListener("click", async () => {
     return;
   }
   try {
-    const res = await fetch(`/api/parroquia/busqueda_parroquia/${encodeURIComponent(termino)}`);
-    if (res.status === 404) {
+    const res = await fetch(`/api/parroquia/buscar/${encodeURIComponent(termino)}`);
+    const data = await res.json();
+
+    if (!data.ok || !Array.isArray(data.datos) || data.datos.length === 0) {
       parroquiasFiltradas = [];
       renderTabla();
+      alert("No se encontraron resultados");
       return;
     }
-    if (!res.ok) throw new Error("Error en búsqueda");
-    const data = await res.json();
-    parroquiasFiltradas = Array.isArray(data) ? data.map(normalizar) : [normalizar(data)];
+
+    parroquiasFiltradas = data.datos.map(normalizar);
     paginaActual = 1;
     renderTabla();
   } catch (err) {
-    console.error(err);
+    console.error("Error al buscar parroquia:", err);
     alert("Error al buscar parroquia");
   }
 });
+
 
 function crearModal() {
   const modalHTML = document.createElement("div");

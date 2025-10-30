@@ -19,7 +19,7 @@
         <div class="funciones">
             <h2>MENÚ DE OPCIONES</h2>
             <div class="botones">
-            <a href="{{ url_for('parroquia_cliente') }}">
+            <a href="{{ url_for('parroquia_admi') }}">
                 <button>
                     <img src="{{ url_for('static', filename='img/parroquia.png') }}" alt="">
                     Parroquia
@@ -31,9 +31,14 @@
                     Reservas
                 </button>
             </a>
-            <button>
-                <img src="{{ url_for('static', filename='img/acto.png') }}" alt="">
-                Acto litúrgicos</button>
+
+            <a href="{{ url_for('metodo_pago_admi') }}">
+                <button>
+                    <img src="{{ url_for('static', filename='img/acto.png') }}" alt="">
+                    Acto litúrgicos
+                </button>
+            </a>
+
             <button>
                 <img src="{{ url_for('static', filename='img/usuario.png') }}" alt="">
                 Usuarios</button>

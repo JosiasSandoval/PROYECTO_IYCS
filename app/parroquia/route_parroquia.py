@@ -8,7 +8,8 @@ from app.parroquia.controlador_parroquia import (
     actualizar_parroquia,
     cambiar_estado_parroquia,
     eliminar_parroquia,
-    verificar_relacion_parroquia
+    verificar_relacion_parroquia,
+    buscar_parroquia
 )
 
 parroquia_bp = Blueprint('parroquia', __name__)
@@ -57,7 +58,7 @@ def listar():
 
 
 # ======================================================
-# 🔹 AGREGAR PARROQUIA
+# AGREGAR PARROQUIA
 # ======================================================
 @parroquia_bp.route('/agregar', methods=['POST'])
 def agregar():
@@ -83,23 +84,23 @@ def agregar():
 
 
 # ======================================================
-# 🔹 CAMBIAR ESTADO DE PARROQUIA
+# CAMBIAR ESTADO DE PARROQUIA
 # ======================================================
 @parroquia_bp.route('/cambiar_estado/<int:idParroquia>', methods=['PUT'])
 def cambiar_estado(idParroquia):
     resultado = cambiar_estado_parroquia(idParroquia)
-    if resultado['ok']:
-        return jsonify({
-            'ok': True,
-            'mensaje': 'Estado cambiado correctamente',
-            'nuevo_estado': resultado['nuevo_estado']
-        })
-    else:
-        return jsonify({'ok': False, 'mensaje': resultado['mensaje']}), 400
+
+    if not resultado['ok']:
+        return jsonify({'error': resultado['mensaje']}),404
+    
+    return jsonify({
+        'mensaje': resultado['mensaje'],
+        'nuevo_estado': resultado['nuevo_estado']
+    }),200
 
 
 # ======================================================
-# 🔹 ACTUALIZAR PARROQUIA
+#  ACTUALIZAR PARROQUIA
 # ======================================================
 @parroquia_bp.route('/actualizar/<int:idParroquia>', methods=['PUT'])
 def actualizar(idParroquia):
@@ -127,7 +128,7 @@ def actualizar(idParroquia):
 
 
 # ======================================================
-# 🔹 ELIMINAR PARROQUIA
+#  ELIMINAR PARROQUIA
 # ======================================================
 @parroquia_bp.route('/eliminar/<int:idParroquia>', methods=['DELETE'])
 def eliminar(idParroquia):
@@ -142,3 +143,14 @@ def eliminar(idParroquia):
     except Exception as e:
         print(f'Error al eliminar parroquia: {e}')
         return jsonify({'ok': False, 'mensaje': 'Error interno'}), 500
+# ======================================================
+#  BUSCAR PARROQUIA
+# ======================================================
+@parroquia_bp.route('/buscar/<string:termino>', methods=['GET'])
+def buscar(termino):
+    resultados = buscar_parroquia(termino)
+    if not resultados:
+        return jsonify({'ok': True, 'datos': []})
+    return jsonify({'ok': True, 'datos': resultados})
+
+

@@ -45,7 +45,7 @@ def agregar():
 
 
 # ======================================================
-# 🔹 CAMBIAR ESTADO DE PARROQUIA
+# CAMBIAR ESTADO DE METODO PAGO
 # ======================================================
 @pago_bp.route('/cambiar_estado_metodo/<int:idMetodo>', methods=['PUT'])
 def cambiar_estado(idMetodo):
