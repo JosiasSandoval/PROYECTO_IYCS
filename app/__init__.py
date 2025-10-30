@@ -9,6 +9,7 @@ from app.cargo.route_cargo import cargo_bp
 from app.pago_metodo.route_pago_metodo import pago_bp
 from app.rol_permiso.route_rol_permiso import rol_bp,permiso_bp
 from app.acto_liturgico_requisito.route_acto import acto_bp
+from app.reserva.route_reserva import reserva_bp
 
 
 def crear_app():
@@ -33,6 +34,7 @@ def crear_app():
     app.register_blueprint(rol_bp,url_prefix='/api/rol')
     app.register_blueprint(permiso_bp,url_prefix='/api/permiso')
     app.register_blueprint(acto_bp,url_prefix='/api/acto')
+    app.register_blueprint(reserva_bp,url_prefix='/api/reserva')
     
     @app.route("/")
     def iniciar_sesion():
