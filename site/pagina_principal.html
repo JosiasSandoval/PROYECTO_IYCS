@@ -31,12 +31,23 @@
                     Reservas
                 </button>
             </a>
-            <button>
-                <img src="{{ url_for('static', filename='img/acto.png') }}" alt="">
-                Acto litúrgicos</button>
-            <button>
-                <img src="{{ url_for('static', filename='img/usuario.png') }}" alt="">
-                Usuarios</button>
+
+            <a href="{{ url_for('acto_liturgico_cliente') }}">
+                <button>
+                    <img src="{{ url_for('static', filename='img/acto.png') }}" alt="">
+                    Acto litúrgicos
+                </button>
+            </a>
+
+            
+            <a href="{{ url_for('perfil_cliente') }}">
+                <button>
+                    <img src="{{ url_for('static', filename='img/usuario.png') }}" alt="">
+                    Usuarios
+                </button>
+            </a>
+
+        
             <button>
                 <img src="{{ url_for('static', filename='img/pago.png') }}" alt="">
                 Pago</button>

@@ -61,3 +61,87 @@ img {
     padding: 8px;
   }
 }
+
+/* ===== SUBMENÚ ===== */
+.menu-grupo {
+  display: flex;
+  flex-direction: column;
+}
+
+.boton-desplegable {
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.flecha {
+  margin-left: auto;
+  font-size: 0.8rem;
+}
+
+/* Submenú oculto por defecto */
+.submenu {
+  display: none;
+  flex-direction: column;
+  margin-left: 35px;
+  margin-top: 5px;
+}
+
+.submenu.activo {
+  display: flex;
+}
+
+.submenu-item {
+  font-size: 14px;
+  color: #333;
+  text-decoration: none;
+  padding: 6px 0;
+  transition: color 0.2s ease;
+}
+
+.submenu-item:hover {
+  color: #1e3a8a;
+}
+
+/* ===== RESPONSIVE EXTRA ===== */
+@media (max-width: 768px) {
+  .submenu {
+    margin-left: 25px;
+  }
+}
+
+@media (max-width: 520px) {
+  .barra-lateral {
+    width: 100%;
+    min-height: auto;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .menu-lateral {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .menu-item {
+    font-size: 13px;
+    padding: 6px;
+  }
+
+  .submenu {
+    position: absolute;
+    background: #adc5e0;
+    border-radius: 6px;
+    margin-left: 0;
+    margin-top: 5px;
+    padding: 8px;
+  }
+
+  .submenu-item {
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+}

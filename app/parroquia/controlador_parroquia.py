@@ -168,26 +168,29 @@ def agregar_parroquia(nombParroquia, historiaParroquia, ruc,
 # 🔹 CAMBIAR ESTADO
 # ======================================================
 def cambiar_estado_parroquia(idParroquia):
-    try:
-        conexion = obtener_conexion()
-        with conexion.cursor() as cursor:
+    conexion = obtener_conexion()
+    with conexion.cursor() as cursor:
+            
             cursor.execute("SELECT estadoParroquia FROM PARROQUIA WHERE idParroquia=%s", (idParroquia,))
             resultado = cursor.fetchone()
-            if not resultado:
+
+            if  resultado is None:
+                conexion.close()
                 return {'ok': False, 'mensaje': 'Parroquia no encontrada'}
-            nuevo_estado = not resultado[0]
-            cursor.execute("UPDATE PARROQUIA SET estadoParroquia=%s WHERE idParroquia=%s",
-                           (nuevo_estado, idParroquia))
-        conexion.commit()
-        return True
-    except Exception as e:
-        print(f'Error al cambiar estado de la parroquia: {e}')
-        return False
-    finally:
-        if conexion:
+            
+            estado_actual = resultado[0]
+            nuevo_estado = not estado_actual
+
+            cursor.execute(
+                "UPDATE PARROQUIA SET estadoParroquia=%s WHERE idParroquia=%s",
+                (nuevo_estado, idParroquia)
+            )
+
+            conexion.commit()
             conexion.close()
-
-
+            return {'ok': True, 'mensaje': 'Estado cambiado correctamente', 'nuevo_estado': nuevo_estado}
+ 
+            
 # ======================================================
 # 🔹 ACTUALIZAR PARROQUIA
 # ======================================================
@@ -252,6 +255,44 @@ def verificar_relacion_parroquia(idParroquia):
     except Exception as e:
         print(f'Error al verificar relación de la parroquia: {e}')
         return False
+    finally:
+        if conexion:
+            conexion.close()
+
+# ======================================================
+# BUSCAR PARROQUIA
+# ======================================================
+def buscar_parroquia(termino):
+    conexion = None
+    parroquias = []
+    try:
+        conexion = obtener_conexion()
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT idparroquia, nombparroquia, direccion, ruc, historiaparroquia, 
+                       telefonocontacto, color, latparroquia, logparroquia, estadoparroquia
+                FROM parroquia
+                WHERE LOWER(nombparroquia) LIKE LOWER(%s)
+                   OR ruc LIKE %s
+            """, (f'%{termino}%', f'%{termino}%'))
+            
+            for fila in cursor.fetchall():
+                parroquias.append({
+                    'id': fila[0],
+                    'nombre': fila[1],
+                    'direccion': fila[2],
+                    'ruc': fila[3],
+                    'historia': fila[4],
+                    'contacto': fila[5],
+                    'color': fila[6],
+                    'latitud': fila[7],
+                    'longitud': fila[8],
+                    'estado': fila[9]
+                })
+        return parroquias
+    except Exception as e:
+        print("Error al buscar parroquia:", e)
+        return []
     finally:
         if conexion:
             conexion.close()
