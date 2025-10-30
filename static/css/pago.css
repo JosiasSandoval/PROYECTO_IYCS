@@ -1,210 +1,533 @@
-/*
-  ESTILOS GLOBALES DE LAYOUT GRID
-  Asume que el header (arriba) ya está manejado y se enfoca en
-  colocar el contenido principal (.funciones) al lado de la barra lateral.
-*/
-.grid {
-  display: grid;
-  /* Definición de la estructura de la cuadrícula: 250px para la barra, el resto para el contenido */
-  grid-template-columns: 250px 1fr; 
-  /* Nombres de área para facilitar la ubicación */
-  grid-template-areas: "sidebar main-content"; 
+/* ===========================
+  VARIABLES Y RESET
+  =========================== */
+:root {
+  --primary-color: #97bdf1;
+  --primary-dark: #667eea;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --bg-light: #f8f9fa;
+  --bg-white: #ffffff;
+  --text-dark: #1a1a2e;
+  --text-gray: #666;
+  --border-color: #e0e0e0;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.2);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --transition: all 0.3s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
+  color: var(--text-dark);
+  /* Dejamos overflow-y: auto para que, si es estrictamente necesario, el body permita scroll */
+  overflow-y: auto; 
 }
 
-#barra_lateral-placeholder {
-  grid-area: sidebar;
-  /* (Aquí irían los estilos específicos de tu barra lateral: background, fixed/sticky, etc.) */
+/* ===========================
+  LAYOUT PRINCIPAL
+  =========================== */
+.grid {
+    display: grid;
+    grid-template-columns: 250px 5fr;
+    grid-template-rows: 1fr;
+    grid-template-areas: "enlaces acto";
+    /* Eliminamos height: 100vh y overflow: hidden */
 }
-
-/* === SECCIÓN DE PAGO (Contenedor .funciones) === */
 .funciones {
-  grid-area: main-content; /* Coloca la sección de pago en el área principal */
-  max-width: 1100px; /* Ancho máximo para el contenido principal */
-  margin: 60px auto; /* Centra el contenido horizontalmente y añade espacio vertical */
-  padding: 0 20px;
+  padding: 25px; /* Reducido de 40px a 25px */
+  animation: fadeIn 0.5s ease;
 }
 
-.funciones h2 {
-  font-size: 2rem;
+/* ===========================
+  BARRA LATERAL (Añadido para quitar bordes/sombras) */
+
+.funciones {
+  border-radius: 24px;
+  /* El padding se maneja arriba */
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===========================
+  TÍTULOS
+  =========================== */
+h2 {
+  font-size: 1.8rem; /* Reducido */
+  color: var(--text-dark);
+  margin-bottom: 25px; /* Reducido de 35px */
   text-align: center;
-  color: #333;
-  margin-top: 30px;
-  margin-bottom: 30px; 
   font-weight: 700;
 }
 
-/* === Contenedor de Formulario y Resumen (.contenedor-pago) === */
-.contenedor-pago {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center; /* Centra el formulario y el resumen */
-  gap: 50px; 
+h3 {
+  font-size: 1.3rem; /* Reducido */
+  color: var(--text-dark);
+  margin-bottom: 15px; /* Reducido de 20px */
+  font-weight: 600;
 }
 
-/* === Formulario de pago (.formulario-pago) === */
-.formulario-pago {
-  background: #f5f7fb;
-  border-radius: 15px;
-  padding: 30px;
-  width: 400px; 
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+/* ===========================
+  CONTENEDOR DE PAGO
+  =========================== */
+.contenedor-pago {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 30px; /* Reducido de 40px */
+  margin-top: 20px; /* Reducido de 30px */
+}
+
+/* ===========================
+  MÉTODOS DE PAGO
+  =========================== */
+.metodos-pago {
+  display: flex;
+  gap: 10px; /* Reducido de 12px */
+  margin-bottom: 20px; /* Reducido de 30px */
+  flex-wrap: wrap;
+}
+
+.metodo-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px 10px; /* Reducido */
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  cursor: pointer;
+  transition: var(--transition);
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  text-align: left;
-  order: 1; 
-  flex-shrink: 0; 
+  align-items: center;
+  gap: 6px; /* Reducido de 8px */
+  font-family: inherit;
 }
 
-.formulario-pago label {
+.metodo-btn:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.25);
+}
+
+.metodo-icon {
+  font-size: 1.8rem; /* Reducido de 2rem */
+  line-height: 1;
+}
+
+.metodo-nombre {
+  font-size: 0.85rem; /* Ligeramente reducido */
   font-weight: 600;
-  color: #333;
-  margin-top: 5px;
+  color: var(--text-dark);
 }
 
-.formulario-pago input {
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 10px;
-  font-size: 1rem;
+/* ===========================
+  FORMULARIO
+  =========================== */
+.form-container {
   width: 100%;
-  box-sizing: border-box; 
 }
 
-.formulario-pago input:focus {
+.formulario-pago {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Reducido de 22px */
+}
+
+.form-section {
+  display: none;
+  animation: slideIn 0.4s ease;
+}
+
+.form-section.active {
+  display: block;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===========================
+  TARJETA VISUAL
+  =========================== */
+.tarjeta-visual {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  border-radius: var(--radius-lg);
+  padding: 20px; /* Reducido de 28px */
+  color: white;
+  margin-bottom: 20px; /* Reducido de 25px */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); /* Sombra más suave */
+  min-height: 160px; /* Reducido de 190px */
+  position: relative;
+  overflow: hidden;
+}
+
+.tarjeta-visual::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  50% {
+    transform: translate(-10%, -10%);
+  }
+}
+
+.tarjeta-chip {
+  width: 40px; /* Reducido de 50px */
+  height: 30px; /* Reducido de 38px */
+  background: linear-gradient(135deg, #ffd89b, #19547b);
+  border-radius: var(--radius-sm);
+  margin-bottom: 15px; /* Reducido de 22px */
+  position: relative;
+  z-index: 1;
+}
+
+.tarjeta-numero {
+  font-size: 1.2rem; /* Reducido de 1.4rem */
+  letter-spacing: 2px; /* Reducido el espaciado */
+  margin: 15px 0; /* Reducido de 22px */
+  font-family: 'Courier New', monospace;
+  position: relative;
+  z-index: 1;
+}
+
+.tarjeta-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem; /* Reducido */
+  position: relative;
+  z-index: 1;
+}
+
+/* ===========================
+  INPUTS Y LABELS
+  =========================== */
+label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 5px; /* Reducido de 8px */
+  font-size: 0.9rem; /* Reducido */
+}
+
+input,
+select {
+  width: 100%;
+  padding: 12px 14px; /* Reducido de 14px 16px */
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem; /* Ligeramente reducido */
+  transition: var(--transition);
+  font-family: inherit;
+  background: var(--bg-white);
+}
+
+input:hover {
+  border-color: #bbb;
+}
+
+input:focus,
+select:focus {
   outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 6px rgba(74,144,226,0.3);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+input::placeholder {
+  color: #999;
 }
 
 .fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px; /* Reducido de 16px */
+}
+
+/* ===========================
+  INFO DE MÉTODOS
+  =========================== */
+.info-metodo {
+  text-align: center;
+  padding: 25px; /* Reducido de 30px */
+  background: var(--bg-light);
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px; /* Reducido de 25px */
+}
+
+.icono-metodo {
+  font-size: 3rem; /* Reducido de 3.5rem */
+  margin-bottom: 10px; /* Reducido de 15px */
+}
+
+.info-metodo h3 {
+  margin-bottom: 8px; /* Reducido */
+  font-size: 1.2rem; /* Reducido */
+}
+
+.info-metodo p {
+  color: var(--text-gray);
+  margin-bottom: 15px; /* Reducido de 20px */
+}
+
+.qr-placeholder {
+  width: 180px; /* Reducido de 220px */
+  height: 180px; /* Reducido de 220px */
+  background: var(--bg-white);
+  margin: 15px auto; /* Reducido de 20px */
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.qr-code {
+  font-size: 4rem; /* Reducido de 5rem */
+  margin-bottom: 8px; /* Reducido */
+}
+
+.qr-texto {
+  font-size: 0.8rem; /* Reducido */
+  color: var(--text-gray);
+}
+
+.datos-transferencia {
+  background: var(--bg-white);
+  padding: 15px; /* Reducido de 20px */
+  border-radius: var(--radius-md);
+  margin-top: 10px; /* Reducido de 15px */
+  text-align: left;
+}
+
+.dato-item {
   display: flex;
   justify-content: space-between;
-  gap: 15px; 
+  padding: 8px 0; /* Reducido de 10px */
+  border-bottom: 1px solid var(--border-color);
 }
 
-.fila > div {
-  flex: 1; 
+.dato-item:last-child {
+  border-bottom: none;
 }
 
+.dato-label {
+  font-weight: 600;
+  color: var(--text-gray);
+}
+
+.dato-valor {
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.info-efectivo {
+  background: var(--bg-white);
+  padding: 15px; /* Reducido de 20px */
+  border-radius: var(--radius-md);
+  margin-top: 10px; /* Reducido de 15px */
+  text-align: left;
+}
+
+.info-efectivo p {
+  margin: 10px 0; /* Reducido de 12px */
+  color: var(--text-dark);
+}
+
+/* ===========================
+  BOTÓN DE PAGO
+  =========================== */
 .btn-pagar {
-  background: #4a90e2;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   color: white;
   border: none;
-  border-radius: 12px;
-  padding: 14px;
-  margin-top: 10px;
-  font-size: 1.1rem;
-  font-weight: 700;
+  padding: 14px; /* Reducido de 18px */
+  border-radius: var(--radius-md);
+  font-size: 1rem; /* Reducido de 1.1rem */
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.3s;
+  transition: var(--transition);
+  margin-top: 10px; /* Reducido de 15px */
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+  font-family: inherit;
 }
 
 .btn-pagar:hover {
-  background: #357abd;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
-/* === Resumen del pago (.resumen-pago) === */
+/* ===========================
+  RESUMEN DEL PAGO
+  =========================== */
 .resumen-pago {
-  background: #fff;
-  border: 2px solid #e0e0e0;
-  border-radius: 15px;
-  padding: 30px;
-  width: 350px; 
-  text-align: left;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-  order: 2;
-  flex-shrink: 0; 
+  background: linear-gradient(135deg, var(--bg-light), #e9ecef);
+  border-radius: var(--radius-lg);
+  padding: 25px; /* Reducido de 32px */
+  height: fit-content;
+  position: sticky;
+  top: 15px; /* Reducido de 20px */
 }
 
 .resumen-pago h3 {
-  margin-bottom: 20px;
-  color: #333;
-  font-size: 1.4rem;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 10px;
+  color: var(--text-dark);
+  margin-bottom: 20px; /* Reducido de 25px */
+  font-size: 1.3rem; /* Reducido */
 }
 
 .resumen-pago p {
-  margin: 10px 0;
-  color: #444;
+  margin: 12px 0; /* Reducido de 16px */
+  color: var(--text-dark);
   display: flex;
   justify-content: space-between;
+  font-size: 0.9rem; /* Reducido */
 }
 
 .resumen-pago hr {
-  border: 0;
-  height: 1px;
-  background: #ddd;
-  margin: 15px 0;
+  border: none;
+  border-top: 1px solid #ddd; /* Grosor reducido */
+  margin: 15px 0; /* Reducido de 22px */
 }
 
-.resumen-pago strong {
-  color: #000;
+.total-line {
+  font-size: 1.05rem; /* Ligeramente reducido */
+  padding-top: 5px; /* Reducido de 10px */
 }
 
-.resumen-pago span {
-  font-weight: bold;
-  font-size: 1.2rem;
-  color: #4a90e2;
+.total-amount {
+  font-size: 1.8rem; /* Reducido de 2rem */
+  font-weight: 700;
+  color: var(--primary-color);
 }
 
+/* ===========================
+  BADGE DE SEGURIDAD
+  =========================== */
+.seguridad-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Reducido de 15px */
+  background: var(--bg-white);
+  padding: 15px; /* Reducido de 18px */
+  border-radius: var(--radius-md);
+  margin-top: 20px; /* Reducido de 25px */
+  font-size: 0.85rem; /* Reducido */
+  color: var(--text-gray);
+  box-shadow: var(--shadow-sm);
+}
 
-/* === Responsive (Ajustes para Tablets y Móviles) === */
+.icono-seguridad {
+  font-size: 1.6rem; /* Reducido de 2rem */
+}
 
-@media (max-width: 992px) {
-  /* En pantallas más pequeñas, apilamos la barra lateral y el contenido */
-  .grid {
+.seguridad-badge strong {
+  display: block;
+  color: var(--text-dark);
+  margin-bottom: 2px; /* Reducido de 4px */
+}
+
+.texto-seguridad {
+  font-size: 0.8rem; /* Reducido */
+}
+
+/* ===========================
+  RESPONSIVE
+  =========================== */
+@media (max-width: 1024px) {
+  .contenedor-pago {
     grid-template-columns: 1fr;
-    grid-template-areas: 
-      "sidebar"
-      "main-content";
   }
-  
-  .funciones {
-    margin: 40px auto; 
+
+  .resumen-pago {
+    position: static;
   }
 }
 
 @media (max-width: 768px) {
-  .contenedor-pago {
-    flex-direction: column; /* Apilar formulario y resumen verticalmente */
-    align-items: center; 
-    gap: 30px; 
+  .funciones {
+    padding: 20px; /* Ajuste responsive */
   }
-  
-  .formulario-pago,
-  .resumen-pago {
-    width: 90%; 
-    max-width: 450px;
-    padding: 25px;
+
+  h2 {
+    font-size: 1.5rem; /* Ajuste responsive */
   }
-  
-  /* Reordenación: Formulario arriba (1), Resumen abajo (2) */
-  .formulario-pago {
-    order: 1; 
+
+  .metodo-btn {
+    min-width: 80px;
+    padding: 10px 8px; /* Ajuste responsive */
   }
-  .resumen-pago {
-    order: 2; 
+
+  .tarjeta-visual {
+    padding: 18px; /* Ajuste responsive */
+    min-height: 150px;
+  }
+
+  .tarjeta-numero {
+    font-size: 1.1rem; /* Ajuste responsive */
+  }
+
+  .fila {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 480px) {
-  .funciones h2 {
-    font-size: 1.8rem;
-  }
-  .formulario-pago label {
-    font-size: 0.95rem;
-  }
-  .formulario-pago input {
-    font-size: 0.95rem;
+  .grid {
+    grid-template-columns: 1fr;
     padding: 10px;
   }
-  .btn-pagar {
-    font-size: 1rem;
-    padding: 12px;
+
+  .funciones {
+    padding: 15px; /* Ajuste responsive */
+    border-radius: 12px;
+  }
+
+  h2 {
+    font-size: 1.3rem; /* Ajuste responsive */
+    margin-bottom: 20px;
   }
 }
