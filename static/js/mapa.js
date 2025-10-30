@@ -3,7 +3,7 @@ const API_URL = '/api/parroquia/datos';
 const GEOJSON_URL = '/static/data/peru_distrital_simple.geojson';
 const DEPARTAMENTO_FILTRO = 'LAMBAYEQUE';
 
-const mapBounds = [[-7.5, -80.8], [-5.8, -79.0]]; 
+const mapBounds = [[-7.5, -80.8], [-5.8, -79.0]];
 const mapCenter = [-6.6, -79.8];
 const zoomInicial = 10;
 
@@ -22,6 +22,7 @@ const ChurchIconHighlight = L.icon({
 });
 
 let map, markerClusterGroup, markersByName = {};
+let marcadorResaltado = null;
 
 // --- INICIALIZACIÓN DEL MAPA ---
 function initMap() {
@@ -86,41 +87,33 @@ async function cargarParroquias() {
 
             markerClusterGroup.addLayer(marker);
 
-            // Guardar el marcador usando el nombre EXACTO tal como está en BD
-            markersByName[p.nombParroquia] = { marker, id: p.idParroquia, nombre: p.nombParroquia };
+            // Guardamos con clave normalizada
+            const nombreNorm = p.nombParroquia.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '');
+            markersByName[nombreNorm] = { marker, id: p.idParroquia, nombre: p.nombParroquia };
         });
 
     } catch(e) { console.error("Error al cargar parroquias:", e); }
 }
 
-// --- BUSCAR PARROQUIA EXACTA ---
-let marcadorResaltado = null;
-
-// Función para restaurar todos los marcadores
+// --- RESTAURAR MARCADORES ---
 function restaurarParroquias() {
     markerClusterGroup.clearLayers();
     Object.values(markersByName).forEach(p => {
-        p.marker.setIcon(ChurchIcon); // Restaurar icono normal
+        p.marker.setIcon(ChurchIcon);
         markerClusterGroup.addLayer(p.marker);
     });
     marcadorResaltado = null;
 }
 
-// --- BUSCAR PARROQUIA INSENSIBLE A MAYÚSCULAS/TILDES ---
+// --- BUSCAR PARROQUIA ---
 function buscarParroquia(valor) {
-    const valNorm = valor.trim().toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, '');
-
-    // Restaurar si el input está vacío
+    const valNorm = valor.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '');
     if (!valNorm) {
         restaurarParroquias();
         return;
     }
 
-    const entry = Object.values(markersByName).find(p => 
-        p.nombre.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '') === valNorm
-    );
-
+    const entry = markersByName[valNorm];
     if (!entry) {
         alert("No se encontró la parroquia.");
         return;
@@ -129,17 +122,14 @@ function buscarParroquia(valor) {
     const { marker, id, nombre } = entry;
 
     localStorage.setItem('idParroquiaSeleccionada', id);
+    localStorage.setItem('nombreParroquiaSeleccionada', nombre);
 
-    // Restaurar marcador previo resaltado
     if (marcadorResaltado && marcadorResaltado !== marker) {
         marcadorResaltado.setIcon(ChurchIcon);
     }
-
-    // Resaltar marcador actual
     marker.setIcon(ChurchIconHighlight);
     marcadorResaltado = marker;
 
-    // Mostrar solo este marcador
     markerClusterGroup.clearLayers();
     marker.addTo(map);
 
@@ -155,12 +145,11 @@ function actualizarSugerencias(valor) {
     const lista = document.getElementById('sugerencias');
     lista.innerHTML = '';
     if (!valor) {
-        restaurarParroquias(); // Restaurar si input está vacío
+        restaurarParroquias();
         return;
     }
 
     const valNorm = valor.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '');
-    
     const coincidencias = Object.values(markersByName).filter(p => 
         p.nombre.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '').includes(valNorm)
     );
@@ -179,7 +168,6 @@ function actualizarSugerencias(valor) {
     });
 }
 
-// --- OCULTAR SUGERENCIAS AL CLIC FUERA ---
 document.addEventListener('click', e => {
     const lista = document.getElementById('sugerencias');
     const input = document.getElementById('input-parroquia');
@@ -189,47 +177,21 @@ document.addEventListener('click', e => {
 // --- DETALLES / CALENDARIO ---
 function mostrarDetallesParroquia(id) {
     localStorage.setItem('idParroquiaSeleccionada', id);
-    window.location.href = '/cliente/detalle_parroquia';
+    window.location.href = `/cliente/detalle_parroquia/${id}`;
 }
 function mostrarCalendarioParroquia(id) {
     localStorage.setItem('idParroquiaSeleccionada', id);
-    window.location.href = '/cliente/calendario';
+    window.location.href = `/cliente/calendario/${id}`;
 }
 
-// --- INICIALIZACIÓN ---
-document.addEventListener('DOMContentLoaded', async () => {
-    initMap();
-    await cargarLimitesGeograficos();
-    await cargarParroquias();
-
-    const input = document.getElementById('input-parroquia');
-    const btnBuscar = document.getElementById('btn-buscar');
-
-    if (input) {
-        input.addEventListener('input', e => actualizarSugerencias(e.target.value));
-        input.addEventListener('keydown', e => { if (e.key === 'Enter') buscarParroquia(input.value); });
-    }
-
-    if (btnBuscar) {
-        btnBuscar.addEventListener('click', () => { if (input.value.trim() !== '') buscarParroquia(input.value); });
-    }
-
-    window.addEventListener('resize', () => { if (map) map.invalidateSize({ animate: true }); });
-});
-
-// --- MODAL DINÁMICO ---
+// --- MODAL RESERVA ---
 function crearModalReserva() {
     const modal = document.createElement('div');
     modal.id = 'modal-confirmar';
     modal.style.cssText = `
-        display:none;
-        position:fixed;
-        top:0; left:0;
-        width:100%; height:100%;
-        background:rgba(0,0,0,0.5);
-        justify-content:center;
-        align-items:center;
-        z-index:9999;
+        display:none; position:fixed; top:0; left:0;
+        width:100%; height:100%; background:rgba(0,0,0,0.5);
+        justify-content:center; align-items:center; z-index:9999;
     `;
     modal.innerHTML = `
         <div style="background:white;padding:20px;border-radius:10px;max-width:400px;width:90%;text-align:center;">
@@ -255,8 +217,8 @@ function abrirModalReserva(nombre, id) {
 
     modalSi.onclick = () => {
         localStorage.setItem('idParroquiaSeleccionada', id);
-        // Pasar al siguiente step o HTML
-        window.location.href = 'reserva_acto';// Cambia por tu ruta real
+        localStorage.setItem('nombreParroquiaSeleccionada', nombre);
+        window.location.href = `reserva_acto`;
     };
 
     modalNo.onclick = () => {
@@ -264,34 +226,39 @@ function abrirModalReserva(nombre, id) {
     };
 }
 
-// Cerrar modal si se hace click fuera
 modalReserva.addEventListener('click', e => {
     if (e.target === modalReserva) modalReserva.style.display = 'none';
 });
 
-// --- BOTÓN SIGUIENTE RESERVA ---
+// --- BOTÓN SIGUIENTE ---
 const btnSiguiente = document.querySelector('.btn-siguiente');
 if (btnSiguiente) {
     btnSiguiente.addEventListener('click', () => {
-        const input = document.getElementById('input-parroquia');
-        const nombreParroquia = input.value.trim();
-
-        if (!nombreParroquia) {
+        if (!marcadorResaltado) {
             alert("Selecciona una parroquia antes de continuar.");
             return;
         }
-
-        // Buscar parroquia en markersByName (objeto cargado en mapa.js)
-        const entry = Object.values(markersByName).find(p =>
-            p.nombre.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '') ===
-            nombreParroquia.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '')
-        );
-
-        if (!entry) {
-            alert("Parroquia no encontrada. Selecciona una de las sugerencias.");
-            return;
-        }
-
-        abrirModalReserva(entry.nombre, entry.id);
+        abrirModalReserva(localStorage.getItem('nombreParroquiaSeleccionada'), localStorage.getItem('idParroquiaSeleccionada'));
     });
 }
+
+// --- INICIALIZACIÓN ---
+document.addEventListener('DOMContentLoaded', async () => {
+    initMap();
+    await cargarLimitesGeograficos();
+    await cargarParroquias();
+
+    const input = document.getElementById('input-parroquia');
+    const btnBuscar = document.getElementById('btn-buscar');
+
+    if (input) {
+        input.addEventListener('input', e => actualizarSugerencias(e.target.value));
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') buscarParroquia(input.value); });
+    }
+
+    if (btnBuscar) {
+        btnBuscar.addEventListener('click', () => { if (input.value.trim() !== '') buscarParroquia(input.value); });
+    }
+
+    window.addEventListener('resize', () => { if (map) map.invalidateSize({ animate: true }); });
+});
