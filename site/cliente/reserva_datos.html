@@ -55,80 +55,24 @@
                         <p>Los datos de ubicación ya han sido registrados.</p>
                     </div>
                     <div class="form-step current" data-step="1">
-                        <h3><span class="icon">👤</span> Datos personales del solicitante</h3>
+                        <h3><span class="icon">👤</span> Participantes del acto litúrgico</h3>
                         <div class="form-personal-data">
-                            <div class="form-group">
-                                <label for="nombre-completo">Nombre completo</label>
+                            <div class="form-group ">
+                                <label for="acto">Acto litúrgico</label>
+                                <input type="text" id="acto" name="acto">
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="nombre-completo">Beneficiario</label>
                                 <input type="text" id="nombre-completo" name="nombre-completo">
                             </div>
-                            <div class="form-group">
-                                <label for="tipo-documento">Documento</label>
-                                <select id="tipo-documento" name="tipo-documento">
-                                    <option>--DNI--</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="numero-documento">N° Documento</label>
-                                <input type="text" id="numero-documento" name="numero-documento">
-                            </div>
-                            <div class="form-group full-width">
-                                <label for="direccion">Dirección</label>
-                                <input type="text" id="direccion" name="direccion">
-                            </div>
-                            <div class="form-group">
-                                <label for="telefono">Teléfono</label>
-                                <input type="tel" id="telefono" name="telefono">
-                            </div>
-                            <div class="form-group">
-                                <label for="correo-electronico">Correo electrónico</label>
-                                <input type="email" id="correo-electronico" name="correo-electronico">
-                            </div>
-                            <div class="form-group">
-                                <label for="relacion-familiar">Relación familiar</label>
-                                <select id="relacion-familiar" name="relacion-familiar">
-                                    <option>--Seleccione--</option>
-                                </select>
-                            </div>
-                            <div class="form-group full-width">
-                                <label for="observaciones">Observaciones(Opcional)</label>
-                                <textarea id="observaciones" name="observaciones"></textarea>
-                            </div>
                         </div>
                     </div>
-                    <div class="form-step" data-step="2">
-                        <h3><span class="icon">⛪</span> Actos Litúrgicos</h3>
-                        <div class="form-act-liturgico">
-                            <div class="form-group">
-                                <label for="acto-liturgico">Acto Litúrgico</label>
-                                <select id="acto-liturgico" name="acto-liturgico">
-                                    <option>--Seleccione un acto--</option>
-                                    <option>Bautismo</option>
-                                    <option>Primera Comunión</option>
-                                    <option>Confirmación</option>
-                                    <option>Matrimonio</option>
-                                    <option>Misa de Difuntos</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="fecha-acto">Fecha del Acto</label>
-                                <input type="date" id="fecha-acto" name="fecha-acto">
-                            </div>
-                            <div class="form-group">
-                                <label for="hora-acto">Hora del Acto</label>
-                                <input type="time" id="hora-acto" name="hora-acto">
-                            </div>
-                            <div class="form-group full-width">
-                                <label for="parroquia-acto">Parroquia de Realización</label>
-                                <select id="parroquia-acto" name="parroquia-acto">
-                                    <option>--Seleccione una parroquia--</option>
-                                </select>
-                            </div>
-                            <div class="form-group full-width">
-                                <label for="observaciones-acto">Observaciones(Opcional)</label>
-                                <textarea id="observaciones-acto" name="observaciones-acto"></textarea>
+                        <div class="form-step" data-step="2">
+                            <h3><span class="icon">⛪</span> Participantes del acto litúrgico</h3>
+                            <div id="participantes-acto" style="max-height:300px; overflow-y:auto; border:1px solid #ccc; padding:10px; border-radius:5px;">
+                                <!-- Aquí se cargarán dinámicamente los participantes -->
                             </div>
                         </div>
-                    </div>
                     </div>
                 <div class="navigation-buttons">
                     <button class="btn btn-prev">
