@@ -1,7 +1,10 @@
 from flask import Blueprint, jsonify, request
 from app.reserva.controlador_reserva import(
     cargar_horas_disponibles, cantidad_misas_al_dia, cantidad_limita_matrimonio,
-    agregar_reserva)
+    agregar_reserva,
+    requisitos_bautismo, 
+    requisitos_matrimonio, 
+    requisitos_misa)
 reserva_bp = Blueprint('reserva', __name__)
 
 @reserva_bp.route('/horarios_base', methods=['GET'])
@@ -91,4 +94,20 @@ def nueva_reserva():
     except Exception as e:
         return f"Ocurrió un error: {str(e)}", 500
 
-    
+# --- RUTA PARA REQUISITOS DE BAUTISMO ---
+@reserva_bp.route('/requisitos/bautismo', methods=['GET'])
+def req_bautismo():
+    resultado = requisitos_bautismo()
+    return jsonify(resultado)
+
+# --- RUTA PARA REQUISITOS DE MATRIMONIO ---
+@reserva_bp.route('/requisitos/matrimonio', methods=['GET'])
+def req_matrimonio():
+    resultado = requisitos_matrimonio()
+    return jsonify(resultado)
+
+# --- RUTA PARA REQUISITOS DE MISA ---
+@reserva_bp.route('/requisitos/misa', methods=['GET'])
+def req_misa():
+    resultado = requisitos_misa()
+    return jsonify(resultado)

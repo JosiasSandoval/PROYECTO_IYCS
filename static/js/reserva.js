@@ -195,6 +195,9 @@ function inicializarCalendario() {
 // ==============================
 // Botón SIGUIENTE
 // ==============================
+// ==============================
+// Botón SIGUIENTE (actualizado)
+// ==============================
 document.getElementById('btn-siguiente')?.addEventListener('click', function() {
     const inputFecha = document.getElementById('fecha-acto');
     const selectHora = document.getElementById('hora-acto');
@@ -205,15 +208,24 @@ document.getElementById('btn-siguiente')?.addEventListener('click', function() {
     const hora = selectHora?.value;
     const observaciones = inputObservaciones?.value;
     const idActo = actoSelect?.value;
+    const nombreActo = actoSelect?.options[actoSelect.selectedIndex].textContent || '';
 
-    if (!fecha || !hora || !observaciones) {
+    if (!fecha || !hora || !observaciones || !idActo) {
         alert("Debe completar todos los campos antes de continuar.");
         return;
     }
 
-    localStorage.setItem('reserva', JSON.stringify({ fecha, hora, observaciones, idActo }));
+    localStorage.setItem('reserva', JSON.stringify({ 
+        idActo,
+        nombreActo,    // <-- Guardamos también el nombre
+        fecha,
+        hora,
+        observaciones 
+    }));
+
     window.location.href = 'reserva_datos'; // Cambiar a la URL real
 });
+
 
 // ==============================
 // Botón ATRÁS
@@ -253,9 +265,75 @@ function cargarDatosPrevios() {
     document.getElementById('observaciones').value = reserva.observaciones || '';
     document.getElementById('acto-liturgico').value = reserva.idActo || '';
 
+    // Mostrar nombre del acto en algún lugar, si quieres
+    const nombreActoDiv = document.getElementById('nombre-acto');
+    if (nombreActoDiv && reserva.nombreActo) {
+        nombreActoDiv.textContent = reserva.nombreActo;
+    }
+
     if (reserva.fecha) {
         fechaSeleccionada = reserva.fecha;
         const diaNombre = DIA_MAPEO[new Date(reserva.fecha).getDay()];
         actualizarSelectHorarios(diaNombre);
+    }
+}
+
+async function renderizarParticipantesPorActo(acto) {
+    const contenedor = document.getElementById('participantes-acto');
+    if (!contenedor) return;
+    contenedor.innerHTML = ''; // Limpiar previo contenido
+
+    if (!acto) return;
+
+    let ruta = '';
+    const tipo = acto.toUpperCase().replace(/\s/g, '_');
+
+    switch (tipo) {
+        case 'BAUTISMO':
+            ruta = '/api/reserva/requisitos/bautismo';
+            break;
+        case 'MATRIMONIO':
+            ruta = '/api/reserva/requisitos/matrimonio';
+            break;
+        case 'MISA':
+        case 'MISA_DE_DIFUNTOS':
+            ruta = '/api/reserva/requisitos/misa';
+            break;
+        default:
+            contenedor.innerHTML = '<p>No hay participantes definidos para este acto.</p>';
+            return;
+    }
+
+    try {
+        const response = await fetch(ruta);
+        if (!response.ok) throw new Error('Error cargando participantes/requisitos');
+        const data = await response.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+            contenedor.innerHTML = '<p>No hay participantes para este acto.</p>';
+            return;
+        }
+
+        data.forEach(item => {
+            // Suponiendo que valor es el nombre del participante
+            const nombre = item.valor || item.nombClave;
+            const div = document.createElement('div');
+            div.className = 'form-group full-width';
+            const idCampo = nombre.toLowerCase().replace(/\s/g,'-');
+            if (nombre.toLowerCase().includes('observacion')) {
+                div.innerHTML = `<label for="${idCampo}">${nombre}</label><textarea id="${idCampo}" name="${idCampo}"></textarea>`;
+            } else {
+                div.innerHTML = `<label for="${idCampo}">${nombre}</label><input type="text" id="${idCampo}" name="${idCampo}">`;
+            }
+            contenedor.appendChild(div);
+        });
+
+        // Scroll si hay muchos campos
+        contenedor.style.maxHeight = '300px';
+        contenedor.style.overflowY = 'auto';
+
+    } catch (error) {
+        console.error(error);
+        contenedor.innerHTML = '<p>Error cargando participantes.</p>';
     }
 }

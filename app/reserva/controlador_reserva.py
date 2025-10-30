@@ -130,3 +130,107 @@ def reprogramar_reserva(idReserva,fecha,hora,observaciones):
     finally:
         if conexion:
             conexion.close()
+
+def requisitos_bautismo():
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+SELECT
+    -- 1. Extrae el nombre del participante/requisito del final de la clave:
+    CASE
+        -- Si la clave contiene '_ROL_', extrae el nombre del ROL
+        WHEN T1.nombClave LIKE '%_ROL_%' THEN 
+             SUBSTRING_INDEX(T1.nombClave, '_ROL_', -1)
+        -- Si la clave contiene '_PASTOR', usa 'PASTOR'
+        WHEN T1.nombClave LIKE '%_PASTOR%' THEN 'PASTOR'
+        ELSE T1.nombClave -- Caso por defecto o error
+    END AS tipoParticipante,
+    
+    T1.valor,
+    T1.descripcion
+    
+FROM
+    CONFIGURACION AS T1
+WHERE
+  +
+    T1.nombClave LIKE 'REQUERIMIENTO_ACTO_BAUTISMO_%'
+    AND T1.estadoConfiguracion = TRUE;
+            """)
+            resultado = cursor.fetchall()  # Trae todos los registros
+            return resultado
+    except Exception as e:
+        print(f"Error al cargar requisitos Bautismo: {e}")
+        return None
+    finally:
+        conexion.close()
+
+
+def requisitos_matrimonio():
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+SELECT
+    -- 1. Extrae el nombre del participante/requisito del final de la clave:
+    CASE
+        -- Si la clave contiene '_ROL_', extrae el nombre del ROL
+        WHEN T1.nombClave LIKE '%_ROL_%' THEN 
+             SUBSTRING_INDEX(T1.nombClave, '_ROL_', -1)
+        -- Si la clave contiene '_PASTOR', usa 'PASTOR'
+        WHEN T1.nombClave LIKE '%_PASTOR%' THEN 'PASTOR'
+        ELSE T1.nombClave -- Caso por defecto o error
+    END AS tipoParticipante,
+    
+    T1.valor,
+    T1.descripcion
+    
+FROM
+    CONFIGURACION AS T1
+WHERE
+    -- Filtra todas las claves que contienen el nombre del acto 'MATRIMONIO'
+    T1.nombClave LIKE 'REQUERIMIENTO_ACTO_MATRIMONIO_%'
+    AND T1.estadoConfiguracion = TRUE;
+            """)
+            resultado = cursor.fetchall()
+            return resultado
+    except Exception as e:
+        print(f"Error al cargar requisitos Matrimonio: {e}")
+        return None
+    finally:
+        conexion.close()
+
+
+def requisitos_misa():
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+SELECT
+    -- 1. Extrae el nombre del participante/requisito del final de la clave:
+    CASE
+        -- Si la clave contiene '_ROL_', extrae el nombre del ROL
+        WHEN T1.nombClave LIKE '%_ROL_%' THEN 
+             SUBSTRING_INDEX(T1.nombClave, '_ROL_', -1)
+        -- Si la clave contiene '_PASTOR', usa 'PASTOR'
+        WHEN T1.nombClave LIKE '%_PASTOR%' THEN 'PASTOR'
+        ELSE T1.nombClave -- Caso por defecto o error
+    END AS tipoParticipante,
+    
+    T1.valor,
+    T1.descripcion
+    
+FROM
+    CONFIGURACION AS T1
+WHERE
+    -- Filtra todas las claves que contienen el nombre del acto 'MATRIMONIO'
+    T1.nombClave LIKE 'REQUERIMIENTO_ACTO_MATRIMONIO_%'
+    AND T1.estadoConfiguracion = TRUE;
+            """)
+            resultado = cursor.fetchall()
+            return resultado
+    except Exception as e:
+        print(f"Error al cargar requisitos Misa: {e}")
+        return None
+    finally:
+        conexion.close()
