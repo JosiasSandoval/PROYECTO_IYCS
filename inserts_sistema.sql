@@ -439,3 +439,66 @@ INSERT INTO REQUISITO (nombRequisito, f_requisito, descripcion, estadoRequisito)
 ('Acta de Defunción', NULL, 'Documento civil que acredita el fallecimiento de la persona.', TRUE),
 ('Petición Familiar', NULL, 'Solicitud formal de la familia para la celebración de la Misa (no es estrictamente un requisito canónico, sino administrativo).', TRUE);
 
+-- =========================================================
+-- CONFIGURACION DE REQUERIMIENTOS FIJOS (PARTICIPANTES Y PASTOR)
+-- =========================================================
+
+-- 1. REQUERIMIENTOS FIJOS PARA BAUTISMO (Ambos tipos: Individual y Comunitario)
+-- -----------------------------------------------------------------------------
+-- Bautizando (Beneficiario del sacramento)
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_BAUTISMO_ROL_BAUTIZANDO', 'número fijo', '1', 'Número EXACTO requerido del Bautizando (beneficiario).', TRUE);
+
+-- Padrino o Madrina (Mínimo requerido para validez)
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_BAUTISMO_ROL_PADRINO', 'número fijo', '1', 'Número MINIMO requerido de Padrinos/Madrinas (mínimo canónico).', TRUE);
+
+-- Padre/Madre (Necesario para el registro/autorización)
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_BAUTISMO_ROL_PADRE', 'número fijo', '1', 'Número MINIMO requerido de Padres o Tutores para registrar el acto.', TRUE);
+
+-- Solicitante (Quien gestiona la reserva)
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_BAUTISMO_ROL_SOLICITANTE', 'número fijo', '1', 'Número EXACTO requerido del Solicitante (quien reserva).', TRUE);
+
+-- Requiere Asignación de Pastor/Sacerdote
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_BAUTISMO_PASTOR', 'boolean', '1', 'Si el acto requiere la asignación de un Sacerdote para ser oficializado.', TRUE);
+
+
+-- 2. REQUERIMIENTOS FIJOS PARA MATRIMONIO (Ambos tipos: Normal y Traslado)
+-- ---------------------------------------------------------------------------
+-- Novio (Contrayente 1)
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_MATRIMONIO_ROL_NOVIO', 'número fijo', '1', 'Número EXACTO requerido de Novios (Contrayente masculino).', TRUE);
+
+-- Novia (Contrayente 2)
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_MATRIMONIO_ROL_NOVIA', 'número fijo', '1', 'Número EXACTO requerido de Novias (Contrayente femenino).', TRUE);
+
+-- Padrinos de Velación (Una pareja para el registro, aunque no para la validez canónica)
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_MATRIMONIO_ROL_PADRINO_VELACION', 'número fijo', '2', 'Número EXACTO requerido de Padrinos de Velación (una pareja para el formulario).', TRUE);
+
+-- Solicitante (Quien gestiona la reserva, puede ser Novio o Novia)
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_MATRIMONIO_ROL_SOLICITANTE', 'número fijo', '1', 'Número EXACTO requerido del Solicitante.', TRUE);
+
+-- Requiere Asignación de Pastor/Sacerdote
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_MATRIMONIO_PASTOR', 'boolean', '1', 'Si el acto requiere la asignación de un Sacerdote para ser oficializado.', TRUE);
+
+
+-- 3. REQUERIMIENTOS FIJOS PARA MISA (Individual y Comunitaria)
+-- -----------------------------------------------------------
+-- Solicitante (Quien organiza/paga la Misa)
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_MISA_ROL_SOLICITANTE', 'número fijo', '1', 'Número EXACTO requerido del Solicitante de la Misa.', TRUE);
+
+-- Difunto/Intención (El motivo de la Misa, se registra como dato)
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_MISA_ROL_DIFUNTO', 'número fijo', '1', 'Número MINIMO de intenciones (difuntos/motivo) a registrar.', TRUE);
+
+-- Requiere Asignación de Pastor/Sacerdote
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('REQUERIMIENTO_ACTO_MISA_PASTOR', 'boolean', '1', 'Si el acto requiere la asignación de un Sacerdote para ser oficializado.', TRUE);

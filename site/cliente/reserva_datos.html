@@ -65,46 +65,14 @@
                                 <label for="nombre-completo">Beneficiario</label>
                                 <input type="text" id="nombre-completo" name="nombre-completo">
                             </div>
-                            <div class="form-group full-width">
-                                <label for="observaciones">Observaciones(Opcional)</label>
-                                <textarea id="observaciones" name="observaciones"></textarea>
-                            </div>
                         </div>
                     </div>
-                    <div class="form-step" data-step="2">
-                        <h3><span class="icon">⛪</span> Actos Litúrgicos</h3>
-                        <div class="form-act-liturgico">
-                            <div class="form-group">
-                                <label for="acto-liturgico">Acto Litúrgico</label>
-                                <select id="acto-liturgico" name="acto-liturgico">
-                                    <option>--Seleccione un acto--</option>
-                                    <option>Bautismo</option>
-                                    <option>Primera Comunión</option>
-                                    <option>Confirmación</option>
-                                    <option>Matrimonio</option>
-                                    <option>Misa de Difuntos</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="fecha-acto">Fecha del Acto</label>
-                                <input type="date" id="fecha-acto" name="fecha-acto">
-                            </div>
-                            <div class="form-group">
-                                <label for="hora-acto">Hora del Acto</label>
-                                <input type="time" id="hora-acto" name="hora-acto">
-                            </div>
-                            <div class="form-group full-width">
-                                <label for="parroquia-acto">Parroquia de Realización</label>
-                                <select id="parroquia-acto" name="parroquia-acto">
-                                    <option>--Seleccione una parroquia--</option>
-                                </select>
-                            </div>
-                            <div class="form-group full-width">
-                                <label for="observaciones-acto">Observaciones(Opcional)</label>
-                                <textarea id="observaciones-acto" name="observaciones-acto"></textarea>
+                        <div class="form-step" data-step="2">
+                            <h3><span class="icon">⛪</span> Participantes del acto litúrgico</h3>
+                            <div id="participantes-acto" style="max-height:300px; overflow-y:auto; border:1px solid #ccc; padding:10px; border-radius:5px;">
+                                <!-- Aquí se cargarán dinámicamente los participantes -->
                             </div>
                         </div>
-                    </div>
                     </div>
                 <div class="navigation-buttons">
                     <button class="btn btn-prev">
