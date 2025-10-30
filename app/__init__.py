@@ -91,6 +91,11 @@ def crear_app():
     @app.route('/cliente/acto_liturgico')
     def acto_liturgico_cliente():
         return render_template('cliente/actos_liturgicos_cliente.html')
+    
+    @app.route('/cliente/perfil')
+    def perfil_cliente():
+        return render_template('cliente/perfil.html')
+
 
    
     
