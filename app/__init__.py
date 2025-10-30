@@ -53,6 +53,10 @@ def crear_app():
     @app.route('/cliente/detalle_parroquia')
     def detalle_parroquia():
         return render_template('cliente/detalle_parroquia.html')
+    
+    @app.route('/cliente/calendario')
+    def calendario_cliente():
+        return render_template('cliente/calendario.html')
 
     @app.route('/cliente/reserva')
     def reserva_cliente():
@@ -71,6 +75,7 @@ def crear_app():
         if 'idUsuario' not in session:
             return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
         return render_template('cliente/reserva_datos.html')
+    
     @app.route('/cliente/reserva_requisito')
     def reserva_requisito():
         if 'idUsuario' not in session:
@@ -82,10 +87,12 @@ def crear_app():
         if 'idUsuario' not in session:
             return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
         return render_template('cliente/reserva_resumen.html')
+    
+    @app.route('/cliente/acto_liturgico')
+    def acto_liturgico_cliente():
+        return render_template('cliente/actos_liturgicos_cliente.html')
 
-    @app.route('/cliente/calendario')
-    def calendario_cliente():
-        return render_template('cliente/calendario.html')
+   
     
     #Administrador
     @app.route('/admi/tipo_documento')
