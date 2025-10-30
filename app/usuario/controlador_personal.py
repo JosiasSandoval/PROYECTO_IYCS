@@ -3,28 +3,29 @@ from app.bd_sistema import obtener_conexion
 def get_datos_personal():
     conexion = obtener_conexion()
     try:
-        resultados_dict = {}  # ✅ Evita duplicados de usuario
+        resultados_dict = {}
 
         with conexion.cursor() as cursor:
             cursor.execute("""
                 SELECT 
-                    us.idUsuario,
-                    us.email,
-                    us.clave,
-                    pe.numDocPers,
-                    ti.nombDocumento,
-                    pe.nombPers,
-                    pe.apePatPers,
-                    pe.apeMatPers,
-                    pe.sexoPers,
-                    pe.direccionPers,
-                    pe.telefonoPers,
-                    pp.f_inicio,
-                    pp.f_fin,
-                    pp.vigenciaParrPers,
-                    ca.nombCargo,
-                    r.nombRol,
-                    pa.nombParroquia
+                    us.idUsuario,          
+                    us.email,              
+                    us.clave,              
+                    us.estadoCuenta,       
+                    pe.numDocPers,         
+                    ti.nombDocumento,      
+                    pe.nombPers,           
+                    pe.apePatPers,         
+                    pe.apeMatPers,         
+                    pe.sexoPers,           
+                    pe.direccionPers,      
+                    pe.telefonoPers,       
+                    pp.f_inicio,           
+                    pp.f_fin,              
+                    pp.vigenciaParrPers,   
+                    ca.nombCargo,          
+                    r.nombRol,             
+                    pa.nombParroquia       
                 FROM usuario us
                 INNER JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
                 INNER JOIN rol r ON r.idRol = ru.idRol
@@ -46,23 +47,24 @@ def get_datos_personal():
                         'idUsuario': fila[0],
                         'email': fila[1],
                         'clave': fila[2],
-                        'numDocPers': fila[3],
-                        'nombDocumento': fila[4],
-                        'nombPers': fila[5],
-                        'apePatPers': fila[6],
-                        'apeMatPers': fila[7],
-                        'sexoPers': fila[8],
-                        'direccionPers': fila[9],
-                        'telefonoPers': fila[10],
-                        'f_inicio': fila[11],
-                        'f_fin': fila[12],
-                        'vigenciaParrPers': fila[13],
-                        'nombCargo': fila[14],
-                        'nombParroquia': fila[16],
-                        'roles': []  # ✅ Acumulará roles
+                        'estadoCuenta': fila[3],
+                        'numDocPers': fila[4],
+                        'nombDocumento': fila[5],
+                        'nombPers': fila[6],
+                        'apePatPers': fila[7],
+                        'apeMatPers': fila[8],
+                        'sexoPers': fila[9],
+                        'direccionPers': fila[10],
+                        'telefonoPers': fila[11],
+                        'f_inicio': fila[12],
+                        'f_fin': fila[13],
+                        'vigenciaParrPers': fila[14],
+                        'nombCargo': fila[15],
+                        'nombParroquia': fila[17],
+                        'roles': []
                     }
 
-                rol = fila[15]
+                rol = fila[16]
                 if rol not in resultados_dict[id_user]['roles']:
                     resultados_dict[id_user]['roles'].append(rol)
 
@@ -75,6 +77,8 @@ def get_datos_personal():
     finally:
         if conexion:
             conexion.close()
+
+
 
 def agregar_usuario_personal(email, clave, numDocPers, nombre, apePaterno, apeMaterno, sexo, direccion,
                              telefono, tipoDocumento, cargo, parroquia, roles, finicio, f_fin):
@@ -221,25 +225,68 @@ def eliminar_usuario_personal(idUsuario):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            # Primero elimina de la tabla personal si tiene relación
+            # Primero eliminar personal porque tiene FK hacia usuario
             cursor.execute("""
-                DELETE FROM personal 
-                WHERE idUsuario = %s
+                DELETE FROM personal WHERE idUsuario = %s
             """, (idUsuario,))
             
-            # Luego elimina de la tabla usuario
+            # Luego eliminar usuario
             cursor.execute("""
-                DELETE FROM usuario 
-                WHERE idUsuario = %s
+                DELETE FROM usuario WHERE idUsuario = %s
             """, (idUsuario,))
 
         conexion.commit()
-        return True
+        return True, "Usuario y personal eliminados correctamente"
     except Exception as e:
-        print(f"Error al eliminar usuario personal: {e}")
-        return False
+        print("Error al eliminar personal:", e)
+        return False, "Error al eliminar personal"
     finally:
         conexion.close()
 
-def verificar_relacion_personal(idPersonal):
-    conexion=obtener_conexion()
+
+def verificar_relacion_personal(idUsuario):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+
+            # ✅ Obtener primero idPersonal a partir del usuario
+            cursor.execute("""
+                SELECT idPersonal 
+                FROM personal 
+                WHERE idUsuario = %s
+            """, (idUsuario,))
+            result = cursor.fetchone()
+
+            idPersonal = result[0] if result else None
+
+            relaciones = []
+
+            # ✅ Verificar roles
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM rol_usuario 
+                WHERE idUsuario = %s
+            """, (idUsuario,))
+            if cursor.fetchone()[0] > 0:
+                relaciones.append("rol_usuario")
+
+            # ✅ Verificar parroquia relacionada
+            if idPersonal is not None:
+                cursor.execute("""
+                    SELECT COUNT(*) 
+                    FROM parroquia_personal 
+                    WHERE idPersonal = %s
+                """, (idPersonal,))
+                if cursor.fetchone()[0] > 0:
+                    relaciones.append("parroquia_personal")
+
+        return {
+            "ok": True,
+            "bloqueado": len(relaciones) > 0,
+            "relaciones": relaciones
+        }
+
+    except Exception as e:
+        print(f"Error al verificar relaciones del personal: {e}")
+        return {"ok": False, "bloqueado": True, "relaciones": []}
+
