@@ -1,11 +1,11 @@
 from flask import Blueprint, request, jsonify, abort, g, redirect, url_for,session,render_template
-from app.auth.controlador_auth import registrar_usuario_y_feligres, verificar_usuario
+from app.auth.controlador_auth import registrar_usuario_feligres, verificar_usuario
 
 auth_bp=Blueprint('auth',__name__)
 
+# ================= LOGIN =================
 @auth_bp.route('/verificar_usuario', methods=['POST'])
 def get_verificar_usuario():
-    # Intentamos obtener JSON del request
     data = request.get_json(silent=True)
     if not data:
         return jsonify({"success": False, "error": "No se recibió información válida."}), 400
@@ -17,34 +17,38 @@ def get_verificar_usuario():
         return jsonify({"success": False, "error": "Debe ingresar email y contraseña."}), 400
 
     try:
-        # Verificamos usuario en la base de datos
-        id_usuario = verificar_usuario(email, clave)
+        usuario = verificar_usuario(email, clave)  # devuelve (idUsuario, nombRol) o None
 
-        if id_usuario:
-            # Guardamos idUsuario en sesión
+        if usuario:
+            id_usuario = usuario[0]
+            rol_usuario = usuario[1].lower()  # convertir a minúsculas para JS
             session['idUsuario'] = id_usuario
-            return jsonify({"success": True, "idUsuario": id_usuario})
+            session['rol'] = rol_usuario
+            return jsonify({"success": True, "idUsuario": id_usuario, "rol": rol_usuario})
         else:
             return jsonify({"success": False, "error": "Email o contraseña incorrectos."}), 401
 
     except Exception as e:
-        # Imprimimos error en consola para depuración
         print(f"Error al verificar usuario: {e}")
         return jsonify({"success": False, "error": "Error interno del servidor."}), 500
+
 
 
 # ================= DASHBOARD =================
 @auth_bp.route('/dashboard')
 def dashboard():
     if 'idUsuario' not in session:
-        return redirect(url_for('iniciar_sesion'))  # Redirige si no hay sesión
+        return redirect(url_for('auth_bp.iniciar_sesion'))  # corregido
     return render_template('principal.html')
+
 
 # ================= LOGOUT =================
 @auth_bp.route('/logout')
 def logout():
-    session.pop('idUsuario', None)  # Eliminamos sesión
-    return redirect(url_for('auth_bp.iniciar_sesion'))
+    session.pop('idUsuario', None)
+    session.pop('rol', None)  # si guardaste el rol
+    return redirect(url_for('auth_bp.iniciar_sesion'))  # corregido
+
 
 # ================= REGISTRO FELIGRES =================
 @auth_bp.route('/registrar_feligres', methods=['POST'])
@@ -75,7 +79,7 @@ def registrar_feligres():
 
         sexo_letra = sexo[0].upper() if sexo else ''
 
-        exito, error = registrar_usuario_y_feligres(
+        exito, error = registrar_usuario_feligres(
             documento,
             nombres,
             apePaterno,

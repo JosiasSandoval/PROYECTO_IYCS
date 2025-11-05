@@ -5,7 +5,7 @@ def obtener_acto_parroquia(idParroquia):
     try:
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT al.idActo, al.nombActo, al.costoBase
+                SELECT al.idActo, al.nombActo, ap.diaSemana,ap.horaInicioActo,al.costoBase
                 FROM acto_liturgico al
                 INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
                 INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
