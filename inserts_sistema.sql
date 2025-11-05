@@ -377,25 +377,73 @@ INSERT INTO ROL_USUARIO (idRol, idUsuario) VALUES
 (3, 29),
 (3, 30);
 
-INSERT INTO ACTO_LITURGICO (nombActo, descripcion, costoBase, estadoActo, imgActo) VALUES
-('Misa Individual', 'Celebración de la Eucaristía solicitada para una intención particular (difuntos, acción de gracias, etc.).', 100.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/1717714486912590687_0'),
-('Misa Comunitaria', 'Celebración de la Eucaristía con múltiples intenciones, abierta a la comunidad de la parroquia.', 50.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/5719853306317319414_0'),
-('Bautismo Comunitario', 'Sacramento de Bautismo celebrado en grupo, en fechas y horarios fijos.', 150.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
-('Bautismo Individual', 'Sacramento de Bautismo celebrado de forma privada, fuera de los horarios comunes.', 250.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
-('Matrimonio (Normal)', 'Sacramento del Matrimonio de dos feligreses propios de la parroquia.', 300.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
-('Matrimonio (Traslado)', 'Sacramento del Matrimonio de feligreses externos que solicitan realizarlo en esta parroquia.', 500.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
-('Confirmación', 'Sacramento que perfecciona la gracia bautismal y confiere el Espíritu Santo.', 100.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/818614702535729351_0'),
-('Misa de Exequias', 'Celebración litúrgica por el eterno descanso del difunto. (Sujeta a horarios).', 200.00, TRUE, 'https://ejemplo.com/imagen_funeral_catolico.jpg'),
-('Unción de Enfermos', 'Sacramento para confortar y dar fortaleza espiritual a los enfermos graves.', 0.00, TRUE, 'https://ejemplo.com/imagen_uncion_enfermos.jpg'),
-('Adoración Eucarística', 'Exposición y adoración del Santísimo Sacramento. Generalmente gratuita.', 0.00, TRUE, 'https://ejemplo.com/imagen_adoracion_eucaristica.jpg');
+INSERT INTO ACTO_LITURGICO (nombActo, descripcion, numParticipantes,tipoParticipantes,costoBase, estadoActo, imgActo) VALUES
+('Misa Individual', 'Celebración de la Eucaristía solicitada para una intención particular (difuntos, acción de gracias, etc.).',2,'Beneficiario(s), sacerdote', 100.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/1717714486912590687_0'),
+('Misa Comunitaria', 'Celebración de la Eucaristía con múltiples intenciones, abierta a la comunidad de la parroquia.',2,'Beneficiario(s), sacerdote', 50.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/5719853306317319414_0'),
+('Bautismo Comunitario', 'Sacramento de Bautismo celebrado en grupo, en fechas y horarios fijos.',5,'Padre,Madre,Padrino,Madrina,Sacerdote', 150.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
+('Bautismo Individual', 'Sacramento de Bautismo celebrado de forma privada, fuera de los horarios comunes.',5,'Padre,Madre,Padrino,Madrina,Sacerdote', 250.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
+('Matrimonio (Normal)', 'Sacramento del Matrimonio de dos feligreses propios de la parroquia.', 7,'Novia,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote',300.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
+('Matrimonio (Traslado)', 'Sacramento del Matrimonio de feligreses externos que solicitan realizarlo en esta parroquia.', 7,'Novia,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote', 500.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
+('Confirmación', 'Sacramento que perfecciona la gracia bautismal y confiere el Espíritu Santo.', 3,'Beneficiario,Padrino o Madrina, Sacerdote',100.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/818614702535729351_0'),
+('Misa de Exequias', 'Celebración litúrgica por el eterno descanso del difunto. (Sujeta a horarios).',2,'Beneficiario(s), sacerdote', 200.00, TRUE, 'https://ejemplo.com/imagen_funeral_catolico.jpg');
 
-INSERT INTO ACTO_PARROQUIA (idActo, idParroquia) VALUES
-(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10), (1, 11), (1, 12), (1, 13), (1, 14), (1, 15), (1, 16), (1, 17), (1, 18), (1, 19), (1, 20), (1, 21), (1, 22), (1, 23),
-(2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (2, 8), (2, 9), (2, 10), (2, 11), (2, 12), (2, 13), (2, 14), (2, 15), (2, 16), (2, 17), (2, 18), (2, 19), (2, 20), (2, 21), (2, 22), (2, 23),
-(3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (3, 12), (3, 13), (3, 14), (3, 15), (3, 16), (3, 17), (3, 18), (3, 19), (3, 20), (3, 21), (3, 22), (3, 23),
-(4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7), (4, 8), (4, 9), (4, 10), (4, 11), (4, 12), (4, 13), (4, 14), (4, 15), (4, 16), (4, 17), (4, 18), (4, 19), (4, 20), (4, 21), (4, 22), (4, 23),
-(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7), (5, 8), (5, 9), (5, 10), (5, 11), (5, 12), (5, 13), (5, 14), (5, 15), (5, 16), (5, 17), (5, 18), (5, 19), (5, 20), (5, 21), (5, 22), (5, 23),
-(6, 1), (6, 2), (6, 3), (6, 4), (6, 5), (6, 6), (6, 7), (6, 8), (6, 9), (6, 10), (6, 11), (6, 12), (6, 13), (6, 14), (6, 15), (6, 16), (6, 17), (6, 18), (6, 19), (6, 20), (6, 21), (6, 22), (6, 23);
+INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo) VALUES
+-- Misa Individual (08:00)
+(1, 1, 'Lun', '08:00:00'), (1, 2, 'Mar', '08:00:00'), (1, 3, 'Mié', '08:00:00'), (1, 4, 'Jue', '08:00:00'), (1, 5, 'Vie', '08:00:00'),
+(1, 6, 'Sáb', '08:00:00'), (1, 7, 'Dom', '08:00:00'), (1, 8, 'Lun', '08:00:00'), (1, 9, 'Mar', '08:00:00'), (1, 10, 'Mié', '08:00:00'),
+(1, 11, 'Jue', '08:00:00'), (1, 12, 'Vie', '08:00:00'), (1, 13, 'Sáb', '08:00:00'), (1, 14, 'Dom', '08:00:00'), (1, 15, 'Lun', '08:00:00'),
+(1, 16, 'Mar', '08:00:00'), (1, 17, 'Mié', '08:00:00'), (1, 18, 'Jue', '08:00:00'), (1, 19, 'Vie', '08:00:00'), (1, 20, 'Sáb', '08:00:00'),
+(1, 21, 'Dom', '08:00:00'), (1, 22, 'Lun', '08:00:00'), (1, 23, 'Mar', '08:00:00'),
+
+-- Misa Comunitaria (10:00)
+(2, 1, 'Lun', '10:00:00'), (2, 2, 'Mar', '10:00:00'), (2, 3, 'Mié', '10:00:00'), (2, 4, 'Jue', '10:00:00'), (2, 5, 'Vie', '10:00:00'),
+(2, 6, 'Sáb', '10:00:00'), (2, 7, 'Dom', '10:00:00'), (2, 8, 'Lun', '10:00:00'), (2, 9, 'Mar', '10:00:00'), (2, 10, 'Mié', '10:00:00'),
+(2, 11, 'Jue', '10:00:00'), (2, 12, 'Vie', '10:00:00'), (2, 13, 'Sáb', '10:00:00'), (2, 14, 'Dom', '10:00:00'), (2, 15, 'Lun', '10:00:00'),
+(2, 16, 'Mar', '10:00:00'), (2, 17, 'Mié', '10:00:00'), (2, 18, 'Jue', '10:00:00'), (2, 19, 'Vie', '10:00:00'), (2, 20, 'Sáb', '10:00:00'),
+(2, 21, 'Dom', '10:00:00'), (2, 22, 'Lun', '10:00:00'), (2, 23, 'Mar', '10:00:00'),
+
+-- Bautismo Comunitario (09:00)
+(3, 1, 'Lun', '09:00:00'), (3, 2, 'Mar', '09:00:00'), (3, 3, 'Mié', '09:00:00'), (3, 4, 'Jue', '09:00:00'), (3, 5, 'Vie', '09:00:00'),
+(3, 6, 'Sáb', '09:00:00'), (3, 7, 'Dom', '09:00:00'), (3, 8, 'Lun', '09:00:00'), (3, 9, 'Mar', '09:00:00'), (3, 10, 'Mié', '09:00:00'),
+(3, 11, 'Jue', '09:00:00'), (3, 12, 'Vie', '09:00:00'), (3, 13, 'Sáb', '09:00:00'), (3, 14, 'Dom', '09:00:00'), (3, 15, 'Lun', '09:00:00'),
+(3, 16, 'Mar', '09:00:00'), (3, 17, 'Mié', '09:00:00'), (3, 18, 'Jue', '09:00:00'), (3, 19, 'Vie', '09:00:00'), (3, 20, 'Sáb', '09:00:00'),
+(3, 21, 'Dom', '09:00:00'), (3, 22, 'Lun', '09:00:00'), (3, 23, 'Mar', '09:00:00'),
+
+-- Bautismo Individual (11:00)
+(4, 1, 'Lun', '11:00:00'), (4, 2, 'Mar', '11:00:00'), (4, 3, 'Mié', '11:00:00'), (4, 4, 'Jue', '11:00:00'), (4, 5, 'Vie', '11:00:00'),
+(4, 6, 'Sáb', '11:00:00'), (4, 7, 'Dom', '11:00:00'), (4, 8, 'Lun', '11:00:00'), (4, 9, 'Mar', '11:00:00'), (4, 10, 'Mié', '11:00:00'),
+(4, 11, 'Jue', '11:00:00'), (4, 12, 'Vie', '11:00:00'), (4, 13, 'Sáb', '11:00:00'), (4, 14, 'Dom', '11:00:00'), (4, 15, 'Lun', '11:00:00'),
+(4, 16, 'Mar', '11:00:00'), (4, 17, 'Mié', '11:00:00'), (4, 18, 'Jue', '11:00:00'), (4, 19, 'Vie', '11:00:00'), (4, 20, 'Sáb', '11:00:00'),
+(4, 21, 'Dom', '11:00:00'), (4, 22, 'Lun', '11:00:00'), (4, 23, 'Mar', '11:00:00'),
+
+-- Matrimonio Normal (16:00)
+(5, 1, 'Sáb', '16:00:00'), (5, 2, 'Sáb', '16:00:00'), (5, 3, 'Sáb', '16:00:00'), (5, 4, 'Sáb', '16:00:00'), (5, 5, 'Sáb', '16:00:00'),
+(5, 6, 'Sáb', '16:00:00'), (5, 7, 'Sáb', '16:00:00'), (5, 8, 'Sáb', '16:00:00'), (5, 9, 'Sáb', '16:00:00'), (5, 10, 'Sáb', '16:00:00'),
+(5, 11, 'Sáb', '16:00:00'), (5, 12, 'Sáb', '16:00:00'), (5, 13, 'Sáb', '16:00:00'), (5, 14, 'Sáb', '16:00:00'), (5, 15, 'Sáb', '16:00:00'),
+(5, 16, 'Sáb', '16:00:00'), (5, 17, 'Sáb', '16:00:00'), (5, 18, 'Sáb', '16:00:00'), (5, 19, 'Sáb', '16:00:00'), (5, 20, 'Sáb', '16:00:00'),
+(5, 21, 'Sáb', '16:00:00'), (5, 22, 'Sáb', '16:00:00'), (5, 23, 'Sáb', '16:00:00'),
+
+-- Matrimonio Traslado (18:00)
+(6, 1, 'Sáb', '18:00:00'), (6, 2, 'Sáb', '18:00:00'), (6, 3, 'Sáb', '18:00:00'), (6, 4, 'Sáb', '18:00:00'), (6, 5, 'Sáb', '18:00:00'),
+(6, 6, 'Sáb', '18:00:00'), (6, 7, 'Sáb', '18:00:00'), (6, 8, 'Sáb', '18:00:00'), (6, 9, 'Sáb', '18:00:00'), (6, 10, 'Sáb', '18:00:00'),
+(6, 11, 'Sáb', '18:00:00'), (6, 12, 'Sáb', '18:00:00'), (6, 13, 'Sáb', '18:00:00'), (6, 14, 'Sáb', '18:00:00'), (6, 15, 'Sáb', '18:00:00'),
+(6, 16, 'Sáb', '18:00:00'), (6, 17, 'Sáb', '18:00:00'), (6, 18, 'Sáb', '18:00:00'), (6, 19, 'Sáb', '18:00:00'), (6, 20, 'Sáb', '18:00:00'),
+(6, 21, 'Sáb', '18:00:00'), (6, 22, 'Sáb', '18:00:00'), (6, 23, 'Sáb', '18:00:00'),
+
+-- Confirmación (15:00)
+(7, 1, 'Dom', '15:00:00'), (7, 2, 'Dom', '15:00:00'), (7, 3, 'Dom', '15:00:00'), (7, 4, 'Dom', '15:00:00'), (7, 5, 'Dom', '15:00:00'),
+(7, 6, 'Dom', '15:00:00'), (7, 7, 'Dom', '15:00:00'), (7, 8, 'Dom', '15:00:00'), (7, 9, 'Dom', '15:00:00'), (7, 10, 'Dom', '15:00:00'),
+(7, 11, 'Dom', '15:00:00'), (7, 12, 'Dom', '15:00:00'), (7, 13, 'Dom', '15:00:00'), (7, 14, 'Dom', '15:00:00'), (7, 15, 'Dom', '15:00:00'),
+(7, 16, 'Dom', '15:00:00'), (7, 17, 'Dom', '15:00:00'), (7, 18, 'Dom', '15:00:00'), (7, 19, 'Dom', '15:00:00'), (7, 20, 'Dom', '15:00:00'),
+(7, 21, 'Dom', '15:00:00'), (7, 22, 'Dom', '15:00:00'), (7, 23, 'Dom', '15:00:00'),
+
+-- Misa de Exequias (12:00)
+(8, 1, 'Vie', '12:00:00'), (8, 2, 'Vie', '12:00:00'), (8, 3, 'Vie', '12:00:00'), (8, 4, 'Vie', '12:00:00'), (8, 5, 'Vie', '12:00:00'),
+(8, 6, 'Vie', '12:00:00'), (8, 7, 'Vie', '12:00:00'), (8, 8, 'Vie', '12:00:00'), (8, 9, 'Vie', '12:00:00'), (8, 10, 'Vie', '12:00:00'),
+(8, 11, 'Vie', '12:00:00'), (8, 12, 'Vie', '12:00:00'), (8, 13, 'Vie', '12:00:00'), (8, 14, 'Vie', '12:00:00'), (8, 15, 'Vie', '12:00:00'),
+(8, 16, 'Vie', '12:00:00'), (8, 17, 'Vie', '12:00:00'), (8, 18, 'Vie', '12:00:00'), (8, 19, 'Vie', '12:00:00'), (8, 20, 'Vie', '12:00:00'),
+(8, 21, 'Vie', '12:00:00'), (8, 22, 'Vie', '12:00:00'), (8, 23, 'Vie', '12:00:00');
+
 
 INSERT INTO REQUISITO (nombRequisito, f_requisito, descripcion, estadoRequisito) VALUES
 -- *******************************************************************
@@ -438,3 +486,18 @@ INSERT INTO REQUISITO (nombRequisito, f_requisito, descripcion, estadoRequisito)
 -- *******************************************************************
 ('Acta de Defunción', NULL, 'Documento civil que acredita el fallecimiento de la persona.', TRUE),
 ('Petición Familiar', NULL, 'Solicitud formal de la familia para la celebración de la Misa (no es estrictamente un requisito canónico, sino administrativo).', TRUE);
+
+INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
+('CUPOS_DIARIOS_MISA', 'personas', '50', 'Número máximo de participantes por día para las misas.', TRUE),
+('CUPOS_DIARIOS_BAUTISMO', 'personas', '20', 'Número máximo de participantes por día para bautismos.', TRUE),
+('CUPOS_DIARIOS_MATRIMONIO', 'parejas', '5', 'Número máximo de matrimonios que se pueden agendar por día.', TRUE),
+('DURACION_MISA', 'minutos', '60', 'Duración estándar de la misa.', TRUE),
+('DURACION_BAUTISMO', 'minutos', '30', 'Duración estándar de bautismos.', TRUE),
+('DURACION_MATRIMONIO', 'minutos', '90', 'Duración estándar de matrimonios.', TRUE),
+('DURACION_CONFIRMACION', 'minutos', '45', 'Duración estándar de la confirmación.', TRUE),
+('DURACION_EXEQUIAS', 'minutos', '50', 'Duración estándar de la misa de exequias.', TRUE),
+('PAGO_UNICO', 'booleano', 'TRUE', 'Define que el pago por acto litúrgico se realiza en un solo abono.', TRUE),
+('DOCUMENTO_PDF', 'booleano', 'TRUE', 'Indica que los documentos se pueden entregar en formato PDF.', TRUE),
+('DOCUMENTO_IMAGEN', 'booleano', 'TRUE', 'Indica que los documentos se pueden entregar en formato imagen (jpg/png).', TRUE),
+('HORARIO_MAXIMO_RESERVA', 'horas', '18', 'Última hora del día en la que se pueden programar actos litúrgicos.', TRUE);
+

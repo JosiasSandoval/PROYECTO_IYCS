@@ -64,36 +64,6 @@ def crear_app():
     @app.route('/cliente/calendario')
     def calendario_cliente():
         return render_template('cliente/calendario.html')
-
-    @app.route('/cliente/reserva')
-    def reserva_cliente():
-        if 'idUsuario' not in session:
-            return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
-        return render_template('cliente/reserva_ubicacion.html')
-    
-    @app.route('/cliente/reserva_acto')
-    def reserva_acto():
-        if 'idUsuario' not in session:
-            return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
-        return render_template('cliente/reserva_acto.html')
-    
-    @app.route('/cliente/reserva_datos')
-    def reserva_datos():
-        if 'idUsuario' not in session:
-            return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
-        return render_template('cliente/reserva_datos.html')
-    
-    @app.route('/cliente/reserva_requisito')
-    def reserva_requisito():
-        if 'idUsuario' not in session:
-            return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
-        return render_template('cliente/reserva_requisito.html')
-    
-    @app.route('/cliente/reserva_resumen')
-    def reserva_resumen():
-        if 'idUsuario' not in session:
-            return redirect(url_for('iniciar_sesion'))  # manda al login si no hay sesión
-        return render_template('cliente/reserva_resumen.html')
     
     @app.route('/cliente/acto_liturgico')
     def acto_liturgico_cliente():
@@ -103,9 +73,57 @@ def crear_app():
     def perfil_cliente():
         return render_template('cliente/perfil.html')
 
+        # --- RESERVAS CLIENTE ---
+    @app.route('/cliente/reserva')
+    def reserva_cliente():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))
+        return render_template(
+            'cliente/reserva_ubicacion.html',
+            id_usuario=session.get('idUsuario'),
+            rol_usuario=session.get('rol')
+        )
 
-   
-    
+    @app.route('/cliente/reserva_acto')
+    def reserva_acto():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))
+        return render_template(
+            'cliente/reserva_acto.html',
+            id_usuario=session.get('idUsuario'),
+            rol_usuario=session.get('rol')
+        )
+
+    @app.route('/cliente/reserva_datos')
+    def reserva_datos():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))
+        return render_template(
+            'cliente/reserva_datos.html',
+            id_usuario=session.get('idUsuario'),
+            rol_usuario=session.get('rol')
+        )
+
+    @app.route('/cliente/reserva_requisito')
+    def reserva_requisito():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))
+        return render_template(
+            'cliente/reserva_requisito.html',
+            id_usuario=session.get('idUsuario'),
+            rol_usuario=session.get('rol')
+        )
+
+    @app.route('/cliente/reserva_resumen')
+    def reserva_resumen():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))
+        return render_template(
+            'cliente/reserva_resumen.html',
+            id_usuario=session.get('idUsuario'),
+            rol_usuario=session.get('rol')
+        )
+
     #Administrador
     @app.route('/admi/tipo_documento')
     def tipo_documento_admi():
@@ -123,10 +141,6 @@ def crear_app():
     def metodo_pago_admi():
         return render_template('administradores/metodo_pago.html')
     
-    @app.route('/cliente/reserva_ubi')
-    def reserva_ubicacion():
-        return render_template('cliente/reserva_ubicacion.html')
-    @app.route('/cliente/pago')
     def pago():
         return render_template('cliente/pago.html')
     @app.route('/admi/rol')

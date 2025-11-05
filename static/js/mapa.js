@@ -24,6 +24,12 @@ const ChurchIconHighlight = L.icon({
 let map, markerClusterGroup, markersByName = {};
 let marcadorResaltado = null;
 
+// --- ROL DEL USUARIO DESDE HTML ---
+const rolUsuario = document.body.dataset.rol;
+const idUsuario = document.body.dataset.id;
+console.log("Rol del usuario:", rolUsuario);
+console.log("ID del usuario:", idUsuario);
+
 // --- INICIALIZACIÓN DEL MAPA ---
 function initMap() {
     map = L.map('gps', { maxBounds: mapBounds, minZoom: 9.5 }).setView(mapCenter, zoomInicial);
@@ -64,6 +70,12 @@ async function cargarParroquias() {
         datos.forEach(p => {
             if (!p.latParroquia || !p.logParroquia) return;
 
+            const mostrarBotonReserva = (rolUsuario === 'feligres' || rolUsuario === 'secretaria') ? `
+                <button onclick="mostrarCalendarioParroquia('${p.idParroquia}')"
+                    style="background:#00a135;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
+                    Ver calendario
+                </button>` : '';
+
             const popupContent = `
                 <div style="font-family: Arial, sans-serif; max-width:250px;">
                     <h4 style="color:#007bff;margin:0">${p.nombParroquia}</h4>
@@ -72,14 +84,7 @@ async function cargarParroquias() {
                     <p><strong>Dirección:</strong> ${p.direccion || 'No disponible'}</p>
                     <p><strong>Teléfono:</strong> ${p.telefonoContacto || 'No disponible'}</p>
                     <p><strong>Horario:</strong> ${p.horaAtencionInicial || ''} - ${p.horaAtencionFinal || 'Cerrado'}</p>
-                    <button onclick="mostrarDetallesParroquia('${p.idParroquia}')"
-                        style="background:#007bff;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
-                        Ver Detalles
-                    </button>
-                    <button onclick="mostrarCalendarioParroquia('${p.idParroquia}')"
-                        style="background:#00a135;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
-                        Ver calendario
-                    </button>
+                    ${mostrarBotonReserva}
                 </div>`;
 
             const marker = L.marker([p.latParroquia, p.logParroquia], { icon: ChurchIcon })
@@ -87,7 +92,6 @@ async function cargarParroquias() {
 
             markerClusterGroup.addLayer(marker);
 
-            // Guardamos con clave normalizada
             const nombreNorm = p.nombParroquia.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '');
             markersByName[nombreNorm] = { marker, id: p.idParroquia, nombre: p.nombParroquia };
         });
@@ -179,7 +183,12 @@ function mostrarDetallesParroquia(id) {
     localStorage.setItem('idParroquiaSeleccionada', id);
     window.location.href = `/cliente/detalle_parroquia/${id}`;
 }
+
 function mostrarCalendarioParroquia(id) {
+    if (rolUsuario !== 'feligres' && rolUsuario !== 'secretaria') {
+        alert("Solo los feligreses o secretarias pueden realizar reservas.");
+        return;
+    }
     localStorage.setItem('idParroquiaSeleccionada', id);
     window.location.href = `/cliente/calendario/${id}`;
 }
@@ -198,7 +207,7 @@ function crearModalReserva() {
             <p id="modal-texto">¿Quieres esta parroquia?</p>
             <div style="margin-top:20px;display:flex;justify-content:space-around;">
                 <button id="modal-si" style="padding:10px 20px;background:#007bff;color:white;border:none;border-radius:5px;cursor:pointer;">Sí</button>
-                <button id="modal-no" style="padding:10px 20px;background:#dc3545;color:white;border:none;border-radius:5px;cursor:pointer;">No</button>
+                <button id="modal-no" style="padding:10px 20px;background:#dc3545;color:white;border:none;border-radius:5px;border-radius:5px;cursor:pointer;">No</button>
             </div>
         </div>
     `;
@@ -212,18 +221,21 @@ const modalSi = document.getElementById('modal-si');
 const modalNo = document.getElementById('modal-no');
 
 function abrirModalReserva(nombre, id) {
+    if (rolUsuario !== 'feligres' && rolUsuario !== 'secretaria') {
+        alert("Solo los feligreses o secretarias pueden realizar reservas.");
+        return;
+    }
+
     modalTexto.textContent = `¿Quieres esta parroquia: "${nombre}"?`;
     modalReserva.style.display = 'flex';
 
     modalSi.onclick = () => {
         localStorage.setItem('idParroquiaSeleccionada', id);
         localStorage.setItem('nombreParroquiaSeleccionada', nombre);
-        window.location.href = `reserva_acto`;
+        window.location.href = `/cliente/reserva_acto`;
     };
 
-    modalNo.onclick = () => {
-        modalReserva.style.display = 'none';
-    };
+    modalNo.onclick = () => { modalReserva.style.display = 'none'; };
 }
 
 modalReserva.addEventListener('click', e => {
