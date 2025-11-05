@@ -8,8 +8,8 @@ from app.pago_metodo.controlador_pago_metodo import (
     verificar_relacion_metodo_pago
 )
 
-# ✅ Nombre único para el Blueprint
-pago_metodo_bp = Blueprint('pago_metodo', __name__)
+pago_bp= Blueprint('pago', __name__)
+
 
 
 # ======================================================
