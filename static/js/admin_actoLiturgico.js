@@ -1,34 +1,45 @@
 // ================== VARIABLES GLOBALES ==================
 let actos = [];
 let actosFiltrados = null;
-let actoEditandoId = null;
+let paginaActual = 1;
 
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
-
+const elementosPorPagina = 5;
 // Referencias a los modales sin Bootstrap
 const modalDetalle = crearModal();
 const modalFormulario = crearModalFormulario();
-
-let paginaActual = 1;
-const elementosPorPagina = 10;
 
 // Variable de ordenamiento
 let ordenActual = { campo: null, ascendente: true };
 
 // ================== FUNCIONES ==================
+function normalizarActo(item) {
+  return {
+    idActo: item.idActo ?? item.id ?? null,
+    nombActo: item.nombActo ?? item.nombre ?? "",
+    descripcion: item.descripcion ?? "",
+    costoBase: item.costoBase ?? item.precio ?? 0,
+    estadoActo:
+      item.estadoActo === true ||
+      item.estadoActo === 1 ||
+      item.estadoActo === "activo" ||
+      item.estado === true ||
+      item.estado === 1,
+    imgActo: item.imgActo ?? item.imagen ?? ""
+  };
+}
 
-// Renderizar tabla
+// ================== RENDERIZAR TABLA ==================
 function renderTabla() {
   tabla.innerHTML = "";
-
   const lista = actosFiltrados ?? actos;
 
   if (ordenActual.campo) {
     lista.sort((a, b) => {
       const campo = ordenActual.campo;
-      const valorA = a[campo] ? a[campo].toString().toLowerCase() : "";
-      const valorB = b[campo] ? b[campo].toString().toLowerCase() : "";
+      const valorA = (a[campo] || "").toString().toLowerCase();
+      const valorB = (b[campo] || "").toString().toLowerCase();
       if (valorA < valorB) return ordenActual.ascendente ? -1 : 1;
       if (valorA > valorB) return ordenActual.ascendente ? 1 : -1;
       return 0;
@@ -40,27 +51,28 @@ function renderTabla() {
   const actosPagina = lista.slice(inicio, fin);
 
   actosPagina.forEach((acto, index) => {
-    const esActivo = acto.estado === "activo";
+    const esActivo = acto.estadoActo === true;
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
 
     const fila = document.createElement("tr");
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
-      <td class="col-nombre">${acto.nombre}</td>
-      <td class="col-precio">${acto.precio}</td>
+      <td class="col-nombre">${acto.nombActo}</td>
+      <td class="col-descripcion">${acto.descripcion || "-"}</td>
+      <td class="col-precio">${acto.costoBase}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="verActo(${acto.id})" title="Ver">
+          <button class="btn btn-info btn-sm" onclick="verActo(${acto.idActo})" title="Ver">
             <img src="/static/img/ojo.png" alt="ver">
           </button>
-          <button class="btn btn-warning btn-sm" onclick="editarActo(${acto.id})" title="Editar">
+          <button class="btn btn-warning btn-sm" onclick="editarActo(${acto.idActo})" title="Editar">
             <img src="/static/img/lapiz.png" alt="editar">
           </button>
-          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${acto.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
+          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${acto.idActo})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
             <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
           </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarActo(${acto.id})" title="Eliminar">
+          <button class="btn btn-danger btn-sm" onclick="eliminarActo(${acto.idActo})" title="Eliminar">
             <img src="/static/img/x.png" alt="eliminar">
           </button>
         </div>
@@ -108,7 +120,6 @@ function renderPaginacion() {
   }
 
   ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, ">"));
-
   paginacion.appendChild(ul);
 }
 
@@ -119,39 +130,41 @@ function cambiarPagina(pagina) {
 }
 
 // ================== CRUD ==================
-function agregarActo(nombre, precio) {
+function agregarActo(nombre, precio, descripcion, imagen) {
   actos.push({
     id: Date.now(),
-    nombre,
-    precio,
-    estado: "activo",
+    nombActo: nombre,
+    costoBase: precio,
+    descripcion: descripcion,
+    imgActo: imagen,
+    estadoActo: true
   });
   renderTabla();
 }
 
 function editarActo(id) {
-  const acto = actos.find((a) => a.id === id);
+  const acto = actos.find((a) => a.idActo === id);
   if (!acto) return;
   abrirModalFormulario("editar", acto);
 }
 
 function eliminarActo(id) {
-  const acto = actos.find((a) => a.id === id);
+  const acto = actos.find((a) => a.idActo === id);
   if (!acto) return;
-  if (!confirm(`¿Seguro que deseas eliminar el acto litúrgico "${acto.nombre}"?`)) return;
-  actos = actos.filter((a) => a.id !== id);
+  if (!confirm(`¿Seguro que deseas eliminar el acto litúrgico "${acto.nombActo}"?`)) return;
+  actos = actos.filter((a) => a.idActo !== id);
   renderTabla();
 }
 
 function darDeBaja(id) {
-  const acto = actos.find((a) => a.id === id);
+  const acto = actos.find((a) => a.idActo === id);
   if (!acto) return;
-  acto.estado = acto.estado === "activo" ? "inactivo" : "activo";
+  acto.estadoActo = !acto.estadoActo;
   renderTabla();
 }
 
 function verActo(id) {
-  const acto = actos.find((a) => a.id === id);
+  const acto = actos.find((a) => a.idActo === id);
   if (!acto) return;
   abrirModalFormulario("ver", acto);
 }
@@ -188,10 +201,19 @@ function crearModalFormulario() {
           </div>
           <div class="modal-body">
             <form id="formModalActo">
-
               <div class="mb-3">
                 <label for="modalNombre" class="form-label">Nombre del acto litúrgico</label>
                 <input type="text" id="modalNombre" class="form-control" required>
+              </div>
+
+              <div class="mb-3">
+                <label for="modalDescripcion" class="form-label">Descripción</label>
+                <textarea id="modalDescripcion" class="form-control" rows="3" required></textarea>
+              </div>
+
+              <div class="mb-3">
+                <label for="modalImagen" class="form-label">URL de la imagen</label>
+                <input type="text" id="modalImagen" class="form-control" placeholder="https://..." required>
               </div>
 
               <div class="mb-3">
@@ -202,7 +224,6 @@ function crearModalFormulario() {
               <div class="modal-footer">
                 <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar">Aceptar</button>
               </div>
-
             </form>
           </div>
         </div>
@@ -227,6 +248,8 @@ function abrirModalFormulario(modo, acto = null) {
   const titulo = document.getElementById("modalFormularioTitulo");
   const inputNombre = document.getElementById("modalNombre");
   const inputPrecio = document.getElementById("modalPrecio");
+  const inputDescripcion = document.getElementById("modalDescripcion");
+  const inputImagen = document.getElementById("modalImagen");
   const botonGuardar = document.getElementById("btnGuardar");
   const form = document.getElementById("formModalActo");
   const modalFooter = document.querySelector("#modalFormulario .modal-footer");
@@ -234,39 +257,53 @@ function abrirModalFormulario(modo, acto = null) {
   modalFooter.innerHTML = "";
   inputNombre.disabled = false;
   inputPrecio.disabled = false;
+  inputDescripcion.disabled = false;
+  inputImagen.disabled = false;
 
   if (modo === "agregar") {
     titulo.textContent = "Agregar Acto Litúrgico";
     inputNombre.value = "";
     inputPrecio.value = "";
+    inputDescripcion.value = "";
+    inputImagen.value = "";
 
     modalFooter.appendChild(botonGuardar);
     form.onsubmit = (e) => {
       e.preventDefault();
-      agregarActo(inputNombre.value.trim(), inputPrecio.value.trim());
+      agregarActo(inputNombre.value.trim(), parseFloat(inputPrecio.value), inputDescripcion.value.trim(), inputImagen.value.trim());
       cerrarModal("modalFormulario");
     };
   } else if (modo === "editar" && acto) {
     titulo.textContent = "Editar Acto Litúrgico";
-    inputNombre.value = acto.nombre;
-    inputPrecio.value = acto.precio;
+    inputNombre.value = acto.nombActo;
+    inputPrecio.value = acto.costoBase;
+    inputDescripcion.value = acto.descripcion;
+    inputImagen.value = acto.imgActo;
 
     modalFooter.appendChild(botonGuardar);
     form.onsubmit = (e) => {
       e.preventDefault();
-      acto.nombre = inputNombre.value.trim();
-      acto.precio = inputPrecio.value.trim();
+      acto.nombActo = inputNombre.value.trim();
+      acto.costoBase = parseFloat(inputPrecio.value);
+      acto.descripcion = inputDescripcion.value.trim();
+      acto.imgActo = inputImagen.value.trim();
       cerrarModal("modalFormulario");
       renderTabla();
     };
   } else if (modo === "ver" && acto) {
     titulo.textContent = "Detalle del Acto Litúrgico";
-    inputNombre.value = acto.nombre;
-    inputPrecio.value = acto.precio;
+    inputNombre.value = acto.nombActo;
+    inputPrecio.value = acto.costoBase;
+    inputDescripcion.value = acto.descripcion;
+    inputImagen.value = acto.imgActo;
+
     inputNombre.disabled = true;
     inputPrecio.disabled = true;
+    inputDescripcion.disabled = true;
+    inputImagen.disabled = true;
 
     modalFooter.appendChild(botonGuardar);
+    botonGuardar.textContent = "Cerrar";
     botonGuardar.onclick = () => cerrarModal("modalFormulario");
   }
 
@@ -282,7 +319,7 @@ btnBuscar.addEventListener("click", () => {
   actosFiltrados =
     termino === ""
       ? null
-      : actos.filter((a) => a.nombre.toLowerCase().includes(termino));
+      : actos.filter((a) => a.nombActo.toLowerCase().includes(termino));
   paginaActual = 1;
   renderTabla();
 });
@@ -293,39 +330,89 @@ document.getElementById("formDocumento").addEventListener("submit", (e) => {
   abrirModalFormulario("agregar");
 });
 
-// ================== DATOS DE EJEMPLO ==================
- actos = [
-  { id: 1, nombre: "Misa Dominical", precio: "50", estado: "activo" },
-  { id: 2, nombre: "Bautizo", precio: "80", estado: "activo" },
-  { id: 3, nombre: "Matrimonio", precio: "200", estado: "activo" },
-  { id: 4, nombre: "Primera Comunión", precio: "120", estado: "activo" },
-  { id: 5, nombre: "Confirmación", precio: "100", estado: "activo" },
-  { id: 6, nombre: "Misa de Difuntos", precio: "60", estado: "activo" },
-  { id: 7, nombre: "Misa de Acción de Gracias", precio: "70", estado: "activo" },
-  { id: 8, nombre: "Confesión", precio: "30", estado: "activo" },
-  { id: 9, nombre: "Unción de los Enfermos", precio: "90", estado: "activo" },
-  { id: 10, nombre: "Misa de Bodas de Plata", precio: "150", estado: "activo" },
-  { id: 11, nombre: "Misa de Bodas de Oro", precio: "180", estado: "activo" },
-  { id: 12, nombre: "Retiro Espiritual", precio: "100", estado: "activo" },
-  { id: 13, nombre: "Adoración al Santísimo", precio: "40", estado: "activo" },
-  { id: 14, nombre: "Rosario Comunitario", precio: "25", estado: "activo" },
-  { id: 15, nombre: "Novena de San José", precio: "35", estado: "activo" },
-  { id: 16, nombre: "Misa por el Año Nuevo", precio: "70", estado: "activo" },
-  { id: 17, nombre: "Misa de Navidad", precio: "90", estado: "activo" },
-  { id: 18, nombre: "Misa de Nochebuena", precio: "100", estado: "activo" },
-  { id: 19, nombre: "Misa de Pascua", precio: "95", estado: "activo" },
-  { id: 20, nombre: "Bendición de Hogar", precio: "60", estado: "activo" },
-  { id: 21, nombre: "Bendición de Vehículos", precio: "40", estado: "activo" },
-  { id: 22, nombre: "Misa por los Estudiantes", precio: "50", estado: "activo" },
-  { id: 23, nombre: "Misa de Graduación", precio: "120", estado: "activo" },
-  { id: 24, nombre: "Misa por los Enfermos", precio: "55", estado: "activo" },
-  { id: 25, nombre: "Misa Vocacional", precio: "60", estado: "activo" },
-  { id: 26, nombre: "Misa por la Familia", precio: "65", estado: "activo" },
-  { id: 27, nombre: "Misa de Quinceañera", precio: "140", estado: "activo" },
-  { id: 28, nombre: "Via Crucis", precio: "30", estado: "activo" },
-  { id: 29, nombre: "Procesión del Corpus Christi", precio: "110", estado: "activo" },
-  { id: 30, nombre: "Catequesis Pre-bautismal", precio: "50", estado: "activo" }
-];
+// ================== CARGAR ACTOS DESDE BD ==================
+async function cargarActosDesdeBD() {
+  try {
+    const respuesta = await fetch("/api/acto_liturgico/actos");
+    const data = await respuesta.json();
+    if (data.success && Array.isArray(data.datos)) {
+      actos = data.datos.map(normalizarActo);
+      actosFiltrados = null;
+      paginaActual = 1;
+      renderTabla();
+    } else {
+      actos = [];
+      renderTabla();
+    }
+  } catch (err) {
+    console.error("Error cargando actos:", err);
+  }
+}
+cargarActosDesdeBD();
 
+// ================== AUTOCOMPLETADO DE BÚSQUEDA ==================
+const inputBusqueda = document.getElementById("inputDocumento");
+const contenedorSugerencias = document.createElement("div");
+contenedorSugerencias.id = "sugerenciasContainer";
+contenedorSugerencias.style.position = "absolute";
+contenedorSugerencias.style.backgroundColor = "#fff";
+contenedorSugerencias.style.border = "1px solid #ccc";
+contenedorSugerencias.style.borderRadius = "6px";
+contenedorSugerencias.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+contenedorSugerencias.style.zIndex = "9999";
+contenedorSugerencias.style.display = "none";
+contenedorSugerencias.style.maxHeight = "200px";
+contenedorSugerencias.style.overflowY = "auto";
+document.body.appendChild(contenedorSugerencias);
+
+function posicionarSugerencias() {
+  const rect = inputBusqueda.getBoundingClientRect();
+  contenedorSugerencias.style.left = `${rect.left + window.scrollX}px`;
+  contenedorSugerencias.style.top = `${rect.bottom + window.scrollY}px`;
+  contenedorSugerencias.style.width = `${rect.width}px`;
+}
+
+inputBusqueda.addEventListener("input", () => {
+  const termino = inputBusqueda.value.trim().toLowerCase();
+  contenedorSugerencias.innerHTML = "";
+
+  if (termino.length === 0) {
+    contenedorSugerencias.style.display = "none";
+    return;
+  }
+
+  const sugerencias = actos.filter(a => a.nombActo.toLowerCase().startsWith(termino));
+
+  if (sugerencias.length === 0) {
+    contenedorSugerencias.style.display = "none";
+    return;
+  }
+
+  sugerencias.forEach(acto => {
+    const item = document.createElement("div");
+    item.textContent = acto.nombActo;
+    item.style.padding = "8px 10px";
+    item.style.cursor = "pointer";
+    item.addEventListener("mouseenter", () => item.style.background = "#f1f1f1");
+    item.addEventListener("mouseleave", () => item.style.background = "#fff");
+    item.addEventListener("click", () => {
+      inputBusqueda.value = acto.nombActo;
+      contenedorSugerencias.style.display = "none";
+    });
+    contenedorSugerencias.appendChild(item);
+  });
+
+  contenedorSugerencias.style.display = "block";
+  posicionarSugerencias();
+});
+
+document.addEventListener("click", (e) => {
+  if (!contenedorSugerencias.contains(e.target) && e.target !== inputBusqueda) {
+    contenedorSugerencias.style.display = "none";
+  }
+});
+
+window.addEventListener("resize", posicionarSugerencias);
+window.addEventListener("scroll", posicionarSugerencias);
 
 renderTabla();

@@ -1,7 +1,7 @@
 // ================== VARIABLES GLOBALES ==================
-let personal = [];
+let feligreses = [];
 let tiposDocumento = []; // Almacenará los tipos de documento
-let personalFiltrados = null;
+let feligresesFiltrados = null;
 let paginaActual = 1;
 const elementosPorPagina = 5;
 
@@ -9,42 +9,42 @@ const elementosPorPagina = 5;
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
 const inputBusqueda = document.getElementById("inputDocumento");
-const listaSugerencias = document.getElementById("sugerencias"); // Usamos la UL del HTML
+const listaSugerencias = document.getElementById("listaSugerencias"); // Usamos la UL del HTML
 
 // ================== FUNCIONES ==================
 
 /**
  * Normaliza los datos venidos de la API
  */
-function normalizarPersonal(item) {
+function normalizarFeligres(item) {
   return {
-    idPersonal: item.idPersonal,
-    nombreCompleto: `${item.apePatPers} ${item.apeMatPers}, ${item.nombPers}`,
-    numDocPers: item.numDocPers,
+    idFeligres: item.idFeligres,
+    // Concatenamos el nombre completo
+    nombreCompleto: `${item.apePatFel} ${item.apeMatFel}, ${item.nombFel}`,
+    numDocFel: item.numDocFel,
     email: item.email,
     estadoCuenta: item.estadoCuenta === true || item.estadoCuenta === 1,
-    idUsuario: item.idUsuario,
-    cargo: item.nombCargo || "Sin Asignar" // Maneja NULL
+    idUsuario: item.idUsuario
   };
 }
 
 // ================== RENDERIZAR TABLA ==================
 function renderTabla() {
   tabla.innerHTML = "";
-  const lista = personalFiltrados ?? personal;
+  const lista = feligresesFiltrados ?? feligreses;
 
   if (lista.length === 0) {
-    tabla.innerHTML = '<tr><td colspan="6" style="text-align:center;">No hay personal para mostrar.</td></tr>';
+    tabla.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay feligreses para mostrar.</td></tr>';
     renderPaginacion(0);
     return;
   }
 
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const fin = inicio + elementosPorPagina;
-  const personalPagina = lista.slice(inicio, fin);
+  const feligresesPagina = lista.slice(inicio, fin);
 
-  personalPagina.forEach((p, index) => {
-    const esActivo = p.estadoCuenta;
+  feligresesPagina.forEach((f, index) => {
+    const esActivo = f.estadoCuenta;
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
     const tituloBoton = esActivo ? 'Desactivar Cuenta' : 'Activar Cuenta';
@@ -52,22 +52,21 @@ function renderTabla() {
     const fila = document.createElement("tr");
     fila.innerHTML = `
       <td class.col-id">${inicio + index + 1}</td>
-      <td class="col-nombre">${p.nombreCompleto}</td>
-      <td class="col-documento">${p.numDocPers}</td>
-      <td class="col-email">${p.email}</td>
-      <td class="col-cargo">${p.cargo}</td>
+      <td class="col-nombre">${f.nombreCompleto}</td>
+      <td class="col-numDocumento">${f.numDocFel}</td>
+      <td class="col-correo">${f.email}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="abrirModalFormulario('ver', ${p.idPersonal})" title="Ver">
+          <button class="btn btn-info btn-sm" onclick="abrirModalFormulario('ver', ${f.idFeligres})" title="Ver">
             <img src="/static/img/ojo.png" alt="ver">
           </button>
-          <button class="btn btn-warning btn-sm" onclick="abrirModalFormulario('editar', ${p.idPersonal})" title="Editar">
+          <button class="btn btn-warning btn-sm" onclick="abrirModalFormulario('editar', ${f.idFeligres})" title="Editar">
             <img src="/static/img/lapiz.png" alt="editar">
           </button>
-          <button class="btn ${botonColor} btn-sm" onclick="cambiarEstadoPersonal(${p.idUsuario}, ${esActivo})" title="${tituloBoton}">
+          <button class="btn ${botonColor} btn-sm" onclick="cambiarEstadoFeligres(${f.idUsuario}, ${esActivo})" title="${tituloBoton}">
             <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
           </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarPersonal(${p.idPersonal})" title="Eliminar">
+          <button class="btn btn-danger btn-sm" onclick="eliminarFeligres(${f.idFeligres})" title="Eliminar">
             <img src="/static/img/x.png" alt="eliminar">
           </button>
         </div>
@@ -111,7 +110,7 @@ function renderPaginacion(totalElementos) {
 }
 
 function cambiarPagina(pagina) {
-  const totalPaginas = Math.ceil((personalFiltrados ?? personal).length / elementosPorPagina);
+  const totalPaginas = Math.ceil((feligresesFiltrados ?? feligreses).length / elementosPorPagina);
   if (pagina < 1 || pagina > totalPaginas) return;
   paginaActual = pagina;
   renderTabla();
@@ -121,17 +120,16 @@ function cambiarPagina(pagina) {
 
 function crearModalFormulario() {
   const modalHTML = document.createElement("div");
-  // Usamos los estilos .modal-lg, .form-grid, etc. que ya tienes en tu CSS
+  // Este modal es mucho más grande
   modalHTML.innerHTML = `
     <div class="modal" id="modalFormulario">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+      <div class="modal-dialog modal-lg"> <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="modalFormularioTitulo"></h5>
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalFormulario')">&times;</button>
           </div>
           <div class="modal-body">
-            <form id="formModalPersonal">
+            <form id="formModalFeligres">
               
               <h6 class="modal-subtitle">Datos de Acceso</h6>
               <div class="form-grid">
@@ -152,16 +150,16 @@ function crearModalFormulario() {
               <h6 class="modal-subtitle">Datos Personales</h6>
               <div class="form-grid">
                  <div class="mb-3">
-                  <label for="modalNombPers" class="form-label">Nombres</label>
-                  <input type="text" id="modalNombPers" class="form-control" required>
+                  <label for="modalNombFel" class="form-label">Nombres</label>
+                  <input type="text" id="modalNombFel" class="form-control" required>
                 </div>
                  <div class="mb-3">
-                  <label for="modalApePatPers" class="form-label">Apellido Paterno</label>
-                  <input type="text" id="modalApePatPers" class="form-control" required>
+                  <label for="modalApePatFel" class="form-label">Apellido Paterno</label>
+                  <input type="text" id="modalApePatFel" class="form-control" required>
                 </div>
                  <div class="mb-3">
-                  <label for="modalApeMatPers" class="form-label">Apellido Materno</label>
-                  <input type="text" id="modalApeMatPers" class="form-control" required>
+                  <label for="modalApeMatFel" class="form-label">Apellido Materno</label>
+                  <input type="text" id="modalApeMatFel" class="form-control" required>
                 </div>
               </div>
 
@@ -172,9 +170,16 @@ function crearModalFormulario() {
                     <option value="">Cargando...</option>
                   </select>
                 </div>
+                <div class="mb-3 form-grid-item-full">
+                  <label for="modalNumDocFel" class="form-label">Número de Documento</label>
+                  <input type="text" id="modalNumDocFel" class="form-control" required>
+                </div>
+              </div>
+
+              <div class="form-grid">
                 <div class="mb-3">
-                  <label for="modalNumDocPers" class="form-label">Número de Documento</label>
-                  <input type="text" id="modalNumDocPers" class="form-control" required>
+                  <label for="modalFNac" class="form-label">Fecha Nacimiento</label>
+                  <input type="date" id="modalFNac" class="form-control">
                 </div>
                  <div class="mb-3">
                   <label for="modalSexo" class="form-label">Sexo</label>
@@ -184,19 +189,16 @@ function crearModalFormulario() {
                     <option value="F">Femenino</option>
                   </select>
                 </div>
-              </div>
-
-              <h6 class="modal-subtitle">Datos de Contacto</h6>
-              <div class="form-grid">
                 <div class="mb-3">
                   <label for="modalTelefono" class="form-label">Teléfono</label>
                   <input type="tel" id="modalTelefono" class="form-control">
                 </div>
-                <div class="mb-3 form-grid-item-full">
+              </div>
+
+               <div class="mb-3">
                   <label for="modalDireccion" class="form-label">Dirección</label>
                   <input type="text" id="modalDireccion" class="form-control">
                 </div>
-               </div>
 
               <div class="modal-footer" id="modalFormularioFooter">
                 </div>
@@ -222,8 +224,9 @@ function cerrarModal(id) {
  */
 function popularTiposDocumentoSelect() {
     const select = document.getElementById("modalTipoDocumento");
-    select.innerHTML = '<option value="">Seleccionar...</option>';
+    select.innerHTML = '<option value="">Seleccionar...</option>'; // Limpiar
     
+    // Filtramos solo los activos
     tiposDocumento.filter(td => td.estadoDocumento === true).forEach(td => {
         const option = document.createElement("option");
         option.value = td.idTipoDocumento;
@@ -235,17 +238,20 @@ function popularTiposDocumentoSelect() {
 /**
  * Controla el modal para 'agregar', 'editar' y 'ver'
  */
-async function abrirModalFormulario(modo, idPersonal = null) {
+async function abrirModalFormulario(modo, idFeligres = null) {
+  // Asegurarnos que los tipos de documento estén cargados
   if (tiposDocumento.length === 0) {
       mostrarAlerta("Error: No se cargaron los tipos de documento.", "error");
       return;
   }
-  popularTiposDocumentoSelect();
+  
+  popularTiposDocumentoSelect(); // Popular el <select>
 
-  const form = document.getElementById("formModalPersonal");
+  const form = document.getElementById("formModalFeligres");
   const footer = document.getElementById("modalFormularioFooter");
-  footer.innerHTML = "";
+  footer.innerHTML = ""; // Limpiar botones
 
+  // Referencias a todos los campos
   const campos = {
       titulo: document.getElementById("modalFormularioTitulo"),
       email: document.getElementById("modalEmail"),
@@ -253,35 +259,42 @@ async function abrirModalFormulario(modo, idPersonal = null) {
       claveConfirmar: document.getElementById("modalClaveConfirmar"),
       campoClave: document.getElementById("campoClave"),
       campoClaveConfirmar: document.getElementById("campoClaveConfirmar"),
-      nombPers: document.getElementById("modalNombPers"),
-      apePatPers: document.getElementById("modalApePatPers"),
-      apeMatPers: document.getElementById("modalApeMatPers"),
+      nombFel: document.getElementById("modalNombFel"),
+      apePatFel: document.getElementById("modalApePatFel"),
+      apeMatFel: document.getElementById("modalApeMatFel"),
       tipoDoc: document.getElementById("modalTipoDocumento"),
-      numDoc: document.getElementById("modalNumDocPers"),
+      numDoc: document.getElementById("modalNumDocFel"),
+      fNac: document.getElementById("modalFNac"),
       sexo: document.getElementById("modalSexo"),
       telefono: document.getElementById("modalTelefono"),
       direccion: document.getElementById("modalDireccion"),
   };
 
-  Object.values(campos).forEach(campo => {
-      if (campo && campo.disabled !== undefined) campo.disabled = false;
-  });
+  // Resetear estado 'disabled'
+  for (const key in campos) {
+      if (campos[key] && campos[key].disabled !== undefined) {
+          campos[key].disabled = false;
+      }
+  }
 
+  // Botón genérico de Cerrar
   const btnCerrar = document.createElement("button");
   btnCerrar.type = "button";
   btnCerrar.className = "btn-modal btn-modal-secondary";
   btnCerrar.textContent = "Cerrar";
   btnCerrar.onclick = () => cerrarModal("modalFormulario");
 
+  // Botón genérico de Guardar
   const btnGuardar = document.createElement("button");
   btnGuardar.type = "submit";
   btnGuardar.className = "btn-modal btn-modal-primary";
   btnGuardar.textContent = "Guardar";
   
+  // Limpiar formulario
   form.reset();
 
   if (modo === "agregar") {
-    campos.titulo.textContent = "Agregar Personal";
+    campos.titulo.textContent = "Agregar Feligrés";
     campos.campoClave.style.display = "block";
     campos.campoClaveConfirmar.style.display = "block";
     campos.clave.required = true;
@@ -299,39 +312,43 @@ async function abrirModalFormulario(modo, idPersonal = null) {
         const data = {
             email: campos.email.value,
             clave: campos.clave.value,
-            nombPers: campos.nombPers.value,
-            apePatPers: campos.apePatPers.value,
-            apeMatPers: campos.apeMatPers.value,
+            nombFel: campos.nombFel.value,
+            apePatFel: campos.apePatFel.value,
+            apeMatFel: campos.apeMatFel.value,
             idTipoDocumento: campos.tipoDoc.value,
-            numDocPers: campos.numDoc.value,
-            sexoPers: campos.sexo.value || null,
-            telefonoPers: campos.telefono.value || null,
-            direccionPers: campos.direccion.value || null,
+            numDocFel: campos.numDoc.value,
+            f_nacimiento: campos.fNac.value || null,
+            sexoFel: campos.sexo.value || null,
+            telefonoFel: campos.telefono.value || null,
+            direccionFel: campos.direccion.value || null,
         };
-        guardarPersonal('POST', '/api/personal/personales', data);
+        guardarFeligres('POST', '/api/feligres/feligreses', data);
     };
 
   } else if (modo === "editar" || modo === "ver") {
-    const personalData = await cargarPersonalPorId(idPersonal);
-    if (!personalData) return;
+    // Cargar datos completos del feligrés
+    const feligres = await cargarFeligresPorId(idFeligres);
+    if (!feligres) return;
 
-    campos.titulo.textContent = modo === 'editar' ? "Editar Personal" : "Detalle del Personal";
+    campos.titulo.textContent = modo === 'editar' ? "Editar Feligrés" : "Detalle del Feligrés";
     
+    // Ocultar campos de clave
     campos.campoClave.style.display = "none";
     campos.campoClaveConfirmar.style.display = "none";
     campos.clave.required = false;
     campos.claveConfirmar.required = false;
 
     // Llenar el formulario
-    campos.email.value = personalData.email;
-    campos.nombPers.value = personalData.nombPers;
-    campos.apePatPers.value = personalData.apePatPers;
-    campos.apeMatPers.value = personalData.apeMatPers;
-    campos.tipoDoc.value = personalData.idTipoDocumento;
-    campos.numDoc.value = personalData.numDocPers;
-    campos.sexo.value = personalData.sexoPers || "";
-    campos.telefono.value = personalData.telefonoPers || "";
-    campos.direccion.value = personalData.direccionPers || "";
+    campos.email.value = feligres.email;
+    campos.nombFel.value = feligres.nombFel;
+    campos.apePatFel.value = feligres.apePatFel;
+    campos.apeMatFel.value = feligres.apeMatFel;
+    campos.tipoDoc.value = feligres.idTipoDocumento;
+    campos.numDoc.value = feligres.numDocFel;
+    campos.fNac.value = feligres.f_nacimiento || "";
+    campos.sexo.value = feligres.sexoFel || "";
+    campos.telefono.value = feligres.telefonoFel || "";
+    campos.direccion.value = feligres.direccionFel || "";
 
     if (modo === 'editar') {
         footer.appendChild(btnCerrar);
@@ -340,25 +357,29 @@ async function abrirModalFormulario(modo, idPersonal = null) {
         form.onsubmit = (e) => {
             e.preventDefault();
             const data = {
-                idUsuario: personalData.idUsuario, // Importante
+                idUsuario: feligres.idUsuario, // Importante para actualizar el usuario
                 email: campos.email.value,
-                nombPers: campos.nombPers.value,
-                apePatPers: campos.apePatPers.value,
-                apeMatPers: campos.apeMatPers.value,
+                nombFel: campos.nombFel.value,
+                apePatFel: campos.apePatFel.value,
+                apeMatFel: campos.apeMatFel.value,
                 idTipoDocumento: campos.tipoDoc.value,
-                numDocPers: campos.numDoc.value,
-                sexoPers: campos.sexo.value || null,
-                telefonoPers: campos.telefono.value || null,
-                direccionPers: campos.direccion.value || null,
+                numDocFel: campos.numDoc.value,
+                f_nacimiento: campos.fNac.value || null,
+                sexoFel: campos.sexo.value || null,
+                telefonoFel: campos.telefono.value || null,
+                direccionFel: campos.direccion.value || null,
             };
-            guardarPersonal('PUT', `/api/personal/personales/${idPersonal}`, data);
+            guardarFeligres('PUT', `/api/feligres/feligreses/${idFeligres}`, data);
         };
 
     } else { // modo === 'ver'
         footer.appendChild(btnCerrar);
-        Object.values(campos).forEach(campo => {
-            if (campo && campo.disabled !== undefined) campo.disabled = true;
-        });
+        // Deshabilitar todos los campos
+        for (const key in campos) {
+            if (campos[key] && campos[key].disabled !== undefined) {
+                campos[key].disabled = true;
+            }
+        }
         form.onsubmit = (e) => e.preventDefault();
     }
   }
@@ -370,30 +391,36 @@ async function abrirModalFormulario(modo, idPersonal = null) {
 // ================== CRUD (API Fetch) ==================
 
 /**
- * Carga los datos iniciales (Tipos de Documento y Personal)
+ * Carga los datos iniciales (Feligreses y Tipos de Documento)
  */
 async function cargarDatosIniciales() {
   try {
+    // Cargar tipos de documento primero
     const respTiposDoc = await fetch("/api/tipoDocumento/documentos");
     const dataTiposDoc = await respTiposDoc.json();
     if (dataTiposDoc.success) {
-      tiposDocumento = dataTiposDoc.datos;
+      tiposDocumento = dataTiposDoc.datos.map(td => ({
+          idTipoDocumento: td.idTipoDocumento,
+          nombDocumento: td.nombDocumento,
+          estadoDocumento: td.estadoDocumento
+      }));
     } else {
       mostrarAlerta("Error fatal: No se pudieron cargar los tipos de documento.", "error");
     }
 
-    const respPersonal = await fetch("/api/personal/personales");
-    const dataPersonal = await respPersonal.json();
-    if (dataPersonal.success && Array.isArray(dataPersonal.datos)) {
-      personal = dataPersonal.datos.map(normalizarPersonal);
-      personalFiltrados = null;
+    // Cargar feligreses
+    const respFeligreses = await fetch("/api/feligres/feligreses");
+    const dataFeligreses = await respFeligreses.json();
+    if (dataFeligreses.success && Array.isArray(dataFeligreses.datos)) {
+      feligreses = dataFeligreses.datos.map(normalizarFeligres);
+      feligresesFiltrados = null;
       inputBusqueda.value = "";
       paginaActual = 1;
       renderTabla();
     } else {
-      personal = [];
+      feligreses = [];
       renderTabla();
-      mostrarAlerta(dataPersonal.mensaje || "No se pudo cargar el personal", "error");
+      mostrarAlerta(dataFeligreses.mensaje || "No se pudieron cargar los feligreses", "error");
     }
   } catch (err) {
     console.error("Error cargando datos iniciales:", err);
@@ -402,11 +429,11 @@ async function cargarDatosIniciales() {
 }
 
 /**
- * Carga los datos completos de UN miembro del personal (para modal)
+ * Carga los datos completos de UN feligrés (para modal)
  */
-async function cargarPersonalPorId(id) {
+async function cargarFeligresPorId(id) {
     try {
-        const respuesta = await fetch(`/api/personal/personales/${id}`);
+        const respuesta = await fetch(`/api/feligres/feligreses/${id}`);
         const res = await respuesta.json();
         if (res.success) {
             return res.datos;
@@ -423,7 +450,7 @@ async function cargarPersonalPorId(id) {
 /**
  * Función genérica para guardar (Crear/Editar)
  */
-async function guardarPersonal(method, url, data) {
+async function guardarFeligres(method, url, data) {
   try {
     const respuesta = await fetch(url, {
       method: method,
@@ -448,13 +475,13 @@ async function guardarPersonal(method, url, data) {
 /**
  * Cambia el estado (Activo/Inactivo)
  */
-async function cambiarEstadoPersonal(idUsuario, estadoActual) {
+async function cambiarEstadoFeligres(idUsuario, estadoActual) {
     const nuevoEstado = !estadoActual;
     const confirmacion = confirm(`¿Seguro que deseas ${nuevoEstado ? 'activar' : 'desactivar'} esta cuenta?`);
     if (!confirmacion) return;
 
     try {
-        const respuesta = await fetch(`/api/personal/personales/${idUsuario}/estado`, {
+        const respuesta = await fetch(`/api/feligres/feligreses/${idUsuario}/estado`, {
             method: 'PATCH',
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ estadoCuenta: nuevoEstado }),
@@ -473,16 +500,16 @@ async function cambiarEstadoPersonal(idUsuario, estadoActual) {
 }
 
 /**
- * Elimina un miembro del personal (y su usuario asociado)
+ * Elimina un feligrés (y su usuario asociado)
  */
-async function eliminarPersonal(idPersonal) {
-    const p = personal.find((per) => per.idPersonal === idPersonal);
-    if (!p) return;
+async function eliminarFeligres(idFeligres) {
+    const f = feligreses.find((fel) => fel.idFeligres === idFeligres);
+    if (!f) return;
     
-    if (!confirm(`¿Seguro que deseas eliminar al personal "${p.nombreCompleto}"?\n\n¡ATENCIÓN! Esto eliminará también su cuenta de usuario y todas sus asignaciones. Esta acción es irreversible.`)) return;
+    if (!confirm(`¿Seguro que deseas eliminar al feligrés "${f.nombreCompleto}"?\n\n¡ATENCIÓN! Esto eliminará también su cuenta de usuario y es irreversible.`)) return;
 
     try {
-        const respuesta = await fetch(`/api/personal/personales/${idPersonal}`, {
+        const respuesta = await fetch(`/api/feligres/feligreses/${idFeligres}`, {
             method: 'DELETE',
         });
         const res = await respuesta.json();
@@ -501,40 +528,41 @@ async function eliminarPersonal(idPersonal) {
 
 // ================== BUSQUEDA Y AUTOCOMPLETADO ==================
 
+// Evento de 'input' para mostrar sugerencias
 inputBusqueda.addEventListener("input", () => {
   const termino = inputBusqueda.value.trim().toLowerCase();
-  listaSugerencias.innerHTML = "";
+  listaSugerencias.innerHTML = ""; // Limpiar sugerencias
   listaSugerencias.style.display = "none";
 
   if (termino.length === 0) {
     return;
   }
 
-  const sugerencias = personal.filter(p => 
-      p.nombreCompleto.toLowerCase().includes(termino) ||
-      p.numDocPers.toLowerCase().includes(termino) ||
-      p.email.toLowerCase().includes(termino) ||
-      p.cargo.toLowerCase().includes(termino)
-  ).slice(0, 5);
+  const sugerencias = feligreses.filter(f => 
+      f.nombreCompleto.toLowerCase().includes(termino) ||
+      f.numDocFel.toLowerCase().includes(termino) ||
+      f.email.toLowerCase().includes(termino)
+  ).slice(0, 5); // Limitar a 5 sugerencias
 
   if (sugerencias.length === 0) {
     return;
   }
 
-  sugerencias.forEach(p => {
+  sugerencias.forEach(f => {
     const item = document.createElement("li");
-    item.textContent = `${p.nombreCompleto} (${p.cargo})`;
+    item.textContent = `${f.nombreCompleto} (${f.numDocFel})`;
     item.onclick = () => {
-      inputBusqueda.value = p.nombreCompleto;
-      listaSugerencias.style.display = "none";
-      document.getElementById("btn_buscar").click();
+      inputBusqueda.value = f.nombreCompleto; // Autocompletar
+      listaSugerencias.style.display = "none"; // Ocultar
+      document.getElementById("btn_buscar").click(); // Simular búsqueda
     };
     listaSugerencias.appendChild(item);
   });
 
-  listaSugerencias.style.display = "block";
+  listaSugerencias.style.display = "block"; // Mostrar lista
 });
 
+// Ocultar sugerencias si se hace clic fuera
 document.addEventListener("click", (e) => {
   if (e.target !== inputBusqueda) {
     listaSugerencias.style.display = "none";
@@ -545,13 +573,12 @@ document.addEventListener("click", (e) => {
 document.getElementById("btn_buscar").addEventListener("click", () => {
   const termino = inputBusqueda.value.trim().toLowerCase();
   if (termino === "") {
-    personalFiltrados = null;
+    feligresesFiltrados = null;
   } else {
-    personalFiltrados = personal.filter(p => 
-      p.nombreCompleto.toLowerCase().includes(termino) ||
-      p.numDocPers.toLowerCase().includes(termino) ||
-      p.email.toLowerCase().includes(termino) ||
-      p.cargo.toLowerCase().includes(termino)
+    feligresesFiltrados = feligreses.filter(f => 
+      f.nombreCompleto.toLowerCase().includes(termino) ||
+      f.numDocFel.toLowerCase().includes(termino) ||
+      f.email.toLowerCase().includes(termino)
     );
   }
   paginaActual = 1;
@@ -560,11 +587,11 @@ document.getElementById("btn_buscar").addEventListener("click", () => {
 });
 
 // Botón de Agregar (Formulario principal)
-document.getElementById("btn_guardar").addEventListener("click", (e) => {
-    e.preventDefault(); // Es tipo 'submit' en tu HTML
+document.getElementById("btn_guardar").addEventListener("click", () => {
     abrirModalFormulario("agregar");
 });
 
+// Evitar que el form principal se envíe
 document.getElementById("formDocumento").addEventListener("submit", (e) => e.preventDefault());
 
 

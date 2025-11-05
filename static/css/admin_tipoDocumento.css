@@ -492,3 +492,60 @@ body {
   transform: none;
   box-shadow: none;
 }
+
+/* ===== ESTILOS PARA NOTIFICACIONES (TOAST) ===== */
+.alerta-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 16px;
+  color: #fff;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.alerta-toast.mostrar {
+  opacity: 1;
+  transform: translateX(0);
+}
+.alerta-toast.success {
+  background-color: #28a745; /* Verde */
+}
+.alerta-toast.error {
+  background-color: #dc3545; /* Rojo */
+}
+
+/* ===== ESTILOS PARA AUTOCOMPLETADO ===== */
+#sugerenciasContainer {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0 0 6px 6px; /* Redondeo solo abajo */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 9998; /* Debajo de las alertas */
+  display: none;
+  max-height: 200px;
+  overflow-y: auto;
+  /* El JS ajusta left, top y width */
+}
+.sugerencia-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.sugerencia-item:hover {
+  background-color: #f0f0f0;
+}
+
+/* ===== MEJORA BOTÓN SECUNDARIO (Cerrar Modal) ===== */
+.btn-modal-secondary {
+  background-color: #6c757d; /* Gris */
+  color: white;
+}
+.btn-modal-secondary:hover {
+  background-color: #5a6268; /* Gris oscuro */
+}

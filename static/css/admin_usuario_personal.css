@@ -190,69 +190,70 @@ body {
 
 /* ===== TABLAS ===== */
 .tabla-documentos {
-  max-height: 60vh;
+  max-height: 65vh;
   overflow-y: auto;
   margin-top: 20px;
 }
+
 .tabla-documentos table {
   width: 100%;
   border-collapse: collapse;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  table-layout: fixed; /* evita que las columnas se deformen */
 }
+
 .tabla-documentos th,
 .tabla-documentos td {
   vertical-align: middle;
   font-size: 15px;
   padding: 10px;
   border: 1px solid #dee2e6;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
+
 .tabla-documentos thead {
   background-color: #343a40;
   color: white;
 }
+
 .tabla-documentos tbody tr:hover {
   background-color: #f0f0f0;
 }
+
 .table-active {
   background-color: #cce5ff !important;
 }
-/* Columnas */
-.col-id,
-.col-acciones {
-  text-align: center;
-}
+/* === COLUMNAS === */
 .col-id {
   width: 5%;
+  text-align: center;
 }
+
 .col-nombre {
   width: 20%;
   text-align: left;
 }
-.col-imagen {
-  width: 10%;
-  text-align: left;
-}
-.col-descripcion {
-  width: 30%;
-  text-align: left;
-}
-.col-precio {
-  width: 5%;
+
+.col-numDocumento {
+  width: 15%;
   text-align: center;
 }
+.col-cargo {
+  width: 20%;
+  text-align: center;
+}
+.col-correo {
+  width: 20%;
+  text-align: left;
+}
+
 .col-acciones {
   width: 20%;
-  white-space: nowrap;
   text-align: center;
-}
-#sugerenciasContainer div {
-  font-size: 14px;
-  color: #333;
-}
-#sugerenciasContainer div:hover {
-  background-color: #e6e6e6;
 }
 
 /* ===== MODALES ===== */
@@ -421,4 +422,90 @@ body {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* === SUGERENCIAS === */
+.sugerencias-lista {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 280px;
+  max-height: 180px;
+  overflow-y: auto;
+  list-style: none;
+  margin-top: 4px;
+  padding: 0;
+  z-index: 999;
+}
+
+.sugerencias-lista li {
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.sugerencias-lista li:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+/* ===== ESTILOS PARA NOTIFICACIONES (TOAST) ===== */
+.alerta-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 16px;
+  color: #fff;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.alerta-toast.mostrar {
+  opacity: 1;
+  transform: translateX(0);
+}
+.alerta-toast.success {
+  background-color: #28a745; /* Verde */
+}
+.alerta-toast.error {
+  background-color: #dc3545; /* Rojo */
+}
+
+/* ===== MEJORAS PARA MODAL GRANDE (Feligrés) ===== */
+.modal-dialog.modal-lg {
+  max-width: 800px; /* Más ancho para el formulario */
+}
+
+.modal-subtitle {
+  font-size: 16px;
+  font-weight: bold;
+  color: #007bff;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 5px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+/* Grilla para el formulario del modal */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+/* Para que un item ocupe toda la fila en la grilla */
+.form-grid .form-grid-item-full {
+  grid-column: 1 / -1;
+}
+
+/* Ajuste para los selects del formulario */
+.form-control {
+    -webkit-appearance: auto;
+    -moz-appearance: auto;
+    appearance: auto;
+    background-color: #fff; /* Asegura fondo blanco en selects */
 }

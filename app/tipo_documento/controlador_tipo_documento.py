@@ -1,148 +1,135 @@
 from app.bd_sistema import obtener_conexion
 
-def listar_tipo_documento():
-    conexion = None
-    documentos = []
+# ================== OBTENER TODOS ==================
+def obtener_documentos():
+    conexion = obtener_conexion()
     try:
-        conexion = obtener_conexion()
-        with conexion.cursor() as cursor:
-            cursor.execute("SELECT idTipoDocumento, nombDocumento, abreviatura, estadoDocumento FROM tipo_documento")
-            filas = cursor.fetchall()
-            for fila in filas:
-                documentos.append({
-                    'id': fila[0],
-                    'nombre': fila[1],
-                    'abreviatura': fila[2],
-                    'estado': fila[3]
-                })
-    finally:
-        if conexion:
-            conexion.close()
-    return documentos
-
-
-def cambiar_estado_tipo_documento(idTipo):
-    conexion = obtener_conexion()
-    with conexion.cursor() as cursor:
-        # Verificar si existe
-        cursor.execute('SELECT estadoDocumento FROM tipo_documento WHERE idTipoDocumento = %s', (idTipo,))
-        resultado = cursor.fetchone()
-
-        if resultado is None:
-            conexion.close()
-            return {'ok': False, 'mensaje': 'Tipo de documento no encontrado'}
-
-        estado_actual = resultado[0]
-        nuevo_estado = not estado_actual  # invertir el estado
-
-        cursor.execute(
-            'UPDATE tipo_documento SET estadoDocumento = %s WHERE idTipoDocumento = %s',
-            (nuevo_estado, idTipo)
-        )
-        conexion.commit()
-        conexion.close()
-        return {'ok': True, 'mensaje': 'Estado cambiado correctamente', 'nuevo_estado': nuevo_estado}
-
-
-def agregar_tipo_documento(nombre, abreviatura):
-    conexion = obtener_conexion()
-    with conexion.cursor() as cursor:
-        cursor.execute(
-            "INSERT INTO tipo_documento (nombDocumento, abreviatura, estadoDocumento) VALUES (%s, %s, TRUE)",
-            (nombre, abreviatura)
-        )
-        conexion.commit()
-        conexion.close()
-
-
-def actualizar_tipo_documento(idTipo, nombre, abreviatura):
-    conexion = obtener_conexion()
-    with conexion.cursor() as cursor:
-        cursor.execute(
-            "UPDATE tipo_documento SET nombDocumento = %s, abreviatura = %s WHERE idTipoDocumento = %s",
-            (nombre, abreviatura, idTipo)
-        )
-        conexion.commit()
-        conexion.close()
-
-
-def obtener_tipo_documento(busqueda):
-    conexion = None
-    documentos = []
-    try:
-        conexion = obtener_conexion()
         with conexion.cursor() as cursor:
             cursor.execute("""
                 SELECT idTipoDocumento, nombDocumento, abreviatura, estadoDocumento
-                FROM tipo_documento
-                WHERE nombDocumento = %s OR abreviatura = %s
-            """, (busqueda, busqueda))
+                FROM TIPO_DOCUMENTO
+                ORDER BY idTipoDocumento DESC;
+            """)
             filas = cursor.fetchall()
+            resultados = []
             for fila in filas:
-                documentos.append({
-                    'id': fila[0],
-                    'nombre': fila[1],
-                    'abreviatura': fila[2],
-                    'estado': fila[3]
+                resultados.append({
+                    "idTipoDocumento": fila[0],
+                    "nombDocumento": fila[1],
+                    "abreviatura": fila[2],
+                    "estadoDocumento": bool(fila[3])
                 })
-        return documentos
+            return resultados
     except Exception as e:
-        print(f"Error al obtener el tipo de documento: {e}")
+        print(f"Error al obtener tipos de documento: {e}")
         return []
     finally:
         if conexion:
             conexion.close()
 
-def verificar_relacion_tipo_documento(idTipo):
+# ================== OBTENER POR ID ==================
+def obtener_documento_por_id(idTipoDocumento):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            cursor.execute('''
-                SELECT COUNT(*) AS total_usos 
-                FROM (
-                    SELECT idTipoDocumento FROM feligres WHERE idTipoDocumento = %s
-                    UNION ALL
-                    SELECT idTipoDocumento FROM personal WHERE idTipoDocumento = %s
-                ) AS usados;
-            ''', (idTipo, idTipo))
-            resultado = cursor.fetchone()
-            return resultado[0] if resultado else 0
+            cursor.execute("""
+                SELECT idTipoDocumento, nombDocumento, abreviatura, estadoDocumento
+                FROM TIPO_DOCUMENTO
+                WHERE idTipoDocumento = %s;
+            """, (idTipoDocumento,))
+            fila = cursor.fetchone()
+            if fila:
+                return {
+                    "idTipoDocumento": fila[0],
+                    "nombDocumento": fila[1],
+                    "abreviatura": fila[2],
+                    "estadoDocumento": bool(fila[3])
+                }
+            return None
     except Exception as e:
-        print(f"Error al verificar relaciones del tipo de documento: {e}")
-        return 0
+        print(f"Error al obtener tipo de documento: {e}")
+        return None
     finally:
-        conexion.close()
+        if conexion:
+            conexion.close()
 
-def eliminar_tipo_documento(idTipo):
+# ================== AGREGAR ==================
+def registrar_documento(data):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            cursor.execute('DELETE FROM tipo_documento where idTipoDocumento=%s', (idTipo,))
+            cursor.execute("""
+                INSERT INTO TIPO_DOCUMENTO (nombDocumento, abreviatura, estadoDocumento)
+                VALUES (%s, %s, %s);
+            """, (
+                data["nombDocumento"],
+                data["abreviatura"],
+                data.get("estadoDocumento", True)  # Default a True (activo)
+            ))
             conexion.commit()
+            return True
     except Exception as e:
-        print(f"Error al eliminar el tipo de documento: {e}")
-        raise
+        print(f"Error al registrar tipo de documento: {e}")
+        return False
     finally:
-        conexion.close()
+        if conexion:
+            conexion.close()
 
-def busqueda_tipo_documento(busqueda):
-    conexion=obtener_conexion()
+# ================== ACTUALIZAR (COMPLETO) ==================
+def actualizar_documento(idTipoDocumento, data):
+    conexion = obtener_conexion()
     try:
-        resultados=[]
-        with conexion.cursor()as cursor:
-            cursor.execute("SELECT idTipoDocumento, nombDocumento,abreviatura,estadoDocumento FROM TIPO_DOCUMENTO where nombDocumento=%s or abreviatura=%s",(busqueda,busqueda))
-            resultados=cursor.fetchall()
-            for fila in resultados:
-                resultados.append({
-                    'id':fila[0],
-                    'nombre':fila[1],
-                    'abreviatura':fila[2],
-                    'estado':fila[3]
-                })
-            return resultados
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                UPDATE TIPO_DOCUMENTO
+                SET nombDocumento=%s, abreviatura=%s, estadoDocumento=%s
+                WHERE idTipoDocumento=%s;
+            """, (
+                data["nombDocumento"],
+                data["abreviatura"],
+                data["estadoDocumento"],
+                idTipoDocumento
+            ))
+            conexion.commit()
+            return True
     except Exception as e:
-        print(f'Error en la busqueda de datos:{e}')
-        return []
+        print(f"Error al actualizar tipo de documento: {e}")
+        return False
+    finally:
+        if conexion:
+            conexion.close()
+
+# ================== ACTUALIZAR ESTADO (PARCIAL) ==================
+def actualizar_estado_documento(idTipoDocumento, estado):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                UPDATE TIPO_DOCUMENTO
+                SET estadoDocumento=%s
+                WHERE idTipoDocumento=%s;
+            """, (estado, idTipoDocumento))
+            conexion.commit()
+            return True
+    except Exception as e:
+        print(f"Error al actualizar estado de tipo de documento: {e}")
+        return False
+    finally:
+        if conexion:
+            conexion.close()
+
+# ================== ELIMINAR ==================
+def eliminar_documento(idTipoDocumento):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("DELETE FROM TIPO_DOCUMENTO WHERE idTipoDocumento = %s;", (idTipoDocumento,))
+            conexion.commit()
+            return True
+    except Exception as e:
+        print(f"Error al eliminar tipo de documento: {e}")
+        # Puedes querer manejar errores de foreign key aquí
+        return False
     finally:
         if conexion:
             conexion.close()

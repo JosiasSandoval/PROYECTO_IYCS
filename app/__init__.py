@@ -10,7 +10,10 @@ from app.rol_permiso.route_rol_permiso import rol_bp,permiso_bp
 from app.acto_liturgico_requisito.route_acto import acto_bp
 from app.pago.route_pago import pago_bp
 from app.pago_metodo.route_pago_metodo import pago_metodo_bp
-
+from app.acto_liturgico.route_actoLiturgico import acto_liturgico_bp
+from app.feligres.route_feligres import feligres_bp
+from app.personal.route_personal import personal_bp
+from app.auditoria_usuario.route_auditoria import auditoria_bp
 def crear_app():
     # Obtiene la ruta absoluta de la carpeta 'app'
     base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -33,8 +36,11 @@ def crear_app():
     app.register_blueprint(rol_bp,url_prefix='/api/rol')
     app.register_blueprint(permiso_bp,url_prefix='/api/permiso')
     app.register_blueprint(acto_bp,url_prefix='/api/acto')
-    app.register_blueprint(pago_bp, url_prefix='/api/pago')
     app.register_blueprint(pago_metodo_bp, url_prefix='/api/metodo-pago') 
+    app.register_blueprint(acto_liturgico_bp, url_prefix='/api/acto_liturgico')
+    app.register_blueprint(feligres_bp, url_prefix='/api/feligres')
+    app.register_blueprint(personal_bp, url_prefix='/api/personal')
+    app.register_blueprint(auditoria_bp, url_prefix='/api/auditoria')
     @app.route("/")
     def iniciar_sesion():
         return render_template('iniciar_sesion.html')
@@ -125,6 +131,20 @@ def crear_app():
     @app.route('/admi/personal')
     def personal_admi():    
         return render_template('administradores/usuario_personal.html')
+    
+    @app.route('/admi/acto_liturgico')
+    def acto_liturgico_admi():    
+        return render_template('administradores/acto_liturgico.html')
+    
+    @app.route('/admi/feligres')
+    def feligres_admin():    
+        return render_template('administradores/usuario_feligres.html')
+    @app.route('/admi/personal')
+    def personal_admin():    
+        return render_template('administradores/usuario_personal.html')
+    @app.route('/admi/auditoria')
+    def auditoria_admin():    
+        return render_template('administradores/auditoria_usuario.html')
 
     return app
 

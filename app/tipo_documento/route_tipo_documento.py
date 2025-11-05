@@ -1,83 +1,87 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
 from app.tipo_documento.controlador_tipo_documento import (
-    listar_tipo_documento,
-    cambiar_estado_tipo_documento,
-    agregar_tipo_documento,
-    actualizar_tipo_documento,
-    obtener_tipo_documento,
-    eliminar_tipo_documento,
-    verificar_relacion_tipo_documento
+    obtener_documentos,
+    obtener_documento_por_id,
+    registrar_documento,
+    actualizar_documento,
+    eliminar_documento,
+    actualizar_estado_documento
 )
 
-tipoDocumento_bp = Blueprint('tipoDocumento', __name__)
+# Recuerda registrar este blueprint en tu __init__.py
+# app.register_blueprint(tipoDocumento_bp, url_prefix='/api/tipoDocumento')
+tipoDocumento_bp = Blueprint('tipo_documento', __name__)
 
-# ✅ Listar tipos de documento
-@tipoDocumento_bp.route('/', methods=['GET'])
-def get_tipos_documento():
-    documentos = listar_tipo_documento()
-    return jsonify(documentos), 200
-
-# ✅ Agregar nuevo tipo de documento
-@tipoDocumento_bp.route('/agregar', methods=['POST'])
-def agregar_tipo():
-    datos = request.get_json()
-    nombre = datos.get('nombre')
-    abreviatura = datos.get('abreviatura')
-
-    if not nombre or not abreviatura:
-        return jsonify({'error': 'Faltan datos'}), 400
-
-    agregar_tipo_documento(nombre, abreviatura)
-    return jsonify({'mensaje': 'Registro exitoso'}), 201
-
-
-# ✅ Actualizar tipo de documento
-@tipoDocumento_bp.route('/actualizar/<int:id>', methods=['PUT'])
-def actualizar_tipo(id):
-    datos = request.get_json()
-    nombre = datos.get('nombre')
-    abreviatura = datos.get('abreviatura')
-
-    if not nombre or not abreviatura:
-        return jsonify({'error': 'Faltan datos'}), 400
-
-    actualizar_tipo_documento(id, nombre, abreviatura)
-    return jsonify({'mensaje': 'Actualización exitosa'}), 200
-
-
-# ✅ Cambiar estado (activo/inactivo)
-@tipoDocumento_bp.route('/cambiar_estado/<int:id>', methods=['PUT'])
-def cambiar_estado(id):
-    resultado = cambiar_estado_tipo_documento(id)
-
-    if not resultado['ok']:
-        return jsonify({'error': resultado['mensaje']}), 404
-
+# ================== LISTAR TODOS ==================
+@tipoDocumento_bp.route('/documentos', methods=['GET'])
+def listar_documentos():
+    datos = obtener_documentos()
     return jsonify({
-        'mensaje': resultado['mensaje'],
-        'nuevo_estado': resultado['nuevo_estado']
+        "success": True,
+        "mensaje": "Documentos obtenidos correctamente",
+        "datos": datos
     }), 200
 
-
-# ✅ Buscar por nombre o abreviatura
-@tipoDocumento_bp.route('/busqueda_documento/<string:busqueda>', methods=['GET'])
-def busqueda_documento(busqueda):
-    documento = obtener_tipo_documento(busqueda)
-
-    if not documento:
-        return jsonify({'error': 'Documento no encontrado'}), 404
-
-    return jsonify(documento), 200
-
-#Eliminar tipo de documento
-@tipoDocumento_bp.route('/eliminar/<int:id>',methods=['DELETE'])
-def eliminar_tipo(id):
-    numero=verificar_relacion_tipo_documento(id)
-    if numero>0:
-        return jsonify({'error': 'No se puede eliminar el tipo de documento porque está relacionado con otras tablas. Por favor, revise las dependencias.'}),409
+# ================== OBTENER UNO ==================
+@tipoDocumento_bp.route('/documentos/<int:idDoc>', methods=['GET'])
+def obtener_documento(idDoc):
+    doc = obtener_documento_por_id(idDoc)
+    if doc:
+        return jsonify({
+            "success": True,
+            "mensaje": "Documento encontrado",
+            "datos": doc
+        }), 200
     else:
-        try:
-            eliminar_tipo_documento(id)
-            return jsonify({'mensaje':'Tipo de documento eliminado correctamente'}),200
-        except Exception as e:
-            return jsonify({'error':f'Error al eliminar el tipo de documento: {str(e)}'}),500
+        return jsonify({"success": False, "mensaje": "Documento no encontrado"}), 404
+
+# ================== REGISTRAR ==================
+@tipoDocumento_bp.route('/documentos', methods=['POST'])
+def crear_documento():
+    data = request.get_json()
+    if not data or "nombDocumento" not in data or "abreviatura" not in data:
+        return jsonify({"success": False, "mensaje": "Datos incompletos"}), 400
+    
+    exito = registrar_documento(data)
+    
+    if exito:
+        return jsonify({"success": True, "mensaje": "Documento registrado correctamente"}), 201
+    else:
+        return jsonify({"success": False, "mensaje": "Error al registrar documento"}), 500
+
+# ================== ACTUALIZAR (COMPLETO) ==================
+@tipoDocumento_bp.route('/documentos/<int:idDoc>', methods=['PUT'])
+def editar_documento(idDoc):
+    data = request.get_json()
+    if not data or "nombDocumento" not in data or "abreviatura" not in data or "estadoDocumento" not in data:
+        return jsonify({"success": False, "mensaje": "Datos incompletos"}), 400
+
+    exito = actualizar_documento(idDoc, data)
+    
+    if exito:
+        return jsonify({"success": True, "mensaje": "Documento actualizado correctamente"}), 200
+    else:
+        return jsonify({"success": False, "mensaje": "Error al actualizar documento"}), 500
+
+# ================== ACTUALIZAR ESTADO (PARCIAL) ==================
+@tipoDocumento_bp.route('/documentos/<int:idDoc>/estado', methods=['PATCH'])
+def cambiar_estado_documento(idDoc):
+    data = request.get_json()
+    if not data or "estadoDocumento" not in data:
+        return jsonify({"success": False, "mensaje": "Estado no proporcionado"}), 400
+
+    exito = actualizar_estado_documento(idDoc, data["estadoDocumento"])
+    
+    if exito:
+        return jsonify({"success": True, "mensaje": "Estado actualizado correctamente"}), 200
+    else:
+        return jsonify({"success": False, "mensaje": "Error al actualizar estado"}), 500
+
+# ================== ELIMINAR ==================
+@tipoDocumento_bp.route('/documentos/<int:idDoc>', methods=['DELETE'])
+def borrar_documento(idDoc):
+    exito = eliminar_documento(idDoc)
+    if exito:
+        return jsonify({"success": True, "mensaje": "Documento eliminado correctamente"}), 200
+    else:
+        return jsonify({"success": False, "mensaje": "Error al eliminar documento"}), 500
