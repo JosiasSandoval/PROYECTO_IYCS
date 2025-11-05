@@ -14,6 +14,9 @@ from app.acto_liturgico.route_actoLiturgico import acto_liturgico_bp
 from app.feligres.route_feligres import feligres_bp
 from app.personal.route_personal import personal_bp
 from app.auditoria_usuario.route_auditoria import auditoria_bp
+from app.reserva.route_reserva import reserva_bp
+
+
 def crear_app():
     # Obtiene la ruta absoluta de la carpeta 'app'
     base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -41,6 +44,8 @@ def crear_app():
     app.register_blueprint(feligres_bp, url_prefix='/api/feligres')
     app.register_blueprint(personal_bp, url_prefix='/api/personal')
     app.register_blueprint(auditoria_bp, url_prefix='/api/auditoria')
+    app.register_blueprint(reserva_bp,url_prefix='/api/reserva')
+    
     @app.route("/")
     def iniciar_sesion():
         return render_template('iniciar_sesion.html')
