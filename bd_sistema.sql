@@ -181,6 +181,8 @@ CREATE TABLE ACTO_LITURGICO (
     idActo INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     nombActo VARCHAR(100) NOT NULL,
     descripcion VARCHAR(255) NULL,
+    numParticipantes int not null,
+    tipoParticipantes VARCHAR(255)not null,
     costoBase DECIMAL(8,2) NOT NULL DEFAULT 0.00,
     estadoActo BOOLEAN NOT NULL,
     imgActo VARCHAR(255) NOT NULL
@@ -189,6 +191,8 @@ CREATE TABLE ACTO_PARROQUIA(
     idActoParroquia INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     idActo INT NOT NULL,
     idParroquia INT NOT NULL,
+    diaSemana char(3) NOT NULL,
+    horaInicioActo time not null,
     CONSTRAINT fk_actoparroquia_acto FOREIGN KEY (idActo) REFERENCES ACTO_LITURGICO(idActo),
     CONSTRAINT fk_parroquia_acto FOREIGN KEY (idParroquia) REFERENCES PARROQUIA(idParroquia)
 );

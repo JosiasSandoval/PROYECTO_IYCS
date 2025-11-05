@@ -95,7 +95,7 @@ body {
     flex-grow: 1;
     
     /* 🚀 CORRECCIÓN CLAVE 3: Quitamos la limitación de altura fija para que flex-grow funcione. */
-    max-height: 675px; 
+    max-height: 725px; 
 
     width: 100%;
     background: #ffffff;
@@ -227,4 +227,223 @@ body {
 
 .fc-timegrid-slot-label {
     font-size: 1em; 
+}
+.fc a {
+    color: inherit !important;  /* respeta tu color original */
+    text-decoration: none !important;
+ }
+/* =======================
+   MODALES HOMOGÉNEOS
+======================= */
+.modal-content {
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+.modal-header {
+    background-color: #1e3a8a; /* Azul elegante */
+    color: #fff;
+    font-weight: 600;
+    padding: 12px 20px;
+}
+
+.modal-header .btn-close {
+    filter: brightness(1.3);
+}
+
+.modal-body {
+    padding: 20px;
+    font-size: 0.95rem;
+    color: #1e293b;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid #e2e8f0;
+    background: #f9fafb;
+}
+
+/* =======================
+   BOTONES
+======================= */
+.btn {
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.btn-success {
+    background-color: #10b981;
+    color: #fff;
+}
+
+.btn-success:hover {
+    background-color: #0f766e;
+}
+
+/* =======================
+   PANEL DE HORAS
+======================= */
+.titulo-horarios {
+    text-align: center;
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+
+.grid-horas {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.hora-btn {
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #2563eb;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.hora-btn:hover {
+    background-color: #1d4ed8;
+}
+
+.hora-btn.bloqueada {
+    background: #ccc;
+    color: #666;
+    cursor: not-allowed;
+}
+
+/* =======================
+   PANEL DE RESERVAS
+======================= */
+.reserva-item {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 0;
+}
+
+.reserva-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reserva-titulo {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1e293b;
+}
+
+.btn-ver-detalles {
+    background: #1e3a8a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-ver-detalles:hover {
+    background-color: #162b66;
+}
+
+.detalles {
+    display: none;
+    margin-top: 8px;
+    padding-left: 5px;
+    color: #334155;
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+/* =======================
+   ESTILO GENERAL CALENDARIO
+======================= */
+#calendar {
+    width: 100%;
+    height: 100%;
+}
+
+.fc .fc-toolbar {
+    background-color: #f8fafc;
+    border-radius: 10px;
+    padding: 8px 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.fc .fc-button-primary {
+    background-color: #2563eb;
+    color: #fff;
+    border-radius: 8px;
+    border: none;
+}
+
+.fc .fc-button-primary:hover {
+    background-color: #1d4ed8;
+}
+
+.fc-event {
+    border-radius: 6px;
+    font-size: 0.8rem;
+    padding: 2px 6px;
+    color: #fff;
+}
+
+/* =======================
+   CONFIRMACION
+======================= */
+.confirmacion-texto {
+    font-size: 0.95rem;
+    color: #1e293b;
+    text-align: center;
+}
+
+/* =======================
+   ACCIONES CALENDARIO
+======================= */
+.acciones-calendario {
+    width: 100%;
+    display: flex;
+    justify-content: space-between; /* separa filtro a la izquierda y botón a la derecha */
+    align-items: center;
+    gap: 50px;
+}
+
+.acciones-calendario label {
+    color: #1e3a8a;
+    margin-bottom: 0;
+}
+
+.acciones-calendario select {
+    min-width: 800px;
+}
+
+.acciones-calendario .btn-regresar {
+    background-color: #6c757d; /* gris elegante */
+    color: #f8fafc;
+}
+
+.acciones-calendario .btn-regresar:hover {
+    background-color: #5a6268;
 }
