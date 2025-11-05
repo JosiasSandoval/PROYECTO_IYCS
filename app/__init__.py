@@ -6,8 +6,12 @@ from app.auth.route_auth import auth_bp
 from app.usuario.route_usuario import usuario_bp
 from app.parroquia.route_parroquia import parroquia_bp
 from app.cargo.route_cargo import cargo_bp
-from app.pago_metodo.route_pago_metodo import pago_bp
 from app.rol_permiso.route_rol_permiso import rol_bp,permiso_bp
+from app.acto_liturgico_requisito.route_acto import acto_bp
+from app.pago.route_pago import pago_bp
+from app.pago_metodo.route_pago_metodo import pago_metodo_bp
+from app.reserva.route_reserva import reserva_bp
+
 
 def crear_app():
     # Obtiene la ruta absoluta de la carpeta 'app'
@@ -30,6 +34,9 @@ def crear_app():
     app.register_blueprint(pago_bp,url_prefix='/api/pago')
     app.register_blueprint(rol_bp,url_prefix='/api/rol')
     app.register_blueprint(permiso_bp,url_prefix='/api/permiso')
+    app.register_blueprint(acto_bp,url_prefix='/api/acto')
+    app.register_blueprint(pago_metodo_bp, url_prefix='/api/metodo-pago') 
+    app.register_blueprint(reserva_bp,url_prefix='/api/reserva')
     
     @app.route("/")
     def iniciar_sesion():
@@ -119,7 +126,9 @@ def crear_app():
     @app.route('/cliente/reserva_ubi')
     def reserva_ubicacion():
         return render_template('cliente/reserva_ubicacion.html')
-    
+    @app.route('/cliente/pago')
+    def pago():
+        return render_template('cliente/pago.html')
     @app.route('/admi/rol')
     def rol_admi():
         return render_template('administradores/rol_permiso.html')

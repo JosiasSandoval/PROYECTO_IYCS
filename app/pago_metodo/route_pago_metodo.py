@@ -8,27 +8,27 @@ from app.pago_metodo.controlador_pago_metodo import (
     verificar_relacion_metodo_pago
 )
 
-pago_bp= Blueprint('pago', __name__)
-
+# ✅ Nombre único para el Blueprint
+pago_metodo_bp = Blueprint('pago_metodo', __name__)
 
 
 # ======================================================
-# 🔹 LISTAR METODO PAGO
+# 🔹 LISTAR MÉTODOS DE PAGO
 # ======================================================
-@pago_bp.route('/metodo', methods=['GET'])
+@pago_metodo_bp.route('/metodo', methods=['GET'])
 def listar():
     try:
         datos = listar_metodo_pago()
         return jsonify({'ok': True, 'datos': datos})
     except Exception as e:
-        print(f'Error al listar parroquias: {e}')
+        print(f'Error al listar métodos de pago: {e}')
         return jsonify({'ok': False, 'datos': [], 'mensaje': 'Error interno'}), 500
 
 
 # ======================================================
-# 🔹 AGREGAR PARROQUIA
+# 🔹 AGREGAR MÉTODO DE PAGO
 # ======================================================
-@pago_bp.route('/agregar_metodo', methods=['POST'])
+@pago_metodo_bp.route('/agregar_metodo', methods=['POST'])
 def agregar():
     try:
         datos = request.get_json()
@@ -36,18 +36,18 @@ def agregar():
             datos.get('nombMetodo')
         )
         if resultado:
-            return jsonify({'ok': True, 'mensaje': 'Parroquia agregada correctamente'})
+            return jsonify({'ok': True, 'mensaje': 'Método de pago agregado correctamente'})
         else:
-            return jsonify({'ok': False, 'mensaje': 'Error al agregar la parroquia'})
+            return jsonify({'ok': False, 'mensaje': 'Error al agregar el método de pago'})
     except Exception as e:
-        print(f'Error al agregar parroquia: {e}')
+        print(f'Error al agregar método de pago: {e}')
         return jsonify({'ok': False, 'mensaje': 'Error interno'}), 500
 
 
 # ======================================================
-# CAMBIAR ESTADO DE METODO PAGO
+# 🔹 CAMBIAR ESTADO DEL MÉTODO DE PAGO
 # ======================================================
-@pago_bp.route('/cambiar_estado_metodo/<int:idMetodo>', methods=['PUT'])
+@pago_metodo_bp.route('/cambiar_estado_metodo/<int:idMetodo>', methods=['PUT'])
 def cambiar_estado(idMetodo):
     resultado = cambiar_estado_metodo_pago(idMetodo)
     if resultado['ok']:
@@ -61,9 +61,9 @@ def cambiar_estado(idMetodo):
 
 
 # ======================================================
-# 🔹 ACTUALIZAR PARROQUIA
+# 🔹 ACTUALIZAR MÉTODO DE PAGO
 # ======================================================
-@pago_bp.route('/actualizar_metodo/<int:idMetodo>', methods=['PUT'])
+@pago_metodo_bp.route('/actualizar_metodo/<int:idMetodo>', methods=['PUT'])
 def actualizar(idMetodo):
     try:
         datos = request.get_json()
@@ -72,27 +72,27 @@ def actualizar(idMetodo):
             datos.get('nombMetodo')
         )
         if resultado:
-            return jsonify({'ok': True, 'mensaje': 'Parroquia actualizada correctamente'})
+            return jsonify({'ok': True, 'mensaje': 'Método de pago actualizado correctamente'})
         else:
-            return jsonify({'ok': False, 'mensaje': 'Error al actualizar la parroquia'})
+            return jsonify({'ok': False, 'mensaje': 'Error al actualizar el método de pago'})
     except Exception as e:
-        print(f'Error al actualizar parroquia: {e}')
+        print(f'Error al actualizar método de pago: {e}')
         return jsonify({'ok': False, 'mensaje': 'Error interno'}), 500
 
 
 # ======================================================
-# 🔹 ELIMINAR PARROQUIA
+# 🔹 ELIMINAR MÉTODO DE PAGO
 # ======================================================
-@pago_bp.route('/eliminar/<int:idMetodo>', methods=['DELETE'])
+@pago_metodo_bp.route('/eliminar/<int:idMetodo>', methods=['DELETE'])
 def eliminar(idMetodo):
     try:
         if verificar_relacion_metodo_pago(idMetodo):
-            return jsonify({'ok': False, 'mensaje': 'No se puede eliminar la parroquia porque tiene registros asociados'})
+            return jsonify({'ok': False, 'mensaje': 'No se puede eliminar el método de pago porque tiene registros asociados'})
         else:
             if eliminar_metodo_pago(idMetodo):
-                return jsonify({'ok': True, 'mensaje': 'Parroquia eliminada correctamente'})
+                return jsonify({'ok': True, 'mensaje': 'Método de pago eliminado correctamente'})
             else:
-                return jsonify({'ok': False, 'mensaje': 'Error al eliminar la parroquia'})
+                return jsonify({'ok': False, 'mensaje': 'Error al eliminar el método de pago'})
     except Exception as e:
-        print(f'Error al eliminar parroquia: {e}')
+        print(f'Error al eliminar método de pago: {e}')
         return jsonify({'ok': False, 'mensaje': 'Error interno'}), 500
