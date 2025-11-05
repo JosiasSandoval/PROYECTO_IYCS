@@ -10,7 +10,7 @@ body {
 
 .grid {
     display: grid;
-    grid-template-columns: 250px 1fr;
+    grid-template-columns: 220px 1fr;
     grid-template-areas: "enlaces main-content";
     height: 93vh;
     overflow: hidden;
@@ -70,9 +70,9 @@ aside {
 
 .reserva {
     width: 100%;
-    max-width: 1500px;
+    max-width: 1700px;
     background-color: #fff;
-    padding: 30px 40px;
+    padding: 20px 25px;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
@@ -179,17 +179,10 @@ aside {
     }
 }
 
-.form-step h3 {
-    text-align: center;
-    font-size: 18px;
-    color: #333;
-    margin-bottom: 20px;
-}
-
 .navigation-buttons {
     display: flex;
     justify-content: space-between;
-    margin-top: 30px;
+    margin-top: 15px;
 }
 
 .btn {
@@ -321,7 +314,8 @@ aside {
 /* Contenedor principal del calendario */
 #fullcalendar-litbook {
     color: #1e293b;
-    height: 100%;;
+    height: 550px; /* o el tamaño que desees */
+    max-height: 600px;
 }
 
 /* Encabezado del calendario (toolbar) */
@@ -433,3 +427,33 @@ aside {
 .fc-timegrid-slot-label {
     font-size: 1em; 
 }
+
+.fc a {
+    color: inherit !important;  /* respeta tu color original */
+    text-decoration: none !important;
+}
+
+/* === AJUSTE TOTAL DEL CALENDARIO === */
+#fullcalendar-litbook {
+    height: 250px !important;   /* 🔥 reduce la altura general */
+    max-height: 250px !important;
+    overflow: hidden !important;
+}
+
+/* === AJUSTE DE LAS FILAS DEL MES === */
+.fc .fc-daygrid-day-frame {
+    min-height: 20x !important; /* 🔥 reduce altura de cada celda del mes */
+    padding: 2px !important;
+}
+
+/* === AJUSTE DEL CONTENEDOR PADRE === */
+.fc .fc-view-harness {
+    height: 350px !important;
+    max-height: 350px !important;
+}
+
+/* === EVITA DESBORDES Y SCROLL EXTRA === */
+.fc-scrollgrid, .fc-view-harness-active {
+    overflow: hidden !important;
+}
+

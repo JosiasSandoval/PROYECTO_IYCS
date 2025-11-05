@@ -8,14 +8,14 @@ from app.pago_metodo.controlador_pago_metodo import (
     verificar_relacion_metodo_pago
 )
 
-pago_metodo_bp= Blueprint('pago', __name__)
+pago_metodo_bp= Blueprint('pago_metodo', __name__)
 
 
 
 # ======================================================
 # 🔹 LISTAR METODO PAGO
 # ======================================================
-@pago_bp.route('/metodo', methods=['GET'])
+@pago_metodo_bp.route('/metodo', methods=['GET'])
 def listar():
     try:
         datos = listar_metodo_pago()
@@ -28,7 +28,7 @@ def listar():
 # ======================================================
 # 🔹 AGREGAR PARROQUIA
 # ======================================================
-@pago_bp.route('/agregar_metodo', methods=['POST'])
+@pago_metodo_bp.route('/agregar_metodo', methods=['POST'])
 def agregar():
     try:
         datos = request.get_json()
@@ -47,7 +47,7 @@ def agregar():
 # ======================================================
 # CAMBIAR ESTADO DE METODO PAGO
 # ======================================================
-@pago_bp.route('/cambiar_estado_metodo/<int:idMetodo>', methods=['PUT'])
+@pago_metodo_bp.route('/cambiar_estado_metodo/<int:idMetodo>', methods=['PUT'])
 def cambiar_estado(idMetodo):
     resultado = cambiar_estado_metodo_pago(idMetodo)
     if resultado['ok']:
@@ -63,7 +63,7 @@ def cambiar_estado(idMetodo):
 # ======================================================
 # 🔹 ACTUALIZAR PARROQUIA
 # ======================================================
-@pago_bp.route('/actualizar_metodo/<int:idMetodo>', methods=['PUT'])
+@pago_metodo_bp.route('/actualizar_metodo/<int:idMetodo>', methods=['PUT'])
 def actualizar(idMetodo):
     try:
         datos = request.get_json()
@@ -83,7 +83,7 @@ def actualizar(idMetodo):
 # ======================================================
 # 🔹 ELIMINAR PARROQUIA
 # ======================================================
-@pago_bp.route('/eliminar/<int:idMetodo>', methods=['DELETE'])
+@pago_metodo_bp.route('/eliminar/<int:idMetodo>', methods=['DELETE'])
 def eliminar(idMetodo):
     try:
         if verificar_relacion_metodo_pago(idMetodo):
