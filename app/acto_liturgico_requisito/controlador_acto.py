@@ -5,7 +5,7 @@ def obtener_acto_parroquia(idParroquia):
     try:
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT al.idActo, al.nombActo, ap.diaSemana,ap.horaInicioActo,al.costoBase
+                SELECT al.idActo, al.nombActo,al.costoBase
                 FROM acto_liturgico al
                 INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
                 INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
@@ -27,3 +27,31 @@ def obtener_acto_parroquia(idParroquia):
     finally:
         if conexion:
             conexion.close()
+
+def disponibilidad_acto_parroquia(idParroquia,idActo):
+    conexion = obtener_conexion()
+    try:    
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT ap.diaSemana, ap.horaInicioActo
+                FROM acto_liturgico al
+                INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
+                INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
+                WHERE pa.idParroquia = %s and al.idActo = %s;
+            """, (idParroquia,idActo))  
+            filas = cursor.fetchall()
+            resultados = []
+            for fila in filas:
+                resultados.append({
+                    'diaSemana': fila[0],
+                    'horaInicioActo': fila[1]
+                })
+            return resultados
+    except Exception as e:
+        print(f'Error al obtener disponibilidad de acto liturgicos: {e}')
+        return []
+    finally:
+        if conexion:
+            conexion.close()
+
+
