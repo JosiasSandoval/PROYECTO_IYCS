@@ -1,10 +1,10 @@
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
 
-const modalDetalle = crearModal();            
+const modalDetalle = crearModal(); 
 const modalFormulario = crearModalFormulario(); 
 
-let parroquias = [];           
+let parroquias = []; 
 let parroquiasFiltradas = null;
 let paginaActual = 1;
 const elementosPorPagina = 10;
@@ -31,8 +31,6 @@ function normalizar(par) {
 
   return { id, nombre, direccion, historia, ruc, contacto, color, latitud, longitud, estado };
 }
-
-
 
 const manejarSolicitud = async (url, opciones = {}, mensajeError = "Error") => {
   try {
@@ -298,16 +296,16 @@ function crearModalFormulario() {
                 <input type="text" id="modalNombre" class="form-control" required>
               </div>
 
-                <div class="mb-3">
-                  <label for="modalHistoria" class="form-label">Historia</label>
-                  <textarea 
-                    id="modalHistoria" 
-                    class="form-control" 
-                    rows="2" 
-                    style="resize: none;"
-                    placeholder="Escribe aquí la historia de la parroquia..."
-                  ></textarea>
-                </div>
+              <div class="mb-3">
+                <label for="modalHistoria" class="form-label">Historia</label>
+                <textarea 
+                  id="modalHistoria" 
+                  class="form-control" 
+                  rows="2" 
+                  style="resize: none;"
+                  placeholder="Escribe aquí la historia de la parroquia..."
+                ></textarea>
+              </div>
 
               <div class="mb-3">
                 <label for="modalRuc" class="form-label">RUC</label>
@@ -351,7 +349,6 @@ function crearModalFormulario() {
   document.body.appendChild(modalHTML);
   return document.getElementById("modalFormulario");
 }
-
 
 function abrirModal(modalId) {
   const modal = document.getElementById(modalId);
@@ -501,8 +498,6 @@ function abrirModalFormulario(modo, par = null) {
   abrirModal("modalFormulario");
 }
 
-
-
 function editarParroquia(id) {
   const par = parroquias.find(d => d.id === id);
   if (par) abrirModalFormulario("editar", par);
@@ -527,5 +522,74 @@ document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
 });
 
 document.getElementById("btn_guardar").addEventListener("click", () => abrirModalFormulario("agregar"));
+
+// ==================================================
+// === INICIO: BLOQUE DE SUGERENCIAS (AÑADIDO) ===
+// ==================================================
+
+// 1. Crear el contenedor de sugerencias dinámicamente
+const contenedorSugerencias = document.createElement("div");
+contenedorSugerencias.id = "sugerenciasContainer";
+document.body.appendChild(contenedorSugerencias); 
+
+// 2. Función para posicionar el contenedor
+function posicionarSugerencias() {
+    // Re-usamos la variable 'inputParroquia' definida arriba
+    const rect = inputParroquia.getBoundingClientRect(); 
+    contenedorSugerencias.style.left = `${rect.left + window.scrollX}px`;
+    contenedorSugerencias.style.top = `${rect.bottom + window.scrollY}px`;
+    contenedorSugerencias.style.width = `${rect.width}px`;
+}
+
+// 3. Event listener 'input' (Lógica de filtrado)
+// Re-usamos 'inputParroquia'
+inputParroquia.addEventListener("input", () => {
+    const termino = inputParroquia.value.trim().toLowerCase();
+    contenedorSugerencias.innerHTML = ""; // Limpiar
+    
+    if (termino.length === 0) {
+        contenedorSugerencias.style.display = "none";
+        return;
+    }
+
+    // Adaptado para 'parroquias', 'nombre' y 'ruc'
+    const sugerencias = parroquias.filter(p => 
+        p.nombre.toLowerCase().startsWith(termino) ||
+        String(p.ruc).toLowerCase().startsWith(termino) // Convertir a String
+    ).slice(0, 5); 
+
+    if (sugerencias.length === 0) {
+        contenedorSugerencias.style.display = "none";
+        return;
+    }
+
+    sugerencias.forEach(p => {
+        const item = document.createElement("div");
+        item.className = "sugerencia-item"; // Usar la clase del CSS
+        item.textContent = `${p.nombre} (RUC: ${p.ruc})`; // Mostrar nombre y RUC
+        
+        item.onclick = () => {
+            inputParroquia.value = p.nombre;
+            contenedorSugerencias.style.display = "none";
+            btnBuscar.click(); // Simular clic
+        };
+        contenedorSugerencias.appendChild(item);
+    });
+
+    contenedorSugerencias.style.display = "block";
+    posicionarSugerencias(); // Posicionarlo
+});
+
+// 4. Listeners para ocultar/reposicionar
+document.addEventListener("click", (e) => {
+    if (contenedorSugerencias && !contenedorSugerencias.contains(e.target) && e.target !== inputParroquia) {
+        contenedorSugerencias.style.display = "none";
+    }
+});
+window.addEventListener("resize", posicionarSugerencias);
+window.addEventListener("scroll", posicionarSugerencias, true);
+
+// === FIN: BLOQUE DE SUGERENCIAS ===
+// ==================================
 
 cargarParroquias();

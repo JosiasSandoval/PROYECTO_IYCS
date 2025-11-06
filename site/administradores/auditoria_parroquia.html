@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/admin_auditoria.css">
+    <title>LITBOOK | Auditoría de Parroquias</title>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="grid">
+        <div id="barra_lateral_administrador-placeholder"></div>
+        <div class="contenido-principal">
+            <div class="contenido">   
+            <h3 class="titulo-seccion">Auditoría de Parroquias</h3>
+              
+              <form id="formBusqueda">
+                <label for="inputBusqueda">Buscar en auditoría:</label>
+
+                <input type="text" id="inputBusqueda" placeholder="Buscar por tabla, acción, ID..."/>
+                <button type="button" id="btn_buscar" class="btn-icon" title="Buscar">
+                    <img src="/static/img/lupa.png" alt="Buscar" />
+                </button>
+            </form>
+
+            <div class="tabla-documentos">
+              <table id="tablaAuditoria">
+                <thead>
+                  <tr>
+                    <th class="col-id">#</th>
+                    <th class="col-fecha">Fecha y Hora</th>
+                    <th class="col-tabla">Tabla</th>
+                    <th class="col-accion">Acción</th>
+                    <th class="col-id-afectado">ID Afectado</th>
+                    <th class="col-campo">Campo Modificado</th>
+                    <th class="col-acciones">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            
+            <div id="paginacionContainer"></div>
+        </div>
+        </div>
+    <script src="/static/js/barra_lateral_administrador.js"></script>
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/admin_auditoria_parroquia.js"></script>
+</body>
+</html>

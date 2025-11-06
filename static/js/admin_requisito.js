@@ -1,38 +1,59 @@
 // ================== VARIABLES GLOBALES ==================
 let requisitos = [];
 let requisitosFiltrados = null;
-let requisitosEditandoId = null;
+let paginaActual = 1;
+const elementosPorPagina = 5;
 
+// Referencias del DOM
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
-
-// Referencias a los modales sin Bootstrap
-const modalDetalle = crearModal();
-const modalFormulario = crearModalFormulario();
-
-let paginaActual = 1;
-const elementosPorPagina = 10;
-
-// Variable de ordenamiento
-let ordenActual = { campo: null, ascendente: true };
+const inputBusqueda = document.getElementById("inputDocumento");
 
 // ================== FUNCIONES ==================
 
-// Renderizar tabla
+/**
+ * Normaliza los datos venidos de la API
+ */
+function normalizarRequisito(item) {
+  return {
+    idRequisito: item.idRequisito,
+    nombRequisito: item.nombRequisito,
+    // Formatear fecha para la tabla (si existe)
+    f_requisito_tabla: item.f_requisito ? new Date(item.f_requisito).toLocaleDateString('es-PE') : "N/A",
+    // Guardar fecha para el modal (formato YYYY-MM-DD)
+    f_requisito_modal: item.f_requisito ? item.f_requisito.split('T')[0] : "",
+    descripcion: item.descripcion || "---",
+    estadoRequisito: item.estadoRequisito === true || item.estadoRequisito === 1,
+  };
+}
+
+/**
+ * Manejador genérico de fetch
+ */
+const manejarSolicitud = async (url, opciones = {}, mensajeError = "Error") => {
+    try {
+        const res = await fetch(url, opciones);
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.mensaje || mensajeError);
+        }
+        return await res.json();
+    } catch (err) {
+        console.error(mensajeError, err);
+        mostrarAlerta(err.message || "Error de conexión", "error");
+        throw err;
+    }
+};
+
+// ================== RENDERIZAR TABLA ==================
 function renderTabla() {
   tabla.innerHTML = "";
-
   const lista = requisitosFiltrados ?? requisitos;
 
-  if (ordenActual.campo) {
-    lista.sort((a, b) => {
-      const campo = ordenActual.campo;
-      const valorA = a[campo] ? a[campo].toString().toLowerCase() : "";
-      const valorB = b[campo] ? b[campo].toString().toLowerCase() : "";
-      if (valorA < valorB) return ordenActual.ascendente ? -1 : 1;
-      if (valorA > valorB) return ordenActual.ascendente ? 1 : -1;
-      return 0;
-    });
+  if (lista.length === 0) {
+    tabla.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay requisitos para mostrar.</td></tr>';
+    renderPaginacion(0);
+    return;
   }
 
   const inicio = (paginaActual - 1) * elementosPorPagina;
@@ -40,28 +61,29 @@ function renderTabla() {
   const requisitosPagina = lista.slice(inicio, fin);
 
   requisitosPagina.forEach((req, index) => {
-    const esActivo = req.estado === "activo";
+    const esActivo = req.estadoRequisito;
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
+    const tituloBoton = esActivo ? 'Dar de baja' : 'Dar de alta';
 
     const fila = document.createElement("tr");
     fila.innerHTML = `
-      <td class="col-id">${inicio + index + 1}</td>
-      <td class="col-nombre">${req.nombre}</td>
-      <td class="col-fechaRegistro">${req.f_registro}</td>
+      <td class="col-id">${req.idRequisito}</td>
+      <td class="col-nombre">${req.nombRequisito}</td>
+      <td class="col-fechaRegistro">${req.f_requisito_tabla}</td>
       <td class="col-descripcion">${req.descripcion}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="verRequisito(${req.id})" title="Ver">
+          <button class="btn btn-info btn-sm" onclick="abrirModalFormulario('ver', ${req.idRequisito})" title="Ver">
             <img src="/static/img/ojo.png" alt="ver">
           </button>
-          <button class="btn btn-warning btn-sm" onclick="editarRequisito(${req.id})" title="Editar">
+          <button class="btn btn-warning btn-sm" onclick="abrirModalFormulario('editar', ${req.idRequisito})" title="Editar">
             <img src="/static/img/lapiz.png" alt="editar">
           </button>
-          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${req.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
+          <button class="btn ${botonColor} btn-sm" onclick="cambiarEstadoRequisito(${req.idRequisito}, ${esActivo})" title="${tituloBoton}">
             <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
           </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarRequisito(${req.id})" title="Eliminar">
+          <button class="btn btn-danger btn-sm" onclick="eliminarRequisito(${req.idRequisito})" title="Eliminar">
             <img src="/static/img/x.png" alt="eliminar">
           </button>
         </div>
@@ -70,113 +92,41 @@ function renderTabla() {
     tabla.appendChild(fila);
   });
 
-  renderPaginacion();
+  renderPaginacion(lista.length);
 }
 
 // ================== PAGINACIÓN ==================
-function renderPaginacion() {
+function renderPaginacion(totalElementos) {
   paginacion.innerHTML = "";
-  const totalPaginas = Math.ceil(requisitos.length / elementosPorPagina);
+  const totalPaginas = Math.ceil(totalElementos / elementosPorPagina);
   if (totalPaginas <= 1) return;
 
   const ul = document.createElement("ul");
   ul.className = "pagination";
-
   const crearItem = (numero, activo = false, disabled = false, texto = null) => {
     const li = document.createElement("li");
     li.className = `page-item ${activo ? "active" : ""} ${disabled ? "disabled" : ""}`;
-    li.innerHTML = `<button class="page-link" onclick="cambiarPagina(${numero})">${texto || numero}</button>`;
+    const btn = document.createElement("button");
+    btn.className = "page-link";
+    if (!disabled) btn.onclick = () => cambiarPagina(numero);
+    btn.innerHTML = texto || numero;
+    li.appendChild(btn);
     return li;
   };
-
   ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, "<"));
-
-  const start = Math.max(1, paginaActual - 2);
-  const end = Math.min(totalPaginas, paginaActual + 2);
-
-  if (start > 1) {
-    ul.appendChild(crearItem(1, paginaActual === 1));
-    if (start > 2) ul.appendChild(crearItem(null, false, true, "..."));
-  }
-
-  for (let i = start; i <= end; i++) {
-    ul.appendChild(crearItem(i, paginaActual === i));
-  }
-
-  if (end < totalPaginas) {
-    if (end < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, "..."));
-    ul.appendChild(crearItem(totalPaginas, paginaActual === totalPaginas));
-  }
-
+  for (let i = 1; i <= totalPaginas; i++) ul.appendChild(crearItem(i, paginaActual === i));
   ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, ">"));
-
   paginacion.appendChild(ul);
 }
 
 function cambiarPagina(pagina) {
-  if (pagina < 1 || pagina > Math.ceil(requisitos.length / elementosPorPagina)) return;
+  const totalPaginas = Math.ceil((requisitosFiltrados ?? requisitos).length / elementosPorPagina);
+  if (pagina < 1 || pagina > totalPaginas) return;
   paginaActual = pagina;
   renderTabla();
 }
 
-// ================== CRUD ==================
-function agregarRequisito(nombre, f_registro, descripcion) {
-  requisitos.push({
-    id: Date.now(),
-    nombre,
-    f_registro,
-    descripcion,
-    estado: "activo",
-  });
-  renderTabla();
-}
-
-function editarRequisito(id) {
-  const req = requisitos.find((r) => r.id === id);
-  if (!req) return;
-  abrirModalFormulario("editar", req);
-}
-
-function eliminarRequisito(id) {
-  const req = requisitos.find((r) => r.id === id);
-  if (!req) return;
-  if (!confirm(`¿Seguro que deseas eliminar el requisito "${req.nombre}"?`)) return;
-  requisitos = requisitos.filter((r) => r.id !== id);
-  renderTabla();
-}
-
-function darDeBaja(id) {
-  const req = requisitos.find((r) => r.id === id);
-  if (!req) return;
-  req.estado = req.estado === "activo" ? "inactivo" : "activo";
-  renderTabla();
-}
-
-function verRequisito(id) {
-  const req = requisitos.find((r) => r.id === id);
-  if (!req) return;
-  abrirModalFormulario("ver", req);
-}
-
-// ================== MODALES ==================
-function crearModal() {
-  const modalHTML = document.createElement("div");
-  modalHTML.innerHTML = `
-    <div class="modal" id="modalDetalle">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Detalle del Requisito</h5>
-            <button type="button" class="btn-cerrar" onclick="cerrarModal('modalDetalle')">&times;</button>
-          </div>
-          <div class="modal-body" id="modalDetalleContenido"></div>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modalHTML);
-  return document.getElementById("modalDetalle");
-}
+// ================== MODALES (Creación dinámica) ==================
 
 function crearModalFormulario() {
   const modalHTML = document.createElement("div");
@@ -189,27 +139,21 @@ function crearModalFormulario() {
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalFormulario')">&times;</button>
           </div>
           <div class="modal-body">
-            <form id="formModalRequisito">
-
+            <form id="formModal">
               <div class="mb-3">
-                <label for="modalNombre" class="form-label">Nombre del requisito</label>
+                <label for="modalNombre" class="form-label">Nombre del Requisito</label>
                 <input type="text" id="modalNombre" class="form-control" required>
               </div>
-
               <div class="mb-3">
-                <label for="modalFechaRegistro" class="form-label">Fecha registro</label>
-                <input type="date" id="modalFechaRegistro" class="form-control" required>
+                <label for="modalFecha" class="form-label">Fecha de Registro (Opcional)</label>
+                <input type="date" id="modalFecha" class="form-control">
               </div>
-
               <div class="mb-3">
-                <label for="modalDescripcion" class="form-label">Descripción</label>
-                <input type="text" id="modalDescripcion" class="form-control" required>
+                <label for="modalDescripcion" class="form-label">Descripción (Opcional)</label>
+                <textarea id="modalDescripcion" class="form-control" rows="3"></textarea>
               </div>
-
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar">Aceptar</button>
+              <div class="modal-footer" id="modalFormularioFooter">
               </div>
-
             </form>
           </div>
         </div>
@@ -217,102 +161,295 @@ function crearModalFormulario() {
     </div>
   `;
   document.body.appendChild(modalHTML);
-  return document.getElementById("modalFormulario");
 }
 
 function abrirModal(id) {
-  const modal = document.getElementById(id);
-  if (modal) modal.classList.add("activo");
+  document.getElementById(id)?.classList.add("activo");
 }
 
 function cerrarModal(id) {
-  const modal = document.getElementById(id);
-  if (modal) modal.classList.remove("activo");
+  document.getElementById(id)?.classList.remove("activo");
 }
 
-function abrirModalFormulario(modo, req = null) {
-  const titulo = document.getElementById("modalFormularioTitulo");
-  const inputNombre = document.getElementById("modalNombre");
-  const inputFechaRegistro = document.getElementById("modalFechaRegistro");
-  const inputDescripcion = document.getElementById("modalDescripcion");
-  const botonGuardar = document.getElementById("btnGuardar");
-  const form = document.getElementById("formModalRequisito");
-  const modalFooter = document.querySelector("#modalFormulario .modal-footer");
+/**
+ * Controla el modal para 'agregar', 'editar' y 'ver'
+ */
+async function abrirModalFormulario(modo, idRequisito = null) {
 
-  modalFooter.innerHTML = "";
-  inputNombre.disabled = false;
-  inputFechaRegistro.disabled = false;
-  inputDescripcion.disabled = false;
+  const form = document.getElementById("formModal");
+  const footer = document.getElementById("modalFormularioFooter");
+  footer.innerHTML = "";
+
+  const campos = {
+      titulo: document.getElementById("modalFormularioTitulo"),
+      nombre: document.getElementById("modalNombre"),
+      fecha: document.getElementById("modalFecha"),
+      descripcion: document.getElementById("modalDescripcion"),
+  };
+
+  Object.values(campos).forEach(campo => {
+      if (campo && campo.disabled !== undefined) campo.disabled = false;
+  });
+
+  const btnCerrar = document.createElement("button");
+  btnCerrar.type = "button";
+  btnCerrar.className = "btn-modal btn-modal-secondary";
+  btnCerrar.textContent = "Cerrar";
+  btnCerrar.onclick = () => cerrarModal("modalFormulario");
+
+  const btnGuardar = document.createElement("button");
+  btnGuardar.type = "submit";
+  btnGuardar.className = "btn-modal btn-modal-primary";
+  btnGuardar.textContent = "Guardar";
+  
+  form.reset();
+  let requisito = null;
 
   if (modo === "agregar") {
-    titulo.textContent = "Agregar requisito";
-    inputNombre.value = "";
-    inputFechaRegistro.value = "";
-    inputDescripcion.value = "";
+    campos.titulo.textContent = "Agregar Requisito";
+    footer.appendChild(btnCerrar);
+    footer.appendChild(btnGuardar);
+    
+  } else if (modo === "editar" || modo === "ver") {
+    
+    try {
+        const res = await manejarSolicitud(`/api/requisito/requisitos/${idRequisito}`, {}, "Error al cargar requisito");
+        requisito = normalizarRequisito(res.datos); // Normalizamos el dato único
+    } catch (err) { return; }
+        
+    if (!requisito) return;
 
-    modalFooter.appendChild(botonGuardar);
-    form.onsubmit = (e) => {
-      e.preventDefault();
-      agregarRequisito(inputNombre.value.trim(), inputFechaRegistro.value.trim(), inputDescripcion.value.trim());
-      cerrarModal("modalFormulario");
-    };
-  } else if (modo === "editar" && req) {
-    titulo.textContent = "Editar requisito";
-    inputNombre.value = req.nombre;
-    inputFechaRegistro.value = req.f_registro;
-    inputDescripcion.value = req.descripcion;
+    campos.titulo.textContent = modo === 'editar' ? "Editar Requisito" : "Detalle del Requisito";
+    
+    // Llenar formulario
+    campos.nombre.value = requisito.nombRequisito;
+    campos.fecha.value = requisito.f_requisito_modal; // Usamos la fecha en formato YYYY-MM-DD
+    campos.descripcion.value = requisito.descripcion === "---" ? "" : requisito.descripcion; // No mostrar "---"
 
-    modalFooter.appendChild(botonGuardar);
-    form.onsubmit = (e) => {
-      e.preventDefault();
-      req.nombre = inputNombre.value.trim();
-      req.f_registro = inputFechaRegistro.value.trim();
-      req.descripcion = inputDescripcion.value.trim();
-      cerrarModal("modalFormulario");
-      renderTabla();
-    };
-  } else if (modo === "ver" && req) {
-    titulo.textContent = "Detalle del requisito";
-    inputNombre.value = req.nombre;
-    inputFechaRegistro.value = req.f_registro;
-    inputDescripcion.value = req.descripcion;
-    inputNombre.disabled = true;
-    inputFechaRegistro.disabled = true;
-    inputDescripcion.disabled = true;
-
-    modalFooter.appendChild(botonGuardar);
-    botonGuardar.textContent = "Cerrar";
-    botonGuardar.onclick = () => cerrarModal("modalFormulario");
+    if (modo === 'editar') {
+        footer.appendChild(btnCerrar);
+        footer.appendChild(btnGuardar);
+    } else { // modo === 'ver'
+        footer.appendChild(btnCerrar);
+        Object.values(campos).forEach(campo => campo.disabled = true);
+    }
   }
+
+  form.onsubmit = async (e) => {
+      e.preventDefault();
+      if (modo === 'ver') return cerrarModal('modalFormulario');
+
+      const data = {
+          nombRequisito: campos.nombre.value,
+          f_requisito: campos.fecha.value || null, // Enviar null si está vacío
+          descripcion: campos.descripcion.value || null,
+      };
+
+      if (modo === "agregar") {
+          await guardarRequisito('POST', '/api/requisito/requisitos', data);
+      } else if (modo === "editar") {
+          await guardarRequisito('PUT', `/api/requisito/requisitos/${idRequisito}`, data);
+      }
+  };
 
   abrirModal("modalFormulario");
 }
 
-// ================== BUSQUEDA ==================
-const inputRequisito = document.getElementById("inputDocumento");
-const btnBuscar = document.getElementById("btn_buscar");
 
+// ================== CRUD (API Fetch) ==================
+
+/**
+ * Carga los datos iniciales
+ */
+async function cargarDatosIniciales() {
+  try {
+    const data = await manejarSolicitud("/api/requisito/requisitos", {}, "Error al cargar requisitos");
+    if (data.success && Array.isArray(data.datos)) {
+      requisitos = data.datos.map(normalizarRequisito);
+      requisitosFiltrados = null;
+      inputBusqueda.value = "";
+      paginaActual = 1;
+      renderTabla();
+    } else {
+      requisitos = [];
+      renderTabla();
+    }
+  } catch (err) {
+    console.error("Error cargando datos iniciales:", err);
+  }
+}
+
+/**
+ * Función genérica para guardar (Crear/Editar)
+ */
+async function guardarRequisito(method, url, data) {
+  try {
+    const res = await manejarSolicitud(url, {
+      method: method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }, "Error al guardar requisito");
+
+    if (res.success) {
+      mostrarAlerta(res.mensaje, "success");
+      cerrarModal("modalFormulario");
+      await cargarDatosIniciales();
+    }
+  } catch (err) {
+    // El manejador ya mostró la alerta
+  }
+}
+
+/**
+ * Cambia el estado (Activo/Inactivo)
+ */
+async function cambiarEstadoRequisito(id, estadoActual) {
+    const nuevoEstado = !estadoActual;
+    const confirmacion = confirm(`¿Seguro que deseas ${nuevoEstado ? 'activar' : 'desactivar'} este requisito?`);
+    if (!confirmacion) return;
+
+    try {
+        const res = await manejarSolicitud(`/api/requisito/requisitos/${id}/estado`, {
+            method: 'PATCH',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ estado: nuevoEstado }),
+        }, "Error al cambiar estado");
+        
+        if (res.success) {
+            mostrarAlerta(res.mensaje, "success");
+            await cargarDatosIniciales();
+        }
+    } catch (err) {
+      // El manejador ya mostró la alerta
+    }
+}
+
+/**
+ * Elimina un requisito
+ */
+async function eliminarRequisito(id) {
+    if (!confirm(`¿Seguro que deseas eliminar este requisito?`)) return;
+
+    try {
+        const res = await manejarSolicitud(`/api/requisito/requisitos/${id}`, {
+            method: 'DELETE',
+        }, "Error al eliminar requisito");
+        
+        if (res.success) {
+            mostrarAlerta(res.mensaje, "success");
+            await cargarDatosIniciales();
+        }
+    } catch (err) {
+      // El manejador ya mostró la alerta (ej. si está en uso)
+    }
+}
+
+// ================== BUSQUEDA Y AUTOCOMPLETADO ==================
+
+// Botón de Búsqueda (Filtro local)
+const btnBuscar = document.getElementById("btn_buscar");
 btnBuscar.addEventListener("click", () => {
-  const termino = inputRequisito.value.trim().toLowerCase();
-  requisitosFiltrados =
-    termino === ""
-      ? null
-      : requisitos.filter((r) => r.nombre.toLowerCase().includes(termino));
+  const termino = inputBusqueda.value.trim().toLowerCase();
+  if (termino === "") {
+    requisitosFiltrados = null;
+  } else {
+    requisitosFiltrados = requisitos.filter(r => 
+      r.nombRequisito.toLowerCase().includes(termino) ||
+      r.descripcion.toLowerCase().includes(termino)
+    );
+  }
   paginaActual = 1;
   renderTabla();
+  contenedorSugerencias.style.display = "none";
 });
 
-// ================== EVENTO FORM PRINCIPAL ==================
-document.getElementById("formDocumento").addEventListener("submit", (e) => {
-  e.preventDefault();
-  abrirModalFormulario("agregar");
+// Botón de Agregar (Formulario principal)
+document.getElementById("btn_guardar").addEventListener("click", (e) => {
+    e.preventDefault();
+    abrirModalFormulario("agregar");
 });
 
-// ================== DATOS DE EJEMPLO ==================
-requisitos = [
-  { id: 1, nombre: "Partida de Nacimiento", f_registro: "2025-10-01", descripcion: "Documento legal de nacimiento", estado: "activo" },
-  { id: 2, nombre: "Certificado de Bautismo", f_registro: "2025-10-02", descripcion: "Requisito para sacramentos", estado: "activo" },
-  { id: 3, nombre: "DNI", f_registro: "2025-10-03", descripcion: "Documento nacional de identidad", estado: "activo" },
-];
+document.getElementById("formDocumento").addEventListener("submit", (e) => e.preventDefault());
 
-renderTabla();
+// ================== NOTIFICACIONES (Alertas) ==================
+function mostrarAlerta(mensaje, tipo = "success") {
+    const alerta = document.createElement("div");
+    alerta.className = `alerta-toast ${tipo}`;
+    alerta.textContent = mensaje;
+    
+    document.body.appendChild(alerta);
+    setTimeout(() => alerta.classList.add("mostrar"), 10);
+    setTimeout(() => {
+        alerta.classList.remove("mostrar");
+        setTimeout(() => alerta.remove(), 500);
+    }, 3000);
+}
+
+// ==================================================
+// === INICIO: BLOQUE DE SUGERENCIAS (DINÁMICO) ===
+// ==================================================
+
+const contenedorSugerencias = document.createElement("div");
+contenedorSugerencias.id = "sugerenciasContainer";
+document.body.appendChild(contenedorSugerencias); 
+
+function posicionarSugerencias() {
+    const rect = inputBusqueda.getBoundingClientRect(); 
+    contenedorSugerencias.style.left = `${rect.left + window.scrollX}px`;
+    contenedorSugerencias.style.top = `${rect.bottom + window.scrollY}px`;
+    contenedorSugerencias.style.width = `${rect.width}px`;
+}
+
+inputBusqueda.addEventListener("input", () => {
+    const termino = inputBusqueda.value.trim().toLowerCase();
+    contenedorSugerencias.innerHTML = "";
+    
+    if (termino.length === 0) {
+        contenedorSugerencias.style.display = "none";
+        return;
+    }
+
+    // Filtrar solo por nombre
+    const sugerencias = requisitos.filter(r => 
+        r.nombRequisito.toLowerCase().startsWith(termino)
+    ).slice(0, 5); 
+
+    if (sugerencias.length === 0) {
+        contenedorSugerencias.style.display = "none";
+        return;
+    }
+
+    sugerencias.forEach(r => {
+        const item = document.createElement("div");
+        item.className = "sugerencia-item";
+        item.textContent = r.nombRequisito;
+        
+        item.onclick = () => {
+            inputBusqueda.value = r.nombRequisito;
+            contenedorSugerencias.style.display = "none";
+            document.getElementById("btn_buscar").click();
+        };
+        contenedorSugerencias.appendChild(item);
+    });
+
+    contenedorSugerencias.style.display = "block";
+    posicionarSugerencias();
+});
+
+// Listeners para ocultar/reposicionar
+document.addEventListener("click", (e) => {
+    if (contenedorSugerencias && !contenedorSugerencias.contains(e.target) && e.target !== inputBusqueda) {
+        contenedorSugerencias.style.display = "none";
+    }
+});
+window.addEventListener("resize", posicionarSugerencias);
+window.addEventListener("scroll", posicionarSugerencias, true);
+
+// === FIN: BLOQUE DE SUGERENCIAS ===
+// ==================================
+
+// ================== INICIALIZACIÓN ==================
+document.addEventListener("DOMContentLoaded", () => {
+    crearModalFormulario(); 
+    cargarDatosIniciales();
+});

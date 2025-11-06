@@ -15,7 +15,9 @@ from app.feligres.route_feligres import feligres_bp
 from app.personal.route_personal import personal_bp
 from app.auditoria_usuario.route_auditoria import auditoria_bp
 from app.reserva.route_reserva import reserva_bp
-
+from app.auditoria_parroquia.route_auditoria_parroquia import auditoria_parroquia_bp 
+from app.disponibilidad.route_disponibilidad import disponibilidad_bp
+from app.requisito.route_requisito import requisito_bp
 
 def crear_app():
     # Obtiene la ruta absoluta de la carpeta 'app'
@@ -26,6 +28,7 @@ def crear_app():
 
     # Construye la ruta a la carpeta 'static'
     static_dir = os.path.join(base_dir, '..', 'static')
+
     
     # Se especifica la ruta completa de las carpetas 'site' y 'static'
     app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
@@ -45,7 +48,10 @@ def crear_app():
     app.register_blueprint(personal_bp, url_prefix='/api/personal')
     app.register_blueprint(auditoria_bp, url_prefix='/api/auditoria')
     app.register_blueprint(reserva_bp,url_prefix='/api/reserva')
-    
+    app.register_blueprint(auditoria_parroquia_bp,url_prefix='/api/auditoria_parroquia')    
+    app.register_blueprint(disponibilidad_bp,url_prefix='/api/disponibilidad')
+    app.register_blueprint(requisito_bp,url_prefix='/api/requisito')
+
     @app.route("/")
     def iniciar_sesion():
         return render_template('iniciar_sesion.html')
@@ -150,6 +156,15 @@ def crear_app():
     @app.route('/admi/auditoria')
     def auditoria_admin():    
         return render_template('administradores/auditoria_usuario.html')
+    @app.route('/admi/auditoria_parroquia') 
+    def auditoria_parroquia_admin():    
+        return render_template('administradores/auditoria_parroquia.html')
+    @app.route('/admi/disponibilidad')
+    def disponibilidad_admin():    
+        return render_template('administradores/disponibilidad.html')
+    @app.route('/admi/requisito')
+    def requisito_admin():    
+        return render_template('administradores/requisitos.html')
 
     return app
 

@@ -238,15 +238,16 @@ body {
   text-align: left;
 }
 
-.col-numDocumento {
+/* --- CORREGIDO --- */
+.col-documento { /* Antes: .col-numDocumento */
   width: 15%;
   text-align: center;
 }
 .col-cargo {
   width: 20%;
-  text-align: center;
+  text-align: left;
 }
-.col-correo {
+.col-email { /* Antes: .col-correo */
   width: 20%;
   text-align: left;
 }
@@ -508,4 +509,27 @@ body {
     -moz-appearance: auto;
     appearance: auto;
     background-color: #fff; /* Asegura fondo blanco en selects */
+}
+
+#sugerenciasContainer {
+  position: absolute; /* Flota sobre la página */
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 9998; /* Se muestra encima de todo */
+  display: none; /* Oculto por defecto */
+  max-height: 200px;
+  overflow-y: auto;
+  /* El JS ajusta la posición (left, top) y el ancho (width) */
+}
+
+/* Cada ítem de la lista de sugerencias */
+.sugerencia-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.sugerencia-item:hover {
+  background-color: #f0f0f0;
 }
