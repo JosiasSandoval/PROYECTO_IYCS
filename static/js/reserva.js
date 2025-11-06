@@ -26,23 +26,34 @@ async function cargarActosPorParroquia(idParroquia) {
     if (!actoSelect) return;
 
     try {
-        // ⚠️ Aquí ahora se puede simular localmente si no hay API
-        const actos = [
-            { id: 1, acto: "Matrimonio", costoBase: 150 },
-            { id: 2, acto: "Bautismo", costoBase: 80 },
-            { id: 3, acto: "Primera Comunión", costoBase: 120 }
-        ];
+        // 🔹 Petición real a la API Flask
+        const respuesta = await fetch(`/api/acto/${idParroquia}`);
+        if (!respuesta.ok) {
+            throw new Error("Error al obtener los actos litúrgicos desde el servidor");
+        }
+
+        const data = await respuesta.json(); // contiene { success, mensaje, datos }
 
         actoSelect.innerHTML = '<option value="">--Seleccione un acto--</option>';
-        actos.forEach(acto => {
-            const option = document.createElement('option');
-            option.value = acto.id;
-            option.textContent = `${acto.acto} (Costo: S/ ${acto.costoBase})`;
-            actoSelect.appendChild(option);
-        });
+
+        // 🔹 Verificar que haya datos antes de recorrer
+        if (data.success && Array.isArray(data.datos) && data.datos.length > 0) {
+            data.datos.forEach(acto => {
+                const option = document.createElement('option');
+                option.value = acto.id;
+                option.textContent = `${acto.acto} (Costo: S/ ${acto.costoBase})`;
+                actoSelect.appendChild(option);
+            });
+
+                // 🔹 Guardar los actos en localStorage para el calendario
+        localStorage.setItem('actosParroquia', JSON.stringify(data.datos));
+        } else {
+            actoSelect.innerHTML = '<option value="">No hay actos disponibles</option>';
+        }
 
     } catch (error) {
-        console.error("Error cargando actos por parroquia:", error);
+        console.error("❌ Error cargando actos por parroquia:", error);
+        actoSelect.innerHTML = '<option value="">Error al cargar actos</option>';
     }
 }
 
