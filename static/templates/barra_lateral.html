@@ -1,15 +1,17 @@
 <!doctype html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Barra lateral - Litbook</title>
   <link rel="stylesheet" href="/static/css/barra_lateral.css">
 </head>
+
 <body>
   <!-- Barra lateral -->
   <div class="barra-lateral">
-  <nav class="menu-lateral">
+    <nav class="menu-lateral">
 
     <a href="#" class="menu-item">
       <img src="/static/img/inicio.png" alt="inicio" /> Inicio
@@ -56,11 +58,6 @@
      <!-- PAGO -->
         <div class="menu-grupo">
       <button class="menu-item boton-desplegable">
-      </a>
-      <a href="#" class="menu-item">
-        <img src="/static/img/acto.png" alt="acto_liturgico" /> Actos litúrgicos
-      </a>
-      <a href="/site/cliente/pago.html" class="menu-item">
         <img src="/static/img/pago.png" alt="pago" /> Pago
         <span class="flecha">▸</span>
       </button>
@@ -70,42 +67,92 @@
       </div>
     </div>
 
-       <!-- CALENDARIO -->
-        <div class="menu-grupo">
-      <button class="menu-item boton-desplegable">
-        <img src="/static/img/calendario.png" alt="calendario" /> Calendario
-        <span class="flecha">▸</span>
-      </button>
-      <div class="submenu">
-        <a href="#" class="submenu-item">Consultar disponibilidad</a>
-        <a href="#" class="submenu-item">Gestionar</a>
+      <!-- PARROQUIA -->
+      <div class="menu-grupo">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/parroquia.png" alt="parroquia" /> Parroquia
+          <span class="flecha">▸</span>
+        </button>
+        <div class="submenu">
+          <a href="#" class="submenu-item">Mostrar Mapa</a>
+          <a href="#" class="submenu-item">Consultar Información</a>
+          <a href="#" class="submenu-item">Gestionar Parroquia</a>
+        </div>
       </div>
-    </div>
 
-        <!-- REQUISITOS -->
-        <div class="menu-grupo">
-      <button class="menu-item boton-desplegable">
-        <img src="/static/img/requisito.png" alt="requisito" /> Requisitos
-        <span class="flecha">▸</span>
-      </button>
-      <div class="submenu">
-        <a href="#" class="submenu-item">Gestionar</a>
+      <!-- RESERVAS -->
+      <div class="menu-grupo">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/reserva.png" alt="reserva" /> Reservas
+          <span class="flecha">▸</span>
+        </button>
+        <div class="submenu">
+          <a href="#" class="submenu-item">Registrar Reserva</a>
+          <a href="#" class="submenu-item">Gestionar Reserva</a>
+        </div>
       </div>
-    </div>
 
-        <!-- REPORTES -->
-        <div class="menu-grupo">
-      <button class="menu-item boton-desplegable">
-        <img src="/static/img/reporte.png" alt="reporte" /> Reportes
-        <span class="flecha">▸</span>
-      </button>
-      <div class="submenu">
-        <a href="#" class="submenu-item">Generar Reportes</a>
+      <!-- ACTOS LITÚRGICOS -->
+      <div class="menu-grupo">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/acto.png" alt="acto" /> Actos litúrgicos
+          <span class="flecha">▸</span>
+        </button>
+        <div class="submenu">
+          <a href="#" class="submenu-item">Mostrar Información</a>
+          <a href="#" class="submenu-item">Gestionar</a>
+        </div>
       </div>
-    </div>
 
-  </nav>
-</div>
-<script src="/static/js/barra_lateral.js"></script>
+      <!-- PAGO -->
+      <div class="menu-grupo">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/pago.png" alt="pago" /> Pago
+          <span class="flecha">▸</span>
+        </button>
+        <div class="submenu">
+          <a href="#" class="submenu-item">Pagos</a>
+          <a href="#" class="submenu-item">Gestionar Método Pago</a>
+        </div>
+      </div>
+
+      <!-- CALENDARIO -->
+      <div class="menu-grupo">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/calendario.png" alt="calendario" /> Calendario
+          <span class="flecha">▸</span>
+        </button>
+        <div class="submenu">
+          <a href="#" class="submenu-item">Consultar disponibilidad</a>
+          <a href="#" class="submenu-item">Gestionar</a>
+        </div>
+      </div>
+
+      <!-- REQUISITOS -->
+      <div class="menu-grupo">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/requisito.png" alt="requisito" /> Requisitos
+          <span class="flecha">▸</span>
+        </button>
+        <div class="submenu">
+          <a href="#" class="submenu-item">Gestionar</a>
+        </div>
+      </div>
+
+      <!-- REPORTES -->
+      <div class="menu-grupo">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/reporte.png" alt="reporte" /> Reportes
+          <span class="flecha">▸</span>
+        </button>
+        <div class="submenu">
+          <a href="#" class="submenu-item">Generar Reportes</a>
+        </div>
+      </div>
+
+    </nav>
+  </div>
+  <script src="/static/js/barra_lateral.js"></script>
 </body>
+
 </html>

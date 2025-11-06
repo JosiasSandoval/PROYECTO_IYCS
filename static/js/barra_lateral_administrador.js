@@ -4,19 +4,25 @@ fetch('/static/templates/barra_lateral_administrador.html')
         const placeholder = document.getElementById('barra_lateral_administrador-placeholder');
         placeholder.innerHTML = data;
 
-        // Ahora sí selecciona los botones y agrega los eventos
         const botonesDesplegables = placeholder.querySelectorAll(".boton-desplegable");
 
         botonesDesplegables.forEach((boton) => {
             boton.addEventListener("click", () => {
                 const submenu = boton.nextElementSibling;
-                submenu.classList.toggle("activo");
                 const flecha = boton.querySelector(".flecha");
-                if (submenu.classList.contains("activo")) {
-                    flecha.textContent = "▾";
-                } else {
-                    flecha.textContent = "▸";
-                }
+
+                // Cierra otros submenús abiertos
+                placeholder.querySelectorAll(".submenu.activo").forEach((activo) => {
+                    if (activo !== submenu) {
+                        activo.classList.remove("activo");
+                        const otraFlecha = activo.previousElementSibling.querySelector(".flecha");
+                        if (otraFlecha) otraFlecha.textContent = "▸";
+                    }
+                });
+
+                // Alterna el actual
+                submenu.classList.toggle("activo");
+                flecha.textContent = submenu.classList.contains("activo") ? "▾" : "▸";
             });
         });
     });

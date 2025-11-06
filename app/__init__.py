@@ -34,9 +34,6 @@ def crear_app():
     app.register_blueprint(pago_bp,url_prefix='/api/pago')
     app.register_blueprint(rol_bp,url_prefix='/api/rol')
     app.register_blueprint(permiso_bp,url_prefix='/api/permiso')
-    app.register_blueprint(acto_bp,url_prefix='/api/acto')
-    app.register_blueprint(pago_metodo_bp, url_prefix='/api/metodo_pago') 
-    app.register_blueprint(reserva_bp,url_prefix='/api/reserva')
     
     @app.route("/")
     def iniciar_sesion():
