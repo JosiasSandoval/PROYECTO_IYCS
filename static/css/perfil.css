@@ -4,13 +4,15 @@ body {
   padding: 0;
   background: #f8f9fa;
   font-family: 'Segoe UI', sans-serif;
-  font-size: 15px; /* tamaño base */
+  font-size: 15px;
+  /* tamaño base */
   color: #212529;
 }
 
 /* ===== BARRA SUPERIOR ===== */
 .barra-superior {
-  background: #e5e7eb; /* gris claro */
+  background: #e5e7eb;
+  /* gris claro */
   padding: 12px 20px;
   display: flex;
   justify-content: space-between;
@@ -65,7 +67,8 @@ body {
 
 /* ===== BARRA LATERAL ===== */
 .barra-lateral {
-  background-color: #dbeafe; /* azul claro */
+  background-color: #dbeafe;
+  /* azul claro */
   border-right: 1px solid #cbd5e1;
   padding: 20px 10px;
   display: flex;
@@ -118,7 +121,7 @@ body {
 .perfil-card {
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   display: flex;
   padding: 40px;
   gap: 40px;
@@ -169,7 +172,7 @@ body {
 .perfil-info input:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 4px rgba(59,130,246,0.3);
+  box-shadow: 0 0 4px rgba(59, 130, 246, 0.3);
 }
 
 /* Botón */
@@ -192,3 +195,69 @@ body {
 .btn-guardar:hover {
   background: #2563eb;
 }
+
+/* Columna derecha (formulario) */
+.perfil-info {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px 25px;
+  align-items: center;
+}
+
+/* Estilo para los campos cuando están deshabilitados (solo lectura) */
+.perfil-info input:disabled {
+  background-color: #f3f4f6;
+  /* Un gris claro para indicar deshabilitado */
+  color: #6b7280;
+  /* Texto más suave */
+  border: 1px solid #e5e7eb;
+  cursor: default;
+}
+
+.perfil-info input:disabled:focus {
+  /* Remueve el foco azul cuando está deshabilitado */
+  box-shadow: none;
+  border-color: #e5e7eb;
+}
+
+/* Contenedor de botones (para que ocupe todo el ancho) */
+.botones-perfil {
+  grid-column: span 2;
+  display: flex;
+  justify-content: center;
+  /* Centra el botón o botones */
+  margin-top: 20px;
+}
+
+/* Estilo general para todos los botones en el perfil */
+.botones-perfil .btn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+  width: 60%;
+  /* Ajusta el ancho de los botones */
+  max-width: 400px;
+}
+
+.botones-perfil .btn:hover {
+  background: #2563eb;
+}
+
+/* Nuevo estilo para el botón de modificar (si quieres darle un color diferente) */
+.btn-modificar {
+  /* Puedes mantener el color principal o darle otro */
+  background: #10b981;
+  /* Verde, por ejemplo */
+}
+
+.btn-modificar:hover {
+  background: #059669;
+}
+

@@ -212,3 +212,55 @@ def eliminar_usuario_feligres(idUsuario):
         return {"ok": False, "mensaje": str(e)}
     finally:
         conexion.close()
+
+
+def obtener_feligres_por_id(idUsuario):
+    """Obtiene los datos de un feligrés específico usando su idUsuario."""
+    conexion = obtener_conexion()
+    feligres = None
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    us.email,
+                    fe.nombFel,
+                    fe.apePatFel,
+                    fe.apeMatFel,
+                    fe.telefonoFel,
+                    fe.direccionFel,
+                    fe.f_nacimiento,
+                    fe.sexoFel,
+                    ti.nombDocumento,
+                    fe.numDocFel
+                FROM usuario us
+                INNER JOIN feligres fe ON us.idUsuario = fe.idUsuario
+                INNER JOIN tipo_documento ti ON fe.idTipoDocumento = ti.idTipoDocumento
+                WHERE us.idUsuario = %s
+            """, (idUsuario,))
+            
+            fila = cursor.fetchone()
+            
+            if fila:
+                feligres = {
+                    'idUsuario': idUsuario, # AGREGADO: Útil para el JS
+                    'email': fila[0],
+                    'nombFel': fila[1], 
+                    'apePatFel': fila[2],
+                    'apeMatFel': fila[3],
+                    'nombreCompleto': f"{fila[1]} {fila[2]} {fila[3]}", # COMBINACIÓN
+                    'telefonoFel': fila[4],
+                    'direccionFel': fila[5],
+                    # Formatea la fecha para el input type="date"
+                    'f_nacimiento': fila[6].strftime("%Y-%m-%d") if fila[6] else None, 
+                    'sexoFel': fila[7], # AGREGADO: Dato necesario para actualizar
+                    'nombDocumento': fila[8], # AGREGADO: Dato necesario para actualizar
+                    'numDocFel': fila[9], # AGREGADO: Dato necesario para actualizar
+                }
+        return feligres
+    except Exception as e:
+        print(f"Error CRÍTICO en la consulta SQL del perfil: {e}")
+        # Retornar None para que el Router maneje el 404
+        return None 
+    finally:
+        if conexion:
+            conexion.close()

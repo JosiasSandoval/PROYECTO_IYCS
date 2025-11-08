@@ -8,7 +8,7 @@ from app.pago_metodo.controlador_pago_metodo import (
     verificar_relacion_metodo_pago
 )
 
-pago_bp= Blueprint('pago', __name__)
+pago_metodo_bp = Blueprint('pago_metodo', __name__) 
 
 
 
