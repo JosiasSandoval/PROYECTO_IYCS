@@ -10,7 +10,7 @@ body {
 
 .grid {
     display: grid;
-    grid-template-columns: 250px 1fr;
+    grid-template-columns: 220px 1fr;
     grid-template-areas: "enlaces main-content";
     height: 100vh;
     overflow: hidden;
@@ -70,9 +70,9 @@ aside {
 
 .reserva {
     width: 100%;
-    max-width: 1500px;
+    max-width: 1800px;
     background-color: #fff;
-    padding: 30px 40px;
+    padding: 25px 30px;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
@@ -158,7 +158,7 @@ aside {
 
 .form-step {
     display: none;
-    padding: 20px;
+    padding: 15px;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     animation: fadeIn 0.5s ease-in-out;
@@ -289,7 +289,7 @@ aside {
 .navigation-buttons {
     display: flex;
     justify-content: space-between;
-    margin-top: 30px;
+    margin-top: 15px;
 }
 
 .btn {
@@ -315,4 +315,87 @@ aside {
     background-color: #e0e0e0;
     cursor: not-allowed;
     color: #999;
+}
+/* ======================================================================== */
+/* --- ESTILOS ADICIONALES PARA LA SECCIÓN DE REQUISITOS --- */
+/* ======================================================================== */
+
+/* 🔑 0. Contenedor Principal: Limita la altura y agrega la barra de desplazamiento */
+#requisitos-lista {
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 15px;
+    margin-top: 20px; 
+}
+
+/* 1. Contenedor de cada Requisito (Tarjeta) */
+.form-group.p-3.border.rounded.shadow-sm {
+    border: 1px solid #dcdcdc !important; 
+    border-left: 5px solid #007bff;
+    padding: 20px !important;
+    margin-bottom: 20px !important;
+    background-color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease-in-out;
+}
+
+.form-group.p-3.border.rounded.shadow-sm:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 2. Título del Requisito */
+.form-group h5 {
+    color: #333; 
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+/* 3. Descripción del Requisito */
+.form-group .text-muted.small {
+    color: #777 !important;
+    font-style: italic;
+    margin-bottom: 15px;
+}
+
+/* 4. Estilo del input[type="file"] */
+.form-control-file {
+    width: 100%; 
+}
+
+/* 5. Mensaje de Alerta/Info Unificado */
+.alert.alert-info.small.mt-3 {
+    border-left: 5px solid #007bff;
+    background-color: #e9f7ff;
+    color: #0056b3;
+    font-size: 0.9rem;
+    padding: 15px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 🔑 6. Estilo del Título del Paso (CORREGIDO: Negro y Centrado) */
+#titulo-acto {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333; /* Color negro/oscuro */
+    margin-bottom: 5px; /* Incrementado para compensar el borde eliminado */
+    border-bottom: none; /* Eliminado el borde inferior */
+    padding-bottom: 0;
+    text-align: center; /* Centrado */
+}
+
+/* 8. Checkbox de Términos y Condiciones */
+.terms-conditions {
+    display: flex;
+    align-items: center; 
+    gap: 5px;
+    margin-top: 10px;
+    padding: 10px 0;
+}
+
+.terms-conditions label {
+    font-size: 14px;
+    color: #555;
+    cursor: pointer;
 }

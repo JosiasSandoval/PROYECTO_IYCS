@@ -290,3 +290,32 @@ def verificar_relacion_personal(idUsuario):
         print(f"Error al verificar relaciones del personal: {e}")
         return {"ok": False, "bloqueado": True, "relaciones": []}
 
+def personal_reserva_datos(idParroquia):
+    conexion=obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+            SELECT
+                CONCAT(pe.nombPers, ' ', pe.apePatPers, ' ', pe.apeMatPers) AS nombreCompleto
+            FROM
+                personal pe
+            INNER JOIN
+                parroquia_personal pp ON pe.idPersonal = pp.idPersonal
+            INNER JOIN
+                usuario us ON us.idUsuario = pe.idUsuario
+            INNER JOIN
+                rol_usuario ru ON us.idUsuario = ru.idUsuario
+            INNER JOIN
+                rol r ON ru.idRol = r.idRol
+            WHERE
+                r.nombRol = 'Sacerdote'
+                AND pp.idParroquia =%s;
+            """,(idParroquia,))
+            resultados=cursor.fetchall()
+            return resultados
+    except Exception as e:
+        print(f"Error al obtener datos del personal: {e}")
+        return {"ok": False, "bloqueado": True, "relaciones": []}
+    finally:
+        if conexion:
+            conexion.close()

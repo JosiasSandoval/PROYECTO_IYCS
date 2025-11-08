@@ -200,7 +200,7 @@ CREATE TABLE ACTO_PARROQUIA(
 CREATE TABLE REQUISITO (
     idRequisito INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     nombRequisito VARCHAR(100) NOT NULL,
-    f_requisito DATE NULL,
+    f_requisito DATE NOT NULL,
     descripcion VARCHAR(255) NULL,
     estadoRequisito BOOLEAN NOT NULL
 );
@@ -233,10 +233,10 @@ CREATE TABLE DOCUMENTO_REQUISITO (
     idDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     rutaArchivo VARCHAR(255) NOT NULL,
     tipoArchivo VARCHAR(100) NULL,
-    f_subido DATETIME NOT NULL,
+    f_subido DATE,
     estadoCumplimiento VARCHAR(50) NOT NULL,
     observacion VARCHAR(255)NOT NULL,
-    vigenciaDocumento BOOLEAN NOT NULL,
+    vigenciaDocumento DATE NOT NULL,
     idReserva INT NOT NULL,
     idActoRequisito INT NOT NULL,
     CONSTRAINT fk_docreq_reserva FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva),

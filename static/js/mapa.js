@@ -125,8 +125,8 @@ function buscarParroquia(valor) {
 
     const { marker, id, nombre } = entry;
 
-    localStorage.setItem('idParroquiaSeleccionada', id);
-    localStorage.setItem('nombreParroquiaSeleccionada', nombre);
+    sessionStorage.setItem('idParroquiaSeleccionada', id);
+    sessionStorage.setItem('nombreParroquiaSeleccionada', nombre);
 
     if (marcadorResaltado && marcadorResaltado !== marker) {
         marcadorResaltado.setIcon(ChurchIcon);
@@ -189,7 +189,7 @@ function mostrarCalendarioParroquia(id) {
         alert("Solo los feligreses o secretarias pueden realizar reservas.");
         return;
     }
-    localStorage.setItem('idParroquiaSeleccionada', id);
+    sessionStorage.setItem('idParroquiaSeleccionada', id);
     window.location.href = `/cliente/calendario/${id}`;
 }
 
@@ -230,8 +230,8 @@ function abrirModalReserva(nombre, id) {
     modalReserva.style.display = 'flex';
 
     modalSi.onclick = () => {
-        localStorage.setItem('idParroquiaSeleccionada', id);
-        localStorage.setItem('nombreParroquiaSeleccionada', nombre);
+        sessionStorage.setItem('idParroquiaSeleccionada', id);
+        sessionStorage.setItem('nombreParroquiaSeleccionada', nombre);
         window.location.href = `/cliente/reserva_acto`;
     };
 

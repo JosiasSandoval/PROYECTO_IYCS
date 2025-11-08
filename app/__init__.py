@@ -11,6 +11,7 @@ from app.acto_liturgico_requisito.route_acto import acto_bp
 from app.pago.route_pago import pago_bp
 from app.pago_metodo.route_pago_metodo import pago_metodo_bp
 from app.reserva.route_reserva import reserva_bp
+from app.acto_liturgico_requisito.route_requisito import requisito_bp
 
 
 def crear_app():
@@ -37,7 +38,8 @@ def crear_app():
     app.register_blueprint(acto_bp,url_prefix='/api/acto')
     app.register_blueprint(pago_metodo_bp, url_prefix='/api/metodo_pago') 
     app.register_blueprint(reserva_bp,url_prefix='/api/reserva')
-    
+    app.register_blueprint(requisito_bp,url_prefix='/api/requisito')
+
     @app.route("/")
     def iniciar_sesion():
         return render_template('iniciar_sesion.html')
