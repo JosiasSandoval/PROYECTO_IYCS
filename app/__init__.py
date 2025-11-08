@@ -29,7 +29,7 @@ def crear_app():
 
     app.register_blueprint(tipoDocumento_bp,url_prefix='/api/tipoDocumento')
     app.register_blueprint(auth_bp,url_prefix='/api/auth')
-    app.register_blueprint(usuario_bp,url_prefix='/api/usuario')
+    app.register_blueprint(usuario_bp, url_prefix='/api/usuario')
     app.register_blueprint(parroquia_bp,url_prefix='/api/parroquia')
     app.register_blueprint(cargo_bp,url_prefix='/api/cargo')
     app.register_blueprint(pago_bp,url_prefix='/api/pago')
@@ -40,6 +40,8 @@ def crear_app():
     app.register_blueprint(reserva_bp,url_prefix='/api/reserva')
     app.register_blueprint(requisito_bp,url_prefix='/api/requisito')
 
+   
+    
     @app.route("/")
     def iniciar_sesion():
         return render_template('iniciar_sesion.html')
@@ -73,7 +75,10 @@ def crear_app():
     
     @app.route('/cliente/perfil')
     def perfil_cliente():
-        return render_template('cliente/perfil.html')
+        id_usuario = session.get('idUsuario')
+        if not id_usuario:
+            return redirect(url_for(iniciar_sesion))
+        return render_template('cliente/perfil.html', id_usuario_logueado=id_usuario)
 
         # --- RESERVAS CLIENTE ---
     @app.route('/cliente/reserva')

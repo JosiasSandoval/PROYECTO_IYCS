@@ -5,6 +5,7 @@ body {
   background: #f8f9fa;
   color: #111827;
 }
+
 img {
   display: inline-block;
   vertical-align: middle;
@@ -15,8 +16,8 @@ img {
 /* ===== BARRA LATERAL ===== */
 .barra-lateral {
   background-color: #adc5e0;
-  width: 220px;            
-  min-height: 100vh;       
+  width: 220px;
+  min-height: 100vh;
   padding: 20px 10px;
   display: flex;
   flex-direction: column;
@@ -25,14 +26,24 @@ img {
 .menu-lateral {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
+/* Espacio entre cada grupo */
+.menu-grupo {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 5px;
+}
+
+/* ===== BOTONES PRINCIPALES ===== */
 .menu-item {
   color: #000;
   font-size: 16px;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
   text-decoration: none;
   padding: 10px;
@@ -50,43 +61,30 @@ img {
   background-color: #c7ddf5;
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-  .barra-lateral {
-    width: 180px;
-    padding: 15px 8px;
-  }
-  .menu-item {
-    font-size: 14px;
-    padding: 8px;
-  }
-}
-
-/* ===== SUBMENÚ ===== */
-.menu-grupo {
-  display: flex;
-  flex-direction: column;
-}
-
 .boton-desplegable {
   background: none;
   border: none;
   width: 100%;
   text-align: left;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
+/* Flecha de despliegue */
 .flecha {
   margin-left: auto;
   font-size: 0.8rem;
 }
 
-/* Submenú oculto por defecto */
+/* ===== SUBMENÚ ===== */
 .submenu {
   display: none;
   flex-direction: column;
   margin-left: 35px;
   margin-top: 5px;
+  transition: all 0.3s ease;
 }
 
 .submenu.activo {
@@ -105,8 +103,18 @@ img {
   color: #1e3a8a;
 }
 
-/* ===== RESPONSIVE EXTRA ===== */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
+  .barra-lateral {
+    width: 180px;
+    padding: 15px 8px;
+  }
+
+  .menu-item {
+    font-size: 14px;
+    padding: 8px;
+  }
+
   .submenu {
     margin-left: 25px;
   }

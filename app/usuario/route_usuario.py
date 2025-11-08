@@ -1,12 +1,14 @@
-from flask import Blueprint, request, jsonify, redirect, url_for,session
+from flask import Blueprint, request, jsonify, redirect, url_for, session, render_template
 from app.usuario.controlador_usuario import(
     get_usuario_feligres,
     agregar_usuario_feligres,
     actualizar_usuario_feligres,
     eliminar_usuario_feligres,
     cambiar_estado_cuenta,
-    verificar_relacion_feligres
+    verificar_relacion_feligres,
+    obtener_feligres_por_id
 )
+
 from app.usuario.controlador_personal import(
     get_datos_personal,
     actualizar_usuario_personal,
@@ -205,9 +207,35 @@ def eliminar_personal(id):
             "ok": False,
             "mensaje": str(e)
         }), 500
+    
+
+@usuario_bp.route('/perfil', methods=['GET'])
+def vista_perfil_usuario():
+    id_usuario = session.get('idUsuario') 
+    
+    if not id_usuario:
+        return redirect(url_for('auth.login')) 
+    return render_template('perfil.html', id_usuario_logueado=id_usuario)
+
+# En router.py, cerca de la línea 235
+@usuario_bp.route('/api/perfil/datos', methods=['GET'])
+def obtener_datos_perfil():
 
 @usuario_bp.route('/personal_reserva/<int:idParroquia>', methods=['GET'])
 def personal_reserva(idParroquia):
     datos=personal_reserva_datos(idParroquia)
     return jsonify({'datos':datos})
         
+    from flask import session 
+    id_usuario = session.get('idUsuario')
+    
+    if not id_usuario:
+        return jsonify({"ok": False, "mensaje": "Usuario no autenticado"}), 401
+    
+    datos_feligres = obtener_feligres_por_id(id_usuario)
+    
+    if datos_feligres:
+        return jsonify({"ok": True, "datos": datos_feligres}), 200
+    else:
+        # Puede ser un 404 si el usuario existe pero no está en la tabla feligres
+        return jsonify({"ok": False, "mensaje": "Datos de feligrés no encontrados o error interno."}), 404
