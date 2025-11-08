@@ -1,45 +1,67 @@
-const tabla = document.querySelector("#tablaDocumentos tbody");
-const paginacion = document.getElementById("paginacionContainer");
-
-const modalDetalle = crearModal();            
-const modalFormulario = crearModalFormulario(); 
-
-let metodos = [];           
+// ================== VARIABLES GLOBALES ==================
+let metodos = []; 
 let metodosFiltrados = null;
 let paginaActual = 1;
 const elementosPorPagina = 10;
-let ordenActual = { campo: null, ascendente: true };
+let ordenActual = { campo: 'nombre', ascendente: true };
 
+// Referencias del DOM
+const tabla = document.querySelector("#tablaDocumentos tbody");
+const paginacion = document.getElementById("paginacionContainer");
+const inputBusqueda = document.getElementById("inputDocumento");
+// El modal se crea dinámicamente
+
+// ================== FUNCIONES ==================
+
+/**
+ * Normaliza los datos venidos de la API
+ */
 function normalizar(met) {
-  const id = met.idMetodo;                   // Campo de la BD
-  const nombre = met.nombMetodo ?? "";       // Campo de la BD
-  const estado = met.estadoMetodo === true || met.estadoMetodo === 1; // Booleano
+  const id = met.idMetodo;
+  const nombre = met.nombMetodo ?? "";
+  const estado = met.estadoMetodo === true || met.estadoMetodo === 1;
   return { id, nombre, estado };
 }
 
-
+/**
+ * Manejador genérico de fetch
+ */
 const manejarSolicitud = async (url, opciones = {}, mensajeError = "Error") => {
-  try {
-    const res = await fetch(url, opciones);
-    if (!res.ok) throw new Error(mensajeError);
-    return await res.json();
-  } catch (err) {
-    console.error(mensajeError, err);
-    alert(mensajeError);
-    throw err;
-  }
+    try {
+        const res = await fetch(url, opciones);
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.mensaje || mensajeError);
+        }
+        return await res.json();
+    } catch (err) {
+        console.error(mensajeError, err);
+        mostrarAlerta(err.message || "Error de conexión", "error");
+        throw err;
+    }
 };
 
-const cargarMetodos = async () => {
+/**
+ * Carga los datos iniciales (Métodos de Pago)
+ */
+const cargarDatosIniciales = async () => {
   try {
-    const data = await manejarSolicitud("/api/pago/metodo", {}, "Error al obtener metodos de pago");
-    console.log("Datos recibidos de la API:", data); // 🔹 para depuración
-    metodos = Array.isArray(data) ? data.map(normalizar) : [];
+    // Apunta a la nueva API RESTful
+    const data = await manejarSolicitud("/api/pago-metodo/metodos", {}, "Error al obtener métodos de pago");
+    
+    // Espera { success: true, datos: [...] }
+    if (data.success && Array.isArray(data.datos)) {
+        metodos = data.datos.map(normalizar);
+    } else {
+        metodos = [];
+    }
+    
     metodosFiltrados = null;
+    inputBusqueda.value = "";
     paginaActual = 1;
     renderTabla();
   } catch (err) {
-    console.error("Error cargando metodos de pago:", err);
+    console.error("Error cargando métodos de pago:", err);
   }
 };
 
@@ -68,14 +90,19 @@ function renderTabla() {
   const fin = inicio + elementosPorPagina;
   const documentosPagina = lista.slice(inicio, fin);
 
+  if (documentosPagina.length === 0 && paginaActual === 1) {
+    tabla.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay métodos de pago para mostrar.</td></tr>';
+  }
+
   documentosPagina.forEach((doc, index) => {
-    const esActivo = doc.estado === true || doc.estado === "activo";
+    const esActivo = doc.estado === true;
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
+    const tituloBoton = esActivo ? 'Dar de baja' : 'Dar de alta';
 
     const fila = document.createElement("tr");
     fila.innerHTML = `
-      <td class="col-id">${inicio + index + 1}</td>
+      <td class="col-id">${doc.id}</td>
       <td class="col-nombre">${escapeHtml(doc.nombre)}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
@@ -85,7 +112,7 @@ function renderTabla() {
           <button class="btn btn-warning btn-sm" onclick="editarMetodo(${doc.id})" title="Editar">
             <img src="/static/img/lapiz.png" alt="editar">
           </button>
-          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${doc.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
+          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${doc.id}, ${esActivo})" title="${tituloBoton}">
             <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
           </button>
           <button class="btn btn-danger btn-sm" onclick="eliminarMetodo(${doc.id})" title="Eliminar">
@@ -97,39 +124,28 @@ function renderTabla() {
     tabla.appendChild(fila);
   });
 
-  renderPaginacion();
+  renderPaginacion(lista.length);
 }
 
 const escapeHtml = text =>
   String(text || "").replace(/[&<>]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
 
-const renderPaginacion = () => {
+const renderPaginacion = (totalElementos) => {
   paginacion.innerHTML = "";
-  const total = (metodosFiltrados ?? metodos).length;
-  const totalPaginas = Math.ceil(total / elementosPorPagina);
+  const totalPaginas = Math.ceil(totalElementos / elementosPorPagina);
   if (totalPaginas <= 1) return;
 
   const ul = document.createElement("ul");
   ul.className = "pagination";
-
+  // ... (código de paginación idéntico) ...
   const crearItem = (numero, activo, disabled, texto) => {
     const li = document.createElement("li");
     li.className = `page-item ${activo ? "active" : ""} ${disabled ? "disabled" : ""}`;
     li.innerHTML = `<button class="page-link" onclick="cambiarPagina(${numero})">${texto || numero}</button>`;
     return li;
   };
-
   ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, "<"));
-  const range = [Math.max(1, paginaActual - 2), Math.min(totalPaginas, paginaActual + 2)];
-  if (range[0] > 1) {
-    ul.appendChild(crearItem(1, paginaActual === 1));
-    if (range[0] > 2) ul.appendChild(crearItem(null, false, true, "..."));
-  }
-  for (let i = range[0]; i <= range[1]; i++) ul.appendChild(crearItem(i, paginaActual === i));
-  if (range[1] < totalPaginas) {
-    if (range[1] < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, "..."));
-    ul.appendChild(crearItem(totalPaginas, paginaActual === totalPaginas));
-  }
+  for (let i = 1; i <= totalPaginas; i++) ul.appendChild(crearItem(i, paginaActual === i));
   ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, ">"));
   paginacion.appendChild(ul);
 };
@@ -141,107 +157,79 @@ function cambiarPagina(pagina) {
   renderTabla();
 }
 
-const agregarMetodo = nombre => manejarSolicitud(
-  "/api/pago/agregar_metodo",
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nombre }),
-  },
-  "Error al agregar metodo"
-).then(() => cargarMetodos());
+/**
+ * Función genérica para guardar (Crear/Editar)
+ */
+async function guardarMetodo(method, url, data) {
+  try {
+    const res = await manejarSolicitud(url, {
+      method: method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }, "Error al guardar método");
 
-const actualizarMetodoAPI = (id, nombre) => manejarSolicitud(
-  `/api/pago/actualizar_metodo/${id}`,
-  {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nombMetodo: nombre }),
-  },
-  "Error al actualizar metodo"
-).then(() => cargarMetodos());
+    if (res.success) {
+      mostrarAlerta(res.mensaje, "success");
+      cerrarModal("modalFormulario");
+      await cargarDatosIniciales();
+    }
+  } catch (err) {
+    // El manejador ya mostró la alerta
+  }
+}
 
 const eliminarMetodo = async id => {
   if (!confirm("¿Está seguro de eliminar este metodo de pago?")) return;
   try {
-    const res = await fetch(`/api/pago/eliminar_metodo/${id}`, { method: "DELETE" });
-    const data = await res.json();
-    if (!res.ok) alert(data.error || "Error al eliminar el cargo");
-    else alert(data.mensaje || "Metodo de pagoeliminado correctamente");
-    cargarMetodos();
+    const res = await manejarSolicitud(`/api/pago-metodo/metodos/${id}`, { method: "DELETE" }, "Error al eliminar método");
+    if (res.success) {
+        mostrarAlerta(res.mensaje, "success");
+        cargarDatosIniciales();
+    }
   } catch (err) {
-    console.error("Error al eliminar metodo de pago", err);
-    alert("Error inesperado al eliminar el metodo de pago");
+     // El manejador ya mostró la alerta
   }
 };
 
-async function darDeBaja(id) {
+async function darDeBaja(id, estadoActual) {
   try {
-    const doc = metodos.find(d => d.id === id);
-    if (!doc) return alert("Metodo de pago no encontrado");
-    const nuevoEstado = !doc.estado;
-    const res = await fetch(`/api/pago/cambiar_estado_metodo/${id}`, {
-      method: "PUT",
+    const nuevoEstado = !estadoActual;
+    const res = await manejarSolicitud(`/api/pago-metodo/metodos/${id}/estado`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado: nuevoEstado })
-    });
-    if (!res.ok) throw new Error("Error al cambiar estado");
-    const data = await res.json();
-    doc.estado = data.nuevo_estado === true;
-    renderTabla();
+    }, "Error al cambiar estado");
+    
+    if (res.success) {
+        mostrarAlerta(res.mensaje, "success");
+        cargarDatosIniciales();
+    }
   } catch (err) {
-    console.error(err);
-    alert("Error al actualizar estado");
+    // El manejador ya mostró la alerta
   }
 }
 
-// ===== BÚSQUEDA CORREGIDA =====
+// ===== BÚSQUEDA (Filtro Local) =====
 const inputMetodo = document.getElementById("inputDocumento");
 const btnBuscar = document.getElementById("btn_buscar");
 
-btnBuscar.addEventListener("click", async () => {
-  const termino = inputMetodo.value.trim(); // ✅ corregido
+btnBuscar.addEventListener("click", () => {
+  const termino = inputMetodo.value.trim().toLowerCase();
   if (termino === "") {
     metodosFiltrados = null;
-    paginaActual = 1;
-    renderTabla();
-    return;
+  } else {
+    metodosFiltrados = metodos.filter(m => 
+        m.nombre.toLowerCase().includes(termino)
+    );
   }
-  try {
-    const res = await fetch(`/api/pago/busqueda_metodo/${encodeURIComponent(termino)}`);
-    if (res.status === 404) {
-      metodosFiltrados = [];
-      renderTabla();
-      return;
-    }
-    if (!res.ok) throw new Error("Error en búsqueda");
-    const data = await res.json();
-    metodosFiltrados = Array.isArray(data) ? data.map(normalizar) : [normalizar(data)];
-    paginaActual = 1;
-    renderTabla();
-  } catch (err) {
-    console.error(err);
-    alert("Error al buscar metodo de pago");
-  }
+  paginaActual = 1;
+  renderTabla();
+  contenedorSugerencias.style.display = "none";
 });
 
 function crearModal() {
-  const modalHTML = document.createElement("div");
-  modalHTML.innerHTML = `
-    <div class="modal" id="modalDetalle">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Detalle del Metodo de pago</h5>
-            <button type="button" class="btn-cerrar" onclick="cerrarModal('modalDetalle')">&times;</button>
-          </div>
-          <div class="modal-body" id="modalDetalleContenido"></div>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modalHTML);
-  return document.getElementById("modalDetalle");
+  // Esta función ya no es necesaria si solo usamos un modal
+  return null;
 }
 
 function crearModalFormulario() {
@@ -283,7 +271,7 @@ function cerrarModal(modalId) {
   if (modal) modal.classList.remove('activo');
 }
 
-function abrirModalFormulario(modo, doc = null) {
+async function abrirModalFormulario(modo, doc = null) {
   const titulo = document.getElementById("modalFormularioTitulo");
   const inputNombre = document.getElementById("modalNombre");
   const botonGuardar = document.getElementById("btnGuardar");
@@ -305,9 +293,10 @@ function abrirModalFormulario(modo, doc = null) {
     form.onsubmit = e => {
       e.preventDefault();
       const nombre = inputNombre.value.trim();
-      if (!nombre) return alert("Complete todos los campos");
-      if (existeMetodo(nombre)) return alert("Ya existe un metodo de pago con ese nombre");
-      agregarMetodo(nombre).then(() => cerrarModal("modalFormulario"));
+      if (!nombre) return mostrarAlerta("Complete todos los campos", "error");
+      if (existeMetodo(nombre)) return mostrarAlerta("Ya existe un metodo de pago con ese nombre", "error");
+      
+      guardarMetodo('POST', '/api/pago-metodo/metodos', { nombMetodo: nombre, estadoMetodo: true });
     };
   } else if (modo === "editar" && doc) {
     titulo.textContent = "Editar metodo de metodo de pago";
@@ -315,15 +304,20 @@ function abrirModalFormulario(modo, doc = null) {
     form.onsubmit = e => {
       e.preventDefault();
       const nombre = inputNombre.value.trim();
-      if (!nombre) return alert("Complete todos los campos");
-      if (existeMetodo(nombre, doc.id)) return alert("Ya existe un metodo de pago con ese nombre");
-      actualizarMetodoAPI(doc.id, nombre).then(() => cerrarModal("modalFormulario"));
+      if (!nombre) return mostrarAlerta("Complete todos los campos", "error");
+      if (existeMetodo(nombre, doc.id)) return mostrarAlerta("Ya existe un metodo de pago con ese nombre", "error");
+      
+      guardarMetodo('PUT', `/api/pago-metodo/metodos/${doc.id}`, { nombMetodo: nombre });
     };
   } else if (modo === "ver" && doc) {
     titulo.textContent = "Detalle del metodo de pago";
     inputNombre.value = doc.nombre;
     inputNombre.disabled = true;
-    botonGuardar.onclick = e => { e.preventDefault(); cerrarModal("modalFormulario"); };
+    
+    // Cambiar botón a "Cerrar"
+    botonGuardar.textContent = "Cerrar";
+    botonGuardar.type = "button";
+    botonGuardar.onclick = (e) => { e.preventDefault(); cerrarModal("modalFormulario"); };
   }
 
   abrirModal("modalFormulario");
@@ -352,7 +346,90 @@ document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
 });
 
 // ===== Botón agregar =====
-document.getElementById("btn_guardar").addEventListener("click", () => abrirModalFormulario("agregar"));
+document.getElementById("btn_guardar").addEventListener("click", (e) => {
+    e.preventDefault();
+    abrirModalFormulario("agregar");
+});
+document.getElementById("formDocumento").addEventListener("submit", (e) => e.preventDefault());
+
+// ================== NOTIFICACIONES (Alertas) ==================
+function mostrarAlerta(mensaje, tipo = "success") {
+    const alerta = document.createElement("div");
+    alerta.className = `alerta-toast ${tipo}`;
+    alerta.textContent = mensaje;
+    
+    document.body.appendChild(alerta);
+    setTimeout(() => alerta.classList.add("mostrar"), 10);
+    setTimeout(() => {
+        alerta.classList.remove("mostrar");
+        setTimeout(() => alerta.remove(), 500);
+    }, 3000);
+}
+
+// ==================================================
+// === INICIO: BLOQUE DE SUGERENCIAS (DINÁMICO) ===
+// ==================================================
+
+const contenedorSugerencias = document.createElement("div");
+contenedorSugerencias.id = "sugerenciasContainer";
+document.body.appendChild(contenedorSugerencias); 
+
+function posicionarSugerencias() {
+    const rect = inputBusqueda.getBoundingClientRect(); 
+    contenedorSugerencias.style.left = `${rect.left + window.scrollX}px`;
+    contenedorSugerencias.style.top = `${rect.bottom + window.scrollY}px`;
+    contenedorSugerencias.style.width = `${rect.width}px`;
+}
+
+inputBusqueda.addEventListener("input", () => {
+    const termino = inputBusqueda.value.trim().toLowerCase();
+    contenedorSugerencias.innerHTML = "";
+    
+    if (termino.length === 0) {
+        contenedorSugerencias.style.display = "none";
+        return;
+    }
+
+    // Filtrar por nombre de método
+    const sugerencias = metodos.filter(m => 
+        m.nombre.toLowerCase().startsWith(termino)
+    ).slice(0, 5); 
+
+    if (sugerencias.length === 0) {
+        contenedorSugerencias.style.display = "none";
+        return;
+    }
+
+    sugerencias.forEach(m => {
+        const item = document.createElement("div");
+        item.className = "sugerencia-item";
+        item.textContent = m.nombre;
+        
+        item.onclick = () => {
+            inputBusqueda.value = m.nombre;
+            contenedorSugerencias.style.display = "none";
+            document.getElementById("btn_buscar").click();
+        };
+        contenedorSugerencias.appendChild(item);
+    });
+
+    contenedorSugerencias.style.display = "block";
+    posicionarSugerencias();
+});
+
+// Listeners para ocultar/reposicionar
+document.addEventListener("click", (e) => {
+    if (contenedorSugerencias && !contenedorSugerencias.contains(e.target) && e.target !== inputBusqueda) {
+        contenedorSugerencias.style.display = "none";
+    }
+});
+window.addEventListener("resize", posicionarSugerencias);
+window.addEventListener("scroll", posicionarSugerencias, true);
+
+// === FIN: BLOQUE DE SUGERENCIAS ===
+// ==================================
 
 // ===== Carga inicial =====
-cargarMetodos();
+document.addEventListener("DOMContentLoaded", () => {
+    cargarDatosIniciales();
+});

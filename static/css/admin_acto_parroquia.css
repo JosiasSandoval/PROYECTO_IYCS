@@ -67,7 +67,7 @@ body {
   width: 100%;
   gap: 12px;
   margin-bottom: 20px;
-  position: relative; /* Para sugerencias */
+  position: relative; 
 }
 #formDocumento label {
   font-weight: bold;
@@ -120,10 +120,6 @@ body {
 .btn-info:hover { background-color: #117a8b; }
 .btn-warning { background-color: #ffc107; }
 .btn-warning:hover { background-color: #e0a800; }
-.btn-orange { background-color: #fd7e14; }
-.btn-orange:hover { background-color: #e8590c; }
-.btn-success { background-color: #28a745; }
-.btn-success:hover { background-color: #218838; }
 .btn-danger { background-color: #dc3545; }
 .btn-danger:hover { background-color: #c82333; }
 
@@ -160,11 +156,10 @@ body {
 }
 /* === COLUMNAS (NUEVAS) === */
 .col-id { width: 8%; text-align: center; }
-.col-monto { width: 15%; text-align: right; }
-.col-fechaPago { width: 20%; text-align: left; }
-.col-estadoPago { width: 12%; text-align: center; }
-.col-metodoPago { width: 15%; text-align: left; }
-.col-reserva { width: 10%; text-align: center; }
+.col-acto { width: 25%; text-align: left; }
+.col-parroquia { width: 25%; text-align: left; }
+.col-dia { width: 10%; text-align: center; }
+.col-hora { width: 12%; text-align: center; }
 .col-acciones { width: 20%; text-align: center; }
 
 /* ===== MODALES ===== */
@@ -275,6 +270,11 @@ body {
 .justify-content-center { justify-content: center; }
 .flex-wrap { flex-wrap: wrap; }
 .gap-1 { gap: 0.25rem; }
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
 
 /* ===== PAGINACIÓN ===== */
 #paginacionContainer {

@@ -18,6 +18,9 @@ from app.reserva.route_reserva import reserva_bp
 from app.auditoria_parroquia.route_auditoria_parroquia import auditoria_parroquia_bp 
 from app.disponibilidad.route_disponibilidad import disponibilidad_bp
 from app.requisito.route_requisito import requisito_bp
+from app.acto_parroquia.route_acto_parroquia import acto_parroquia_bp
+from app.configuracion.route_configuracion import configuracion_bp
+from app.excepcion_personal.route_excepcion_personal import excepcion_bp
 
 def crear_app():
     # Obtiene la ruta absoluta de la carpeta 'app'
@@ -51,6 +54,9 @@ def crear_app():
     app.register_blueprint(auditoria_parroquia_bp,url_prefix='/api/auditoria_parroquia')    
     app.register_blueprint(disponibilidad_bp,url_prefix='/api/disponibilidad')
     app.register_blueprint(requisito_bp,url_prefix='/api/requisito')
+    app.register_blueprint(acto_parroquia_bp, url_prefix='/api/acto-parroquia')
+    app.register_blueprint(configuracion_bp, url_prefix='/api/configuracion')
+    app.register_blueprint(excepcion_bp, url_prefix='/api/excepcion')
 
     @app.route("/")
     def iniciar_sesion():
@@ -165,7 +171,18 @@ def crear_app():
     @app.route('/admi/requisito')
     def requisito_admin():    
         return render_template('administradores/requisitos.html')
-
+    @app.route('/admi/pago')
+    def pago_admin():
+        return render_template('administradores/pago.html')
+    @app.route('/admi/acto_parroquia')
+    def acto_parroquia_admin():
+        return render_template('administradores/acto_parroquia.html')
+    @app.route('/admi/configuracion')
+    def configuracion_admin():
+        return render_template('administradores/configuracion')
+    @app.route('/admi/execepcion_personal')
+    def excepcion_personal_admin():
+        return render_template('administradores/excepcion_personal.html')
     return app
 
 

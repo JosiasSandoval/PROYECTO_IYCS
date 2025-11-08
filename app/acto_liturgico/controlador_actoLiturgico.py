@@ -6,9 +6,10 @@ def obtener_actos():
     try:
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT idActo, nombActo, descripcion, costoBase, estadoActo, imgActo
-                FROM acto_liturgico
-                ORDER BY idActo DESC;
+                SELECT idActo, nombActo, descripcion, numParticipantes, 
+                       tipoParticipantes, costoBase, estadoActo, imgActo
+                FROM ACTO_LITURGICO
+                ORDER BY nombActo ASC;
             """)
             filas = cursor.fetchall()
             resultados = []
@@ -17,9 +18,11 @@ def obtener_actos():
                     "idActo": fila[0],
                     "nombActo": fila[1],
                     "descripcion": fila[2],
-                    "costoBase": float(fila[3]),
-                    "estadoActo": bool(fila[4]),
-                    "imgActo": fila[5]
+                    "numParticipantes": fila[3],
+                    "tipoParticipantes": fila[4],
+                    "costoBase": float(fila[5]),
+                    "estadoActo": bool(fila[6]),
+                    "imgActo": fila[7]
                 })
             return resultados
     except Exception as e:
@@ -29,15 +32,15 @@ def obtener_actos():
         if conexion:
             conexion.close()
 
-
 # ================== OBTENER POR ID ==================
 def obtener_acto_por_id(idActo):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT idActo, nombActo, descripcion, costoBase, estadoActo, imgActo
-                FROM acto_liturgico
+                SELECT idActo, nombActo, descripcion, numParticipantes, 
+                       tipoParticipantes, costoBase, estadoActo, imgActo
+                FROM ACTO_LITURGICO
                 WHERE idActo = %s;
             """, (idActo,))
             fila = cursor.fetchone()
@@ -46,9 +49,11 @@ def obtener_acto_por_id(idActo):
                     "idActo": fila[0],
                     "nombActo": fila[1],
                     "descripcion": fila[2],
-                    "costoBase": float(fila[3]),
-                    "estadoActo": bool(fila[4]),
-                    "imgActo": fila[5]
+                    "numParticipantes": fila[3],
+                    "tipoParticipantes": fila[4],
+                    "costoBase": float(fila[5]),
+                    "estadoActo": bool(fila[6]),
+                    "imgActo": fila[7]
                 }
             return None
     except Exception as e:
@@ -58,31 +63,33 @@ def obtener_acto_por_id(idActo):
         if conexion:
             conexion.close()
 
-
-# ================== AGREGAR ==================
+# ================== REGISTRAR ==================
 def registrar_acto(data):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO acto_liturgico (nombActo, descripcion, costoBase, estadoActo, imgActo)
-                VALUES (%s, %s, %s, %s, %s);
+                INSERT INTO ACTO_LITURGICO (
+                    nombActo, descripcion, numParticipantes, tipoParticipantes, 
+                    costoBase, estadoActo, imgActo
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s);
             """, (
                 data["nombActo"],
                 data.get("descripcion"),
+                data["numParticipantes"],
+                data["tipoParticipantes"],
                 data["costoBase"],
-                data["estadoActo"],
+                data.get("estadoActo", True),
                 data["imgActo"]
             ))
             conexion.commit()
-            return True
+            return True, "Acto registrado"
     except Exception as e:
         print(f"Error al registrar acto litúrgico: {e}")
-        return False
+        return False, f"Error: {e}"
     finally:
         if conexion:
             conexion.close()
-
 
 # ================== ACTUALIZAR ==================
 def actualizar_acto(idActo, data):
@@ -90,38 +97,67 @@ def actualizar_acto(idActo, data):
     try:
         with conexion.cursor() as cursor:
             cursor.execute("""
-                UPDATE acto_liturgico
-                SET nombActo=%s, descripcion=%s, costoBase=%s, estadoActo=%s, imgActo=%s
-                WHERE idActo=%s;
+                UPDATE ACTO_LITURGICO SET
+                nombActo = %s,
+                descripcion = %s,
+                numParticipantes = %s,
+                tipoParticipantes = %s,
+                costoBase = %s,
+                imgActo = %s
+                WHERE idActo = %s;
             """, (
                 data["nombActo"],
                 data.get("descripcion"),
+                data["numParticipantes"],
+                data["tipoParticipantes"],
                 data["costoBase"],
-                data["estadoActo"],
                 data["imgActo"],
                 idActo
             ))
             conexion.commit()
-            return True
+            return True, "Acto actualizado"
     except Exception as e:
         print(f"Error al actualizar acto litúrgico: {e}")
-        return False
+        return False, f"Error: {e}"
     finally:
         if conexion:
             conexion.close()
 
+# ================== ACTUALIZAR ESTADO ==================
+def actualizar_estado_acto(id, estado):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute(
+                "UPDATE ACTO_LITURGICO SET estadoActo = %s WHERE idActo = %s",
+                (estado, id)
+            )
+            conexion.commit()
+            return True
+    except Exception as e:
+        print(f"Error al actualizar estado: {e}")
+        return False
+    finally:
+        if conexion:
+            conexion.close()
 
 # ================== ELIMINAR ==================
 def eliminar_acto(idActo):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            cursor.execute("DELETE FROM acto_liturgico WHERE idActo = %s;", (idActo,))
+            # Primero, eliminar dependencias en ACTO_REQUISITO y ACTO_PARROQUIA
+            cursor.execute("DELETE FROM ACTO_REQUISITO WHERE idActo = %s;", (idActo,))
+            cursor.execute("DELETE FROM ACTO_PARROQUIA WHERE idActo = %s;", (idActo,))
+            # Ahora eliminar el acto principal
+            cursor.execute("DELETE FROM ACTO_LITURGICO WHERE idActo = %s;", (idActo,))
             conexion.commit()
-            return True
+            return True, "Acto eliminado"
     except Exception as e:
         print(f"Error al eliminar acto litúrgico: {e}")
-        return False
+        if "foreign key constraint" in str(e).lower():
+            return False, "Error: Este acto está siendo usado en una reserva."
+        return False, f"Error: {e}"
     finally:
         if conexion:
             conexion.close()
