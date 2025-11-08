@@ -50,30 +50,25 @@
                     </div>
                 </div>
                 <div id="form-container">
-                    <div class="form-step current" data-step="4">
-                        <h3><span class="icon">📄</span> Revisa y confirma tu reserva</h3>
-                        <div class="summary-section">
-                            <h4>Parroquia</h4>
-                            <p><strong>Provincia / Distrito:</strong> Chiclayo</p>
-                            <p><strong>Parroquia:</strong> Nombre_parroquia</p>
-                        </div>
-                        <div class="summary-section">
-                            <h4>Solicitante</h4>
-                            <p><strong>Nombre:</strong> Nombre</p>
-                            <p><strong>DNI:</strong> NOMBRE</p>
-                            <p><strong>Teléfono:</strong> NOMBRE</p>
-                            <p><strong>Correo:</strong> NOMBRE</p>
-                            <p><strong>Dirección:</strong> NOMBRE</p>
-                            <p><strong>Relación:</strong> NOMBRE</p>
-                        </div>
-                        <div class="summary-section">
-                            <h4>Acto y programación</h4>
-                            <div class="info_acto"></div>
-                        </div>
-                        <div class="terms-conditions">
-                            <p><i class="fas fa-bell"></i> Recibirás un correo/ WhatsApp cuando la parroquia valide los requisitos.</p>
-                        </div>
-                    </div>
+                                    <div class="form-step current" data-step="4">                                        
+                                        <div class="summary-section">
+                                            <h4>Parroquia</h4>
+                                            <div id="parroquia_data">
+                                                </div>
+                                        </div>
+                                        
+                                        <div class="summary-section">
+                                            <h4>Solicitante</h4>
+                                            <div id="solicitante_data">
+                                                </div>
+                                        </div>
+                                        
+                                        <div class="summary-section">
+                                            <h4>Acto y programación</h4>
+                                            <div id="acto_data">
+                                                </div>
+                                        </div>
+                                    </div>
                 </div>
                 <div class="navigation-buttons">
                     <button class="btn btn-prev">
@@ -87,7 +82,7 @@
         </div>
     </div>
     <script src="/static/js/header.js"></script>
-    <script src="/static/js/reserva.js"></script>
+    <script src="/static/js/resumen.js"></script>
     <script src="/static/js/barra_lateral.js"></script>
 </body>
 </html>

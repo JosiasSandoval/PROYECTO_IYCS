@@ -14,7 +14,8 @@ from app.usuario.controlador_personal import(
     actualizar_usuario_personal,
     agregar_usuario_personal,
     verificar_relacion_personal,
-    eliminar_usuario_personal
+    eliminar_usuario_personal,
+    personal_reserva_datos
 )
 
 usuario_bp = Blueprint('usuario', __name__)
@@ -220,6 +221,11 @@ def vista_perfil_usuario():
 @usuario_bp.route('/api/perfil/datos', methods=['GET'])
 def obtener_datos_perfil():
 
+@usuario_bp.route('/personal_reserva/<int:idParroquia>', methods=['GET'])
+def personal_reserva(idParroquia):
+    datos=personal_reserva_datos(idParroquia)
+    return jsonify({'datos':datos})
+        
     from flask import session 
     id_usuario = session.get('idUsuario')
     

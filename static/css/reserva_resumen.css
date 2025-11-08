@@ -11,7 +11,7 @@ body {
 
 .grid {
     display: grid;
-    grid-template-columns: 250px 1fr;
+    grid-template-columns: 220px 1fr;
     grid-template-areas: "enlaces main-content";
     overflow: hidden;
 }
@@ -71,7 +71,7 @@ aside {
 /* Estilos del contenedor principal del formulario */
 .reserva {
     width: 100%;
-    max-width: 1500px;
+    max-width: 1800px;
     background-color: #fff;
     padding: 30px 40px;
     border-radius: 10px;
