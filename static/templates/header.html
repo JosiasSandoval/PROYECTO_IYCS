@@ -1,11 +1,13 @@
 <!doctype html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Header - Litbook</title>
   <link rel="stylesheet" href="/static/css/header.css">
 </head>
+
 <body>
   <!-- Barra superior -->
   <div class="barra-superior">
@@ -28,11 +30,25 @@
         <div class="texto-rol">Usuario</div>
       </div>
 
-      <button id="btn_salir" class="btn-icon" aria-label="Salir">
-        <a href="#"><img src="/static/img/salida.png" alt="salida" /></a>
+      <button id="btn_notificaciones" class="btn-icon" aria-label="notificaciones">
+        <img src="/static/img/notificaciones.png" alt="notificaciones" /></a>
+      </button>
+
+      <button id="btn_cerrar_sesion" class="btn-icon" aria-label="Cerrar Sesión">
+        <img src="/static/img/salida.png" alt="Cerrar Sesión" /></a>
       </button>
     </div>
   </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const btnCerrarSesion = document.getElementById("btn_cerrar_sesion");
+      if (btnCerrarSesion) {
+        btnCerrarSesion.addEventListener("click", () => {
+          window.location.href = "/cerrar_sesion";
+        });
+      }
+    });
+  </script>
 </body>
-</html>
 
+</html>
