@@ -155,7 +155,13 @@ def crear_app():
     @app.route('/admi/personal')
     def personal_admi():    
         return render_template('administradores/usuario_personal.html')
-
+    
+    @app.route('/cerrar_sesion')
+    def cerrar_sesion():
+        session.clear()
+        return redirect(url_for('iniciar_sesion'))
+    
+    
     return app
 
 

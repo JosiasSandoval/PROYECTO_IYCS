@@ -240,3 +240,85 @@ width: 400px;
     background: #0b5ed7;
     transform: translateY(-1px);
 }
+
+/* =========================
+   🔹 RESPONSIVE DESIGN
+   ========================= */
+
+/* --- Para pantallas medianas (tablets, < 900px) --- */
+@media (max-width: 900px) {
+  .formulario {
+    flex-direction: column-reverse; /* 👈 Imagen arriba del form */
+    align-items: center;
+    gap: 20px;
+    padding: 30px;
+    max-width: 90%;
+  }
+
+  .left {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .right img {
+    width: 250px;
+    height: auto;
+  }
+}
+
+/* --- Para pantallas pequeñas (celulares, < 600px) --- */
+@media (max-width: 600px) {
+  main {
+    padding: 10px;
+  }
+
+  .formulario {
+    flex-direction: column-reverse; /* 👈 mantiene la imagen arriba */
+    box-shadow: none;
+    padding: 25px 20px;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .right img {
+    display: block;       /* 👈 aseguramos que la imagen se vea */
+    width: 180px;
+    height: auto;
+    margin-bottom: 10px;
+  }
+
+  .left h1 {
+    font-size: 20px;
+  }
+
+  .left input {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .left button {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .left .forgot {
+    font-size: 12px;
+  }
+}
+
+/* --- Para pantallas muy pequeñas (< 380px) --- */
+@media (max-width: 380px) {
+  .left h1 {
+    font-size: 18px;
+  }
+
+  .right img {
+    width: 150px;
+  }
+
+  .left input,
+  .left button {
+    font-size: 13px;
+  }
+}
