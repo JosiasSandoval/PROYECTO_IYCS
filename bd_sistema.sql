@@ -220,23 +220,26 @@ CREATE TABLE RESERVA (
     idReserva INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     f_reserva DATE NOT NULL,
     h_reserva TIME NOT NULL,
-    observaciones VARCHAR(255) NULL,
+    mencion VARCHAR(255) NULL,
     estadoReserva VARCHAR(50) NOT NULL,
     numReprogramaciones INT NOT NULL,
     estadoReprogramado BOOLEAN NOT NULL,
-    vigenciaReserva BOOLEAN NOT NULL,
+    vigenciaReserva DATE NOT NULL,
     idUsuario INT NOT NULL,
-    CONSTRAINT fk_reserva_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario)
+    idSolicitante INT,
+    CONSTRAINT fk_reserva_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario),
+    CONSTRAINT fk_reserva_solicitante FOREIGN KEY (idSolicitante) REFERENCES FELIGRES(idFeligres)
 );
 
 CREATE TABLE DOCUMENTO_REQUISITO (
     idDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     rutaArchivo VARCHAR(255) NOT NULL,
     tipoArchivo VARCHAR(100) NULL,
-    f_subido DATE,
+    f_subido DATE NULL,
     estadoCumplimiento VARCHAR(50) NOT NULL,
+    aprobado BOOLEAN NOT NULL,
     observacion VARCHAR(255)NOT NULL,
-    vigenciaDocumento DATE NOT NULL,
+    vigenciaDocumento DATE NULL,
     idReserva INT NOT NULL,
     idActoRequisito INT NOT NULL,
     CONSTRAINT fk_docreq_reserva FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva),

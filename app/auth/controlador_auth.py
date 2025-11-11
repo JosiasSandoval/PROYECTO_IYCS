@@ -48,13 +48,21 @@ def verificar_usuario(email, clave):
     try:
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT us.idUsuario, r.nombRol
+                SELECT 
+                    us.idUsuario, 
+                    r.nombRol, 
+                    pp.idParroquia, 
+                    fe.idFeligres  -- <--- AGREGAR EL ID DEL FELIGRES
                 FROM usuario us
                 INNER JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
                 INNER JOIN rol r ON r.idRol = ru.idRol
+                LEFT JOIN personal pe ON us.idUsuario=pe.idUsuario
+                LEFT JOIN feligres fe ON us.idUsuario=fe.idUsuario -- fe.idFeligres o fe.idUsuario, depende de tu tabla
+                LEFT JOIN parroquia_personal pp ON pe.idPersonal=pp.idPersonal
                 WHERE us.email = %s AND us.clave = %s
             """, (email, clave))
-            usuario = cursor.fetchone()  # retorna (idUsuario, nombRol) o None
+            # Ahora devuelve (idUsuario, nombRol, idParroquia, idFeligres) o None
+            usuario = cursor.fetchone() 
 
         return usuario
     finally:

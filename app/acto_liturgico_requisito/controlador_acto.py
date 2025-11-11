@@ -104,4 +104,19 @@ def participante_acto(idActo):
         if conexion:
             conexion.close()
 
-
+def registrar_participantes_acto(nombParticipante,rolParticipante,idActo,idReserva):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO participantes_acto (nombParticipante, rolParticipante, idActo, idReserva)
+                VALUES (%s, %s, %s,%s);
+                """, (nombParticipante,rolParticipante,idActo,idReserva))
+            conexion.commit()
+            return 1, 'Participantes registrados correctamente'
+    except Exception as e:
+        print(f'Error al registrar los participantes del acto: {e}')
+        return 0, []
+    finally:
+        if conexion:
+            conexion.close()

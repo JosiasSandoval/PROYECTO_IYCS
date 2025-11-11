@@ -264,3 +264,36 @@ def obtener_feligres_por_id(idUsuario):
     finally:
         if conexion:
             conexion.close()
+
+def datos_reserva_usuario(nombre):
+    """
+    Busca feligreses cuyo nombre completo contenga las palabras proporcionadas
+    en el parámetro `nombre`. La búsqueda es parcial y mantiene el orden de las palabras.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Construimos la cadena de búsqueda para SQL LIKE
+            palabras = nombre.strip().split()  # divide en palabras
+            like_pattern = '%' + '%'.join(palabras) + '%'  # '%Juan%Perez%Lopez%'
+
+            cursor.execute("""
+                SELECT 
+                    idFeligres,
+                    numDocFel, 
+                    CONCAT(nombFel, ' ', apePatFel, ' ', apeMatFel) AS nombreCompleto, 
+                    telefonoFel, 
+                    direccionFel
+                FROM feligres
+                WHERE CONCAT(nombFel, ' ', apePatFel, ' ', apeMatFel) LIKE %s
+            """, (like_pattern,))
+            
+            resultados = cursor.fetchall()
+            return resultados
+    except Exception as e:
+        print(f'Error al obtener los datos de la reserva: {e}')
+        return []
+    finally:
+        if conexion:
+            conexion.close()
+
