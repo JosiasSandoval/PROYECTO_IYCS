@@ -17,14 +17,28 @@ def get_verificar_usuario():
         return jsonify({"success": False, "error": "Debe ingresar email y contraseña."}), 400
 
     try:
-        usuario = verificar_usuario(email, clave)  # devuelve (idUsuario, nombRol) o None
+        # Devuelve (idUsuario, nombRol, idParroquia, idFeligres)
+        usuario = verificar_usuario(email, clave) 
 
         if usuario:
             id_usuario = usuario[0]
-            rol_usuario = usuario[1].lower()  # convertir a minúsculas para JS
+            rol_usuario = usuario[1].lower()
+            parroquia_usuario = usuario[2]
+            id_feligres = usuario[3] if rol_usuario == 'feligres' else None # Solo asigna si es feligres
+
             session['idUsuario'] = id_usuario
             session['rol'] = rol_usuario
-            return jsonify({"success": True, "idUsuario": id_usuario, "rol": rol_usuario})
+            session['parroquia_usuario'] = parroquia_usuario
+            session['idFel'] = id_feligres # <--- NUEVO CAMPO DE SESIÓN
+
+            # Puedes devolverlo o no, pero ya está en la sesión para el HTML (si lo agregas)
+            return jsonify({
+                "success": True, 
+                "idUsuario": id_usuario, 
+                "rol": rol_usuario,
+                "parroquia_usuario": parroquia_usuario,
+                "idFel": id_feligres # Agregado a la respuesta API
+            })
         else:
             return jsonify({"success": False, "error": "Email o contraseña incorrectos."}), 401
 

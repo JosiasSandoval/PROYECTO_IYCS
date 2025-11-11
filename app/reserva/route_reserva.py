@@ -1,7 +1,10 @@
-from flask import Blueprint, jsonify, request
-from app.reserva.controlador_reserva import(
-    agregar_reserva)
-#from app.reserva.configuracion_reserva
+from flask import Blueprint, request, jsonify
+from app.reserva.controlador_reserva import (
+    agregar_reserva,
+    cambiar_estado_reserva,
+    eliminar_reserva,
+    reprogramar_reserva
+)
 
 reserva_bp = Blueprint('reserva', __name__)
 
@@ -11,20 +14,45 @@ def nueva_reserva():
         data = request.get_json()
         fecha = data.get('fecha')
         hora = data.get('hora')
-        observaciones = data.get('observaciones')
+        mencion = data.get('observaciones') # Puede ser una cadena vacía ("")
         idUsuario = data.get('idUsuario')
+        idSolicitante = data.get('idSolicitante')
 
-        # Validación simple
-        if not fecha or not hora or not observaciones or not idUsuario:
-            return "Faltan datos en la solicitud.", 400
+        # 🛑 CORRECCIÓN DE LA VALIDACIÓN:
+        # 1. 'mencion' no se valida (puede ser vacío).
+        # 2. 'idSolicitante' se añade como obligatorio, ya que se pasa a agregar_reserva.
+        if not fecha or not hora or not idUsuario or not idSolicitante:
+            return jsonify({"ok": False, "mensaje": "Faltan datos obligatorios (fecha, hora, idUsuario, idSolicitante)."}), 400
 
+        # Si mencion es None (si el campo no existía en el JSON) se inicializa a cadena vacía,
+        # aunque data.get('observaciones') ya lo haría si el frontend envía el campo.
+        mencion = mencion if mencion is not None else ""
+        
         # Llamada a la función que inserta la reserva
-        exito, mensaje = agregar_reserva(fecha, hora, observaciones, idUsuario)
+        exito, resultado = agregar_reserva(fecha, hora, mencion, idUsuario, idSolicitante)
         
         if exito:
-            return mensaje, 200  # Ej: "Reserva creada correctamente"
+            # 💡 NOTA: Asumiendo que 'resultado' contiene el idReserva directamente.
+            return jsonify({"ok": True, "mensaje": "Reserva agregada exitosamente.", "idReserva": resultado}), 200
         else:
-            return mensaje, 500  # Ej: "Error al crear la reserva"
+            return jsonify({"ok": False, "mensaje": f"Error al agregar la reserva: {resultado}"}), 500
+            
+    except Exception as e:
+        # Error general del servidor o JSON inválido
+        return jsonify({"ok": False, "mensaje": f"Error interno del servidor: {str(e)}"}), 500
+
+@reserva_bp.route('/cambiar_estado/<int:idReserva>', methods=['POST'])
+def route_cambiar_estado(idReserva):
+    try:
+        data = request.get_json() or {}
+        accion = data.get('accion', 'continuar')  # Por defecto 'continuar'
+
+        exito, resultado = cambiar_estado_reserva(idReserva, accion)
+
+        if exito:
+            return jsonify({"ok": True, "nuevo_estado": resultado}), 200
+        else:
+            return jsonify({"ok": False, "mensaje": f"Error al cambiar el estado de la reserva: {resultado}"}), 400
 
     except Exception as e:
-        return f"Ocurrió un error: {str(e)}", 500
+        return jsonify({"ok": False, "mensaje": f"Ocurrió un error: {str(e)}"}), 500

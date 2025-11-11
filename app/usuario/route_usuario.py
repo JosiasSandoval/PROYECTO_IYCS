@@ -6,7 +6,8 @@ from app.usuario.controlador_usuario import(
     eliminar_usuario_feligres,
     cambiar_estado_cuenta,
     verificar_relacion_feligres,
-    obtener_feligres_por_id
+    obtener_feligres_por_id,
+    datos_reserva_usuario
 )
 
 from app.usuario.controlador_personal import(
@@ -217,16 +218,13 @@ def vista_perfil_usuario():
         return redirect(url_for('auth.login')) 
     return render_template('perfil.html', id_usuario_logueado=id_usuario)
 
-# En router.py, cerca de la línea 235
-@usuario_bp.route('/api/perfil/datos', methods=['GET'])
-def obtener_datos_perfil():
-
 @usuario_bp.route('/personal_reserva/<int:idParroquia>', methods=['GET'])
 def personal_reserva(idParroquia):
     datos=personal_reserva_datos(idParroquia)
     return jsonify({'datos':datos})
         
-    from flask import session 
+@usuario_bp.route('/perfil/datos', methods=['GET'])
+def obtener_datos_perfil():
     id_usuario = session.get('idUsuario')
     
     if not id_usuario:
@@ -239,3 +237,37 @@ def personal_reserva(idParroquia):
     else:
         # Puede ser un 404 si el usuario existe pero no está en la tabla feligres
         return jsonify({"ok": False, "mensaje": "Datos de feligrés no encontrados o error interno."}), 404
+
+from flask import request, jsonify
+
+@usuario_bp.route('/buscar_solicitante/<path:nombre>', methods=['GET'])
+def buscar_solicitante(nombre):
+    """
+    Busca un feligrés por su nombre completo (parcial o completo).
+    Devuelve el primer usuario encontrado o un mensaje si no existe.
+    """
+    if not nombre:
+        return jsonify({'error': 'Debe proporcionar un nombre para la búsqueda'}), 400
+
+    # Llamamos a la función de la BD
+    resultados = datos_reserva_usuario(nombre)
+
+    if not resultados:
+        return jsonify({'mensaje': 'No se encontraron feligreses con ese nombre'}), 404
+
+    # Tomamos solo el primer resultado
+    fila = resultados[0]
+    usuario = {
+        'idUsuario': fila[0],
+        'numDocFel': fila[1],
+        'nombreCompleto': fila[2],
+        'telefonoFel': fila[3],
+        'direccionFel': fila[4]
+    }
+
+    return jsonify({'usuario': usuario}), 200
+
+
+
+
+
