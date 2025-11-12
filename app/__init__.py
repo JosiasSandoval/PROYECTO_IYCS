@@ -142,8 +142,9 @@ def crear_app():
     def metodo_pago_admi():
         return render_template('administradores/metodo_pago.html')
     
+    @app.route('/admi/pago')
     def pago():
-        return render_template('cliente/pago.html')
+        return render_template('administradores/pago.html')
     @app.route('/admi/rol')
     def rol_admi():
         return render_template('administradores/rol_permiso.html')
