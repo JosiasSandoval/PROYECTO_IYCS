@@ -242,13 +242,13 @@ width: 400px;
 }
 
 /* =========================
-   🔹 RESPONSIVE DESIGN
+   RESPONSIVE DESIGN
    ========================= */
 
 /* --- Para pantallas medianas (tablets, < 900px) --- */
 @media (max-width: 900px) {
   .formulario {
-    flex-direction: column-reverse; /* 👈 Imagen arriba del form */
+    flex-direction: column-reverse; 
     align-items: center;
     gap: 20px;
     padding: 30px;
@@ -273,7 +273,7 @@ width: 400px;
   }
 
   .formulario {
-    flex-direction: column-reverse; /* 👈 mantiene la imagen arriba */
+    flex-direction: column-reverse; 
     box-shadow: none;
     padding: 25px 20px;
     border-radius: 8px;
@@ -282,7 +282,7 @@ width: 400px;
   }
 
   .right img {
-    display: block;       /* 👈 aseguramos que la imagen se vea */
+    display: block;      
     width: 180px;
     height: auto;
     margin-bottom: 10px;
