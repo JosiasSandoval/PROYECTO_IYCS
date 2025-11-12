@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, time
 from flask import jsonify,Blueprint,request
-from app.acto_liturgico_requisito.controlador_acto import (obtener_acto_parroquia,disponibilidad_acto_parroquia,participante_acto,registrar_participantes_acto)
+from app.acto_liturgico_requisito.controlador_acto import (
+    obtener_acto_parroquia,disponibilidad_acto_parroquia,participante_acto,registrar_participantes_acto, obtener_configuracion_acto)
 
 acto_bp=Blueprint('acto',__name__)
 
@@ -75,3 +76,13 @@ def registrar_participante_controller():
     except Exception as e:
         print(f"Error en el controlador de participantes: {e}")
         return jsonify({"ok": False, "mensaje": f"Error interno del servidor al procesar participante: {str(e)}"}), 500
+    
+@acto_bp.route('/configuracion/<int:id>', methods=['GET'])
+def configuracion_acto(id):
+    datos = obtener_configuracion_acto(id)
+    
+    return jsonify({
+        "success": True,
+        "mensaje": "Actos encontrados correctamente",
+        "datos": datos
+    }), 200

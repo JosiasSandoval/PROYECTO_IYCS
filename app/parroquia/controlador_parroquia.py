@@ -8,7 +8,7 @@ def get_obtener_mapa_datos():
         conexion = obtener_conexion()
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT idParroquia, nombParroquia, latParroquia, logParroquia,
+                SELECT idParroquia, nombParroquia,descripcionBreve, latParroquia, logParroquia,
                        historiaParroquia, direccion, telefonoContacto, color
                 FROM PARROQUIA
             """)
@@ -16,12 +16,13 @@ def get_obtener_mapa_datos():
                 {
                     'idParroquia': f[0],
                     'nombParroquia': f[1],
-                    'latParroquia': float(f[2]) if f[2] else None,
-                    'logParroquia': float(f[3]) if f[3] else None,
-                    'historiaParroquia': f[4],
-                    'direccion': f[5],
-                    'telefonoContacto': f[6],
-                    'color': f[7]
+                    'descripcionBreve': f[2],
+                    'latParroquia': float(f[3]) if f[3] else None,
+                    'logParroquia': float(f[4]) if f[4] else None,
+                    'historiaParroquia': f[5],
+                    'direccion': f[6],
+                    'telefonoContacto': f[7],
+                    'color': f[8]
                 }
                 for f in cursor.fetchall()
             ]
@@ -67,13 +68,22 @@ def ubicar_parroquia(nombParroquia):
 # 🔹 OBTENER INFORMACIÓN DETALLADA
 # ======================================================
 def obtener_informacion_parroquia(idParroquia):
+    conexion = None
     try:
         conexion = obtener_conexion()
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT nombParroquia, historiaParroquia, ruc,
-                       telefonoContacto, direccion, color,
-                       latParroquia, logParroquia, estadoParroquia
+                SELECT nombParroquia,
+                       historiaParroquia,
+                       f_creacion,
+                       ruc,
+                       email,
+                       telefonoContacto,
+                       direccion,
+                       color,
+                       latParroquia,
+                       logParroquia,
+                       estadoParroquia
                 FROM PARROQUIA
                 WHERE idParroquia = %s
             """, (idParroquia,))
@@ -82,13 +92,15 @@ def obtener_informacion_parroquia(idParroquia):
                 return {
                     'nombParroquia': fila[0],
                     'historiaParroquia': fila[1],
-                    'ruc': fila[2],
-                    'telefonoContacto': fila[3],
-                    'direccion': fila[4],
-                    'color': fila[5],
-                    'latParroquia': float(fila[6]) if fila[6] else None,
-                    'logParroquia': float(fila[7]) if fila[7] else None,
-                    'estadoParroquia': fila[8]
+                    'f_creacion': fila[2],
+                    'ruc': fila[3],
+                    'email': fila[4],
+                    'telefonoContacto': fila[5],
+                    'direccion': fila[6],
+                    'color': fila[7],
+                    'latParroquia': float(fila[8]) if fila[8] is not None else None,
+                    'logParroquia': float(fila[9]) if fila[9] is not None else None,
+                    'estadoParroquia': fila[10]
                 }
             return None
     except Exception as e:
@@ -97,7 +109,6 @@ def obtener_informacion_parroquia(idParroquia):
     finally:
         if conexion:
             conexion.close()
-
 
 # ======================================================
 # 🔹 LISTAR PARROQUIAS

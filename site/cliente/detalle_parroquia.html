@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LITBOOK | Información de parroquia</title>
     <link rel="stylesheet" href="/static/css/detalle_parroquia.css">
 </head>
-<body>
+<body data-rol="{{ session['rol'] }}" data-id="{{ session['idUsuario'] }}">
     <div id="header-placeholder"></div>
 
     <div class="grid">
@@ -17,16 +17,20 @@
                 <h2>Conoce la parroquia <span id="nombre"></span></h2>
                 
                 <div class="izquierda">
-                    
+
                     <div class="historia campo-largo">
                         <h2>Historia</h2>
                         <p id="historia"></p>
                     </div>
 
-
                     <div class="ruc">
                         <h2>RUC:</h2>
                         <p id="ruc"></p>
+                    </div>
+
+                    <div class="fecha-creacion">
+                        <h2>Fecha de creación:</h2>
+                        <p id="fecha"></p>
                     </div>
                     
                     <div class="sacerdotes">
@@ -40,19 +44,34 @@
                     </div>
                     
                     <div class="contactos">
-                        <h2>Contactos:</h2>
+                        <h2>Contacto:</h2>
                         <p id="contacto"></p>
+                    </div>
+
+                    <div class="email">
+                        <h2>Email:</h2>
+                        <p id="email"></p>
                     </div>
 
                     <div class="direccion campo-largo">
                         <h2>Dirección:</h2>
                         <p id="ubicacion"></p>
                     </div>
+
+                    <div class="info-adicional campo-largo">
+                        <h2>Información adicional:</h2>
+                        <p id="info"></p>
+                    </div>
+
+                    <div class="fecha-horario">
+                        <h2>Horario de atención:</h2>
+                        <p>Horario: <span id="horario"></span></p>
+                    </div>
                     
                 </div>
                 
                 <div class="derecha">
-                    <img id="imagen" alt="Imagen de la parroquia"> 
+                    <img id="imagen" alt="Imagen de la parroquia">
                     <a href="{{ url_for('reserva_cliente') }}"><button type="button" class="reserva">Realizar reserva</button></a>
                     <a href="{{ url_for('calendario_cliente') }}"><button type="button" class="calendario">Ver calendario</button></a>
                     <a href="{{ url_for('parroquia_cliente') }}"><button type="button" class="mapa">Regresar mapa</button></a>

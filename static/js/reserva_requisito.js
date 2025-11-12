@@ -1,8 +1,9 @@
 // =========================================================
-// reserva_requisito.js - Lógica con Roles (Feligres/Secretaria/Admin) CORREGIDO Y UNIFICADO
+// reserva_requisito.js - Lógica con Roles (Feligres/Secretaria/Admin) CORREGIDO FINAL
 // =========================================================
 
 let archivosSeleccionados = {}; // Archivos temporales del Feligres
+let configuracionActo = null;  // Configuración dinámica del acto (se cargará desde la API)
 
 // ==============================
 // FUNCIONES AUXILIARES
@@ -12,12 +13,56 @@ function obtenerRolUsuario() {
 }
 
 function volverPasoAnterior() {
-    // 💡 Paso clave: Guardar el estado actual de los requisitos antes de salir
     guardarRequisitos();
     window.location.href = '/cliente/reserva_datos'; 
 }
 
-// Manejo de selección de archivo
+// ==============================
+// CONFIGURACIÓN DEL ACTO
+// ==============================
+async function obtenerConfiguracionActo(idActo) {
+    try {
+        const resp = await fetch(`/api/acto/configuracion/${idActo}`);
+        const data = await resp.json();
+        if (data.success && data.datos) {
+            configuracionActo = data.datos;
+            console.log("✅ Configuración del acto cargada:", configuracionActo);
+        } else {
+            console.warn("⚠️ No se encontró configuración para este acto.");
+        }
+    } catch (error) {
+        console.error("❌ Error al obtener configuración del acto:", error);
+    }
+}
+
+// ==============================
+// CALCULAR FECHA LÍMITE DOCUMENTOS (manteniendo formato YYYY-MM-DD)
+// ==============================
+function calcularFechaLimiteDocumentos(reservaData) {
+    if (!reservaData?.fecha) return null;
+    if (!configuracionActo) return null;
+
+    const tiempoCambio = configuracionActo.tiempoCambioDocumentos || 48;
+    const unidad = configuracionActo.unidadTiempoAcciones || "horas";
+    const fechaActo = new Date(reservaData.fecha);
+    const fechaLimite = new Date(fechaActo);
+
+    if (unidad === "horas") {
+        fechaLimite.setHours(fechaLimite.getHours() - tiempoCambio);
+    } else {
+        fechaLimite.setDate(fechaLimite.getDate() - tiempoCambio);
+    }
+
+    // 🔹 Mantiene el formato YYYY-MM-DD (válido para MySQL)
+    const year = fechaLimite.getFullYear();
+    const month = String(fechaLimite.getMonth() + 1).padStart(2, '0');
+    const day = String(fechaLimite.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// ==============================
+// MANEJO DE ARCHIVOS
+// ==============================
 function manejarCambioArchivo(event) {
     const input = event.target;
     const idRequisito = input.dataset.idRequisito;
@@ -56,7 +101,7 @@ function manejarCambioArchivo(event) {
 }
 
 // ==============================
-// GUARDAR REQUISITOS (Función de guardado independiente)
+// GUARDAR REQUISITOS
 // ==============================
 function guardarRequisitos() {
     const rol = obtenerRolUsuario();
@@ -66,23 +111,25 @@ function guardarRequisitos() {
     const requisitosGuardados = reservaData.requisitos;
     let datosRequisitosNuevos = {};
 
-    // Obtener la fecha de hoy en formato YYYY-MM-DD una sola vez
     const fechaHoy = new Date().toISOString().split('T')[0];
 
-    // Función auxiliar para calcular la vigencia de PLAZO (Hoy + 7 días)
+    // 🔹 Función auxiliar para calcular vigencia por defecto (7 días)
     const calcularVigenciaPlazo = () => {
         const fechaLimite = new Date();
         fechaLimite.setDate(fechaLimite.getDate() + 7);
-        return fechaLimite.toISOString().split('T')[0];
+        const year = fechaLimite.getFullYear();
+        const month = String(fechaLimite.getMonth() + 1).padStart(2, '0');
+        const day = String(fechaLimite.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     };
-    
-    // Calcular el plazo de 7 días una sola vez (se usa siempre para vigencia)
+
     const plazoSieteDias = calcularVigenciaPlazo(); 
 
-
+    // ==========================
+    // ROL FELIGRES
+    // ==========================
     if (rol === 'feligres') {
         const inputFiles = requisitosContainer.querySelectorAll('input[type="file"]');
-        
         inputFiles.forEach(input => {
             const idRequisito = input.dataset.idRequisito;
             const nombreRequisito = input.dataset.nombreRequisito;
@@ -92,8 +139,6 @@ function guardarRequisitos() {
 
             const archivoNuevo = !!archivoData?.file;
             const archivoPreviamenteGuardado = !!metaDataPrevia.rutaArchivo && metaDataPrevia.nombreArchivo !== 'NO CUMPLIDO'; 
-            
-            // Se considera cumplido si se subió uno nuevo O ya había uno guardado
             const archivoPresente = archivoNuevo || archivoPreviamenteGuardado; 
 
             let fSubidoFinal = null;
@@ -102,90 +147,68 @@ function guardarRequisitos() {
             let tipoArchivoFinal = null;
 
             if (archivoPresente) {
-                // REGLA 1: Cumplido -> f_subido = HOY
                 fSubidoFinal = fechaHoy;
-                
-                // Priorizar el archivo nuevo, sino el metadata previo
                 nombreArchivoFinal = archivoNuevo ? archivoData.file.name : metaDataPrevia.nombreArchivo;
                 rutaArchivoFinal = archivoNuevo ? `/temporal/${idRequisito}_${archivoData.file.name}` : metaDataPrevia.rutaArchivo;
                 tipoArchivoFinal = archivoNuevo ? archivoData.tipo : metaDataPrevia.tipoArchivo;
-
-            } else {
-                // REGLA 2: No Cumplido -> f_subido = NULL
-                fSubidoFinal = null;
             }
+
+            const fechaLimiteConfig = calcularFechaLimiteDocumentos(reservaData);
 
             datosRequisitosNuevos[idRequisito] = {
                 idActoRequisito,
                 nombre: nombreRequisito,
-                
                 nombreArchivo: nombreArchivoFinal,
                 archivoListo: !!archivoPresente,
                 rutaArchivo: rutaArchivoFinal,
                 tipoArchivo: tipoArchivoFinal,
-                
-                // ✨ Asignación final de Fechas/Vigencia
                 f_subido: fSubidoFinal,
-                // Vigencia SIEMPRE es de 7 días, sin importar el estado.
-                vigenciaDocumento: plazoSieteDias, 
-                
+                vigenciaDocumento: fechaLimiteConfig || plazoSieteDias,
                 aprobado: false,
                 estadoCumplido: archivoPresente ? 'CUMPLIDO' : 'NO_CUMPLIDO'
             };
         });
-    } else if (rol === 'secretaria' || rol === 'administrador') {
+    } 
+    // ==========================
+    // ROL SECRETARIA / ADMINISTRADOR
+    // ==========================
+    else if (rol === 'secretaria' || rol === 'administrador') {
         const checkboxes = requisitosContainer.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
             const idRequisito = checkbox.dataset.idRequisito;
             const nombreRequisito = checkbox.dataset.nombreRequisito;
             const idActoRequisito = checkbox.dataset.idActoRequisito || null;
-
-            // LEER DATOS PREVIOS DIRECTAMENTE DE SESSION STORAGE (más seguro)
             const metaDataPrevia = requisitosGuardados[idRequisito] || {};
 
-            // ¡USAR LET!
             let nombreArchivo = metaDataPrevia.nombreArchivo || 'NO CUMPLIDO';
             let rutaArchivo = metaDataPrevia.rutaArchivo || null;
             let tipoArchivo = metaDataPrevia.tipoArchivo || null;
-            
             let fechaSubidaFinal = null;
             let estadoCumplidoFinal;
 
             if (checkbox.checked) {
-                // REGLA 1: Cumplido (Check marcado) -> f_subido = HOY
                 estadoCumplidoFinal = 'CUMPLIDO';
-                
                 fechaSubidaFinal = fechaHoy; 
-                
-                if (nombreArchivo === 'NO CUMPLIDO') {
-                    nombreArchivo = 'ENTREGADO (Manual)'; 
-                }
-
+                if (nombreArchivo === 'NO CUMPLIDO') nombreArchivo = 'ENTREGADO (Manual)'; 
             } else {
-                // REGLA 2: No Cumplido (Check desmarcado) -> f_subido = NULL
                 estadoCumplidoFinal = 'NO_CUMPLIDO';
-                
-                // Resetear metadata de archivo y fechas
                 nombreArchivo = 'NO CUMPLIDO';
                 rutaArchivo = null;
                 tipoArchivo = null;
                 fechaSubidaFinal = null; 
             }
 
+            const fechaLimiteConfig = calcularFechaLimiteDocumentos(reservaData);
+
             datosRequisitosNuevos[idRequisito] = {
                 idActoRequisito,
                 nombre: nombreRequisito,
-                
-                nombreArchivo: nombreArchivo,
+                nombreArchivo,
                 archivoListo: !!rutaArchivo,
-                rutaArchivo: rutaArchivo,
-                tipoArchivo: tipoArchivo,
-                
-                // ✨ Asignación de fechas y estado
+                rutaArchivo,
+                tipoArchivo,
                 f_subido: fechaSubidaFinal,
-                // Vigencia SIEMPRE es de 7 días, sin importar el estado.
-                vigenciaDocumento: plazoSieteDias, 
-                
+                vigenciaDocumento: fechaLimiteConfig || plazoSieteDias,
                 aprobado: false,
                 entregado: checkbox.checked,
                 estadoCumplido: estadoCumplidoFinal
@@ -193,12 +216,10 @@ function guardarRequisitos() {
         });
     }
 
-    // Merge profundo
     Object.keys(datosRequisitosNuevos).forEach(id => {
-        // Al fusionar, los nuevos datos tienen prioridad y están completos
         reservaData.requisitos[id] = {
-            ...reservaData.requisitos[id], // Mantiene metadata no modificada
-            ...datosRequisitosNuevos[id] // Sobrescribe con los datos de entrada corregidos
+            ...reservaData.requisitos[id],
+            ...datosRequisitosNuevos[id]
         };
     });
 
@@ -206,44 +227,37 @@ function guardarRequisitos() {
     console.log('📌 Requisitos guardados:', reservaData.requisitos);
 }
 
-
 // ==============================
-// GUARDAR REQUISITOS Y CONTINUAR
+// GUARDAR Y CONTINUAR
 // ==============================
 function guardarRequisitosYContinuar() {
-// ... (resto de la función es correcto)
     const rol = obtenerRolUsuario();
     const termsCheckbox = document.getElementById('terms-autorizacion');
 
-    // 1. Validar solo si es feligrés e intenta continuar
     if (rol === 'feligres') {
         if (!termsCheckbox || !termsCheckbox.checked) {
             alert("⚠️ Debes aceptar los términos y condiciones antes de continuar.");
             return;
         }
     }
-    
-    // 2. Guardar los datos de los requisitos
-    guardarRequisitos();
 
-    // 3. Redirigir al siguiente paso
+    guardarRequisitos();
     window.location.href = '/cliente/reserva_resumen';
 }
 
 // ==============================
-// GENERACIÓN DINÁMICA DE UI
+// GENERACIÓN DE UI
 // ==============================
 function generarUIRequisitos(listaRequisitos, container, rol, reservaData) {
-// ... (resto de la función es correcto)
     if (!container) return;
-    
     container.innerHTML = '';
     const requisitosGuardados = reservaData.requisitos || {};
 
     if (rol === 'feligres') {
+        const fechaLimite = calcularFechaLimiteDocumentos(reservaData);
         const info = document.createElement('p');
         info.className = 'alert alert-info small mt-3';
-        info.innerHTML = '<i class="fas fa-info-circle"></i> Nota: Cada documento tiene 7 días para cambios. PDF/JPG/JPEG.';
+        info.innerHTML = `<i class="fas fa-info-circle"></i> Nota: Debes entregar o cambiar los documentos antes del <strong>${fechaLimite || '...'}</strong>.`;
         container.appendChild(info);
     }
 
@@ -255,18 +269,14 @@ function generarUIRequisitos(listaRequisitos, container, rol, reservaData) {
     listaRequisitos.forEach(requisito => {
         const idRequisito = requisito.id;
         const metaDataPrevia = requisitosGuardados[idRequisito] || {};
-
         const card = document.createElement('div');
         card.className = 'card mb-3 shadow-sm border-info';
-
-
         const cardBody = document.createElement('div');
         cardBody.className = 'card-body';
 
         const titulo = document.createElement('h5');
         titulo.className = 'card-title';
         titulo.textContent = requisito.nombRequisito + (requisito.obligatorio ? ' *' : '');
-
         const descripcion = document.createElement('p');
         descripcion.className = 'card-text text-muted small';
         descripcion.textContent = requisito.descripcion;
@@ -276,14 +286,12 @@ function generarUIRequisitos(listaRequisitos, container, rol, reservaData) {
 
         if (rol === 'feligres') {
             const archivoYaCargado = !!metaDataPrevia.rutaArchivo || !!archivosSeleccionados[idRequisito];
-
             if (archivoYaCargado && metaDataPrevia.nombreArchivo && metaDataPrevia.nombreArchivo !== 'NO CUMPLIDO') {
                 const infoExistente = document.createElement('p');
                 infoExistente.className = 'text-success small font-weight-bold';
-                infoExistente.innerHTML = `<i class="fas fa-check-circle"></i> Archivo previamente subido: <strong>${metaDataPrevia.nombreArchivo}</strong> (Suba uno nuevo para reemplazar)`;
+                infoExistente.innerHTML = `<i class="fas fa-check-circle"></i> Archivo previamente subido: <strong>${metaDataPrevia.nombreArchivo}</strong>`;
                 cardBody.appendChild(infoExistente);
             }
-
             const input = document.createElement('input');
             input.type = 'file';
             input.className = 'form-control-file mt-2';
@@ -295,21 +303,14 @@ function generarUIRequisitos(listaRequisitos, container, rol, reservaData) {
             if (requisito.obligatorio && !archivoYaCargado) input.required = true;
             input.addEventListener('change', manejarCambioArchivo);
             cardBody.appendChild(input);
-
         } else if (rol === 'secretaria' || rol === 'administrador') {
-            const nombreArchivo = metaDataPrevia.nombreArchivo || 'No subido';
             const entregado = metaDataPrevia.entregado === true;
-
             const archivoInfo = document.createElement('p');
             archivoInfo.className = entregado ? 'text-success' : 'text-danger';
-            archivoInfo.innerHTML = `
-                Estado: <strong>${entregado ? 'CUMPLIDO' : 'NO CUMPLIDO'}</strong>
-            `;
+            archivoInfo.innerHTML = `Estado: <strong>${entregado ? 'CUMPLIDO' : 'NO CUMPLIDO'}</strong>`;
             cardBody.appendChild(archivoInfo);
-
             const checkDiv = document.createElement('div');
             checkDiv.className = 'form-check mt-2';
-
             const inputCheck = document.createElement('input');
             inputCheck.type = 'checkbox';
             inputCheck.className = 'form-check-input';
@@ -318,19 +319,10 @@ function generarUIRequisitos(listaRequisitos, container, rol, reservaData) {
             inputCheck.dataset.idRequisito = idRequisito;
             inputCheck.dataset.idActoRequisito = requisito.idActoRequisito;
             inputCheck.dataset.nombreRequisito = requisito.nombRequisito;
-            
-            // Los data-attributes ahora solo son para la UI o debug, la lógica usa sessionStorage.
-            inputCheck.dataset.nombreArchivo = metaDataPrevia.nombreArchivo || 'NO CUMPLIDO';
-            inputCheck.dataset.rutaArchivo = metaDataPrevia.rutaArchivo || null;
-            inputCheck.dataset.tipoArchivo = metaDataPrevia.tipoArchivo || null;
-            inputCheck.dataset.fSubido = metaDataPrevia.f_subido || null;
-            inputCheck.dataset.vigenciaDocumento = metaDataPrevia.vigenciaDocumento || null;
-            
             const labelCheck = document.createElement('label');
             labelCheck.className = 'form-check-label font-weight-bold';
             labelCheck.htmlFor = inputCheck.id;
             labelCheck.textContent = 'Entregado';
-
             checkDiv.appendChild(inputCheck);
             checkDiv.appendChild(labelCheck);
             cardBody.appendChild(checkDiv);
@@ -344,40 +336,12 @@ function generarUIRequisitos(listaRequisitos, container, rol, reservaData) {
 // ==============================
 // INICIALIZACIÓN
 // ==============================
-document.addEventListener('DOMContentLoaded', () => {
-// ... (resto de la función es correcto)
+document.addEventListener('DOMContentLoaded', async () => {
     const rolUsuario = obtenerRolUsuario();
     const datosReservaString = sessionStorage.getItem('reserva');
     const requisitosContainer = document.getElementById('requisitos-lista');
     const btnSiguiente = document.getElementById('btn-siguiente'); 
     const btnAtras = document.getElementById('btn-atras'); 
-    const termsCheckbox = document.getElementById('terms-autorizacion');
-
-    // Inicializar archivosSeleccionados desde sessionStorage (metadata, no el archivo en sí)
-    if (datosReservaString) {
-        const reservaData = JSON.parse(datosReservaString);
-        archivosSeleccionados = {};
-        if (reservaData.requisitos) {
-            Object.keys(reservaData.requisitos).forEach(id => {
-                const req = reservaData.requisitos[id];
-                // Solo inicializa si se subió un archivo válido antes
-                if (req.archivoListo && req.rutaArchivo && req.nombreArchivo !== 'NO CUMPLIDO') { 
-                    archivosSeleccionados[id] = { file: null, tipo: req.tipoArchivo };
-                }
-            });
-        }
-    }
-
-    const termsContainer = termsCheckbox ? termsCheckbox.closest('.form-check') : null;
-    if (termsContainer) {
-        if (rolUsuario === 'feligres') {
-            termsContainer.style.display = '';
-            // No fuerces a false si ya estaba checked y volvio a este paso
-            // termsCheckbox.checked = false; 
-        } else {
-            termsContainer.style.display = 'none';
-        }
-    }
 
     if (!datosReservaString || !requisitosContainer) return;
 
@@ -389,9 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Inicializamos requisitos si no existen
-    reservaData.requisitos = reservaData.requisitos || {};
-    sessionStorage.setItem('reserva', JSON.stringify(reservaData));
+    await obtenerConfiguracionActo(idActo);
 
     fetch(`/api/requisito/${idActo}`)
         .then(resp => resp.ok ? resp.json() : Promise.reject(`HTTP ${resp.status}`))
@@ -406,15 +368,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnSiguiente) btnSiguiente.addEventListener('click', guardarRequisitosYContinuar);
     if (btnAtras) btnAtras.addEventListener('click', volverPasoAnterior);
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-            e.preventDefault(); 
-            guardarRequisitosYContinuar();
-        }
-        if (e.key === 'Backspace' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-            e.preventDefault(); 
-            volverPasoAnterior();
-        }
-    });
 });

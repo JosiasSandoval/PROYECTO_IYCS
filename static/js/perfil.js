@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cargarDatosPerfil = async () => {
         try {
-            const response = await fetch('/api/usuario/api/perfil/datos');
+            const response = await fetch('/api/usuario/perfil/datos');
 
             if (!response.ok) {
                 console.error(`Error al cargar datos del perfil: ${response.status} ${response.statusText}`);

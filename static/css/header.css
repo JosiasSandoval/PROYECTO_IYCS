@@ -97,6 +97,80 @@ img {
   color: #adc5e0;
   outline-offset: 2px;
 }
+/* ===== MODAL USUARIO (efecto nube flotante) ===== */
+.usuario-container {
+  position: relative;
+  display: inline-block;
+}
+
+.modal-usuario {
+  display: none;
+  position: absolute;
+  top: 65px; /* justo debajo del icono */
+  right: 115px; /* centrado visualmente */
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 210px;
+  overflow: hidden;
+  z-index: 1000;
+  font-size: 1rem;
+  line-height: 1.5;
+  transform-origin: top right;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Flecha tipo nube */
+.modal-usuario::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  right: 20px;
+  width: 16px;
+  height: 16px;
+  background: #ffffff;
+  border-left: 1px solid #d1d5db;
+  border-top: 1px solid #d1d5db;
+  transform: rotate(45deg);
+  box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.05);
+  z-index: -1;
+}
+
+.modal-usuario.mostrar {
+  display: block;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.modal-usuario a {
+  display: block;
+  padding: 12px 18px;
+  text-decoration: none;
+  color: #111827;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.modal-usuario a:hover {
+  background-color: #eff6ff;
+  color: #1e3a8a;
+}
+
+.modal-usuario hr {
+  margin: 8px 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+.modal-usuario #rol_actual {
+  font-weight: 600;
+  color: #2563eb;
+  text-align: center;
+  padding: 8px 0;
+}
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 520px) {

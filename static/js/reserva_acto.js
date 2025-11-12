@@ -1,12 +1,13 @@
 // ==============================
-// reserva_acto.js — Lógica de reserva + calendario integrado (VERSIÓN FINAL CORREGIDA Y OPTIMIZADA)
+// reserva_acto.js — Lógica de reserva + calendario integrado (VERSIÓN FINAL con CONFIGURACIÓN ACTO + ENFOQUE AUTOMÁTICO DE MES)
 // ==============================
 
 let fechaSeleccionada = null;
 let horaSeleccionada = null;
 let calendario;
 let horariosConfiguracion = [];
-const DIA_ABREV = ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"];
+let configuracionActo = { tiempoMinimoReserva: 0, tiempoMaximoReserva: null };
+const DIA_ABREV = ["Dom", "Lun", "Mar", "Mi", "Jue", "Vie", "Sáb"];
 const idParroquia = sessionStorage.getItem('idParroquiaSeleccionada');
 const nombreParroquia = sessionStorage.getItem('nombreParroquiaSeleccionada');
 
@@ -35,7 +36,6 @@ function limpiarSeleccionActo() {
 }
 
 function reiniciarReserva() {
-    // Solo eliminar los datos de reserva y no todo el sessionStorage
     sessionStorage.removeItem('reserva');
     limpiarSeleccionActo();
 
@@ -58,14 +58,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Mostrar nombre de parroquia
     const tituloParroquia = document.getElementById('nombreParroquiaSeleccionada');
     if (tituloParroquia && nombreParroquia) tituloParroquia.textContent = nombreParroquia;
 
     const actoSelect = document.getElementById('acto-liturgico');
     if (!actoSelect.value) limpiarSeleccionActo();
 
-    // Cargar actos y luego datos previos
     await cargarActosPorParroquia(idParroquia);
     await cargarDatosPrevios();
 
@@ -75,7 +73,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnAtras = document.getElementById('btn-atras');
     if (btnAtras) btnAtras.addEventListener('click', volverPasoAnterior);
 
-    // Detectar cambio de acto litúrgico → reiniciar reserva solo si cambia realmente
     actoSelect?.addEventListener('change', () => {
         const idActoSeleccionado = actoSelect.value;
         const reservaGuardada = JSON.parse(sessionStorage.getItem('reserva') || '{}');
@@ -98,7 +95,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         cargarDisponibilidadActo(idParroquia, actoSelect.value);
     }
 
-    // Confirmar hora dentro del modal
     document.addEventListener('click', e => {
         if (e.target.id === 'btnConfirmarModalHora') {
             const modalElement = document.getElementById('modalConfirmacion');
@@ -115,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const obsTextarea = document.getElementById('observaciones');
             if (obsTextarea) {
                 obsTextarea.disabled = false;
-                obsTextarea.placeholder = 'Escribe aquí cualquier mencion relevante...';
+                obsTextarea.placeholder = 'Escribe aquí cualquier mención relevante...';
             }
 
             modal.hide();
@@ -187,20 +183,20 @@ document.getElementById('btn-siguiente')?.addEventListener('click', function() {
 
     const reservaActual = JSON.parse(sessionStorage.getItem('reserva') || '{}');
 
-const reservaData = {
-    ...reservaActual,
-    idParroquia,
-    nombreParroquia,
-    idActo,             // ⚡ usar el acto seleccionado actualmente
-    nombreActo,         // ⚡ usar el nombre del acto seleccionado
-    costoBase,
-    fecha: fechaSeleccionada,
-    hora: horaSeleccionada,
-    observaciones,
-    participantes: reservaActual.participantes || {},
-    requisitos: reservaActual.requisitos || {},
-    solicitante: reservaActual.solicitante || {}
-};
+    const reservaData = {
+        ...reservaActual,
+        idParroquia,
+        nombreParroquia,
+        idActo,
+        nombreActo,
+        costoBase,
+        fecha: fechaSeleccionada,
+        hora: horaSeleccionada,
+        observaciones,
+        participantes: reservaActual.participantes || {},
+        requisitos: reservaActual.requisitos || {},
+        solicitante: reservaActual.solicitante || {}
+    };
 
     sessionStorage.setItem('reserva', JSON.stringify(reservaData));
     window.location.href = 'reserva_datos';
@@ -253,18 +249,18 @@ function inicializarCalendario(calendarioEl) {
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
         dateClick: function(info) {
             const fechaLocal = new Date(info.dateStr + 'T12:00:00');
-            const actoSelect = document.getElementById('acto-liturgico');
-            if (!actoSelect || !actoSelect.value) {
-                alert("⚠️ Por favor, selecciona un acto litúrgico primero.");
+            const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+
+            // ⚙️ Validar tiempo mínimo de reserva
+            const fechaMin = new Date(hoy);
+            fechaMin.setDate(fechaMin.getDate() + (configuracionActo.tiempoMinimoReserva || 0));
+            if (fechaLocal < fechaMin) {
+                alert(`⚠️ Solo puedes reservar a partir del ${fechaMin.toLocaleDateString()}.`);
                 return;
             }
 
-            const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-            if (fechaLocal < hoy) return;
-
             const diaAbrev = DIA_ABREV[fechaLocal.getDay()].toLowerCase();
-            const disponible = fechaDisponible(diaAbrev);
-            if (!disponible) {
+            if (!fechaDisponible(diaAbrev)) {
                 alert("⚠️ Este día no tiene horarios disponibles.");
                 return;
             }
@@ -275,11 +271,11 @@ function inicializarCalendario(calendarioEl) {
     calendario.render();
 }
 
+// ⚙️ NUEVO: Cargar disponibilidad + configuración
 async function cargarDisponibilidadActo(idParroquia, idActo) {
     try {
         const resp = await fetch(`/api/acto/disponibilidad/${idParroquia}/${idActo}`);
         if (!resp.ok) throw new Error("Error al obtener disponibilidad del acto");
-
         const data = await resp.json();
         horariosConfiguracion = Array.isArray(data.datos)
             ? data.datos.map(d => ({
@@ -288,10 +284,29 @@ async function cargarDisponibilidadActo(idParroquia, idActo) {
             }))
             : [];
 
+        const respConfig = await fetch(`/api/acto/configuracion/${idActo}`);
+        if (respConfig.ok) {
+            const dataConfig = await respConfig.json();
+            if (dataConfig.success && dataConfig.datos) {
+                configuracionActo = {
+                    tiempoMinimoReserva: dataConfig.datos.tiempoMinimoReserva || 0,
+                    tiempoMaximoReserva: dataConfig.datos.tiempoMaximoReserva || null
+                };
+            }
+        }
+
+        console.log("⚙️ Configuración aplicada:", configuracionActo);
         pintarDiasDisponibles();
+
+        const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+        const fechaInicio = new Date(hoy);
+        fechaInicio.setDate(fechaInicio.getDate() + (configuracionActo.tiempoMinimoReserva || 0));
+
+        if (calendario) calendario.gotoDate(fechaInicio);
     } catch (error) {
-        console.error("❌ Error cargando disponibilidad:", error);
+        console.error("❌ Error cargando disponibilidad/configuración:", error);
         horariosConfiguracion = [];
+        configuracionActo = { tiempoMinimoReserva: 0, tiempoMaximoReserva: null };
         pintarDiasDisponibles();
     }
 }
@@ -306,17 +321,25 @@ function pintarDiasDisponibles() {
 
     const eventos = [];
     const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-    const fechaFin = new Date(hoy); fechaFin.setMonth(fechaFin.getMonth() + 6);
 
-    for (let d = new Date(hoy); d <= fechaFin; d.setDate(d.getDate() + 1)) {
+    const fechaInicio = new Date(hoy);
+    fechaInicio.setDate(fechaInicio.getDate() + (configuracionActo.tiempoMinimoReserva || 0));
+
+    const fechaFin = new Date(hoy);
+    if (configuracionActo.tiempoMaximoReserva) {
+        fechaFin.setDate(fechaFin.getDate() + configuracionActo.tiempoMaximoReserva);
+    } else {
+        fechaFin.setFullYear(fechaFin.getFullYear() + 3);
+    }
+
+    for (let d = new Date(fechaInicio); d <= fechaFin; d.setDate(d.getDate() + 1)) {
         const fechaStr = d.toISOString().split('T')[0];
         const diaAbrev = DIA_ABREV[d.getDay()].toLowerCase();
-
-        let color = "#ccc";
-        if (d >= hoy) color = fechaDisponible(diaAbrev) ? "#b8f7b0" : "#f7b0b0";
+        const color = fechaDisponible(diaAbrev) ? "#b8f7b0" : "#f7b0b0";
 
         eventos.push({ start: fechaStr, display: 'background', backgroundColor: color });
     }
+
     calendario.addEventSource(eventos);
 }
 
@@ -377,3 +400,23 @@ function abrirModalHoraDisponible(fecha) {
         });
     });
 }
+
+// ==============================
+// 🔹 Mostrar/Ocultar campo "Mención" según acto
+// ==============================
+document.addEventListener("DOMContentLoaded", () => {
+    const selectActo = document.getElementById("acto-liturgico");
+    const grupoMencion = document.querySelector('.form-group label[for="observaciones"]').closest('.form-group');
+
+    if (selectActo && grupoMencion) {
+        selectActo.addEventListener("change", () => {
+            const texto = selectActo.options[selectActo.selectedIndex].textContent.toLowerCase();
+
+            if (texto.includes("bautismo") || texto.includes("matrimonio")) {
+                grupoMencion.style.display = "none";
+            } else {
+                grupoMencion.style.display = "block";
+            }
+        });
+    }
+});

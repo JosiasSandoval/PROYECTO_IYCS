@@ -75,13 +75,16 @@ main {
 
 .detalle {
     background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 25px;
-    margin-top: 0;  
+    border-radius: 16px;              /* Más redondeado */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); /* Sombra más profunda */
+    padding: 40px;                    /* Más espacio interno */
+    margin-top: 20px;                 /* Separación desde arriba */
     display: grid;
-    grid-template-columns: 3fr 2fr;
-    gap: 40px;
+    grid-template-columns: 2.5fr 2fr; /* Ajuste de proporciones más equilibrado */
+    gap: 50px;                        /* Mayor separación entre columnas */
+    max-width: 1800px;                /* Limitar ancho máximo para pantallas grandes */
+    margin-left: auto;
+    margin-right: auto;               /* Centrar horizontalmente */
 }
 
 .detalle > h2 {

@@ -37,18 +37,16 @@
       <button id="btn_cerrar_sesion" class="btn-icon" aria-label="Cerrar Sesión">
         <img src="/static/img/salida.png" alt="Cerrar Sesión" /></a>
       </button>
+
+        <div id="modal_usuario" class="modal-usuario">
+        <a href="/cliente/perfil">👤 Mi perfil</a>
+        <hr>
+        <a href="#">⚙️ Mi rol: <span id="rol_actual">Usuario</span></a>
+      </div>
+
     </div>
   </div>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const btnCerrarSesion = document.getElementById("btn_cerrar_sesion");
-      if (btnCerrarSesion) {
-        btnCerrarSesion.addEventListener("click", () => {
-          window.location.href = "/cerrar_sesion";
-        });
-      }
-    });
-  </script>
+  <script src="/static/js/header.js"></script>
 </body>
 
 </html>
