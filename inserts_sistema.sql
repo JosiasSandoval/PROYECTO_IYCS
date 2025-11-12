@@ -382,10 +382,8 @@ INSERT INTO ACTO_LITURGICO (nombActo, descripcion, numParticipantes,tipoParticip
 ('Misa Comunitaria', 'Celebración de la Eucaristía con múltiples intenciones, abierta a la comunidad de la parroquia.',2,'Beneficiario(s), sacerdote', 50.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/5719853306317319414_0'),
 ('Bautismo Comunitario', 'Sacramento de Bautismo celebrado en grupo, en fechas y horarios fijos.',5,'Padre,Madre,Padrino,Madrina,Sacerdote', 150.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
 ('Bautismo Individual', 'Sacramento de Bautismo celebrado de forma privada, fuera de los horarios comunes.',5,'Padre,Madre,Padrino,Madrina,Sacerdote', 250.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
-('Matrimonio (Normal)', 'Sacramento del Matrimonio de dos feligreses propios de la parroquia.', 7,'Novia,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote',300.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
-('Matrimonio (Traslado)', 'Sacramento del Matrimonio de feligreses externos que solicitan realizarlo en esta parroquia.', 7,'Novia,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote', 500.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
-('Confirmación', 'Sacramento que perfecciona la gracia bautismal y confiere el Espíritu Santo.', 3,'Beneficiario,Padrino o Madrina, Sacerdote',100.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/818614702535729351_0'),
-('Misa de Exequias', 'Celebración litúrgica por el eterno descanso del difunto. (Sujeta a horarios).',2,'Beneficiario(s), sacerdote', 200.00, TRUE, 'https://ejemplo.com/imagen_funeral_catolico.jpg');
+('Matrimonio (Normal)', 'Sacramento del Matrimonio de dos feligreses propios de la parroquia.', 7,'Novio,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote',300.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
+('Matrimonio (Traslado)', 'Sacramento del Matrimonio de feligreses externos que solicitan realizarlo en esta parroquia.', 7,'Novio,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote', 500.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0');
 
 INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo) VALUES
 -- Misa Individual (08:00)
@@ -437,55 +435,89 @@ INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo) VALU
 (7, 16, 'Dom', '15:00:00'), (7, 17, 'Dom', '15:00:00'), (7, 18, 'Dom', '15:00:00'), (7, 19, 'Dom', '15:00:00'), (7, 20, 'Dom', '15:00:00'),
 (7, 21, 'Dom', '15:00:00'), (7, 22, 'Dom', '15:00:00'), (7, 23, 'Dom', '15:00:00'),
 
--- Misa de Exequias (12:00)
-(8, 1, 'Vie', '12:00:00'), (8, 2, 'Vie', '12:00:00'), (8, 3, 'Vie', '12:00:00'), (8, 4, 'Vie', '12:00:00'), (8, 5, 'Vie', '12:00:00'),
-(8, 6, 'Vie', '12:00:00'), (8, 7, 'Vie', '12:00:00'), (8, 8, 'Vie', '12:00:00'), (8, 9, 'Vie', '12:00:00'), (8, 10, 'Vie', '12:00:00'),
-(8, 11, 'Vie', '12:00:00'), (8, 12, 'Vie', '12:00:00'), (8, 13, 'Vie', '12:00:00'), (8, 14, 'Vie', '12:00:00'), (8, 15, 'Vie', '12:00:00'),
-(8, 16, 'Vie', '12:00:00'), (8, 17, 'Vie', '12:00:00'), (8, 18, 'Vie', '12:00:00'), (8, 19, 'Vie', '12:00:00'), (8, 20, 'Vie', '12:00:00'),
-(8, 21, 'Vie', '12:00:00'), (8, 22, 'Vie', '12:00:00'), (8, 23, 'Vie', '12:00:00');
 
 
 INSERT INTO REQUISITO (nombRequisito, f_requisito, descripcion, estadoRequisito) VALUES
--- *******************************************************************
--- Requisitos para BAUTISMO (Comunitario/Individual)
--- *******************************************************************
-('Acta de Nacimiento', NULL, 'Documento oficial que certifica el nacimiento del niño(a).', TRUE),
-('Consentimiento de Padres', NULL, 'Declaración firmada de ambos padres o tutores legales.', TRUE),
-('Catequesis Prebautismal', NULL, 'Constancia de asistencia a la charla de preparación de padres y padrinos.', TRUE),
-('Padrinos Confirmados', NULL, 'Los padrinos deben ser católicos, estar confirmados y llevar una vida congruente con la fe.', TRUE),
-('Documentos de Padrinos', NULL, 'Copia del acta de Confirmación y, si están casados, del acta de Matrimonio Eclesiástico.', TRUE),
+-- Requisitos para Misas
+('Documento de Identidad del Solicitante', '2025-01-01', 'Presentar el DNI o Carné de Extranjería del solicitante.', TRUE), -- ID 1
+('Intención de la Misa (Formulario)', '2025-01-01', 'Especificar el motivo de la Misa (difunto, acción de gracias, salud, etc.).', TRUE), -- ID 2
+('Constancia de Ofrenda', '2025-01-01', 'Comprobante del pago o donación correspondiente al estipendio de la Misa.', TRUE), -- ID 3
 
--- *******************************************************************
--- Requisitos para CONFIRMACIÓN
--- *******************************************************************
-('Acta de Bautismo', NULL, 'Certificado que acredita la recepción del sacramento del Bautismo.', TRUE),
-('Acta de Primera Comunión', NULL, 'Certificado de haber recibido previamente la Eucaristía.', TRUE),
-('Catequesis de Confirmación', NULL, 'Comprobante de haber asistido y aprobado el curso de catequesis (usualmente 1-2 años).', TRUE),
-('Confesión Previa', '2025-10-25', 'Haber recibido el sacramento de la Penitencia (Confesión) días antes de la ceremonia.', TRUE),
+-- Requisitos para Bautismos
+('Partida de Nacimiento del Bautizando', '2025-01-01', 'Copia certificada de la Partida de Nacimiento civil.', TRUE), -- ID 4
+('Documentos de Identidad de Padres', '2025-01-01', 'Copia de DNI o pasaporte de ambos padres.', TRUE), -- ID 5
+('Certificado de Padrinos (DNI)', '2025-01-01', 'Copia de DNI del Padrino y la Madrina.', TRUE), -- ID 6
+('Certificado de Charla Pre-Bautismal', '2025-01-01', 'Constancia de asistencia de padres y padrinos a la catequesis pre-bautismal.', TRUE), -- ID 7
+('Licencia de la Parroquia', '2025-01-01', 'Permiso (Licencia) de la parroquia de residencia de los padres.', TRUE), -- ID 8
 
--- *******************************************************************
--- Requisitos para MATRIMONIO (Normal/Traslado)
--- *******************************************************************
-('Acta de Bautismo Actualizada (Novios)', NULL, 'Certificado reciente (no mayor a 6 meses) de Bautismo de ambos contrayentes.', TRUE),
-('Acta de Confirmación (Novios)', NULL, 'Certificado de haber recibido el sacramento de la Confirmación.', TRUE),
-('Acta de Primera Comunión (Novios)', NULL, 'Certificado de haber recibido la Primera Comunión.', TRUE),
-('Pláticas Prematrimoniales', NULL, 'Constancia de asistencia al curso prematrimonial impartido por la Diócesis.', TRUE),
-('Proclamas Matrimoniales', NULL, 'Comprobante de la publicación de las amonestaciones en las parroquias de origen.', TRUE),
-('Fotocopia Cédula/DNI', NULL, 'Copia de identificación de los novios, padrinos y testigos.', TRUE),
-('Licencia de Traslado', NULL, 'Documento que permite celebrar el matrimonio en una parroquia diferente a la de domicilio (solo para Matrimonio Traslado).', TRUE),
+-- Requisitos para Matrimonios
+('Partida de Bautismo Actualizada', '2025-01-01', 'Partida de Bautismo de ambos contrayentes, expedida con no más de 6 meses de antigüedad.', TRUE), -- ID 9
+('Partida de Confirmación', '2025-01-01', 'Partida o constancia de Confirmación de ambos contrayentes.', TRUE), -- ID 10
+('Certificado de Charla Pre-Matrimonial', '2025-01-01', 'Constancia de asistencia al curso de preparación matrimonial.', TRUE), -- ID 11
+('Documentos de Identidad Contrayentes', '2025-01-01', 'Copia de DNI o pasaporte de ambos.', TRUE), -- ID 12
+('Certificado de Soltería Canónica', '2025-01-01', 'Documento que acredita que no están casados por la Iglesia.', TRUE), -- ID 13
+('Licencia del Párroco', '2025-01-01', 'Permiso del párroco de domicilio del contrayente/novia.', TRUE), -- ID 14
+('Documentos de Identidad de Testigos', '2025-01-01', 'Copia de DNI de los testigos (mínimo 2 o 4, según requerimiento).', TRUE); -- ID 15
+INSERT INTO ACTO_REQUISITO (idActo, idRequisito) VALUES
+-- ------------------------------
+-- Misa Individual (idActo: 1)
+-- Requisitos 1, 2, 3
+-- ------------------------------
+(1, 1), 
+(1, 2), 
+(1, 3), 
 
--- *******************************************************************
--- Requisitos para PRIMERA COMUNIÓN
--- *******************************************************************
-('Acta de Bautismo', NULL, 'Certificado que acredita la recepción del sacramento del Bautismo.', TRUE),
-('Catequesis Eucarística', NULL, 'Comprobante de haber asistido y aprobado el curso de catequesis (usualmente 2 años).', TRUE),
-('Edad Mínima', NULL, 'Haber cumplido la edad requerida (ej. 8 años) y tener uso de razón.', TRUE),
+-- ------------------------------
+-- Misa Comunitaria (idActo: 2)
+-- Requisitos 1, 2, 3
+-- ------------------------------
+(2, 1), 
+(2, 2), 
+(2, 3), 
 
--- *******************************************************************
--- Requisitos para MISA DE EXEQUIAS
--- *******************************************************************
-('Acta de Defunción', NULL, 'Documento civil que acredita el fallecimiento de la persona.', TRUE),
-('Petición Familiar', NULL, 'Solicitud formal de la familia para la celebración de la Misa (no es estrictamente un requisito canónico, sino administrativo).', TRUE);
+-- ------------------------------
+-- Bautismo Comunitario (idActo: 3)
+-- Requisitos 4, 5, 6, 7, 8
+-- ------------------------------
+(3, 4), 
+(3, 5), 
+(3, 6), 
+(3, 7), 
+(3, 8), 
+
+-- ------------------------------
+-- Bautismo Individual (idActo: 4)
+-- Requisitos 4, 5, 6, 7, 8
+-- ------------------------------
+(4, 4),  
+(4, 5),  
+(4, 6),  
+(4, 7),  
+(4, 8),  
+
+-- ------------------------------
+-- Matrimonio (Normal) (idActo: 5)
+-- Requisitos 9, 10, 11, 12, 13, 14, 15
+-- ------------------------------
+(5, 9),  
+(5, 10), 
+(5, 11), 
+(5, 12), 
+(5, 13), 
+(5, 14), 
+(5, 15), 
+
+-- ------------------------------
+-- Matrimonio (Traslado) (idActo: 6)
+-- Requisitos 9, 10, 11, 12, 13, 14, 15
+-- ------------------------------
+(6, 9),  
+(6, 10), 
+(6, 11), 
+(6, 12), 
+(6, 13), 
+(6, 14), 
+(6, 15);
 
 INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
 ('CUPOS_DIARIOS_MISA', 'personas', '50', 'Número máximo de participantes por día para las misas.', TRUE),
@@ -501,3 +533,36 @@ INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfigur
 ('DOCUMENTO_IMAGEN', 'booleano', 'TRUE', 'Indica que los documentos se pueden entregar en formato imagen (jpg/png).', TRUE),
 ('HORARIO_MAXIMO_RESERVA', 'horas', '18', 'Última hora del día en la que se pueden programar actos litúrgicos.', TRUE);
 
+INSERT INTO CONFIGURACION_ACTO (
+    idActo, tiempoDuracion, tiempoMaxCancelacion, tiempoMaxReprogramacion, 
+    tiempoAprobacionRequisitos, tiempoCambioDocumentos, tiempoMaxPago, 
+    tiempoMinimoReserva, tiempoMaximoReserva, maxActosPorDia, 
+    unidadTiempoAcciones, unidadTiempoReserva, estadoConfiguracion
+) VALUES
+-- Misa Individual (idActo = 1)
+(1, 45, 12, 24, 48, 48, 72, NULL, NULL, 5, 'horas', 'dias', TRUE),
+
+-- Misa Comunitaria (idActo = 2)
+-- Menos restricciones, solo una duración
+(2, 45, 12, 24, 48, 48, 72, NULL, NULL, 5, 'horas', 'dias', TRUE),
+
+-- Bautismo Comunitario (idActo = 3)
+-- Reserva fija (no se usa rango), pero con límites de tiempo importantes
+(3, 90, 3, 7, 7, 7, 3, NULL, NULL, NULL, 'dias', 'dias', TRUE),
+
+-- Bautismo Individual (idActo = 4)
+-- Requiere más anticipación para coordinar
+(4, 60, 7, 14, 14, 14, 7, NULL, NULL, 1, 'dias', 'dias', TRUE);
+INSERT INTO CONFIGURACION_ACTO (
+    idActo, tiempoDuracion, tiempoMaxCancelacion, tiempoMaxReprogramacion, 
+    tiempoAprobacionRequisitos, tiempoCambioDocumentos, tiempoMaxPago, 
+    tiempoMinimoReserva, tiempoMaximoReserva, maxActosPorDia, 
+    unidadTiempoAcciones, unidadTiempoReserva, estadoConfiguracion
+) VALUES
+-- Matrimonio (Normal) (idActo = 5)
+-- ¡Aquí aplicamos el rango de reserva de 3 a 6 meses!
+(5, 120, 30, 60, 90, 90, 7, 90, 180, 1, 'dias', 'dias', TRUE),
+
+-- Matrimonio (Traslado) (idActo = 6)
+-- Similar al Normal, pero con tiempos de aprobación de documentos más estrictos
+(6, 120, 30, 60, 90, 90, 7, 90, 180, 1, 'dias', 'meses', TRUE);

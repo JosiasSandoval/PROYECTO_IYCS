@@ -7,54 +7,49 @@
 }
 
 /* 1. CORRECCIÓN CLAVE: FIJAR ALTURA Y EVITAR SCROLL EN EL BODY */
-/* Esto asume que .grid está dentro del <body>. Si .grid no es el contenedor principal, 
-   deberías aplicar estas propiedades al <body> o al contenedor que envuelve a .grid. */
 html, body {
     height: 100%;
     overflow: hidden; /* EVITA EL SCROLL GLOBAL DE LA PÁGINA */
 }
 
-/* Contenedor Principal: Fija la altura al 100% del viewport */
+/* Contenedor Principal */
 .grid {
     display: grid;
-    /* Columna de navegación (aside) fija y contenido principal flexible */
-    grid-template-columns: 230px 1fr; /* Sidebar ligeramente más ancha */
-    /* Fila de mapa (mapa) que toma el espacio restante y fila de detalle (detalle) fija */
+    grid-template-columns: 230px 1fr; 
     grid-template-rows: 1fr auto; 
     grid-template-areas:
         "enlaces mapa"
         "enlaces detalle";
     height: 100vh;
-    overflow: hidden; /* Asegura que la cuadrícula misma no se desborde */
+    overflow: hidden; 
 }
 
 /* --- ASIDE: ENLACES/SIDEBAR --- */
 aside {
     grid-area: enlaces;
-    padding: 25px 20px; /* Más padding vertical */
-    background-color: #ffffff; /* Fondo blanco para contraste */
+    padding: 25px 20px;
+    background-color: #ffffff;
     border-right: 1px solid #e9ecef;
     display: flex;
     flex-direction: column;
-    /* Sombra sutil para destacar la barra lateral */
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
-    overflow-y: auto; /* Permite scroll solo en la barra lateral si hay muchos botones */
+    overflow-y: auto;
 }
 
 .botones {
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Más espacio entre botones */
+    gap: 8px;
 }
 
 .botones button {
     display: flex;
     align-items: center;
     gap: 15px;
-    padding: 12px 18px; /* Botones más grandes */
+    padding: 12px 18px;
     border: none;
     background-color: transparent;
-    border-radius: 10px; /* Bordes más redondeados */
+    border-radius: 10px;
     text-align: left;
     font-size: 15px;
     font-weight: 500;
@@ -66,25 +61,23 @@ aside {
 
 .botones button:hover,
 .botones button.activo {
-    background-color: #e6f0ff; /* Azul muy claro */
-    color: #007bff; /* Azul principal */
+    background-color: #e6f0ff;
+    color: #007bff;
     font-weight: 600;
 }
 
 .botones img {
-    width: 20px; /* Íconos ligeramente más pequeños */
+    width: 20px;
     height: 20px;
     flex-shrink: 0;
-    /* Filtro para que los íconos sean azules cuando el botón está activo/hover */
     filter: grayscale(100%);
     transition: filter 0.3s;
 }
 
 .botones button:hover img,
 .botones button.activo img {
-    filter: none; /* Icono a color cuando está activo */
+    filter: none;
 }
-
 
 /* --- MAPA Y CONTROLES DE BÚSQUEDA --- */
 #mapa {
@@ -92,42 +85,35 @@ aside {
     display: block; 
     overflow: hidden;
     position: relative;
-    /* CLAVE DE MARGENES: El padding da el espacio a los lados del mapa */
-    padding: 0 30px; /* Añade margen a los costados (30px) */
+    padding: 0 30px;
 }
 
-/* Contenedor para Título y Búsqueda (Header del Mapa) */
 .mapa-header {
     display: flex;
     flex-direction: column;
-    /* ALINEACION CLAVE: Ahora el contenido se estira para llenar los 100% del ancho */
-    align-items: stretch; /* Asegura que .consulta tome todo el ancho */
-    padding: 20px 0 0; /* Padding superior para el contenido del mapa */
+    align-items: stretch;
+    padding: 20px 0 0;
     background-color: #ffffff; 
     border-bottom: none; 
     width: 100%; 
 }
 
-/* Título de la Sección de Mapa */
 #mapa h2 {
-    margin-bottom: 25px; /* Espacio debajo del título */
+    margin-bottom: 25px;
     color: #0b1a2e;
     text-transform: uppercase;
-    font-weight: 800; /* Título con mucho peso */
+    font-weight: 800;
     font-size: 28px;
     text-align: center;
     letter-spacing: -0.5px;
 }
 
-/* 2. CORRECCIÓN CLAVE: Alineación Horizontal para etiqueta y input */
 .consulta {
-    width: 100%; /* Toma el ancho completo dentro del mapa-header */
-    max-width: none;
+    width: 100%;
     margin-bottom: 30px; 
     display: flex;
     flex-direction: row; 
     align-items: center; 
-    /* ELIMINAMOS EL GAP Y USAMOS JUSTIFY-CONTENT PARA FORZAR LA SEPARACIÓN Y ALINEACIÓN EN BORDES */
     justify-content: space-between; 
 }
 
@@ -135,21 +121,21 @@ aside {
     font-size: 15px;
     color: #212529;
     font-weight: 600;
-    flex-shrink: 0; /* No permite que la etiqueta se encoja */
-    margin-right: 15px; /* Espacio fijo a la derecha de la etiqueta */
+    flex-shrink: 0;
+    margin-right: 15px;
 }
 
-/* Agrupamiento de Input y Botón (Diseño Moderno) */
+/* === GRUPO INPUT (CORREGIDO PARA LISTA DEBAJO DEL INPUT) === */
 .input-group {
+    position: relative; /* 👈 NECESARIO PARA QUE la lista se ubique debajo */
     display: flex;
     border: 1px solid #ced4da;
     border-radius: 10px; 
-    overflow: hidden;
+    overflow: visible; /* 👈 Permite mostrar las sugerencias fuera del borde */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); 
-    /* CLAVE: Calculamos el ancho restante */
     flex-grow: 1; 
-    width: calc(100% - 150px); /* Un valor de ejemplo para que el label tome aprox. 135px y el input el resto. */
-    max-width: none; /* Asegura que se expanda sin límites artificiales */
+    width: calc(100% - 150px);
+    max-width: none;
 }
 
 .input-group input {
@@ -164,7 +150,6 @@ aside {
     color: #adb5bd;
 }
 
-/* Estilo del Botón de Búsqueda */
 #btn-buscar {
     padding: 12px 25px;
     border: none;
@@ -180,10 +165,37 @@ aside {
     background-color: #0056b3;
 }
 
-/* Contenedor Leaflet Map */
+/* === LISTA DE SUGERENCIAS (CORREGIDA) === */
+.sugerencias-lista {
+    position: absolute;
+    top: calc(100% + 1px); /* 👈 JUSTO DEBAJO DEL INPUT */
+    left: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    width: 93%; /* Igual ancho que el input */
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    z-index: 999;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sugerencia-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.sugerencia-item:hover {
+    background: #f0f0f0;
+}
+
+/* --- MAPA --- */
 #gps {
     width: 100%; 
-    /* Mantenemos la altura ajustada */
     height: calc(100vh - 230px); 
     border-radius: 10px; 
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); 
@@ -193,24 +205,22 @@ aside {
 /* --- DETALLE DE PARROQUIA --- */
 .detalle {
     grid-area: detalle;
-    /* Mantenemos el padding horizontal para que coincida con el margen del mapa (30px) */
     padding: 20px 30px; 
-    background-color: #f8f9fa; /* Fondo ligeramente gris */
+    background-color: #f8f9fa;
     border-top: 1px solid #e9ecef;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    /* IMPORTANTE: Altura máxima controlada por el grid, y scroll interno */
-    max-height: 40vh; /* Permite que tome una porción de la pantalla para detalle */
-    overflow-y: auto; /* El scroll SOLO ocurre dentro de esta sección */
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.03); /* Sombra superior sutil */
+    max-height: 40vh;
+    overflow-y: auto;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .detalle img {
     width: 100%;
     max-width: 350px;
-    height: 180px; /* Altura fija para la imagen */
+    height: 180px;
     border-radius: 12px;
     margin-bottom: 20px;
     object-fit: cover;
@@ -241,7 +251,6 @@ aside {
     margin-top: 15px;
 }
 
-/* Nota: En tu código tenías '.botones_detalle', lo corregí a '.botones-detalle' para consistencia */
 .botones-detalle button { 
     padding: 10px 25px;
     border: none;
@@ -266,23 +275,4 @@ aside {
 .botones-detalle .reserva:hover {
     background-color: #1e7e34;
     transform: translateY(-1px);
-} 
-.sugerencias-lista {
-    position: absolute;
-    background: #fff;
-    border: 1px solid #ccc;
-    width: 78.5%;
-    max-height: 150px;
-    overflow-y: auto;
-    padding: 0;
-    margin: 0;
-    list-style: none;
-    z-index: 999;
-}
-.sugerencia-item {
-    padding: 5px 10px;
-    cursor: pointer;
-}
-.sugerencia-item:hover {
-    background: #f0f0f0;
 }

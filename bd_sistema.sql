@@ -200,7 +200,7 @@ CREATE TABLE ACTO_PARROQUIA(
 CREATE TABLE REQUISITO (
     idRequisito INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     nombRequisito VARCHAR(100) NOT NULL,
-    f_requisito DATE NULL,
+    f_requisito DATE NOT NULL,
     descripcion VARCHAR(255) NULL,
     estadoRequisito BOOLEAN NOT NULL
 );
@@ -220,23 +220,26 @@ CREATE TABLE RESERVA (
     idReserva INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     f_reserva DATE NOT NULL,
     h_reserva TIME NOT NULL,
-    observaciones VARCHAR(255) NULL,
+    mencion VARCHAR(255) NULL,
     estadoReserva VARCHAR(50) NOT NULL,
     numReprogramaciones INT NOT NULL,
     estadoReprogramado BOOLEAN NOT NULL,
-    vigenciaReserva BOOLEAN NOT NULL,
+    vigenciaReserva DATE NOT NULL,
     idUsuario INT NOT NULL,
-    CONSTRAINT fk_reserva_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario)
+    idSolicitante INT,
+    CONSTRAINT fk_reserva_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario),
+    CONSTRAINT fk_reserva_solicitante FOREIGN KEY (idSolicitante) REFERENCES FELIGRES(idFeligres)
 );
 
 CREATE TABLE DOCUMENTO_REQUISITO (
     idDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     rutaArchivo VARCHAR(255) NOT NULL,
     tipoArchivo VARCHAR(100) NULL,
-    f_subido DATETIME NOT NULL,
+    f_subido DATE NULL,
     estadoCumplimiento VARCHAR(50) NOT NULL,
+    aprobado BOOLEAN NOT NULL,
     observacion VARCHAR(255)NOT NULL,
-    vigenciaDocumento BOOLEAN NOT NULL,
+    vigenciaDocumento DATE NULL,
     idReserva INT NOT NULL,
     idActoRequisito INT NOT NULL,
     CONSTRAINT fk_docreq_reserva FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva),
@@ -278,13 +281,35 @@ CREATE TABLE PAGO (
 -- =========================
 -- CONFIGURACIÓN Y EXCEPCIONES
 -- =========================
-CREATE TABLE CONFIGURACION (
-    idConfiguracion INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    nombClave VARCHAR(150) NOT NULL,
-    unidad VARCHAR(50) NOT NULL,
-    valor VARCHAR(30) NOT NULL,
-    descripcion VARCHAR(255) NULL,
-    estadoConfiguracion BOOLEAN NOT NULL
+CREATE TABLE CONFIGURACION_ACTO (
+    idConfigActo INT PRIMARY KEY AUTO_INCREMENT,
+    idActo INT NOT NULL,
+
+    -- Duración del Acto (Sigue siendo obligatorio)
+    tiempoDuracion INT NOT NULL,                  -- Duración en minutos
+
+    -- Tiempos de Límites de Acción (Ahora Opcionales/NULL)
+    tiempoMaxCancelacion INT NOT NULL,            -- Máx. tiempo antes del acto que se puede cancelar
+    tiempoMaxReprogramacion INT NOT NULL,         -- Máx. tiempo antes del acto que se puede reprogramar
+    tiempoAprobacionRequisitos INT NOT NULL,      -- Tiempo límite para aprobar requisitos
+    tiempoCambioDocumentos INT NOT NULL,          -- Tiempo límite para cambiar documentos
+    tiempoMaxPago INT NOT NULL,                   -- Tiempo máximo para realizar el pago
+
+    -- Rango de Reserva (Ahora Opcionales/NULL)
+    tiempoMinimoReserva INT NULL,             -- Mínimo de tiempo de anticipación para reservar
+    tiempoMaximoReserva INT NULL,             -- Máximo de tiempo de anticipación para reservar
+
+    -- Configuración General
+    maxActosPorDia INT NULL,                 -- Cuántos actos de este tipo se pueden celebrar por día
+    
+    -- Unidades de Tiempo (Estas deben ser NOT NULL si se usan los campos de tiempo)
+    -- Podrías considerar hacerlas NULL también, o usar el ENUM solo si el tiempo NO es NULL.
+    unidadTiempoAcciones ENUM('horas', 'dias') NOT NULL,
+    unidadTiempoReserva ENUM('dias', 'meses', 'años') NOT NULL, 
+
+    estadoConfiguracion BOOLEAN NOT NULL,
+    CONSTRAINT fk_configacto_acto FOREIGN KEY (idActo)
+        REFERENCES ACTO_LITURGICO(idActo)
 );
 
 CREATE TABLE EXCEPCION_PERSONAL (
