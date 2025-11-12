@@ -120,3 +120,60 @@ def registrar_participantes_acto(nombParticipante,rolParticipante,idActo,idReser
     finally:
         if conexion:
             conexion.close()
+
+def obtener_configuracion_acto(idActo):
+    conexion = obtener_conexion() # Asegura que la conexión se obtenga aquí
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    idConfigActo, 
+                    tiempoDuracion, 
+                    tiempoMaxCancelacion, 
+                    tiempoMaxReprogramacion, 
+                    tiempoAprobacionRequisitos, 
+                    tiempoCambioDocumentos, 
+                    tiempoMaxPago,
+                    tiempoMinimoReserva,
+                    tiempoMaximoReserva, 
+                    maxActosPorDia, 
+                    unidadTiempoAcciones, 
+                    unidadTiempoReserva,
+                    estadoConfiguracion
+                FROM configuracion_acto
+                WHERE idActo = %s;
+            """, (idActo,))
+            
+            fila = cursor.fetchone()
+            
+            if fila:
+                # Mapear los resultados a un diccionario usando los índices actualizados (0 a 12)
+                resultado = {
+                    'ok': True,
+                    'idConfigActo': fila[0],
+                    'tiempoDuracion': fila[1],
+                    'tiempoMaxCancelacion': fila[2],
+                    'tiempoMaxReprogramacion': fila[3],
+                    'tiempoAprobacionRequisitos': fila[4],
+                    'tiempoCambioDocumentos': fila[5],
+                    'tiempoMaxPago': fila[6],
+                    'tiempoMinimoReserva': fila[7],        # NUEVO
+                    'tiempoMaximoReserva': fila[8],        # NUEVO
+                    'maxActosPorDia': fila[9],
+                    'unidadTiempoAcciones': fila[10],      # CORREGIDO
+                    'unidadTiempoReserva': fila[11],       # NUEVO
+                    'estadoConfiguracion': fila[12]
+                }
+                return resultado
+            else:
+                # Caso donde no hay configuración para ese idActo
+                return {'ok': False, 'mensaje': f'No se encontró configuración para el idActo: {idActo}'}
+                
+    except Exception as e:
+        print(f'Error al obtener la configuración del acto: {e}')
+        # Retornar mensaje de error detallado
+        return {'ok': False, 'mensaje': f'Error al consultar la base de datos: {e}'}
+        
+    finally:
+        if conexion:
+            conexion.close()

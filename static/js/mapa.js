@@ -49,10 +49,10 @@ async function cargarParroquias() {
         datos.forEach(p => {
             if (!p.latParroquia || !p.logParroquia) return;
 
-            const mostrarBotonReserva = (rolUsuario === 'feligres' || rolUsuario === 'secretaria') ? ` 
-                <button onclick="mostrarCalendarioParroquia('${p.idParroquia}')"
+            const mostrarBotonReserva = (rolUsuario === 'feligres') ? ` 
+                <button onclick="mostrarInformacionParroquia('${p.idParroquia}')"
                     style="background:#00a135;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
-                    Ver calendario
+                    Más información
                 </button>` : '';
 
             const popupContent = `
@@ -79,6 +79,19 @@ async function cargarParroquias() {
         console.error("Error al cargar parroquias:", e);
     }
 }
+
+// --- FUNCION PARA BOTON "MAS INFORMACION" ---
+function mostrarInformacionParroquia(idParroquia) {
+    // Guardar la parroquia seleccionada en sessionStorage
+    const entry = Object.values(markersByName).find(p => String(p.id) === String(idParroquia));
+    if (entry) {
+        sessionStorage.setItem('idParroquiaSeleccionada', entry.id);
+        sessionStorage.setItem('nombreParroquiaSeleccionada', entry.nombre);
+    }
+    // Redirigir a la página de detalle de parroquia
+    window.location.href = '/cliente/detalle_parroquia';
+}
+
 
 function restaurarParroquias() {
     markerClusterGroup.clearLayers();

@@ -383,9 +383,7 @@ INSERT INTO ACTO_LITURGICO (nombActo, descripcion, numParticipantes,tipoParticip
 ('Bautismo Comunitario', 'Sacramento de Bautismo celebrado en grupo, en fechas y horarios fijos.',5,'Padre,Madre,Padrino,Madrina,Sacerdote', 150.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
 ('Bautismo Individual', 'Sacramento de Bautismo celebrado de forma privada, fuera de los horarios comunes.',5,'Padre,Madre,Padrino,Madrina,Sacerdote', 250.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
 ('Matrimonio (Normal)', 'Sacramento del Matrimonio de dos feligreses propios de la parroquia.', 7,'Novio,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote',300.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
-('Matrimonio (Traslado)', 'Sacramento del Matrimonio de feligreses externos que solicitan realizarlo en esta parroquia.', 7,'Novio,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote', 500.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
-('Confirmación', 'Sacramento que perfecciona la gracia bautismal y confiere el Espíritu Santo.', 3,'Beneficiario,Padrino o Madrina, Sacerdote',100.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/818614702535729351_0'),
-('Misa de Exequias', 'Celebración litúrgica por el eterno descanso del difunto. (Sujeta a horarios).',2,'Beneficiario(s), sacerdote', 200.00, TRUE, 'https://ejemplo.com/imagen_funeral_catolico.jpg');
+('Matrimonio (Traslado)', 'Sacramento del Matrimonio de feligreses externos que solicitan realizarlo en esta parroquia.', 7,'Novio,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote', 500.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0');
 
 INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo) VALUES
 -- Misa Individual (08:00)
@@ -437,12 +435,6 @@ INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo) VALU
 (7, 16, 'Dom', '15:00:00'), (7, 17, 'Dom', '15:00:00'), (7, 18, 'Dom', '15:00:00'), (7, 19, 'Dom', '15:00:00'), (7, 20, 'Dom', '15:00:00'),
 (7, 21, 'Dom', '15:00:00'), (7, 22, 'Dom', '15:00:00'), (7, 23, 'Dom', '15:00:00'),
 
--- Misa de Exequias (12:00)
-(8, 1, 'Vie', '12:00:00'), (8, 2, 'Vie', '12:00:00'), (8, 3, 'Vie', '12:00:00'), (8, 4, 'Vie', '12:00:00'), (8, 5, 'Vie', '12:00:00'),
-(8, 6, 'Vie', '12:00:00'), (8, 7, 'Vie', '12:00:00'), (8, 8, 'Vie', '12:00:00'), (8, 9, 'Vie', '12:00:00'), (8, 10, 'Vie', '12:00:00'),
-(8, 11, 'Vie', '12:00:00'), (8, 12, 'Vie', '12:00:00'), (8, 13, 'Vie', '12:00:00'), (8, 14, 'Vie', '12:00:00'), (8, 15, 'Vie', '12:00:00'),
-(8, 16, 'Vie', '12:00:00'), (8, 17, 'Vie', '12:00:00'), (8, 18, 'Vie', '12:00:00'), (8, 19, 'Vie', '12:00:00'), (8, 20, 'Vie', '12:00:00'),
-(8, 21, 'Vie', '12:00:00'), (8, 22, 'Vie', '12:00:00'), (8, 23, 'Vie', '12:00:00');
 
 
 INSERT INTO REQUISITO (nombRequisito, f_requisito, descripcion, estadoRequisito) VALUES
@@ -465,17 +457,7 @@ INSERT INTO REQUISITO (nombRequisito, f_requisito, descripcion, estadoRequisito)
 ('Documentos de Identidad Contrayentes', '2025-01-01', 'Copia de DNI o pasaporte de ambos.', TRUE), -- ID 12
 ('Certificado de Soltería Canónica', '2025-01-01', 'Documento que acredita que no están casados por la Iglesia.', TRUE), -- ID 13
 ('Licencia del Párroco', '2025-01-01', 'Permiso del párroco de domicilio del contrayente/novia.', TRUE), -- ID 14
-('Documentos de Identidad de Testigos', '2025-01-01', 'Copia de DNI de los testigos (mínimo 2 o 4, según requerimiento).', TRUE), -- ID 15
-
--- Requisitos para Confirmación
-('Certificado de Partida de Bautismo', '2025-01-01', 'Copia simple de la Partida de Bautismo.', TRUE), -- ID 16
-('Documento de Identidad del Confirmando', '2025-01-01', 'Presentar el DNI o Carné de Extranjería del beneficiario.', TRUE), -- ID 17
-('Certificado de Preparación (Confirmación)', '2025-01-01', 'Constancia de haber culminado la catequesis de Confirmación.', TRUE), -- ID 18
-
--- Requisitos para Misa de Exequias
-('Certificado de Defunción', '2025-01-01', 'Copia legalizada del Certificado de Defunción (Para Misa de Exequias).', TRUE), -- ID 19
-('Permiso del Cementerio/Funeraria', '2025-01-01', 'Documento que acredite el lugar y hora del sepelio (Para Misa de Exequias).', TRUE); -- ID 20
-
+('Documentos de Identidad de Testigos', '2025-01-01', 'Copia de DNI de los testigos (mínimo 2 o 4, según requerimiento).', TRUE); -- ID 15
 INSERT INTO ACTO_REQUISITO (idActo, idRequisito) VALUES
 -- ------------------------------
 -- Misa Individual (idActo: 1)
@@ -535,23 +517,7 @@ INSERT INTO ACTO_REQUISITO (idActo, idRequisito) VALUES
 (6, 12), 
 (6, 13), 
 (6, 14), 
-(6, 15), 
-
--- ------------------------------
--- Confirmación (idActo: 7)
--- Requisitos 16, 17, 18
--- ------------------------------
-(7, 16), 
-(7, 17), 
-(7, 18), 
-
--- ------------------------------
--- Misa de Exequias (idActo: 8)
--- Requisitos 1, 19, 20
--- ------------------------------
-(8, 1),  
-(8, 19), 
-(8, 20);
+(6, 15);
 
 INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
 ('CUPOS_DIARIOS_MISA', 'personas', '50', 'Número máximo de participantes por día para las misas.', TRUE),
@@ -567,3 +533,36 @@ INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfigur
 ('DOCUMENTO_IMAGEN', 'booleano', 'TRUE', 'Indica que los documentos se pueden entregar en formato imagen (jpg/png).', TRUE),
 ('HORARIO_MAXIMO_RESERVA', 'horas', '18', 'Última hora del día en la que se pueden programar actos litúrgicos.', TRUE);
 
+INSERT INTO CONFIGURACION_ACTO (
+    idActo, tiempoDuracion, tiempoMaxCancelacion, tiempoMaxReprogramacion, 
+    tiempoAprobacionRequisitos, tiempoCambioDocumentos, tiempoMaxPago, 
+    tiempoMinimoReserva, tiempoMaximoReserva, maxActosPorDia, 
+    unidadTiempoAcciones, unidadTiempoReserva, estadoConfiguracion
+) VALUES
+-- Misa Individual (idActo = 1)
+(1, 45, 12, 24, 48, 48, 72, NULL, NULL, 5, 'horas', 'dias', TRUE),
+
+-- Misa Comunitaria (idActo = 2)
+-- Menos restricciones, solo una duración
+(2, 45, 12, 24, 48, 48, 72, NULL, NULL, 5, 'horas', 'dias', TRUE),
+
+-- Bautismo Comunitario (idActo = 3)
+-- Reserva fija (no se usa rango), pero con límites de tiempo importantes
+(3, 90, 3, 7, 7, 7, 3, NULL, NULL, NULL, 'dias', 'dias', TRUE),
+
+-- Bautismo Individual (idActo = 4)
+-- Requiere más anticipación para coordinar
+(4, 60, 7, 14, 14, 14, 7, NULL, NULL, 1, 'dias', 'dias', TRUE);
+INSERT INTO CONFIGURACION_ACTO (
+    idActo, tiempoDuracion, tiempoMaxCancelacion, tiempoMaxReprogramacion, 
+    tiempoAprobacionRequisitos, tiempoCambioDocumentos, tiempoMaxPago, 
+    tiempoMinimoReserva, tiempoMaximoReserva, maxActosPorDia, 
+    unidadTiempoAcciones, unidadTiempoReserva, estadoConfiguracion
+) VALUES
+-- Matrimonio (Normal) (idActo = 5)
+-- ¡Aquí aplicamos el rango de reserva de 3 a 6 meses!
+(5, 120, 30, 60, 90, 90, 7, 90, 180, 1, 'dias', 'dias', TRUE),
+
+-- Matrimonio (Traslado) (idActo = 6)
+-- Similar al Normal, pero con tiempos de aprobación de documentos más estrictos
+(6, 120, 30, 60, 90, 90, 7, 90, 180, 1, 'dias', 'meses', TRUE);

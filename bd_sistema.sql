@@ -281,13 +281,35 @@ CREATE TABLE PAGO (
 -- =========================
 -- CONFIGURACIÓN Y EXCEPCIONES
 -- =========================
-CREATE TABLE CONFIGURACION (
-    idConfiguracion INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    nombClave VARCHAR(150) NOT NULL,
-    unidad VARCHAR(50) NOT NULL,
-    valor VARCHAR(30) NOT NULL,
-    descripcion VARCHAR(255) NULL,
-    estadoConfiguracion BOOLEAN NOT NULL
+CREATE TABLE CONFIGURACION_ACTO (
+    idConfigActo INT PRIMARY KEY AUTO_INCREMENT,
+    idActo INT NOT NULL,
+
+    -- Duración del Acto (Sigue siendo obligatorio)
+    tiempoDuracion INT NOT NULL,                  -- Duración en minutos
+
+    -- Tiempos de Límites de Acción (Ahora Opcionales/NULL)
+    tiempoMaxCancelacion INT NOT NULL,            -- Máx. tiempo antes del acto que se puede cancelar
+    tiempoMaxReprogramacion INT NOT NULL,         -- Máx. tiempo antes del acto que se puede reprogramar
+    tiempoAprobacionRequisitos INT NOT NULL,      -- Tiempo límite para aprobar requisitos
+    tiempoCambioDocumentos INT NOT NULL,          -- Tiempo límite para cambiar documentos
+    tiempoMaxPago INT NOT NULL,                   -- Tiempo máximo para realizar el pago
+
+    -- Rango de Reserva (Ahora Opcionales/NULL)
+    tiempoMinimoReserva INT NULL,             -- Mínimo de tiempo de anticipación para reservar
+    tiempoMaximoReserva INT NULL,             -- Máximo de tiempo de anticipación para reservar
+
+    -- Configuración General
+    maxActosPorDia INT NULL,                 -- Cuántos actos de este tipo se pueden celebrar por día
+    
+    -- Unidades de Tiempo (Estas deben ser NOT NULL si se usan los campos de tiempo)
+    -- Podrías considerar hacerlas NULL también, o usar el ENUM solo si el tiempo NO es NULL.
+    unidadTiempoAcciones ENUM('horas', 'dias') NOT NULL,
+    unidadTiempoReserva ENUM('dias', 'meses', 'años') NOT NULL, 
+
+    estadoConfiguracion BOOLEAN NOT NULL,
+    CONSTRAINT fk_configacto_acto FOREIGN KEY (idActo)
+        REFERENCES ACTO_LITURGICO(idActo)
 );
 
 CREATE TABLE EXCEPCION_PERSONAL (
