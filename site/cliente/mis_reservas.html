@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LITBOOK | Mis reservas</title>
+    <link rel="stylesheet" href="/static/css/mis_reservas.css">
+</head>
+<body data-rol="{{ session['rol'] }}" data-id="{{ session['idUsuario'] }}">
+    <div id="header-placeholder"></div>
+
+    <div class="grid">
+        <div id="barra_lateral-placeholder"></div>
+
+        <main class="reservas-main">
+            <section class="reservas-container">
+                <!-- ======== VIÑETAS (TABS) ======== -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="calendario">🗓️ Calendario</button>
+                    <button class="tab-btn" data-tab="confirmadas">✅ Confirmadas</button>
+                    <button class="tab-btn" data-tab="pendientes">⚠️ Pendientes / Canceladas</button>
+                </div>
+
+                <!-- ======== CONTENEDORES DE CADA SECCIÓN ======== -->
+                <div class="tab-content active" id="tab-calendario">
+                    <div id="calendario-container" class="calendario-box">
+                        <p class="placeholder">📅 Cargando calendario de reservas...</p>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-confirmadas">
+                    <div class="reservas-lista" id="lista-confirmadas">
+                        <p class="placeholder">No tienes reservas confirmadas.</p>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-pendientes">
+                    <div class="reservas-lista" id="lista-pendientes">
+                        <p class="placeholder">No tienes reservas pendientes o canceladas.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/barra_lateral.js"></script>
+    <script src="/static/js/mis_reservas.js"></script>
+</body>
+</html>

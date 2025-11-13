@@ -222,6 +222,7 @@ def obtener_feligres_por_id(idUsuario):
         with conexion.cursor() as cursor:
             cursor.execute("""
                 SELECT 
+                    fe.idFeligres,
                     us.email,
                     fe.nombFel,
                     fe.apePatFel,
@@ -243,18 +244,19 @@ def obtener_feligres_por_id(idUsuario):
             if fila:
                 feligres = {
                     'idUsuario': idUsuario, # AGREGADO: Útil para el JS
-                    'email': fila[0],
-                    'nombFel': fila[1], 
-                    'apePatFel': fila[2],
-                    'apeMatFel': fila[3],
-                    'nombreCompleto': f"{fila[1]} {fila[2]} {fila[3]}", # COMBINACIÓN
-                    'telefonoFel': fila[4],
-                    'direccionFel': fila[5],
+                    'idFeligres': fila[0],
+                    'email': fila[1],
+                    'nombFel': fila[2], 
+                    'apePatFel': fila[3],
+                    'apeMatFel': fila[4],
+                    'nombreCompleto': f"{fila[2]} {fila[3]} {fila[4]}", # COMBINACIÓN
+                    'telefonoFel': fila[5],
+                    'direccionFel': fila[6],
                     # Formatea la fecha para el input type="date"
-                    'f_nacimiento': fila[6].strftime("%Y-%m-%d") if fila[6] else None, 
-                    'sexoFel': fila[7], # AGREGADO: Dato necesario para actualizar
-                    'nombDocumento': fila[8], # AGREGADO: Dato necesario para actualizar
-                    'numDocFel': fila[9], # AGREGADO: Dato necesario para actualizar
+                    'f_nacimiento': fila[7].strftime("%Y-%m-%d") if fila[7] else None, 
+                    'sexoFel': fila[8], # AGREGADO: Dato necesario para actualizar
+                    'nombDocumento': fila[9], # AGREGADO: Dato necesario para actualizar
+                    'numDocFel': fila[10], # AGREGADO: Dato necesario para actualizar
                 }
         return feligres
     except Exception as e:
