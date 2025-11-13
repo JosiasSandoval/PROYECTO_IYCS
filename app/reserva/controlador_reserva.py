@@ -1,7 +1,7 @@
 from app.bd_sistema import obtener_conexion
 
 # Función Python (backend/db.py) - CORREGIDA PARA MySQL
-def agregar_reserva(fecha, hora, mencion, idUsuario, idSolicitante):
+def agregar_reserva(fecha, hora,mencion,estado, idUsuario, idSolicitante):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
@@ -11,8 +11,8 @@ def agregar_reserva(fecha, hora, mencion, idUsuario, idSolicitante):
                     f_reserva, h_reserva, mencion, estadoReserva, numReprogramaciones, 
                     estadoReprogramado, vigenciaReserva, idUsuario, idSolicitante
                 )
-                VALUES (%s, %s, %s, 'PENDIENTE_DOCUMENTOS', 0, FALSE, CURRENT_DATE, %s, %s);
-            """, (fecha, hora, mencion, idUsuario, idSolicitante))
+                VALUES (%s, %s, %s, %s, 0, FALSE, CURRENT_DATE, %s, %s);
+            """, (fecha, hora, mencion, estado,idUsuario, idSolicitante))
             
             # 2. Obtener el ID insertado usando lastrowid (propio de MySQL/drivers Python)
             id_reserva = cursor.lastrowid
@@ -96,4 +96,84 @@ def eliminar_reserva(idReserva):
     finally:
         if conexion:
             conexion.close()
+
+def get_reserva_feligres(idUsuario):
+    conexion = obtener_conexion()
+    try:
+        resultados=[]
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+            SELECT f_reserva, h_reserva, mencion,estadoReserva from reserva where idUsuario=%s;
+            """,(idUsuario,))
+            resultados = cursor.fetchall()
+            for filas in resultados:
+                resultados.append({
+                    'fecha': filas[0],
+                    'hora': filas[1],
+                    'mencion': filas[2],
+                    'estado': filas[3]
+                })
+            return resultados
+    except Exception as e:
+        print(f"Error al listar las reservas: {e}")
+        return []
+    finally:
+        if conexion:
+            conexion.close()
+
+def get_reserva():
+    conexion = obtener_conexion()
+    try:
+        resultados=[]
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+            SELECT idReserva, f_reserva, h_reserva, mencion,estadoReserva,numReprogramaciones,estadoReprogramado,vigenciaReserva,idUsuario,idSolicitante from reserva;
+            """)
+            resultados = cursor.fetchall()
+            for filas in resultados:
+                resultados.append({
+                    'idReserva': filas[0],
+                    'fecha': filas[1],
+                    'hora': filas[2],
+                    'mencion': filas[3],
+                    'estado': filas[4],
+                    'numReprogramaciones': filas[5],
+                    'estadoReprogramado': filas[6],
+                    'vigenciaReserva': filas[7],
+                    'idUsuario': filas[8],
+                    'idSolicitante': filas[9]
+                })
+            return resultados
+    except Exception as e:
+        print(f"Error al listar las reservas: {e}")
+        return []
+    finally:
+        if conexion:
+            conexion.close()
+
+def get_reserva_sacerdote(nombre):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor as cursor:
+            cursor.execute("""
+            SELECT 
+                re.idReserva, 
+                re.f_reserva, 
+                re.h_reserva, 
+                re.mencion, 
+                al.idActo, 
+                al.nombActo
+            FROM participantes_acto pa
+            INNER JOIN reserva re ON pa.idReserva = re.idReserva
+            INNER JOIN acto_liturgico al ON pa.idActo = al.idActo
+            WHERE pa.rolParticipante = 'SACERDOTE'
+            AND LOWER(pa.nombParticipante) LIKE LOWER('%raul%');
+            """)
+    except Exception as e:
+        print(f"Error al listar las reservas: {e}")
+        return []
+    finally:
+        if conexion:
+            conexion.close()
+
 

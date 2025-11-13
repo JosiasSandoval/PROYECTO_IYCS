@@ -426,22 +426,11 @@ INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo) VALU
 (6, 6, 'Sáb', '18:00:00'), (6, 7, 'Sáb', '18:00:00'), (6, 8, 'Sáb', '18:00:00'), (6, 9, 'Sáb', '18:00:00'), (6, 10, 'Sáb', '18:00:00'),
 (6, 11, 'Sáb', '18:00:00'), (6, 12, 'Sáb', '18:00:00'), (6, 13, 'Sáb', '18:00:00'), (6, 14, 'Sáb', '18:00:00'), (6, 15, 'Sáb', '18:00:00'),
 (6, 16, 'Sáb', '18:00:00'), (6, 17, 'Sáb', '18:00:00'), (6, 18, 'Sáb', '18:00:00'), (6, 19, 'Sáb', '18:00:00'), (6, 20, 'Sáb', '18:00:00'),
-(6, 21, 'Sáb', '18:00:00'), (6, 22, 'Sáb', '18:00:00'), (6, 23, 'Sáb', '18:00:00'),
-
--- Confirmación (15:00)
-(7, 1, 'Dom', '15:00:00'), (7, 2, 'Dom', '15:00:00'), (7, 3, 'Dom', '15:00:00'), (7, 4, 'Dom', '15:00:00'), (7, 5, 'Dom', '15:00:00'),
-(7, 6, 'Dom', '15:00:00'), (7, 7, 'Dom', '15:00:00'), (7, 8, 'Dom', '15:00:00'), (7, 9, 'Dom', '15:00:00'), (7, 10, 'Dom', '15:00:00'),
-(7, 11, 'Dom', '15:00:00'), (7, 12, 'Dom', '15:00:00'), (7, 13, 'Dom', '15:00:00'), (7, 14, 'Dom', '15:00:00'), (7, 15, 'Dom', '15:00:00'),
-(7, 16, 'Dom', '15:00:00'), (7, 17, 'Dom', '15:00:00'), (7, 18, 'Dom', '15:00:00'), (7, 19, 'Dom', '15:00:00'), (7, 20, 'Dom', '15:00:00'),
-(7, 21, 'Dom', '15:00:00'), (7, 22, 'Dom', '15:00:00'), (7, 23, 'Dom', '15:00:00'),
+(6, 21, 'Sáb', '18:00:00'), (6, 22, 'Sáb', '18:00:00'), (6, 23, 'Sáb', '18:00:00');
 
 
 
 INSERT INTO REQUISITO (nombRequisito, f_requisito, descripcion, estadoRequisito) VALUES
--- Requisitos para Misas
-('Documento de Identidad del Solicitante', '2025-01-01', 'Presentar el DNI o Carné de Extranjería del solicitante.', TRUE), -- ID 1
-('Intención de la Misa (Formulario)', '2025-01-01', 'Especificar el motivo de la Misa (difunto, acción de gracias, salud, etc.).', TRUE), -- ID 2
-('Constancia de Ofrenda', '2025-01-01', 'Comprobante del pago o donación correspondiente al estipendio de la Misa.', TRUE), -- ID 3
 
 -- Requisitos para Bautismos
 ('Partida de Nacimiento del Bautizando', '2025-01-01', 'Copia certificada de la Partida de Nacimiento civil.', TRUE), -- ID 4
@@ -460,78 +449,50 @@ INSERT INTO REQUISITO (nombRequisito, f_requisito, descripcion, estadoRequisito)
 ('Documentos de Identidad de Testigos', '2025-01-01', 'Copia de DNI de los testigos (mínimo 2 o 4, según requerimiento).', TRUE); -- ID 15
 INSERT INTO ACTO_REQUISITO (idActo, idRequisito) VALUES
 -- ------------------------------
--- Misa Individual (idActo: 1)
--- Requisitos 1, 2, 3
--- ------------------------------
-(1, 1), 
-(1, 2), 
-(1, 3), 
-
--- ------------------------------
--- Misa Comunitaria (idActo: 2)
--- Requisitos 1, 2, 3
--- ------------------------------
-(2, 1), 
-(2, 2), 
-(2, 3), 
-
--- ------------------------------
 -- Bautismo Comunitario (idActo: 3)
 -- Requisitos 4, 5, 6, 7, 8
 -- ------------------------------
+(3, 1), 
+(3, 2), 
+(3, 3), 
 (3, 4), 
 (3, 5), 
-(3, 6), 
-(3, 7), 
-(3, 8), 
 
 -- ------------------------------
 -- Bautismo Individual (idActo: 4)
 -- Requisitos 4, 5, 6, 7, 8
 -- ------------------------------
+(4, 1),  
+(4, 2),  
+(4, 3),  
 (4, 4),  
 (4, 5),  
-(4, 6),  
-(4, 7),  
-(4, 8),  
 
 -- ------------------------------
 -- Matrimonio (Normal) (idActo: 5)
 -- Requisitos 9, 10, 11, 12, 13, 14, 15
 -- ------------------------------
-(5, 9),  
+(5, 6),  
+(5, 7), 
+(5, 8), 
+(5, 9), 
 (5, 10), 
 (5, 11), 
 (5, 12), 
-(5, 13), 
-(5, 14), 
-(5, 15), 
 
 -- ------------------------------
 -- Matrimonio (Traslado) (idActo: 6)
 -- Requisitos 9, 10, 11, 12, 13, 14, 15
 -- ------------------------------
-(6, 9),  
+(6, 6),  
+(6, 7), 
+(6, 8), 
+(6, 9), 
 (6, 10), 
 (6, 11), 
-(6, 12), 
-(6, 13), 
-(6, 14), 
-(6, 15);
+(6, 12);
 
-INSERT INTO CONFIGURACION (nombClave, unidad, valor, descripcion, estadoConfiguracion) VALUES
-('CUPOS_DIARIOS_MISA', 'personas', '50', 'Número máximo de participantes por día para las misas.', TRUE),
-('CUPOS_DIARIOS_BAUTISMO', 'personas', '20', 'Número máximo de participantes por día para bautismos.', TRUE),
-('CUPOS_DIARIOS_MATRIMONIO', 'parejas', '5', 'Número máximo de matrimonios que se pueden agendar por día.', TRUE),
-('DURACION_MISA', 'minutos', '60', 'Duración estándar de la misa.', TRUE),
-('DURACION_BAUTISMO', 'minutos', '30', 'Duración estándar de bautismos.', TRUE),
-('DURACION_MATRIMONIO', 'minutos', '90', 'Duración estándar de matrimonios.', TRUE),
-('DURACION_CONFIRMACION', 'minutos', '45', 'Duración estándar de la confirmación.', TRUE),
-('DURACION_EXEQUIAS', 'minutos', '50', 'Duración estándar de la misa de exequias.', TRUE),
-('PAGO_UNICO', 'booleano', 'TRUE', 'Define que el pago por acto litúrgico se realiza en un solo abono.', TRUE),
-('DOCUMENTO_PDF', 'booleano', 'TRUE', 'Indica que los documentos se pueden entregar en formato PDF.', TRUE),
-('DOCUMENTO_IMAGEN', 'booleano', 'TRUE', 'Indica que los documentos se pueden entregar en formato imagen (jpg/png).', TRUE),
-('HORARIO_MAXIMO_RESERVA', 'horas', '18', 'Última hora del día en la que se pueden programar actos litúrgicos.', TRUE);
+
 
 INSERT INTO CONFIGURACION_ACTO (
     idActo, tiempoDuracion, tiempoMaxCancelacion, tiempoMaxReprogramacion, 
@@ -540,19 +501,19 @@ INSERT INTO CONFIGURACION_ACTO (
     unidadTiempoAcciones, unidadTiempoReserva, estadoConfiguracion
 ) VALUES
 -- Misa Individual (idActo = 1)
-(1, 45, 12, 24, 48, 48, 72, NULL, NULL, 5, 'horas', 'dias', TRUE),
+(1, 45, 12, 18, 12, 12, 18, 1, null, 5, 'horas', 'dias', TRUE),
 
 -- Misa Comunitaria (idActo = 2)
 -- Menos restricciones, solo una duración
-(2, 45, 12, 24, 48, 48, 72, NULL, NULL, 5, 'horas', 'dias', TRUE),
+(2, 45, 12, 18, 12, 12, 18, 1, null, 5, 'horas', 'dias', TRUE),
 
 -- Bautismo Comunitario (idActo = 3)
 -- Reserva fija (no se usa rango), pero con límites de tiempo importantes
-(3, 90, 3, 7, 7, 7, 3, NULL, NULL, NULL, 'dias', 'dias', TRUE),
+(3, 90, 3, 7, 7, 7, 3, 14, NULL, 1, 'dias', 'dias', TRUE),
 
 -- Bautismo Individual (idActo = 4)
 -- Requiere más anticipación para coordinar
-(4, 60, 7, 14, 14, 14, 7, NULL, NULL, 1, 'dias', 'dias', TRUE);
+(4, 60, 7, 14, 14, 14, 7, 21, NULL, 1, 'dias', 'dias', TRUE);
 INSERT INTO CONFIGURACION_ACTO (
     idActo, tiempoDuracion, tiempoMaxCancelacion, tiempoMaxReprogramacion, 
     tiempoAprobacionRequisitos, tiempoCambioDocumentos, tiempoMaxPago, 
@@ -561,8 +522,8 @@ INSERT INTO CONFIGURACION_ACTO (
 ) VALUES
 -- Matrimonio (Normal) (idActo = 5)
 -- ¡Aquí aplicamos el rango de reserva de 3 a 6 meses!
-(5, 120, 30, 60, 90, 90, 7, 90, 180, 1, 'dias', 'dias', TRUE),
+(5, 120, 30, 60, 90, 90, 7, 90, null, 1, 'dias', 'dias', TRUE),
 
 -- Matrimonio (Traslado) (idActo = 6)
 -- Similar al Normal, pero con tiempos de aprobación de documentos más estrictos
-(6, 120, 30, 60, 90, 90, 7, 90, 180, 1, 'dias', 'meses', TRUE);
+(6, 120, 30, 60, 90, 90, 7, 90, null, 1, 'dias', 'meses', TRUE);

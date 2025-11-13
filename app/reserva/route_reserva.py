@@ -14,6 +14,7 @@ def nueva_reserva():
         data = request.get_json()
         fecha = data.get('fecha')
         hora = data.get('hora')
+        estado=data.get('estadoReserva')
         mencion = data.get('observaciones') # Puede ser una cadena vacía ("")
         idUsuario = data.get('idUsuario')
         idSolicitante = data.get('idSolicitante')
@@ -29,7 +30,7 @@ def nueva_reserva():
         mencion = mencion if mencion is not None else ""
         
         # Llamada a la función que inserta la reserva
-        exito, resultado = agregar_reserva(fecha, hora, mencion, idUsuario, idSolicitante)
+        exito, resultado = agregar_reserva(fecha, hora, mencion,estado, idUsuario, idSolicitante)
         
         if exito:
             # 💡 NOTA: Asumiendo que 'resultado' contiene el idReserva directamente.
