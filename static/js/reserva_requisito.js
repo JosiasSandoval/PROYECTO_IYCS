@@ -9,12 +9,12 @@ let configuracionActo = null;  // Configuración dinámica del acto (se cargará
 // FUNCIONES AUXILIARES
 // ==============================
 function obtenerRolUsuario() {
-    return document.body.dataset.rol ? document.body.dataset.rol.toLowerCase() : 'feligres'; 
+    return document.body.dataset.rol ? document.body.dataset.rol.toLowerCase() : 'feligres';
 }
 
 function volverPasoAnterior() {
     guardarRequisitos();
-    window.location.href = '/cliente/reserva_datos'; 
+    window.location.href = '/cliente/reserva_datos';
 }
 
 // ==============================
@@ -68,14 +68,14 @@ function manejarCambioArchivo(event) {
     const idRequisito = input.dataset.idRequisito;
     const archivo = input.files[0];
     const mensajeErrorEl = document.getElementById(`error-${idRequisito}`);
-    
+
     if (mensajeErrorEl) mensajeErrorEl.remove();
     input.classList.remove('is-invalid');
 
     if (archivo) {
         const tipoArchivo = archivo.type;
         const tiposPermitidos = ['application/pdf', 'image/jpeg', 'image/jpg'];
-        
+
         if (!tiposPermitidos.includes(tipoArchivo)) {
             input.classList.add('is-invalid');
             const errorDiv = document.createElement('div');
@@ -85,7 +85,7 @@ function manejarCambioArchivo(event) {
             input.parentNode.insertBefore(errorDiv, input.nextSibling);
 
             delete archivosSeleccionados[idRequisito];
-            input.value = ''; 
+            input.value = '';
             return;
         }
 
@@ -107,7 +107,12 @@ function guardarRequisitos() {
     const rol = obtenerRolUsuario();
     const requisitosContainer = document.getElementById('requisitos-lista');
     const reservaData = JSON.parse(sessionStorage.getItem('reserva') || '{}');
-    reservaData.requisitos = reservaData.requisitos || {};
+
+    // Asegurar que requisitos sea un objeto y no tocar otros campos (ej. solicitante)
+    reservaData.requisitos = reservaData.requisitos && typeof reservaData.requisitos === 'object'
+        ? reservaData.requisitos
+        : {};
+
     const requisitosGuardados = reservaData.requisitos;
     let datosRequisitosNuevos = {};
 
@@ -123,7 +128,8 @@ function guardarRequisitos() {
         return `${year}-${month}-${day}`;
     };
 
-    const plazoSieteDias = calcularVigenciaPlazo(); 
+    const plazoSieteDias = calcularVigenciaPlazo();
+    let totalArchivosSubidos = 0;
 
     // ==========================
     // ROL FELIGRES
@@ -133,13 +139,15 @@ function guardarRequisitos() {
         inputFiles.forEach(input => {
             const idRequisito = input.dataset.idRequisito;
             const nombreRequisito = input.dataset.nombreRequisito;
-            const archivoData = archivosSeleccionados[idRequisito]; 
+            const archivoData = archivosSeleccionados[idRequisito];
             const metaDataPrevia = requisitosGuardados[idRequisito] || {};
             const idActoRequisito = metaDataPrevia.idActoRequisito || input.dataset.idActoRequisito || null;
 
             const archivoNuevo = !!archivoData?.file;
-            const archivoPreviamenteGuardado = !!metaDataPrevia.rutaArchivo && metaDataPrevia.nombreArchivo !== 'NO CUMPLIDO'; 
-            const archivoPresente = archivoNuevo || archivoPreviamenteGuardado; 
+            const archivoPreviamenteGuardado = !!metaDataPrevia.rutaArchivo && metaDataPrevia.nombreArchivo !== 'NO CUMPLIDO';
+            const archivoPresente = archivoNuevo || archivoPreviamenteGuardado;
+
+            if (archivoPresente) totalArchivosSubidos++;
 
             let fSubidoFinal = null;
             let nombreArchivoFinal = "NO CUMPLIDO";
@@ -168,7 +176,7 @@ function guardarRequisitos() {
                 estadoCumplido: archivoPresente ? 'CUMPLIDO' : 'NO_CUMPLIDO'
             };
         });
-    } 
+    }
     // ==========================
     // ROL SECRETARIA / ADMINISTRADOR
     // ==========================
@@ -188,14 +196,14 @@ function guardarRequisitos() {
 
             if (checkbox.checked) {
                 estadoCumplidoFinal = 'CUMPLIDO';
-                fechaSubidaFinal = fechaHoy; 
-                if (nombreArchivo === 'NO CUMPLIDO') nombreArchivo = 'ENTREGADO (Manual)'; 
+                fechaSubidaFinal = fechaHoy;
+                if (nombreArchivo === 'NO CUMPLIDO') nombreArchivo = 'ENTREGADO (Manual)';
             } else {
                 estadoCumplidoFinal = 'NO_CUMPLIDO';
                 nombreArchivo = 'NO CUMPLIDO';
                 rutaArchivo = null;
                 tipoArchivo = null;
-                fechaSubidaFinal = null; 
+                fechaSubidaFinal = null;
             }
 
             const fechaLimiteConfig = calcularFechaLimiteDocumentos(reservaData);
@@ -216,6 +224,7 @@ function guardarRequisitos() {
         });
     }
 
+    // Fusionar los datos nuevos en reservaData.requisitos (sin tocar solicitante)
     Object.keys(datosRequisitosNuevos).forEach(id => {
         reservaData.requisitos[id] = {
             ...reservaData.requisitos[id],
@@ -223,8 +232,32 @@ function guardarRequisitos() {
         };
     });
 
+    // Asignar estado dentro de reservaData.requisitos (no en solicitante ni en otro lado)
+    // Si el tipo de acto contiene "misa" lo dejamos en PENDIENTE_PAGO (este caso normalmente ya se manejó
+    // en la inicialización, pero lo dejamos por seguridad)
+    const tipoActoStr = (reservaData.tipoActo || reservaData.nombreActo || '').toString().toLowerCase();
+
+    if (tipoActoStr.includes('misa')) {
+        reservaData.requisitos.estado = "PENDIENTE_PAGO";
+    } else {
+        // Si no hay requisitos (objeto vacío aparte de estado), marcamos PENDIENTE_DOCUMENTO
+        const requisitosCount = Object.keys(reservaData.requisitos).filter(k => k !== 'estado').length;
+        if (requisitosCount === 0) {
+            // No hay inputs de requisitos - dejamos el objeto vacío y estado como PENDIENTE_DOCUMENTO
+            reservaData.requisitos.estado = "PENDIENTE_DOCUMENTO";
+        } else {
+            // Si hay requisitos y al menos un archivo subido => PENDIENTE_REVISION, si no => PENDIENTE_DOCUMENTO
+            const totalArchivosSubidos = Object.keys(reservaData.requisitos).reduce((acc, k) => {
+                if (k === 'estado') return acc;
+                return acc + (reservaData.requisitos[k].archivoListo ? 1 : 0);
+            }, 0);
+
+            reservaData.requisitos.estado = totalArchivosSubidos > 0 ? "PENDIENTE_REVISION" : "PENDIENTE_DOCUMENTO";
+        }
+    }
+
     sessionStorage.setItem('reserva', JSON.stringify(reservaData));
-    console.log('📌 Requisitos guardados:', reservaData.requisitos);
+    console.log('📌 Requisitos guardados (solo en reservaData.requisitos):', reservaData.requisitos);
 }
 
 // ==============================
@@ -262,6 +295,7 @@ function generarUIRequisitos(listaRequisitos, container, rol, reservaData) {
     }
 
     if (!listaRequisitos || listaRequisitos.length === 0) {
+        // Mostrar mensaje amigable y NO modificar solicitante ni otros campos.
         container.innerHTML = '<p class="alert alert-success">✅ No se encontraron requisitos para este acto.</p>';
         return;
     }
@@ -334,14 +368,14 @@ function generarUIRequisitos(listaRequisitos, container, rol, reservaData) {
 }
 
 // ==============================
-// INICIALIZACIÓN
+// INICIALIZACIÓN (CON CONTROL DE MISA --> estado guardado EN reservaData.requisitos)
 // ==============================
 document.addEventListener('DOMContentLoaded', async () => {
     const rolUsuario = obtenerRolUsuario();
     const datosReservaString = sessionStorage.getItem('reserva');
     const requisitosContainer = document.getElementById('requisitos-lista');
-    const btnSiguiente = document.getElementById('btn-siguiente'); 
-    const btnAtras = document.getElementById('btn-atras'); 
+    const btnSiguiente = document.getElementById('btn-siguiente');
+    const btnAtras = document.getElementById('btn-atras');
 
     if (!datosReservaString || !requisitosContainer) return;
 
@@ -355,6 +389,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await obtenerConfiguracionActo(idActo);
 
+    // 🔹 Detectar si el acto es una MISA (se compara nombre del acto en configuración o reserva)
+    const nombreActo = (configuracionActo?.nombreActo || reservaData.nombreActo || '').toString().toLowerCase();
+
+    if (nombreActo.includes('misa')) {
+        requisitosContainer.innerHTML = `
+            <div class="alert alert-success text-center p-4 rounded">
+                <h5 class="mb-2">✅ No se encontraron requisitos para este acto.</h5>
+                <p class="mb-0">Para este tipo de celebración no se solicitarán documentos adicionales.</p>
+            </div>
+        `;
+
+        // Guardar estado en reservaData.requisitos (¡no tocamos solicitante!)
+        reservaData.requisitos = reservaData.requisitos && typeof reservaData.requisitos === 'object'
+            ? reservaData.requisitos
+            : {};
+        reservaData.requisitos.estado = "PENDIENTE_PAGO";
+
+        sessionStorage.setItem('reserva', JSON.stringify(reservaData));
+        console.log("✅ Acto litúrgico de MISA detectado → sin requisitos, guardado EN reservaData.requisitos.estado = PENDIENTE_PAGO.");
+
+        if (btnSiguiente) btnSiguiente.addEventListener('click', () => {
+            window.location.href = '/cliente/reserva_resumen';
+        });
+        if (btnAtras) btnAtras.addEventListener('click', volverPasoAnterior);
+        return;
+    }
+
+    // 🔹 Caso normal: cargar requisitos desde API
     fetch(`/api/requisito/${idActo}`)
         .then(resp => resp.ok ? resp.json() : Promise.reject(`HTTP ${resp.status}`))
         .then(data => {

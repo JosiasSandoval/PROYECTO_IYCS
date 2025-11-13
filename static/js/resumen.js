@@ -67,8 +67,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // 🛑 FUNCIÓN DE MODAL ELIMINADA
-
 // ---------------------------------------------------------------------------------------------------
 
     // =========================================================
@@ -90,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // 1. Establecer IDs críticos INMEDIATAMENTE y guardar en sesión
             reservaData.idSolicitante = idUsuarioSesion; 
-            reservaData.idUsuario = idUsuarioSesion;     
+            reservaData.idUsuario = idUsuarioSesion;     
             sessionStorage.setItem('reserva', JSON.stringify(reservaData));
             
             let datos = {};
@@ -137,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Secretaria/Admin
             const datos = reservaData.solicitante || {};
 
-// CLAVE: Extraer idSolicitante (que es datos.idUsuario) de reservaData.solicitante y el idUsuario de la Sesión
+            // CLAVE: Extraer idSolicitante (que es datos.idUsuario) de reservaData.solicitante y el idUsuario de la Sesión
 
             // Se corrige la condición: se debe verificar la existencia del ID de usuario del solicitante (datos.idUsuario)
             // en lugar de un idSolicitante que no existe en el objeto 'solicitante'.
@@ -230,64 +228,67 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 4. Lógica de Registro de APIs (Funciones auxiliares)
     // =========================================================
 
-// A. Registrar Documento (CORREGIDO)
-    async function registrarDocumentoAPI(documento, idReserva) {
-        // Validar campos críticos antes de enviar
-        if (!documento.idActoRequisito) {
-            console.error('Documento omitido por falta de idActoRequisito');
-            return { ok: false, mensaje: 'Falta idActoRequisito' };
-        }
+    // A. Registrar Documento (CORREGIDO)
+    async function registrarDocumentoAPI(documento, idReserva) {
+        // Validar campos críticos antes de enviar
+        if (!documento.idActoRequisito) {
+            console.error('Documento omitido por falta de idActoRequisito');
+            return { ok: false, mensaje: 'Falta idActoRequisito' };
+        }
 
-        // --- Extracción y Coherencia de Datos ---
-        // 1. Usar f_subido del documento, o la fecha de hoy si está CUMPLIDO y no tiene fecha previa.
-        const fechaSubida = documento.f_subido || (documento.estadoCumplido === 'CUMPLIDO' ? new Date().toISOString().split('T')[0] : null);
-
-        // 2. Usar vigenciaDocumento del documento (Hoy + 7 días o previo), o '2050-12-31' como fallback si está CUMPLIDO.
-        const vigenciaFinal = documento.vigenciaDocumento || (documento.estadoCumplido === 'CUMPLIDO' ? '2050-12-31' : null);
+        // --- Extracción y Coherencia de Datos (AJUSTADA) ---
         
-        // 3. Usar el estadoCumplido que ya calculamos (CUMPLIDO o NO_CUMPLIDO), o PENDIENTE_REVISION si no existe.
+        // 1. Fecha de Subida
+        const fechaActual = new Date().toISOString().split('T')[0];
+        const fechaSubida = documento.f_subido || 
+                            (documento.estadoCumplido === 'CUMPLIDO' ? fechaActual : '1900-01-01'); // Fallback seguro
+
+        // 2. Vigencia del Documento
+        const vigenciaFinal = documento.vigenciaDocumento || 
+                              (documento.estadoCumplido === 'CUMPLIDO' ? '2050-12-31' : '1900-01-01'); // Fallback seguro
+        
+        // 3. Estado
         const estadoFinal = documento.estadoCumplido || 'PENDIENTE_REVISION';
-        
-        const docPayload = {
-            idActoRequisito: Number(documento.idActoRequisito), 
-            idReserva: Number(idReserva),
-            
-            // 🚀 Corregido: Usar los valores del objeto documento
-            ruta: documento.rutaArchivo || 'PENDIENTE', // Usamos rutaArchivo del objeto guardado
-            tipoArchivo: documento.tipoArchivo || 'N/A', 
-            fecha: fechaSubida, // 💡 Ahora usa el valor f_subido de la sesión
-            estadoCumplimiento: estadoFinal, // 💡 Ahora usa 'CUMPLIDO' o 'NO_CUMPLIDO'
-            observacion: documento.observacion || '', // Incluimos observación si existe
-            vigencia: vigenciaFinal // 💡 Ahora usa el valor vigenciaDocumento de la sesión
-        };
+        
+        const docPayload = {
+            idActoRequisito: Number(documento.idActoRequisito), 
+            idReserva: Number(idReserva),
+            
+            // 🚀 Corregido: Usar los valores del objeto documento o fallbacks.
+            ruta: documento.rutaArchivo || 'PENDIENTE', 
+            tipoArchivo: documento.tipoArchivo || 'N/A', 
+            fecha: fechaSubida, // 💡 Usa el valor ajustado.
+            estadoCumplimiento: estadoFinal, // 💡 Usa 'CUMPLIDO', 'NO_CUMPLIDO' o 'PENDIENTE_REVISION'.
+            observacion: documento.observacion || '', 
+            vigencia: vigenciaFinal // 💡 Usa el valor ajustado.
+        };
 
-        console.log(`[DEPURACIÓN DOCS] Payload Documento ${documento.idActoRequisito}:`, docPayload);
-        
-        // 💡 La URL ahora usa la constante corregida que apunta al endpoint completo
-        try {
-            // ... (rest of the fetch logic is correct) ...
-            const response = await fetch(API_URL_REGISTRAR_DOC, { 
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(docPayload)
-            });
-            
-            console.log(`[DEPURACIÓN DOCS] Status HTTP Documento ${documento.idActoRequisito}:`, response.status);
-            
-            const result = await response.json();
+        console.log(`[DEPURACIÓN DOCS] Payload Documento ${documento.idActoRequisito}:`, docPayload);
+        
+        // 💡 La URL ahora usa la constante corregida que apunta al endpoint completo
+        try {
+            const response = await fetch(API_URL_REGISTRAR_DOC, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(docPayload)
+            });
+            
+            console.log(`[DEPURACIÓN DOCS] Status HTTP Documento ${documento.idActoRequisito}:`, response.status);
+            
+            const result = await response.json();
 
-            console.log(`[DEPURACIÓN DOCS] Resultado API Documento ${documento.idActoRequisito}:`, result);
+            console.log(`[DEPURACIÓN DOCS] Resultado API Documento ${documento.idActoRequisito}:`, result);
 
-            if (!response.ok || !result.ok) {
-                // 🛑 Si el backend devuelve un error, lo lanzamos para que el catch lo maneje
-                throw new Error(result.mensaje || `Fallo al registrar documento ${documento.idActoRequisito}`);
-            }
-            return { ok: result.ok, mensaje: result.mensaje || `Documento ${documento.idActoRequisito} registrado` };
-        } catch (error) {
-            console.error(`❌ Error de red/backend al registrar documento ${documento.idActoRequisito}:`, error);
-            return { ok: false, mensaje: error.message };
-        }
-    }
+            if (!response.ok || !result.ok) {
+                // 🛑 Si el backend devuelve un error, lo lanzamos para que el catch lo maneje
+                throw new Error(result.mensaje || `Fallo al registrar documento ${documento.idActoRequisito}`);
+            }
+            return { ok: result.ok, mensaje: result.mensaje || `Documento ${documento.idActoRequisito} registrado` };
+        } catch (error) {
+            console.error(`❌ Error de red/backend al registrar documento ${documento.idActoRequisito}:`, error);
+            return { ok: false, mensaje: error.message };
+        }
+    }
 
     // B. Registrar Participante
     async function registrarParticipanteAPI(rol, nombre, idActo, idReserva) {
@@ -366,22 +367,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             // ====================================================================
-            // 🚀 CORRECCIÓN APLICADA AQUÍ: Preparar Documentos 
+            // 🚀 Preparar Documentos (Lógica para convertir el objeto en un array)
             // ====================================================================
-            // 1. Tomar los documentos del campo 'requisitos' (como se ve en tus logs)
+            // 1. Tomar los documentos del campo 'requisitos' o 'documentos'
             const documentosCrudos = data.requisitos || data.documentos || {};
             
-            // 2. Convertir el objeto (con claves 1, 2, 3) a un array de documentos, si no es ya un array.
-            const documentosArray = Array.isArray(documentosCrudos) 
-                ? documentosCrudos 
-                : Object.values(documentosCrudos);
+            // 2. Convertir el objeto a un array de documentos, y filtrar explícitamente 
+            const documentosArray = Object.values(documentosCrudos).filter(item => {
+                // Consideramos un elemento válido si es un objeto con la propiedad clave idActoRequisito
+                return typeof item === 'object' && item !== null && item.idActoRequisito;
+            });
 
             console.log("[DEPURACIÓN DOCS - CORREGIDA] Documentos a procesar (Array Final):", documentosArray);
             
             const participantes = data.participantes || {};
             const idActo = data.idActo; 
             
-            // No es un error si están vacíos, solo verificamos que los datos estén cargados correctamente
             if (documentosArray.length === 0) {
                  console.warn("Advertencia: No hay documentos para registrar (documentosArray vacío).");
             }
@@ -394,13 +395,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             // ====================================================================
             mostrarMensaje('Registrando reserva principal (Paso 1/3)...', 'info');
             
+            // 🛑 CORRECCIÓN CLAVE: OBTENER EL ESTADO DE LA RESERVA DE data.requisitos.estado
+            const estadoRequisitos = data.requisitos && data.requisitos.estado;
+            const estadoInicialReserva = estadoRequisitos || 'PENDIENTE_REVISION'; // Fallback seguro
+            
+            console.log(`[DEPURACIÓN RESERVA] Estado de Reserva obtenido de 'requisitos.estado': ${estadoInicialReserva}`);
+
             const reservaPayload = {
                 fecha: data.fecha,
                 hora: data.hora,
                 observaciones: data.observaciones || '', 
                 idUsuario: String(data.idUsuario), 
                 idSolicitante: String(data.idSolicitante),
-                idActo: String(data.idActo) 
+                idActo: String(data.idActo),
+                estadoReserva: estadoInicialReserva // <<-- CORRECCIÓN FINAL APLICADA AQUÍ
             };
             
             console.log("[DEPURACIÓN RESERVA] Payload de Reserva enviado:", reservaPayload);
@@ -434,7 +442,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!idReserva) throw new Error("La API principal no devolvió el ID de Reserva."); 
             
             // ====================================================================
-            // 🚀 PASO 2: Documentos (Ahora con la corrección debería tener items)
+            // 🚀 PASO 2: Documentos
             // ====================================================================
             if (documentosArray.length > 0) {
                 mostrarMensaje('Registrando documentos adjuntos (Paso 2/3)...', 'info');
@@ -459,16 +467,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                  
                  // Usamos filter para omitir participantes con nombre vacío
                  const promesasParticipantes = Object.entries(participantes)
-                     .filter(([, nombre]) => nombre && String(nombre).trim() !== '')
-                     .map(([rol, nombre]) => registrarParticipanteAPI(rol, nombre, idActo, idReserva));
+                      .filter(([, nombre]) => nombre && String(nombre).trim() !== '')
+                      .map(([rol, nombre]) => registrarParticipanteAPI(rol, nombre, idActo, idReserva));
                  
                  const resultadosParticipantes = await Promise.all(promesasParticipantes);
                  
                  const fallosParticipantes = resultadosParticipantes.filter(r => !r.ok && r.mensaje !== 'Participante omitido (vacío)');
                  if (fallosParticipantes.length > 0) {
-                     // Si falla, notificamos el error, pero el ID de reserva persiste
-                     const mensajeFallo = fallosParticipantes.map(f => f.mensaje).join('; ');
-                     throw new Error(`[PARTICIPANTES] Falló el Paso 3: Fallo al registrar ${fallosParticipantes.length} participante(s). Detalles: ${mensajeFallo}`);
+                      // Si falla, notificamos el error, pero el ID de reserva persiste
+                      const mensajeFallo = fallosParticipantes.map(f => f.mensaje).join('; ');
+                      throw new Error(`[PARTICIPANTES] Falló el Paso 3: Fallo al registrar ${fallosParticipantes.length} participante(s). Detalles: ${mensajeFallo}`);
                  }
             }
 
@@ -520,8 +528,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const exitoCargaSolicitante = await cargarDatosSolicitante(); 
     
     // 2. Cargamos datos visuales
-    cargarResumenActo();     
-    cargarParticipantes();     
+    cargarResumenActo();     
+    cargarParticipantes();     
     
     // 3. Configuración del botón Confirmar
 if(btnConfirmar) { 
@@ -542,9 +550,9 @@ if(btnConfirmar) {
                  const isConfirmed = window.confirm("¿Está seguro de que desea confirmar y registrar esta reserva? Esta acción es final y creará el registro definitivo.");
                  
                  if (isConfirmed) {
-                     enviarReserva(reservaData);
+                      enviarReserva(reservaData);
                  } else {
-                     mostrarMensaje('Confirmación cancelada por el usuario.', 'info');
+                      mostrarMensaje('Confirmación cancelada por el usuario.', 'info');
                  }
             });
             
