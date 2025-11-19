@@ -1,11 +1,13 @@
-from flask import Blueprint, request, jsonify, abort, g, redirect, url_for,session,render_template
-from app.auth.controlador_auth import registrar_usuario_feligres, verificar_usuario
+from flask import Blueprint, request, jsonify, session, redirect, url_for, flash
+from app.auth.controlador_auth import registrar_feligres, autenticar_usuario
 
-auth_bp=Blueprint('auth',__name__)
+auth_bp = Blueprint('auth', __name__)
 
-# ================= LOGIN =================
+# ============================================================
+# 1. LOGIN (VERIFICAR USUARIO)
+# ============================================================
 @auth_bp.route('/verificar_usuario', methods=['POST'])
-def get_verificar_usuario():
+def login():
     data = request.get_json(silent=True)
     if not data:
         return jsonify({"success": False, "error": "No se recibió información válida."}), 400
@@ -16,103 +18,130 @@ def get_verificar_usuario():
     if not email or not clave:
         return jsonify({"success": False, "error": "Debe ingresar email y contraseña."}), 400
 
-    try:
-        # Devuelve (idUsuario, nombRol, idParroquia, idFeligres)
-        usuario = verificar_usuario(email, clave) 
+    # Llamada al controlador unificado
+    resultado_auth = autenticar_usuario(email, clave)
 
-        if usuario:
-            id_usuario = usuario[0]
-            rol_usuario = usuario[1].lower()
-            parroquia_usuario = usuario[2]
-            id_feligres = usuario[3] if rol_usuario == 'feligres' else None # Solo asigna si es feligres
+    if resultado_auth and resultado_auth['success']:
+        # --- GESTIÓN DE SESIÓN ---
+        session.clear() # Limpiamos cualquier sesión residual
+        session['logged_in'] = True
+        
+        # Guardamos datos básicos para visualización (Header)
+        session['idUsuario'] = resultado_auth['idUsuario']
+        session['email'] = resultado_auth['email']
+        session['nombre_usuario'] = resultado_auth['nombre_usuario']
+        session['cargo_usuario'] = resultado_auth['cargo_usuario']
+        
+        # Guardamos datos técnicos para lógica de negocio (Reservas, Permisos)
+        session['rol_sistema'] = resultado_auth['rol_sistema']
+        session['idFeligres'] = resultado_auth.get('idFeligres')
+        session['idPersonal'] = resultado_auth.get('idPersonal')
+        session['idParroquia'] = resultado_auth.get('idParroquia') # Útil para el insert de reservas
 
-            session['idUsuario'] = id_usuario
-            session['rol'] = rol_usuario
-            session['parroquia_usuario'] = parroquia_usuario
-            session['idFel'] = id_feligres # <--- NUEVO CAMPO DE SESIÓN
-
-            # Puedes devolverlo o no, pero ya está en la sesión para el HTML (si lo agregas)
-            return jsonify({
-                "success": True, 
-                "idUsuario": id_usuario, 
-                "rol": rol_usuario,
-                "parroquia_usuario": parroquia_usuario,
-                "idFel": id_feligres # Agregado a la respuesta API
-            })
-        else:
-            return jsonify({"success": False, "error": "Email o contraseña incorrectos."}), 401
-
-    except Exception as e:
-        print(f"Error al verificar usuario: {e}")
-        return jsonify({"success": False, "error": "Error interno del servidor."}), 500
+        return jsonify({
+            "success": True, 
+            "mensaje": "Autenticación exitosa",
+            "redirect": url_for('auth.dashboard') # Opcional: URL a donde ir
+        })
+    else:
+        return jsonify({"success": False, "error": "Email o contraseña incorrectos."}), 401
 
 
-
-# ================= DASHBOARD =================
-@auth_bp.route('/dashboard')
-def dashboard():
-    if 'idUsuario' not in session:
-        return redirect(url_for('auth_bp.iniciar_sesion'))  # corregido
-    return render_template('principal.html')
-
-
-# ================= LOGOUT =================
-@auth_bp.route('/logout')
-def logout():
-    session.pop('idUsuario', None)
-    session.pop('rol', None)  # si guardaste el rol
-    return redirect(url_for('auth_bp.iniciar_sesion'))  # corregido
-
-
-# ================= REGISTRO FELIGRES =================
+# ============================================================
+# 2. REGISTRO DE FELIGRÉS
+# ============================================================
 @auth_bp.route('/registrar_feligres', methods=['POST'])
-def registrar_feligres():
-    documento = request.form.get('documento')
-    nombres = request.form.get('nombre')
-    apePaterno = request.form.get('apePaterno')
-    apeMaterno = request.form.get('apeMaterno')
-    f_nacimiento = request.form.get('fecha')
-    sexo = request.form.get('sexo')
-    telefono = request.form.get('telefono')
-    direccion = request.form.get('direccion')
-    tipo_documento = request.form.get('tipo-doc')
-    email = request.form.get('email')
-    clave = request.form.get('contraseña')
-
-    # Validación de campos obligatorios
-    campos = [documento, nombres, apePaterno, apeMaterno, f_nacimiento, sexo, telefono, direccion, tipo_documento, email, clave]
-    if not all(campo and campo.strip() for campo in campos):
-        return jsonify({"error": "Faltan campos obligatorios en la solicitud."}), 400
+def registro():
+    # Usamos request.form porque viene de un formulario HTML clásico (no JSON)
+    data = request.form
+    
+    # Validación básica de campos obligatorios
+    campos_obligatorios = ['email', 'contraseña', 'nombre', 'documento']
+    if not all(data.get(c) for c in campos_obligatorios):
+         return jsonify({"error": "Faltan campos obligatorios."}), 400
 
     try:
-        # Convertir tipo_documento a int si es posible
+        # Preparar datos para el controlador
+        # Nota: data.get('sexo') devuelve 'Masculino'/'Femenino', tomamos la inicial 'M'/'F'
+        sexo_input = data.get('sexo')
+        sexo_letra = sexo_input[0].upper() if sexo_input else None
+        
+        # Conversión segura de tipo documento
         try:
-            id_tipo_documento = int(tipo_documento)
+            id_tipo_doc = int(data.get('tipo-doc'))
         except (ValueError, TypeError):
-            id_tipo_documento = None
+            id_tipo_doc = None
 
-        sexo_letra = sexo[0].upper() if sexo else ''
-
-        exito, error = registrar_usuario_feligres(
-            documento,
-            nombres,
-            apePaterno,
-            apeMaterno,
-            f_nacimiento,
-            sexo_letra,
-            direccion,
-            telefono,
-            id_tipo_documento,
-            email,
-            clave
+        exito, error = registrar_feligres(
+            nombFel=data.get('nombre'),
+            apePaFel=data.get('apePaterno'),
+            apeMaFel=data.get('apeMaterno'),
+            numDocFel=data.get('documento'),
+            f_nacimiento=data.get('fecha'),
+            sexoFel=sexo_letra,
+            direccionFel=data.get('direccion'),
+            telefonoFel=data.get('telefono'),
+            idTipoDocumento=id_tipo_doc,
+            email=data.get('email'),
+            clave=data.get('contraseña')
         )
 
         if exito:
-            return jsonify({"mensaje": "Registro exitoso"}), 200
+            return jsonify({"mensaje": "Registro exitoso"}), 201
         else:
-            print("Error BD:", error)
-            return jsonify({"error": "Error interno del servidor. Revisar logs de BD."}), 500
+            # Manejo de errores específicos de BD (ej: duplicados)
+            msg_error = str(error)
+            if "Duplicate" in msg_error or "Unique" in msg_error:
+                return jsonify({"error": "El correo o documento ya están registrados."}), 409
+            return jsonify({"error": f"Error al registrar: {msg_error}"}), 500
 
     except Exception as e:
-        print("Error general:", e)
-        return jsonify({"error": "Error interno del servidor. Revisar logs de BD."}), 500
+        print(f"Error crítico en ruta registro: {e}")
+        return jsonify({"error": "Error interno del servidor."}), 500
+
+
+# ============================================================
+# 3. DATOS DE SESIÓN (API PARA HEADER.JS)
+# ============================================================
+@auth_bp.route('/get_session_data')
+def get_session_data():
+    """
+    Devuelve JSON con nombre y cargo para pintar el header dinámicamente.
+    """
+    if session.get('logged_in'):
+        return jsonify({
+            "success": True,
+            "nombre": session.get('nombre_usuario', 'Usuario'),
+            "cargo": session.get('cargo_usuario', 'Feligrés'),
+            "idUsuario": session.get('idUsuario')
+        })
+    else:
+        return jsonify({
+            "success": False,
+            "nombre": "Visitante",
+            "cargo": "Invitado"
+        }), 200 # Devolvemos 200 para que el JS no falle, simplemente muestra "Visitante"
+
+
+# ============================================================
+# 4. LOGOUT (CERRAR SESIÓN)
+# ============================================================
+@auth_bp.route('/cerrar_sesion')
+def logout():
+    session.clear()
+    flash('Has cerrado sesión correctamente.', 'info')
+    # Redirigir al login (asumiendo que tienes una ruta 'login_page' o similar)
+    # Si tu ruta de vista login se llama diferente, ajusta 'iniciar_sesion'
+    return redirect(url_for('iniciar_sesion')) 
+
+
+# ============================================================
+# 5. DASHBOARD (EJEMPLO DE RUTA PROTEGIDA)
+# ============================================================
+@auth_bp.route('/dashboard')
+def dashboard():
+    if not session.get('logged_in'):
+        return redirect(url_for('iniciar_sesion'))
+    
+    # Aquí puedes pasar datos extra a la plantilla usando la sesión
+    return f"Bienvenido al Dashboard, {session.get('nombre_usuario')}"
