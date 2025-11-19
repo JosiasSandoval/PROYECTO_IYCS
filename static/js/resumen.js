@@ -85,53 +85,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (rolUsuario === 'feligres') {
-            
-            // 1. Establecer IDs críticos INMEDIATAMENTE y guardar en sesión
-            reservaData.idSolicitante = idUsuarioSesion; 
-            reservaData.idUsuario = idUsuarioSesion;     
-            sessionStorage.setItem('reserva', JSON.stringify(reservaData));
-            
-            let datos = {};
-            let exitoVisual = true; 
 
-            // 2. Intentar obtener datos VISUALES del perfil (opcional, no bloqueante)
-            try {
-                const response = await fetch(API_URL_PERFIL);
-                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-                
-                let data = await response.json();
-                
-                if (data.ok && data.datos) {
-                    datos = data.datos;
-                } else {
+                let datos = {};
+                let exitoVisual = true;
+
+                try {
+                    const response = await fetch(API_URL_PERFIL);
+                    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+
+                    const data = await response.json();
+
+                    if (data.ok && data.datos) {
+                        datos = data.datos;
+
+                        // ✅ CORRECCIÓN CLAVE: idSolicitante se toma del API
+                        reservaData.idSolicitante = datos.idFeligres || idUsuarioSesion; // fallback seguro
+                        reservaData.idUsuario = idUsuarioSesion; // quien registra
+                        sessionStorage.setItem('reserva', JSON.stringify(reservaData));
+
+                    } else {
+                        exitoVisual = false;
+                    }
+
+                } catch (error) {
                     exitoVisual = false;
-                    console.warn('Advertencia: Respuesta de API OK, pero datos de perfil incompletos o faltantes.');
+                    console.error('❌ Fallo al obtener datos del API de perfil:', error);
                 }
 
-            } catch (error) {
-                exitoVisual = false;
-                console.error('❌ Fallo al cargar datos visuales de la API de perfil:', error);
-                datos = {}; 
-            }
-            
-            // 3. Renderizar el resumen (usando datos de API o VALOR_VACIO)
-            const nombreCompleto = formatValue(`${datos.nombFel || ''} ${datos.apePatFel || ''} ${datos.apeMatFel || ''}`);
-            
-            solicitanteDataContainer.innerHTML = `
-                <p><strong>Nombre completo:</strong> ${nombreCompleto}</p>
-                <p><strong>Email:</strong> ${formatValue(datos.email)}</p>
-                <p><strong>DNI/Documento:</strong> ${formatValue(datos.numDocFel)}</p>
-                <p><strong>Teléfono:</strong> ${formatValue(datos.telefonoFel)}</p>
-                <p><strong>Dirección:</strong> ${formatValue(datos.direccionFel)}</p>
-            `;
+                const nombreCompleto = formatValue(`${datos.nombFel || ''} ${datos.apePatFel || ''} ${datos.apeMatFel || ''}`);
 
-            if (!exitoVisual) {
-                 solicitanteDataContainer.innerHTML += `<p class="alert alert-warning small mt-3">Advertencia: Fallo al cargar datos visuales del perfil. Los IDs de Reserva están establecidos.</p>`;
+                solicitanteDataContainer.innerHTML = `
+                    <p><strong>Nombre completo:</strong> ${nombreCompleto}</p>
+                    <p><strong>Email:</strong> ${formatValue(datos.email)}</p>
+                    <p><strong>DNI/Documento:</strong> ${formatValue(datos.numDocFel)}</p>
+                    <p><strong>Teléfono:</strong> ${formatValue(datos.telefonoFel)}</p>
+                    <p><strong>Dirección:</strong> ${formatValue(datos.direccionFel)}</p>
+                `;
+
+                if (!exitoVisual) {
+                    solicitanteDataContainer.innerHTML += `<p class="alert alert-warning small mt-3">Advertencia: No se pudieron cargar todos los datos del perfil. Los IDs de reserva se han intentado establecer.</p>`;
+                }
+
+                return true;
             }
-            
-            return true; // ÉXITO: Los IDs internos están garantizados.
-            
-        } else if (rolUsuario === 'secretaria' || rolUsuario === 'administrador') {
+            else if (rolUsuario === 'secretaria' || rolUsuario === 'administrador') {
             // Secretaria/Admin
             const datos = reservaData.solicitante || {};
 
@@ -227,68 +224,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     // =========================================================
     // 4. Lógica de Registro de APIs (Funciones auxiliares)
     // =========================================================
-
-    // A. Registrar Documento (CORREGIDO)
-    async function registrarDocumentoAPI(documento, idReserva) {
-        // Validar campos críticos antes de enviar
-        if (!documento.idActoRequisito) {
-            console.error('Documento omitido por falta de idActoRequisito');
-            return { ok: false, mensaje: 'Falta idActoRequisito' };
-        }
-
-        // --- Extracción y Coherencia de Datos (AJUSTADA) ---
-        
-        // 1. Fecha de Subida
-        const fechaActual = new Date().toISOString().split('T')[0];
-        const fechaSubida = documento.f_subido || 
-                            (documento.estadoCumplido === 'CUMPLIDO' ? fechaActual : '1900-01-01'); // Fallback seguro
-
-        // 2. Vigencia del Documento
-        const vigenciaFinal = documento.vigenciaDocumento || 
-                              (documento.estadoCumplido === 'CUMPLIDO' ? '2050-12-31' : '1900-01-01'); // Fallback seguro
-        
-        // 3. Estado
-        const estadoFinal = documento.estadoCumplido || 'PENDIENTE_REVISION';
-        
-        const docPayload = {
-            idActoRequisito: Number(documento.idActoRequisito), 
-            idReserva: Number(idReserva),
-            
-            // 🚀 Corregido: Usar los valores del objeto documento o fallbacks.
-            ruta: documento.rutaArchivo || 'PENDIENTE', 
-            tipoArchivo: documento.tipoArchivo || 'N/A', 
-            fecha: fechaSubida, // 💡 Usa el valor ajustado.
-            estadoCumplimiento: estadoFinal, // 💡 Usa 'CUMPLIDO', 'NO_CUMPLIDO' o 'PENDIENTE_REVISION'.
-            observacion: documento.observacion || '', 
-            vigencia: vigenciaFinal // 💡 Usa el valor ajustado.
-        };
-
-        console.log(`[DEPURACIÓN DOCS] Payload Documento ${documento.idActoRequisito}:`, docPayload);
-        
-        // 💡 La URL ahora usa la constante corregida que apunta al endpoint completo
-        try {
-            const response = await fetch(API_URL_REGISTRAR_DOC, { 
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(docPayload)
-            });
-            
-            console.log(`[DEPURACIÓN DOCS] Status HTTP Documento ${documento.idActoRequisito}:`, response.status);
-            
-            const result = await response.json();
-
-            console.log(`[DEPURACIÓN DOCS] Resultado API Documento ${documento.idActoRequisito}:`, result);
-
-            if (!response.ok || !result.ok) {
-                // 🛑 Si el backend devuelve un error, lo lanzamos para que el catch lo maneje
-                throw new Error(result.mensaje || `Fallo al registrar documento ${documento.idActoRequisito}`);
-            }
-            return { ok: result.ok, mensaje: result.mensaje || `Documento ${documento.idActoRequisito} registrado` };
-        } catch (error) {
-            console.error(`❌ Error de red/backend al registrar documento ${documento.idActoRequisito}:`, error);
-            return { ok: false, mensaje: error.message };
-        }
+async function registrarDocumentoAPI(documento, idReserva) {
+    if (!documento.idActoRequisito) {
+        console.error('Documento omitido por falta de idActoRequisito');
+        return { ok: false, mensaje: 'Falta idActoRequisito' };
     }
+    if (!idReserva) {
+        console.error('Documento omitido por falta de idReserva');
+        return { ok: false, mensaje: 'Falta idReserva' };
+    }
+
+    const fechaActual = new Date().toISOString().split('T')[0];
+    const fechaSubida = documento.f_subido || fechaActual;
+    const vigenciaFinal = documento.vigenciaDocumento || '2050-12-31';
+
+    // 🟢 Cambiado: solo se marca como "CUMPLIDO" si hay archivo
+    const estadoFinal = documento.file ? (documento.estadoCumplido || 'CUMPLIDO') : 'NO_CUMPLIDO';
+
+    const formData = new FormData();
+
+    formData.append('idActoRequisito', String(documento.idActoRequisito));
+    formData.append('idReserva', String(idReserva));
+    formData.append('estadoCumplimiento', estadoFinal);
+    formData.append('observacion', documento.observacion || '');
+    formData.append('vigenciaDocumento', documento.vigenciaDocumento);
+    formData.append('fecha', fechaSubida);
+
+    // Solo agregar campos de archivo si hay file
+    if (documento.file) {
+        formData.append('file', documento.file);
+        if (documento.rutaArchivo) formData.append('ruta', documento.rutaArchivo);
+        if (documento.tipoArchivo) formData.append('tipoArchivo', documento.tipoArchivo);
+    }
+
+    try {
+        const response = await fetch(API_URL_REGISTRAR_DOC, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            throw new Error(result.mensaje || `Fallo al registrar documento ${documento.idActoRequisito}`);
+        }
+
+        return { ok: true, mensaje: result.mensaje || `Documento ${documento.idActoRequisito} registrado` };
+    } catch (error) {
+        console.error(`❌ Error registrar documento ${documento.idActoRequisito}:`, error);
+        return { ok: false, mensaje: error.message };
+    }
+}
+
 
     // B. Registrar Participante
     async function registrarParticipanteAPI(rol, nombre, idActo, idReserva) {
@@ -338,185 +324,161 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 5. FUNCIÓN PRINCIPAL DE CONFIRMACIÓN (API ORCHESTRATOR)
     // =========================================================
 
-    async function enviarReserva(data) {
-        if (!btnConfirmar) return;
+async function enviarReserva(data) {
+    if (!btnConfirmar) return;
 
-        btnConfirmar.disabled = true;
-        btnConfirmar.textContent = 'Enviando...';
-        mostrarMensaje('Procesando reserva, por favor espere...', 'info');
-        
-        let idReserva = null; // Variable para almacenar el ID de la reserva creada
+    btnConfirmar.disabled = true;
+    btnConfirmar.textContent = 'Enviando...';
+    mostrarMensaje('Procesando reserva, por favor espere...', 'info');
 
+    let idReserva = null;
+
+    try {
+        // -------------------------------------------------------
+        // 🛑 VALIDACIÓN DE CAMPOS CRÍTICOS
+        // -------------------------------------------------------
+        if (!data.idSolicitante || !data.idUsuario || !data.idActo || !data.fecha || !data.hora) {
+            const missing = [];
+            if (!data.idSolicitante) missing.push('ID Solicitante');
+            if (!data.idUsuario) missing.push('ID Usuario');
+            if (!data.idActo) missing.push('ID Acto');
+            if (!data.fecha) missing.push('Fecha');
+            if (!data.hora) missing.push('Hora');
+            throw new Error(`Error de datos: faltan ${missing.join(', ')}`);
+        }
+
+        // -------------------------------------------------------
+        // 📁 DOCUMENTOS
+        // -------------------------------------------------------
+        const documentosCrudos = data.requisitos || data.documentos || {};
+        const documentosArray = Object.values(documentosCrudos)
+            .filter(d => d && typeof d === 'object' && d.idActoRequisito);
+
+        console.log("Documentos a procesar:", documentosArray);
+
+        // -------------------------------------------------------
+        // 👥 PARTICIPANTES
+        // -------------------------------------------------------
+        const participantes = data.participantes || {};
+        const idActo = data.idActo;
+
+        // -------------------------------------------------------
+        // 🔥 DEFINIR ESTADO DE LA RESERVA (TU CONDICIÓN NUEVA)
+        // -------------------------------------------------------
+        const requisitos = data.requisitos ||{};
+
+        // -------------------------------------------------------
+        // 📝 PASO 1 — REGISTRAR RESERVA
+        // -------------------------------------------------------
+        mostrarMensaje('Registrando reserva principal (Paso 1/3)...', 'info');
+
+        const reservaPayload = {
+            fecha: data.fecha,
+            hora: data.hora,
+            observaciones: data.observaciones || '',
+            idUsuario: String(data.idUsuario),
+            idSolicitante: String(data.idSolicitante),
+            idActo: String(data.idActo),
+            estadoReserva: requisitos.estado,
+            idParroquia: data.idParroquia
+        };
+
+        console.log("Payload reserva:", reservaPayload);
+
+        const apiReserva = await fetch(API_URL_NUEVA_RESERVA, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reservaPayload)
+        });
+
+        let resultReserva;
         try {
-            
-            // ====================================================================
-            // 🛑 PRE-VALIDACIÓN CRÍTICA DE DATOS ANTES DE CUALQUIER LLAMADA API 🛑
-            // ====================================================================
-            
-            // Validaciones de IDs críticos para la Reserva principal
-            if (!data.idSolicitante || !data.idUsuario || !data.idActo || !data.fecha || !data.hora) {
-                // Mensaje detallado para saber qué falta
-                const missing = [];
-                if (!data.idSolicitante) missing.push('ID Solicitante');
-                if (!data.idUsuario) missing.push('ID Usuario');
-                if (!data.idActo) missing.push('ID Acto');
-                if (!data.fecha) missing.push('Fecha');
-                if (!data.hora) missing.push('Hora');
-                
-                throw new Error(`Error de datos críticos: Faltan campos necesarios para el registro principal: ${missing.join(', ')}.`);
-            }
-            
-            // ====================================================================
-            // 🚀 Preparar Documentos (Lógica para convertir el objeto en un array)
-            // ====================================================================
-            // 1. Tomar los documentos del campo 'requisitos' o 'documentos'
-            const documentosCrudos = data.requisitos || data.documentos || {};
-            
-            // 2. Convertir el objeto a un array de documentos, y filtrar explícitamente 
-            const documentosArray = Object.values(documentosCrudos).filter(item => {
-                // Consideramos un elemento válido si es un objeto con la propiedad clave idActoRequisito
-                return typeof item === 'object' && item !== null && item.idActoRequisito;
-            });
+            resultReserva = await apiReserva.json();
+        } catch (e) {
+            const responseText = await apiReserva.text();
+            console.error("No es JSON:", responseText);
+            throw new Error("Respuesta del servidor no es JSON");
+        }
 
-            console.log("[DEPURACIÓN DOCS - CORREGIDA] Documentos a procesar (Array Final):", documentosArray);
-            
-            const participantes = data.participantes || {};
-            const idActo = data.idActo; 
-            
-            if (documentosArray.length === 0) {
-                 console.warn("Advertencia: No hay documentos para registrar (documentosArray vacío).");
-            }
-            if (Object.keys(participantes).length === 0) {
-                 console.warn("Advertencia: No hay participantes para registrar (participantes vacío).");
-            }
-            
-            // ====================================================================
-            // 🚀 PASO 1: REGISTRAR RESERVA PRINCIPAL
-            // ====================================================================
-            mostrarMensaje('Registrando reserva principal (Paso 1/3)...', 'info');
-            
-            // 🛑 CORRECCIÓN CLAVE: OBTENER EL ESTADO DE LA RESERVA DE data.requisitos.estado
-            const estadoRequisitos = data.requisitos && data.requisitos.estado;
-            const estadoInicialReserva = estadoRequisitos || 'PENDIENTE_REVISION'; // Fallback seguro
-            
-            console.log(`[DEPURACIÓN RESERVA] Estado de Reserva obtenido de 'requisitos.estado': ${estadoInicialReserva}`);
+        if (!apiReserva.ok || !resultReserva.ok) {
+            throw new Error(resultReserva.mensaje || "Error al registrar la reserva");
+        }
 
-            const reservaPayload = {
-                fecha: data.fecha,
-                hora: data.hora,
-                observaciones: data.observaciones || '', 
-                idUsuario: String(data.idUsuario), 
-                idSolicitante: String(data.idSolicitante),
-                idActo: String(data.idActo),
-                estadoReserva: estadoInicialReserva // <<-- CORRECCIÓN FINAL APLICADA AQUÍ
-            };
-            
-            console.log("[DEPURACIÓN RESERVA] Payload de Reserva enviado:", reservaPayload);
+        idReserva = resultReserva.idReserva;
+        if (!idReserva) throw new Error("La API no devolvió idReserva");
 
-            const apiReserva = await fetch(API_URL_NUEVA_RESERVA, { 
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(reservaPayload)
-            });
+        // -------------------------------------------------------
+        // 📁 PASO 2 — REGISTRAR DOCUMENTOS
+        // -------------------------------------------------------
+        if (documentosArray.length > 0) {
+            mostrarMensaje('Registrando documentos (Paso 2/3)...', 'info');
 
-            console.log("[DEPURACIÓN RESERVA] Status HTTP de la API de Reserva:", apiReserva.status);
+            const resultadosDocs = await Promise.all(
+                documentosArray.map(doc => registrarDocumentoAPI(doc, idReserva))
+            );
 
-            let resultReserva;
-            try {
-                resultReserva = await apiReserva.json();
-            } catch (e) {
-                const responseText = await apiReserva.text();
-                console.error("[DEPURACIÓN RESERVA] Error al parsear JSON. Respuesta recibida (NO JSON):", responseText);
-                throw new Error("Respuesta del servidor no es JSON. HTTP Status: " + apiReserva.status);
-            }
-            
-            console.log("[DEPURACIÓN RESERVA] Resultado de la API de Reserva:", resultReserva);
-            
-            if (!apiReserva.ok || !resultReserva.ok) {
-                const mensajeError = resultReserva.mensaje || "Error desconocido al crear la reserva principal.";
-                console.error("[DEPURACIÓN RESERVA] Error del Backend:", mensajeError);
-                throw new Error(`[RESERVA PRINCIPAL] Falló el Paso 1: ${mensajeError}.`);
-            }
-
-            idReserva = resultReserva.idReserva; 
-            if (!idReserva) throw new Error("La API principal no devolvió el ID de Reserva."); 
-            
-            // ====================================================================
-            // 🚀 PASO 2: Documentos
-            // ====================================================================
-            if (documentosArray.length > 0) {
-                mostrarMensaje('Registrando documentos adjuntos (Paso 2/3)...', 'info');
-                
-                // Usamos map y Promise.all para manejar la concurrencia
-                const promesasDocs = documentosArray.map(doc => registrarDocumentoAPI(doc, idReserva));
-                const resultadosDocs = await Promise.all(promesasDocs); 
-                
-                const fallosDocs = resultadosDocs.filter(r => !r.ok);
-                if (fallosDocs.length > 0) {
-                    // Si falla, notificamos el error, pero el ID de reserva persiste
-                    const mensajeFallo = fallosDocs.map(f => f.mensaje).join('; ');
-                    throw new Error(`[DOCUMENTOS] Falló el Paso 2: Fallo al registrar ${fallosDocs.length} documento(s). Detalles: ${mensajeFallo}`);
-                }
-            }
-            
-            // ====================================================================
-            // 🚀 PASO 3: Participantes
-            // ====================================================================
-            if (Object.keys(participantes).length > 0) {
-                 mostrarMensaje('Registrando participantes del acto (Paso 3/3)...', 'info');
-                 
-                 // Usamos filter para omitir participantes con nombre vacío
-                 const promesasParticipantes = Object.entries(participantes)
-                      .filter(([, nombre]) => nombre && String(nombre).trim() !== '')
-                      .map(([rol, nombre]) => registrarParticipanteAPI(rol, nombre, idActo, idReserva));
-                 
-                 const resultadosParticipantes = await Promise.all(promesasParticipantes);
-                 
-                 const fallosParticipantes = resultadosParticipantes.filter(r => !r.ok && r.mensaje !== 'Participante omitido (vacío)');
-                 if (fallosParticipantes.length > 0) {
-                      // Si falla, notificamos el error, pero el ID de reserva persiste
-                      const mensajeFallo = fallosParticipantes.map(f => f.mensaje).join('; ');
-                      throw new Error(`[PARTICIPANTES] Falló el Paso 3: Fallo al registrar ${fallosParticipantes.length} participante(s). Detalles: ${mensajeFallo}`);
-                 }
-            }
-
-            // --- ÉXITO TOTAL (Todos los pasos OK) ---
-            
-            mostrarMensaje('✅ Reserva confirmada exitosamente. Redirigiendo al inicio...', 'success');
-            
-            // 🛑 ÚNICO LUGAR DONDE SE LIMPIA sessionStorage Y REDIRIGE A /principal
-            sessionStorage.clear(); 
-            
-            setTimeout(() => {
-                window.location.href = `/principal`;
-            }, 1500);
-            
-            // Usamos 'return' aquí para evitar que el 'finally' se ejecute antes de la redirección
-            return; 
-
-        } catch (error) {
-            // Manejo de errores fatales
-            // 🛑 La sesión NO se limpia en caso de error (se mantiene en la vista actual)
-            let mensajeMostrar = `❌ Error al confirmar la reserva: ${error.message}`;
-            
-            if (idReserva) {
-                // Si la reserva principal se creó (Paso 1 OK) pero fallaron subsiguientes (Paso 2 o 3),
-                mensajeMostrar += `<br>La **Reserva (ID: ${idReserva})** se creó, pero fallaron pasos posteriores (Documentos/Participantes). **Necesita revisión manual**. Los datos de sesión persisten.`;
-            } else {
-                // Si falla la pre-validación o el Paso 1, la reserva principal nunca se creó.
-                mensajeMostrar += `<br>La **Reserva NO fue creada**. Los datos de sesión persisten.`;
-            }
-            
-            mostrarMensaje(mensajeMostrar, 'error');
-            console.error('Proceso de reserva fallido (Datos de sesión mantenidos):', error);
-        } finally {
-            // Restauramos el botón solo si la función no ha salido por éxito (mediante el 'return' dentro del try)
-            if (btnConfirmar.textContent === 'Enviando...') {
-                 btnConfirmar.disabled = false;
-                 btnConfirmar.textContent = 'Confirma reserva';
+            const fallos = resultadosDocs.filter(r => !r.ok);
+            if (fallos.length > 0) {
+                const detalles = fallos.map(f => f.mensaje).join('; ');
+                throw new Error(`Fallaron ${fallos.length} documentos: ${detalles}`);
             }
         }
+
+        // -------------------------------------------------------
+        // 👥 PASO 3 — REGISTRAR PARTICIPANTES
+        // -------------------------------------------------------
+        if (Object.keys(participantes).length > 0) {
+            mostrarMensaje('Registrando participantes (Paso 3/3)...', 'info');
+
+            const resultadosParticipantes = await Promise.all(
+                Object.entries(participantes)
+                    .filter(([, nombre]) => nombre && nombre.trim() !== '')
+                    .map(([rol, nombre]) => registrarParticipanteAPI(rol, nombre, idActo, idReserva))
+            );
+
+            const fallos = resultadosParticipantes.filter(
+                r => !r.ok && r.mensaje !== 'Participante omitido (vacío)'
+            );
+
+            if (fallos.length > 0) {
+                const detalles = fallos.map(f => f.mensaje).join('; ');
+                throw new Error(`Fallaron participantes: ${detalles}`);
+            }
+        }
+
+        // -------------------------------------------------------
+        // 🎉 ÉXITO TOTAL
+        // -------------------------------------------------------
+        mostrarMensaje('✅ Reserva confirmada exitosamente. Redirigiendo...', 'success');
+
+        sessionStorage.clear();
+
+        setTimeout(() => {
+            window.location.href = `/principal`;
+        }, 1500);
+
+        return;
+
+    } catch (error) {
+        let mensaje = `❌ Error al confirmar la reserva: ${error.message}`;
+
+        if (idReserva) {
+            mensaje += `<br>La reserva (ID: ${idReserva}) sí se creó, pero fallaron pasos posteriores. Revisión manual necesaria.`;
+        } else {
+            mensaje += `<br>La reserva NO se creó.`;
+        }
+
+        mostrarMensaje(mensaje, 'error');
+        console.error("Error en envío de reserva:", error);
+
+    } finally {
+        if (btnConfirmar.textContent === 'Enviando...') {
+            btnConfirmar.disabled = false;
+            btnConfirmar.textContent = 'Confirma reserva';
+        }
     }
+}
+
 
 // ---------------------------------------------------------------------------------------------------
 

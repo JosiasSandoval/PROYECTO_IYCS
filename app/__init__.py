@@ -131,6 +131,25 @@ def crear_app():
             rol_usuario=session.get('rol')
         )
 
+    @app.route('/cliente/mis_reservas')
+    def mis_reservas():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))
+        return render_template(
+            'cliente/mis_reservas.html',
+            id_usuario=session.get('idUsuario'),
+            rol_usuario=session.get('rol')
+        )
+    @app.route('/cliente/pago')
+    def pago_cliente():
+        if 'idUsuario' not in session:
+            return redirect(url_for('iniciar_sesion'))
+        return render_template(
+            'cliente/pago.html',
+            id_usuario=session.get('idUsuario'),
+            rol_usuario=session.get('rol')
+        )
+    
     #Administrador
     @app.route('/admi/tipo_documento')
     def tipo_documento_admi():

@@ -6,39 +6,43 @@
   <title>Pago Seguro</title>
   <link rel="stylesheet" href="/static/css/pago.css" />
 </head>
-<body>
+<body data-rol="{{ session['rol'] }}" data-id="{{ session['idUsuario'] }}">
+  
+  <!-- Header dinámico -->
   <div id="header-placeholder"></div>
   
-    <main class="grid">
-        <div id="barra_lateral-placeholder"></div>
+  <main class="grid">
+    
+    <!-- Barra lateral dinámica -->
+    <div id="barra_lateral-placeholder"></div>
 
+    <!-- Contenido principal -->
     <div class="funciones">
       <h2>Detalles del Pago</h2>
 
       <div class="contenedor-pago">
-        <!-- Formulario -->
+
+        <!-- Formulario de pago -->
         <div class="form-container">
-          <!-- Selector de método de pago -->
-          <div class="metodos-pago" id="metodos-container">
-            <!-- Los métodos se cargarán dinámicamente desde la BD -->
-          </div>
+          
+          <!-- Métodos de pago (dinámicos desde la BD) -->
+          <div class="metodos-pago" id="metodos-container"></div>
 
           <form class="formulario-pago" id="form-pago">
-            <!-- Input oculto para ID de reserva -->
             <input type="hidden" id="idReserva" name="idReserva" value="">
-            
+
             <!-- Sección Tarjeta -->
-            <div class="form-section active" id="section-tarjeta">
+            <div class="form-section" id="section-tarjeta">
               <div class="tarjeta-visual">
                 <div class="tarjeta-chip"></div>
                 <div class="tarjeta-numero" id="card-display">•••• •••• •••• ••••</div>
                 <div class="tarjeta-info">
                   <div>
-                    <div style="font-size: 0.7rem; opacity: 0.8;">TITULAR</div>
+                    <div class="small-text">TITULAR</div>
                     <div id="name-display">NOMBRE APELLIDO</div>
                   </div>
                   <div>
-                    <div style="font-size: 0.7rem; opacity: 0.8;">VENCE</div>
+                    <div class="small-text">VENCE</div>
                     <div id="exp-display">MM/AA</div>
                   </div>
                 </div>
@@ -60,11 +64,11 @@
             </div>
 
             <!-- Sección Yape -->
-            <div class="form-section active" id="section-yape">
+            <div class="form-section" id="section-yape">
               <div class="info-metodo">
                 <div class="icono-metodo"></div>
                 <h3>Pagar con Yape</h3>
-                <p>Realiza el pago escaneando el código QR desde tu app de Yape</p>
+                <p>Escanea el código QR desde tu app de Yape</p>
                 <div class="qr-placeholder">
                   <div class="qr-code"></div>
                   <p class="qr-texto">Código QR de pago</p>
@@ -72,9 +76,9 @@
               </div>
 
               <div class="dato-item">
-                    <span class="dato-label">Número destino:</span>
-                    <span class="dato-valor">999 888 777</span>
-                  </div>
+                <span class="dato-label">Número destino:</span>
+                <span class="dato-valor">999 888 777</span>
+              </div>
                   
               <label for="yape-codigo">Código de operación * (después de pagar)</label>
               <input type="text" id="yape-codigo" name="yape-codigo" placeholder="Ingresa el código de 8 dígitos">
@@ -99,10 +103,10 @@
               </div>
 
               <label for="plin-numero">Tu número de celular *</label>
-              <input type="tel" id="plin-numero" name="plin-numero" placeholder="999 999 999" maxlength="11">
+              <input type="tel" id="plin-numero" name="plin-numero" placeholder="999 999 999" maxlength="11" required>
 
               <label for="plin-codigo">Código de operación *</label>
-              <input type="text" id="plin-codigo" name="plin-codigo" placeholder="Ingresa el código de transacción">
+              <input type="text" id="plin-codigo" name="plin-codigo" placeholder="Ingresa el código de transacción" required>
             </div>
 
             <!-- Sección Efectivo -->
@@ -112,28 +116,26 @@
                 <h3>Pago en Efectivo</h3>
                 <p>Realiza el pago en nuestras oficinas o al momento del servicio</p>
                 <div class="info-efectivo">
-                  <p> <strong>Dirección:</strong> Av. Principal 123, Chiclayo</p>
-                  <p> <strong>Horario:</strong> Lun-Vie 9:00 AM - 6:00 PM</p>
-                  <p> El pago debe realizarse antes de la fecha del servicio</p>
+                  <p><strong>Dirección:</strong> Av. Principal 123, Chiclayo</p>
+                  <p><strong>Horario:</strong> Lun-Vie 9:00 AM - 6:00 PM</p>
+                  <p>El pago debe realizarse antes de la fecha del servicio</p>
                 </div>
               </div>
 
               <label for="efectivo-nombre">Nombre completo *</label>
-              <input type="text" id="efectivo-nombre" name="efectivo-nombre" placeholder="Nombre de quien realizará el pago">
+              <input type="text" id="efectivo-nombre" name="efectivo-nombre" placeholder="Nombre de quien realizará el pago" required>
 
               <label for="efectivo-dni">DNI *</label>
-              <input type="text" id="efectivo-dni" name="efectivo-dni" placeholder="Número de DNI" maxlength="8">
+              <input type="text" id="efectivo-dni" name="efectivo-dni" placeholder="Número de DNI" maxlength="8" required>
             </div>
 
-            <button type="submit" class="btn-pagar" id="btn-submit">
-               Procesar Pago
-            </button>
+            <button type="submit" class="btn-pagar" id="btn-submit">Procesar Pago</button>
           </form>
         </div>
 
-        <!-- Resumen -->
+        <!-- Resumen del pedido -->
         <div class="resumen-pago">
-          <h3> Resumen del Pedido</h3>
+          <h3>Resumen del Pedido</h3>
           <div id="resumen-contenido">
             <p><strong>Producto:</strong> <span id="producto-nombre">Cargando...</span></p>
             <p><strong>Duración:</strong> <span id="producto-duracion">-</span></p>
@@ -151,12 +153,15 @@
             </div>
           </div>
         </div>
+
       </div>
     </div>
-</main>
-    
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="/static/js/header.js"></script>
+  <script src="/static/js/barra_lateral.js"></script>
+  <script src="/static/js/pago.js"></script>
 </body>
-<script src="/static/js/header.js"></script>
-<script src="/static/js/barra_lateral.js"></script>
-<script src="/static/js/pago.js"></script>
 </html>

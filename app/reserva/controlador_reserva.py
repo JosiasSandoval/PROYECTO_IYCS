@@ -1,7 +1,8 @@
 from app.bd_sistema import obtener_conexion
+from datetime import date, datetime, timedelta
 
 # Función Python (backend/db.py) - CORREGIDA PARA MySQL
-def agregar_reserva(fecha, hora,mencion,estado, idUsuario, idSolicitante):
+def agregar_reserva(fecha, hora,mencion,estado, idUsuario, idSolicitante,idParroquia):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
@@ -9,10 +10,10 @@ def agregar_reserva(fecha, hora,mencion,estado, idUsuario, idSolicitante):
             cursor.execute("""
                 INSERT INTO reserva (
                     f_reserva, h_reserva, mencion, estadoReserva, numReprogramaciones, 
-                    estadoReprogramado, vigenciaReserva, idUsuario, idSolicitante
+                    estadoReprogramado, vigenciaReserva, idUsuario, idSolicitante,idParroquia
                 )
-                VALUES (%s, %s, %s, %s, 0, FALSE, CURRENT_DATE, %s, %s);
-            """, (fecha, hora, mencion, estado,idUsuario, idSolicitante))
+                VALUES (%s, %s, %s, %s, 0, FALSE, CURRENT_DATE, %s, %s,%s);
+            """, (fecha, hora, mencion, estado,idUsuario, idSolicitante,idParroquia))
             
             # 2. Obtener el ID insertado usando lastrowid (propio de MySQL/drivers Python)
             id_reserva = cursor.lastrowid
@@ -60,9 +61,11 @@ def cambiar_estado_reserva(idReserva, accion='continuar'):
             # Si se solicita cancelar, no importa el estado actual
             if accion == 'cancelar':
                 nuevo_estado = 'CANCELADO'
-            elif estado_actual == 'PENDIENTE_DOCUMENTOS':
-                nuevo_estado = 'PENDIENTE_PAGOS'
-            elif estado_actual == 'PENDIENTE_PAGOS':
+            elif estado_actual == 'PENDIENTE_DOCUMENTO':
+                nuevo_estado = 'PENDIENTE_REVISION'
+            elif estado_actual == 'PENDIENTE_REVISION':
+                nuevo_estado = 'PENDIENTE_PAGO'
+            elif estado_actual == 'PENDIENTE_PAGO':
                 nuevo_estado = 'CONFIRMADO'
             else:
                 nuevo_estado = estado_actual  # Mantiene el estado si no aplica cambio
@@ -97,83 +100,196 @@ def eliminar_reserva(idReserva):
         if conexion:
             conexion.close()
 
-def get_reserva_feligres(idUsuario):
+def get_reservas_sacerdote(nombre): 
     conexion = obtener_conexion()
     try:
-        resultados=[]
+        resultados = []
         with conexion.cursor() as cursor:
             cursor.execute("""
-            SELECT f_reserva, h_reserva, mencion,estadoReserva from reserva where idUsuario=%s;
-            """,(idUsuario,))
-            resultados = cursor.fetchall()
-            for filas in resultados:
-                resultados.append({
-                    'fecha': filas[0],
-                    'hora': filas[1],
-                    'mencion': filas[2],
-                    'estado': filas[3]
-                })
-            return resultados
-    except Exception as e:
-        print(f"Error al listar las reservas: {e}")
-        return []
-    finally:
-        if conexion:
-            conexion.close()
+            SELECT 
+                r.idReserva,
+                al.nombActo,
+                r.f_reserva,
+                r.h_reserva,
+                r.mencion,
+                CONCAT(f.nombFel,' ',f.apePatFel,' ',f.apeMatFel) AS nombreFeligres,
+                f.telefonoFel,
+                f.direccionFel,
+                pr.nombParroquia,
+                COALESCE(GROUP_CONCAT(
+                    CASE 
+                        WHEN pa.rolParticipante NOT LIKE '%sacerdote%' 
+                        THEN CONCAT(pa.rolParticipante, ': ', pa.nombParticipante)
+                    END SEPARATOR '; '
+                ), '') AS participantes
+            FROM RESERVA r
+            INNER JOIN FELIGRES f ON f.idFeligres = r.idSolicitante
+            INNER JOIN PARROQUIA pr ON r.idParroquia = pr.idParroquia
+            LEFT JOIN PARTICIPANTES_ACTO pa ON pa.idReserva = r.idReserva
+            INNER JOIN ACTO_LITURGICO al ON al.idActo = pa.idActo
+            INNER JOIN USUARIO us ON f.idUsuario = us.idUsuario
+            INNER JOIN ROL_USUARIO rs ON us.idUsuario = rs.idUsuario
+            INNER JOIN ROL ro ON rs.idRol = ro.idRol
+            WHERE EXISTS (
+                SELECT 1 
+                FROM PARTICIPANTES_ACTO pa_s 
+                WHERE pa_s.idReserva = r.idReserva
+                  AND pa_s.rolParticipante LIKE '%Sacerdote%'
+                  AND pa_s.nombParticipante LIKE %s
+            )
+            GROUP BY r.idReserva, al.nombActo;
+            """, (f"%{nombre}%",))
 
-def get_reserva():
-    conexion = obtener_conexion()
-    try:
-        resultados=[]
-        with conexion.cursor() as cursor:
-            cursor.execute("""
-            SELECT idReserva, f_reserva, h_reserva, mencion,estadoReserva,numReprogramaciones,estadoReprogramado,vigenciaReserva,idUsuario,idSolicitante from reserva;
-            """)
             resultados = cursor.fetchall()
             for filas in resultados:
                 resultados.append({
                     'idReserva': filas[0],
-                    'fecha': filas[1],
-                    'hora': filas[2],
-                    'mencion': filas[3],
-                    'estado': filas[4],
-                    'numReprogramaciones': filas[5],
-                    'estadoReprogramado': filas[6],
-                    'vigenciaReserva': filas[7],
-                    'idUsuario': filas[8],
-                    'idSolicitante': filas[9]
+                    'nombreActo': filas[1],
+                    'fecha': filas[2],
+                    'hora': filas[3],
+                    'mencion': filas[4],
+                    'nombreFeligres': filas[5],
+                    'telefonoFeligres': filas[6],
+                    'direccionFeligres': filas[7],
+                    'nombreParroquia': filas[8],
+                    'participantes': filas[9]
                 })
-            return resultados
+        return resultados   
     except Exception as e:
-        print(f"Error al listar las reservas: {e}")
+        print(f"Error al obtener las reservas: {e}")
         return []
     finally:
         if conexion:
             conexion.close()
 
-def get_reserva_sacerdote(nombre):
+def get_reservas_id_usuario(idUsuario, rol, idParroquia=None):
     conexion = obtener_conexion()
     try:
-        with conexion.cursor as cursor:
-            cursor.execute("""
-            SELECT 
-                re.idReserva, 
-                re.f_reserva, 
-                re.h_reserva, 
-                re.mencion, 
-                al.idActo, 
-                al.nombActo
-            FROM participantes_acto pa
-            INNER JOIN reserva re ON pa.idReserva = re.idReserva
-            INNER JOIN acto_liturgico al ON pa.idActo = al.idActo
-            WHERE pa.rolParticipante = 'SACERDOTE'
-            AND LOWER(pa.nombParticipante) LIKE LOWER('%raul%');
-            """)
+        resultados = []
+        with conexion.cursor() as cursor:
+
+            # Se incluye al.costoBase en ambas consultas
+            
+            if "Secretaria" in rol:
+                # ===== SECRETARIA =====
+                cursor.execute("""
+                    SELECT 
+                        r.idReserva,
+                        al.nombActo,
+                        al.idActo,
+                        r.f_reserva,
+                        r.h_reserva,
+                        r.estadoReserva,
+                        r.mencion,
+                        CONCAT(f.nombFel,' ',f.apePatFel,' ',f.apeMatFel) AS nombreFeligres,
+                        pr.nombParroquia,
+                        GROUP_CONCAT(CONCAT(pa.rolParticipante, ': ', pa.nombParticipante) SEPARATOR '; ') AS participantes,
+                        al.costoBase -- 💡 CAMBIO: Nuevo campo agregado
+                    FROM RESERVA r
+                    INNER JOIN FELIGRES f ON f.idFeligres = r.idSolicitante
+                    INNER JOIN PARROQUIA pr ON r.idParroquia = pr.idParroquia
+                    LEFT JOIN PARTICIPANTES_ACTO pa ON pa.idReserva = r.idReserva
+                    INNER JOIN ACTO_LITURGICO al ON al.idActo = pa.idActo
+                    INNER JOIN USUARIO us ON f.idUsuario = us.idUsuario
+                    INNER JOIN ROL_USUARIO rs ON us.idUsuario = rs.idUsuario
+                    INNER JOIN ROL ro ON rs.idRol = ro.idRol
+                    WHERE ro.nombRol LIKE %s 
+                      AND r.idUsuario = %s
+                      AND r.idParroquia = %s
+                    GROUP BY r.idReserva, al.nombActo, al.idActo, r.f_reserva, r.h_reserva, r.estadoReserva, r.mencion, f.nombFel, f.apePatFel, f.apeMatFel, pr.nombParroquia, al.costoBase
+                    ORDER BY r.f_reserva ASC, r.h_reserva ASC;
+                    """, (f"%{rol}%", idUsuario, idParroquia))
+
+            else:
+                # ===== FELIGRÉS =====
+                cursor.execute("""
+                    SELECT 
+                        r.idReserva,
+                        al.nombActo,
+                        al.idActo,
+                        r.f_reserva,
+                        r.h_reserva,
+                        r.mencion, 
+                        r.estadoReserva,
+                        CONCAT(f.nombFel,' ',f.apePatFel,' ',f.apeMatFel) AS nombreFeligres,
+                        pr.nombParroquia,
+                        GROUP_CONCAT(CONCAT(pa.rolParticipante, ': ', pa.nombParticipante) SEPARATOR '; ') AS participantes,
+                        al.costoBase -- 💡 CAMBIO: Nuevo campo agregado
+                    FROM RESERVA r
+                    INNER JOIN FELIGRES f ON f.idFeligres = r.idSolicitante
+                    INNER JOIN PARROQUIA pr ON r.idParroquia = pr.idParroquia
+                    LEFT JOIN PARTICIPANTES_ACTO pa ON pa.idReserva = r.idReserva
+                    INNER JOIN ACTO_LITURGICO al ON al.idActo = pa.idActo
+                    INNER JOIN USUARIO us ON f.idUsuario = us.idUsuario
+                    INNER JOIN ROL_USUARIO rs ON us.idUsuario = rs.idUsuario
+                    INNER JOIN ROL ro ON rs.idRol = ro.idRol
+                    WHERE ro.nombRol LIKE %s 
+                      AND r.idUsuario = %s
+                    GROUP BY r.idReserva, al.nombActo, al.idActo, r.f_reserva, r.h_reserva, r.mencion,
+                    r.estadoReserva, f.nombFel, f.apePatFel, f.apeMatFel, pr.nombParroquia, al.costoBase
+                    ORDER BY r.f_reserva ASC, r.h_reserva ASC;
+                    """, (f"%{rol}%", idUsuario))
+
+            filas = cursor.fetchall()
+            
+            for fila in filas:
+                # El nuevo orden de columnas (incluyendo costoBase al final) es:
+                # 0: idReserva, 1: nombActo, 2: idActo, 3: f_reserva, 4: h_reserva, ...
+                
+                idActo_val = fila[2]
+                fecha = fila[3]
+                hora = fila[4]
+
+                # Lógica para determinar el índice de estadoReserva y mencion (ajustado +1)
+                if "Secretaria" in rol:
+                    # Secretaria: 0..4, 5:estadoReserva, 6:mencion, 7:nombreFeligres, 8:nombParroquia, 9:participantes, 10:costoBase
+                    estadoReserva_val = fila[5]
+                    mencion_val = fila[6]
+                    nombreFeligres_val = fila[7]
+                    nombreParroquia_val = fila[8]
+                    participantes_val = fila[9]
+                    costoBase_val = fila[10] # 💡 CAMBIO: Nuevo índice
+                else:
+                    # Feligrés: 0..4, 5:mencion, 6:estadoReserva, 7:nombreFeligres, 8:nombParroquia, 9:participantes, 10:costoBase
+                    mencion_val = fila[5]
+                    estadoReserva_val = fila[6]
+                    nombreFeligres_val = fila[7]
+                    nombreParroquia_val = fila[8]
+                    participantes_val = fila[9]
+                    costoBase_val = fila[10] # 💡 CAMBIO: Nuevo índice
+
+                # Convertir fecha a texto JSON
+                if isinstance(fecha, (date, datetime)):
+                    fecha = fecha.isoformat()
+
+                # Convertir hora (timedelta → "HH:MM:SS")
+                if isinstance(hora, timedelta):
+                    total_seconds = int(hora.total_seconds())
+                    horas = total_seconds // 3600
+                    minutos = (total_seconds % 3600) // 60
+                    segundos = total_seconds % 60
+                    hora = f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+
+                resultados.append({
+                    'idReserva': fila[0],
+                    'nombreActo': fila[1],
+                    'idActo': idActo_val,
+                    'fecha': fecha,
+                    'hora': hora,
+                    'mencion': mencion_val,
+                    'estadoReserva': estadoReserva_val,
+                    'nombreFeligres': nombreFeligres_val,
+                    'nombreParroquia': nombreParroquia_val,
+                    'participantes': participantes_val,
+                    'costoBase': costoBase_val # 💡 CAMBIO: Nuevo campo añadido
+                })
+
+        return resultados
+
     except Exception as e:
-        print(f"Error al listar las reservas: {e}")
+        print(f"Error al obtener las reservas: {e}")
         return []
+
     finally:
         if conexion:
             conexion.close()
-
-

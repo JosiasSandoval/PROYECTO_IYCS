@@ -4,7 +4,7 @@ from datetime import datetime
 # ===========================
 # REGISTRAR NUEVO PAGO
 # ===========================
-def registrar_pago(montoTotal, numTarjeta, estadoPago, idMetodo, idReserva):
+def registrar_pago(montoTotal,numTarjeta,tipoPago, idReserva):
     """
     Registra un nuevo pago en el sistema
     
@@ -21,22 +21,17 @@ def registrar_pago(montoTotal, numTarjeta, estadoPago, idMetodo, idReserva):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            f_transaccion = datetime.now()
             
             cursor.execute(
                 """INSERT INTO pago 
-                (montoTotal, f_transaccion, numTarjeta, estadoPago, vigenciaPago, idMetodo, idReserva) 
-                VALUES (%s, %s, %s, %s, TRUE, %s, %s)""",
-                (montoTotal, f_transaccion, numTarjeta, estadoPago, idMetodo, idReserva)
+                (montoTotal, f_transaccion, numTarjeta,tipoPago, estadoPago, idReserva) 
+                VALUES (%s, CURRENTE_DATE, %s, %s,'APROBADO', %s)""",
+                (montoTotal, numTarjeta, tipoPago,  idReserva)
             )
             conexion.commit()
             
-            id_pago = cursor.lastrowid
-            print(f'Pago registrado correctamente con ID: {id_pago}')
-            
             return {
                 'ok': True,
-                'idPago': id_pago,
                 'mensaje': 'Pago registrado exitosamente'
             }
             
@@ -49,49 +44,42 @@ def registrar_pago(montoTotal, numTarjeta, estadoPago, idMetodo, idReserva):
     finally:
         conexion.close()
 
-
 # ===========================
 # OBTENER DETALLES DE UN PAGO
 # ===========================
-def obtener_pago(idPago):
+def obtener_pago(idReserva):
     """
     Obtiene los detalles de un pago específico
     """
     conexion = obtener_conexion()
     try:
+        resultados=[]
         with conexion.cursor() as cursor:
             cursor.execute(
-                """SELECT p.idPago, p.montoTotal, p.f_transaccion, p.numTarjeta, 
-                p.estadoPago, p.vigenciaPago, p.idMetodo, p.idReserva,
-                m.nombMetodo
-                FROM pago p
-                INNER JOIN metodo_pago m ON p.idMetodo = m.idMetodo
-                WHERE p.idPago = %s""",
-                (idPago,)
+                """
+                SELECT idPago, montoTotal, f_transaccion, numTarjeta,tipoPago,estadoPago
+                FROM pago where idReserva = %s
+                """
+                (idReserva,)
             )
-            fila = cursor.fetchone()
-            
-            if fila:
-                return {
+            resultados = cursor.fetchone()
+            for fila in resultados:
+                resultados.append({
                     'idPago': fila[0],
                     'montoTotal': float(fila[1]),
-                    'f_transaccion': fila[2],
+                    'f_transaccion': fila[2].strftime('%Y-%m-%d %H:%M:%S') if fila[2] else None,
                     'numTarjeta': fila[3],
-                    'estadoPago': fila[4],
-                    'vigenciaPago': fila[5],
-                    'idMetodo': fila[6],
-                    'idReserva': fila[7],
-                    'nombMetodo': fila[8]
-                }
-            return None
-            
+                    'tipoPago': fila[4],
+                    'estadoPago': fila[5]
+                })
+            return resultados   
     except Exception as e:
         print(f'Error al obtener pago: {e}')
         return None
     finally:
         conexion.close()
 
-
+#MODIFICAR_ESTO
 # ===========================
 # LISTAR PAGOS POR RESERVA
 # ===========================
