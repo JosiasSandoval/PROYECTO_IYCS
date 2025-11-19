@@ -14,34 +14,104 @@
 
         <main class="reservas-main">
             <section class="reservas-container">
-                <!-- ======== VIÑETAS (TABS) ======== -->
+
+                <!-- ======== TABS ======== -->
                 <div class="tabs">
                     <button class="tab-btn active" data-tab="calendario">🗓️ Calendario</button>
                     <button class="tab-btn" data-tab="confirmadas">✅ Confirmadas</button>
-                    <button class="tab-btn" data-tab="pendientes">⚠️ Pendientes / Canceladas</button>
+                    <button class="tab-btn" data-tab="pendientes">⚠️ Pendientes</button>
+                    <button class="tab-btn" data-tab="canceladas">❌ Canceladas</button>
                 </div>
 
-                <!-- ======== CONTENEDORES DE CADA SECCIÓN ======== -->
+                <!-- ======== CONTENEDORES DE CADA TAB ======== -->
                 <div class="tab-content active" id="tab-calendario">
                     <div id="calendario-container" class="calendario-box">
                         <p class="placeholder">📅 Cargando calendario de reservas...</p>
                     </div>
                 </div>
 
-                <div class="tab-content" id="tab-confirmadas">
-                    <div class="reservas-lista" id="lista-confirmadas">
-                        <p class="placeholder">No tienes reservas confirmadas.</p>
-                    </div>
+                <div class="tab-content" id="tab-pendientes">
+                    <table class="reservas-table" id="tabla-pendientes">
+                        <thead>
+                            <tr>
+                                <th>Acto</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Parroquia</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="6" class="placeholder">Cargando reservas pendientes...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <div class="tab-content" id="tab-pendientes">
-                    <div class="reservas-lista" id="lista-pendientes">
-                        <p class="placeholder">No tienes reservas pendientes o canceladas.</p>
-                    </div>
+                <div class="tab-content" id="tab-confirmadas">
+                    <table class="reservas-table" id="tabla-confirmadas">
+                        <thead>
+                            <tr>
+                                <th>Acto</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Parroquia</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="6" class="placeholder">Cargando reservas confirmadas...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
+
+                <div class="tab-content" id="tab-canceladas">
+                    <table class="reservas-table" id="tabla-canceladas">
+                        <thead>
+                            <tr>
+                                <th>Acto</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Parroquia</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="6" class="placeholder">Cargando reservas canceladas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </section>
         </main>
     </div>
+
+                <!-- Modal -->
+            <div id="modalReserva" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2 id="modal-title">Detalle de reserva</h2>
+                    <div id="modal-body">
+                        <!-- Contenido dinámico según acción -->
+                    </div>
+                    <div id="modal-footer">
+                        <!-- Botones dinámicos -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="modalArchivo" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                        <h2 id="modal-archivo-title">Documento Adjunto</h2> <span class="close" id="cerrarModalArchivo">&times;</span>
+                    </div>
+                    <div id="modal-archivo-body" style="text-align:center; padding:10px;">
+                        </div>
+                </div>
+            </div>
+
 
     <script src="/static/js/header.js"></script>
     <script src="/static/js/barra_lateral.js"></script>

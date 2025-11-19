@@ -33,44 +33,42 @@ def procesar_pago():
     """Procesa un nuevo pago"""
     try:
         datos = request.get_json()
-        
+
         # Validar datos requeridos
         if not datos.get('montoTotal'):
             return jsonify({'ok': False, 'mensaje': 'El monto total es requerido'}), 400
-        
-        if not datos.get('idMetodo'):
-            return jsonify({'ok': False, 'mensaje': 'El método de pago es requerido'}), 400
-        
+
+        if not datos.get('tipoPago'):
+            return jsonify({'ok': False, 'mensaje': 'El tipo de pago es requerido'}), 400
+
         if not datos.get('idReserva'):
             return jsonify({'ok': False, 'mensaje': 'La reserva es requerida'}), 400
-        
+
         # Obtener número de tarjeta (solo últimos 4 dígitos o None)
         num_tarjeta = datos.get('numTarjeta')
         if num_tarjeta and len(num_tarjeta) > 4:
-            # Guardar solo los últimos 4 dígitos
             num_tarjeta = f"****{num_tarjeta[-4:]}"
-        
+
         # Estado del pago
         estado_pago = datos.get('estadoPago', 'Pendiente')
-        
+
         # Registrar el pago
         resultado = registrar_pago(
             montoTotal=float(datos['montoTotal']),
             numTarjeta=num_tarjeta,
+            tipoPago=datos['tipoPago'],  # ahora viene del cliente
             estadoPago=estado_pago,
-            idMetodo=int(datos['idMetodo']),
             idReserva=int(datos['idReserva'])
         )
-        
+
         if resultado['ok']:
             return jsonify(resultado), 201
         else:
             return jsonify(resultado), 400
-            
+
     except Exception as e:
         print(f'Error al procesar pago: {e}')
         return jsonify({'ok': False, 'mensaje': f'Error interno: {str(e)}'}), 500
-
 
 # ======================================================
 # 🔹 LISTAR TODOS LOS PAGOS
