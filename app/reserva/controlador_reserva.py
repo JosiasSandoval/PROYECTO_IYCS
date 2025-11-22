@@ -67,6 +67,8 @@ def cambiar_estado_reserva(idReserva, accion='continuar'):
                 nuevo_estado = 'PENDIENTE_PAGO'
             elif estado_actual == 'PENDIENTE_PAGO':
                 nuevo_estado = 'CONFIRMADO'
+            elif estado_actual == 'CONFIRMADO':
+                nuevo_estado = 'ATENDIDO'               
             else:
                 nuevo_estado = estado_actual  # Mantiene el estado si no aplica cambio
 

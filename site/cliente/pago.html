@@ -6,162 +6,269 @@
   <title>Pago Seguro</title>
   <link rel="stylesheet" href="/static/css/pago.css" />
 </head>
-<body data-rol="{{ session['rol'] }}" data-id="{{ session['idUsuario'] }}">
-  
-  <!-- Header dinámico -->
+
+<body data-rol="{{ session['rol'] }}" data-id="{{ session['idUsuario'] }}" data-parroquia="{{ session['parroquia_usuario'] }}">
+
+  <!-- HEADER DINÁMICO -->
   <div id="header-placeholder"></div>
-  
+
   <main class="grid">
-    
-    <!-- Barra lateral dinámica -->
+
+    <!-- BARRA LATERAL -->
     <div id="barra_lateral-placeholder"></div>
 
-    <!-- Contenido principal -->
-    <div class="funciones">
-      <h2>Detalles del Pago</h2>
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="contenedor-principal">
+      
+      <h2 class="titulo-pagina">Detalles del Pago Consolidado</h2>
 
-      <div class="contenedor-pago">
+      <!-- GRID DE 3 COLUMNAS -->
+      <div class="contenedor-pago-consolidado">
 
-        <!-- Formulario de pago -->
-        <div class="form-container">
+        <!-- ============================ -->
+        <!-- COLUMNA 1: RESERVAS -->
+        <!-- ============================ -->
+        <div class="reservas-columna">
           
-          <!-- Métodos de pago (dinámicos desde la BD) -->
-          <div class="metodos-pago" id="metodos-container"></div>
+          <h3 class="titulo-columna">1. Selecciona Reservas Pendientes</h3>
+          <p class="instruccion-reserva">Marca las reservas que deseas pagar en esta transacción.</p>
 
-          <form class="formulario-pago" id="form-pago">
-            <input type="hidden" id="idReserva" name="idReserva" value="">
+          <div class="tabla-reservas-container" id="reservas-lista">
 
-            <!-- Sección Tarjeta -->
-            <div class="form-section" id="section-tarjeta">
-              <div class="tarjeta-visual">
-                <div class="tarjeta-chip"></div>
-                <div class="tarjeta-numero" id="card-display">•••• •••• •••• ••••</div>
-                <div class="tarjeta-info">
-                  <div>
-                    <div class="small-text">TITULAR</div>
-                    <div id="name-display">NOMBRE APELLIDO</div>
-                  </div>
-                  <div>
-                    <div class="small-text">VENCE</div>
-                    <div id="exp-display">MM/AA</div>
-                  </div>
-                </div>
-              </div>
-
-              <label for="numero">Número de tarjeta *</label>
-              <input type="text" id="numero" name="numero" placeholder="1234 5678 9012 3456" maxlength="19" required>
-
-              <div class="fila">
-                <div>
-                  <label for="exp">Fecha de expiración *</label>
-                  <input type="text" id="exp" name="exp" placeholder="MM/AA" maxlength="5" required>
-                </div>
-                <div>
-                  <label for="cvv">CVV *</label>
-                  <input type="password" id="cvv" name="cvv" placeholder="123" maxlength="4" required>
-                </div>
-              </div>
+            <!-- FILAS DINÁMICAS DE RESERVAS DE EJEMPLO -->
+            <div class="reserva-row" data-id="R001" data-monto="150.00">
+              <input type="checkbox" class="reserva-checkbox" id="check-R001">
+              <label for="check-R001">Reserva #1 - Servicio A (15/07/2024)</label>
+              <span class="reserva-monto">S/ 150.00</span>
             </div>
 
-            <!-- Sección Yape -->
-            <div class="form-section" id="section-yape">
-              <div class="info-metodo">
-                <div class="icono-metodo"></div>
-                <h3>Pagar con Yape</h3>
-                <p>Escanea el código QR desde tu app de Yape</p>
-                <div class="qr-placeholder">
-                  <div class="qr-code"></div>
-                  <p class="qr-texto">Código QR de pago</p>
-                </div>
-              </div>
-
-              <div class="dato-item">
-                <span class="dato-label">Número destino:</span>
-                <span class="dato-valor">999 888 777</span>
-              </div>
-                  
-              <label for="yape-codigo">Código de operación * (después de pagar)</label>
-              <input type="text" id="yape-codigo" name="yape-codigo" placeholder="Ingresa el código de 8 dígitos">
+            <div class="reserva-row" data-id="R002" data-monto="80.50">
+              <input type="checkbox" class="reserva-checkbox" id="check-R002">
+              <label for="check-R002">Reserva #2 - Servicio B (20/07/2024)</label>
+              <span class="reserva-monto">S/ 80.50</span>
             </div>
 
-            <!-- Sección Plin -->
-            <div class="form-section" id="section-plin">
-              <div class="info-metodo">
-                <div class="icono-metodo"></div>
-                <h3>Pagar con Plin</h3>
-                <p>Realiza la transferencia desde tu app bancaria</p>
-                <div class="datos-transferencia">
-                  <div class="dato-item">
-                    <span class="dato-label">Número destino:</span>
-                    <span class="dato-valor">999 888 777</span>
-                  </div>
-                  <div class="dato-item">
-                    <span class="dato-label">Banco:</span>
-                    <span class="dato-valor">BCP</span>
-                  </div>
-                </div>
-              </div>
-
-              <label for="plin-numero">Tu número de celular *</label>
-              <input type="tel" id="plin-numero" name="plin-numero" placeholder="999 999 999" maxlength="11" required>
-
-              <label for="plin-codigo">Código de operación *</label>
-              <input type="text" id="plin-codigo" name="plin-codigo" placeholder="Ingresa el código de transacción" required>
+            <div class="reserva-row" data-id="R003" data-monto="55.00">
+              <input type="checkbox" class="reserva-checkbox" id="check-R003">
+              <label for="check-R003">Reserva #3 - Servicio C (01/08/2024)</label>
+              <span class="reserva-monto">S/ 55.00</span>
             </div>
-
-            <!-- Sección Efectivo -->
-            <div class="form-section" id="section-efectivo">
-              <div class="info-metodo">
-                <div class="icono-metodo"></div>
-                <h3>Pago en Efectivo</h3>
-                <p>Realiza el pago en nuestras oficinas o al momento del servicio</p>
-                <div class="info-efectivo">
-                  <p><strong>Dirección:</strong> Av. Principal 123, Chiclayo</p>
-                  <p><strong>Horario:</strong> Lun-Vie 9:00 AM - 6:00 PM</p>
-                  <p>El pago debe realizarse antes de la fecha del servicio</p>
-                </div>
-              </div>
-
-              <label for="efectivo-nombre">Nombre completo *</label>
-              <input type="text" id="efectivo-nombre" name="efectivo-nombre" placeholder="Nombre de quien realizará el pago" required>
-
-              <label for="efectivo-dni">DNI *</label>
-              <input type="text" id="efectivo-dni" name="efectivo-dni" placeholder="Número de DNI" maxlength="8" required>
-            </div>
-
-            <button type="submit" class="btn-pagar" id="btn-submit">Procesar Pago</button>
-          </form>
-        </div>
-
-        <!-- Resumen del pedido -->
-        <div class="resumen-pago">
-          <h3>Resumen del Pedido</h3>
-          <div id="resumen-contenido">
-            <p><strong>Producto:</strong> <span id="producto-nombre">Cargando...</span></p>
-            <p><strong>Duración:</strong> <span id="producto-duracion">-</span></p>
-            <p><strong>Subtotal:</strong> <span id="subtotal">S/ 0.00</span></p>
-            <p><strong>IGV (18%):</strong> <span id="igv">S/ 0.00</span></p>
-            <hr>
-            <p class="total-line"><strong>Total a Pagar:</strong> <span class="total-amount" id="total">S/ 0.00</span></p>
+            <!-- FIN FILAS -->
           </div>
-          
-          <div class="seguridad-badge">
-            <span class="icono-seguridad"></span>
-            <div>
-              <strong>Pago 100% seguro</strong>
-              <div class="texto-seguridad">Tus datos están protegidos con encriptación SSL</div>
+
+          <div class="total-seleccionado">
+            <strong class="label-total-sel">Total Seleccionado:</strong>
+            <span id="total-reservas" class="monto-total-sel">S/ 0.00</span>
+          </div>
+
+        </div>
+        <!-- FIN COLUMNA 1 -->
+
+        
+        <!-- ============================ -->
+        <!-- COLUMNA 2: MÉTODOS + FORMULARIO -->
+        <!-- ============================ -->
+        <div class="formulario-columna">
+
+          <h3 class="titulo-columna">2. Selecciona Método de Pago</h3>
+
+          <!-- MÉTODOS DE PAGO -->
+                    <div class="metodos-pago" id="metodos-container">
+                        
+                        <button class="metodo-card active" data-metodo="tarjeta">
+                            <span class="icono-metodo">💳</span>
+                            <span class="nombre-metodo">Tarjeta de Crédito / Débito</span>
+                        </button>
+
+                        <button class="metodo-card" data-metodo="yape">
+                            <span class="icono-metodo">📱</span>
+                            <span class="nombre-metodo">Yape</span>
+                        </button>
+
+                        <button class="metodo-card" data-metodo="plin">
+                            <span class="icono-metodo">🏦</span>
+                            <span class="nombre-metodo">Plin</span>
+                        </button>
+
+                        <button class="metodo-card" data-metodo="efectivo">
+                            <span class="icono-metodo">💵</span>
+                            <span class="nombre-metodo">Efectivo en Oficina</span>
+                        </button>
+
+                    </div>
+
+                      <!-- FORMULARIO GENERAL -->
+            <form class="formulario-pago" id="form-pago">
+                <input type="hidden" id="idReservasSeleccionadas" name="idReservasSeleccionadas">
+                
+                <!-- Este div es el contenedor CRÍTICO para el scroll interno.
+                    Debe envolver todos los form-section pero NO al botón de submit. -->
+                <div class="form-content-area">
+
+                    <!-- ============ TARJETA ============ -->
+                    <div class="form-section active" data-metodo="tarjeta" id="section-tarjeta">
+                        <h4 class="subtitulo-seccion">Datos de la Tarjeta</h4>
+
+                        <div class="tarjeta-visual">
+                            <div class="tarjeta-chip"></div>
+                            <div class="tarjeta-numero" id="card-display">•••• •••• •••• ••••</div>
+
+                            <div class="tarjeta-info">
+                                <div>
+                                    <div class="small-text">TITULAR</div>
+                                    <div id="name-display">NOMBRE APELLIDO</div>
+                                </div>
+
+                                <div>
+                                    <div class="small-text">VENCE</div>
+                                    <div id="exp-display">MM/AA</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <label for="numero">Número de tarjeta *</label>
+                        <input type="text" id="numero" placeholder="1234 5678 9012 3456" maxlength="19" required>
+
+                        <label for="nombre-titular">Nombre del titular *</label>
+                        <input type="text" id="nombre-titular" placeholder="Tal como aparece en la tarjeta" required>
+
+                        <div class="fila">
+                            <div>
+                                <label for="exp">Fecha de expiración *</label>
+                                <input type="text" id="exp" placeholder="MM/AA" maxlength="5" required>
+                            </div>
+
+                            <div>
+                                <label for="cvv">CVV *</label>
+                                <input type="password" id="cvv" placeholder="123" maxlength="4" required>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ============ YAPE ============ -->
+                    <div class="form-section" data-metodo="yape" id="section-yape">
+                        <h4 class="subtitulo-seccion">Pago con Yape</h4>
+
+                        <div class="info-metodo">
+                            <p>Escanea el código QR desde tu app de Yape</p>
+                            <div class="qr-placeholder">
+                                <p class="qr-texto">Código QR de pago</p>
+                            </div>
+                        </div>
+
+                        <div class="dato-item">
+                            <span class="dato-label">Número destino:</span>
+                            <span class="dato-valor">999 888 777</span>
+                        </div>
+
+                        <label for="yape-codigo">Código de operación *</label>
+                        <input type="text" id="yape-codigo" placeholder="Ingresa el código de 8 dígitos">
+                    </div>
+
+                    <!-- ============ PLIN ============ -->
+
+                    <div class="form-section" data-metodo="transferencia" id="section-plin">
+                        <h4 class="subtitulo-seccion">Pago con Plin</h4>
+
+                        <div class="info-metodo">
+                            <p>Escanea el código QR desde tu app de Yape</p>
+                            <div class="qr-placeholder">
+                                <p class="qr-texto">Código QR de pago</p>
+                            </div>
+                        </div>
+
+                        <div class="dato-item">
+                            <span class="dato-label">Número destino:</span>
+                            <span class="dato-valor">999 888 777</span>
+                        </div>
+
+                        <label for="plin-codigo">Código de operación *</label>
+                        <input type="text" id="plin-codigo" placeholder="Ingresa el código de transacción" required>
+                    </div>
+
+                    <!-- ============ EFECTIVO ============ -->
+                    <div class="form-section" data-metodo="efectivo" id="section-efectivo">
+                        <h4 class="subtitulo-seccion">Pago en Efectivo</h4>
+
+                        <div class="info-metodo">
+                            <p>Realiza el pago en nuestras oficinas o al momento del servicio</p>
+
+                            <div class="info-efectivo">
+                                <p><strong>Dirección:</strong> Av. Principal 123, Chiclayo</p>
+                          <p><strong>Horario:</strong> Lun-Vie 9:00 AM - 6:00 PM</p>
+                                <p class="nota-pago">El pago debe realizarse antes de la fecha del servicio</p>
+                            </div>
+                        </div>
+
+                        <label for="efectivo-nombre">Nombre completo *</label>
+                        <input type="text" id="efectivo-nombre" placeholder="Nombre de quien realizará el pago" required>
+
+                        <label for="efectivo-dni">DNI *</label>
+                        <input type="text" id="efectivo-dni" placeholder="Número de DNI" maxlength="8" required>
+                    </div>
+                    
+                </div> <!-- Cierre de .form-content-area -->
+
+                <button type="submit" class="btn-pagar btn-tarjeta" data-metodo="tarjeta" id="btn-submit">Procesar Pago</button>
+
+            </form>
+
+        </div>
+        <!-- FIN COLUMNA 2 -->
+
+
+        <!-- ============================ -->
+        <!-- COLUMNA 3: RESUMEN -->
+        <!-- ============================ -->
+        <div class="resumen-columna">
+
+          <div class="resumen-pago">
+
+            <h3 class="titulo-columna">3. Resumen del Pedido</h3>
+
+            <div class="detalle-linea">
+              <span class="label">Reservas Seleccionadas:</span>
+              <span class="valor" id="reservas-cont">0</span>
+            </div>
+
+            <div id="resumen-contenido">
+              <div class="detalle-linea">
+                <span class="label">Subtotal de Servicios:</span>
+                <span class="valor" id="subtotal-servicios">S/ 0.00</span>
+              </div>
+
+              <hr class="divisor-resumen">
+
+              <div class="total-linea">
+                <strong class="label-total">Total a Pagar:</strong>
+                <span class="total-amount" id="total">S/ 0.00</span>
+              </div>
+            </div>
+
+            <div class="seguridad-badge">
+              <span class="icono-seguridad">🔒</span>
+              <div>
+                <strong>Pago 100% seguro</strong>
+                <div class="texto-seguridad">Tus datos están protegidos con encriptación SSL</div>
+              </div>
             </div>
           </div>
+
         </div>
+        <!-- FIN COLUMNA 3 -->
 
       </div>
+      <!-- FIN GRID 3 COLUMNAS -->
+
     </div>
 
   </main>
 
-  <!-- Scripts -->
+  <!-- SCRIPTS -->
   <script src="/static/js/header.js"></script>
   <script src="/static/js/barra_lateral.js"></script>
   <script src="/static/js/pago.js"></script>
+
 </body>
 </html>
