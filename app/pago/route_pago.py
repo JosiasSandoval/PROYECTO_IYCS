@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify
+from datetime import datetime
 from app.pago.controlador_pago import (
     registrar_pago,
+    registrar_pago_reserva,
     obtener_pago,
     listar_pagos_por_reserva,
     listar_todos_pagos,
@@ -28,37 +30,36 @@ def pagina_pago():
 # ======================================================
 # 🔹 PROCESAR PAGO
 # ======================================================
-@pago_bp.route('/procesar_pago', methods=['POST'])
+@pago_bp.route('/registrar_pago', methods=['POST'])
 def procesar_pago():
-    """Procesa un nuevo pago"""
+    """Procesa un nuevo pago, generando la fecha en el servidor."""
     try:
-        datos = request.get_json()
+        datos = request.form  # <-- FORM DATA
 
-        # Validar datos requeridos
+        # Validaciones
         if not datos.get('montoTotal'):
             return jsonify({'ok': False, 'mensaje': 'El monto total es requerido'}), 400
-
-        if not datos.get('tipoPago'):
+        if not datos.get('metodoPago'):
             return jsonify({'ok': False, 'mensaje': 'El tipo de pago es requerido'}), 400
+        if not datos.get('numeroTransaccion'):
+            return jsonify({'ok': False, 'mensaje': 'El número de transacción es requerido'}), 400
 
-        if not datos.get('idReserva'):
-            return jsonify({'ok': False, 'mensaje': 'La reserva es requerida'}), 400
-
-        # Obtener número de tarjeta (solo últimos 4 dígitos o None)
-        num_tarjeta = datos.get('numTarjeta')
-        if num_tarjeta and len(num_tarjeta) > 4:
-            num_tarjeta = f"****{num_tarjeta[-4:]}"
+        # Fecha generada en backend
+        f_pago_actual = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # Estado del pago
-        estado_pago = datos.get('estadoPago', 'Pendiente')
+        estado_pago = datos.get('estadoPago', 'PENDIENTE').upper()
 
-        # Registrar el pago
+        # Garantizar valor válido del ENUM
+        if estado_pago not in ['PENDIENTE', 'APROBADO', 'CANCELADO']:
+            estado_pago = 'PENDIENTE'
+
         resultado = registrar_pago(
+            f_pago=f_pago_actual,
             montoTotal=float(datos['montoTotal']),
-            numTarjeta=num_tarjeta,
-            tipoPago=datos['tipoPago'],  # ahora viene del cliente
-            estadoPago=estado_pago,
-            idReserva=int(datos['idReserva'])
+            metodoPago=datos['metodoPago'],
+            numeroTransaccion=datos['numeroTransaccion'],
+            estadoPago=estado_pago
         )
 
         if resultado['ok']:
@@ -69,6 +70,33 @@ def procesar_pago():
     except Exception as e:
         print(f'Error al procesar pago: {e}')
         return jsonify({'ok': False, 'mensaje': f'Error interno: {str(e)}'}), 500
+
+@pago_bp.route('/registrar_pago_reserva', methods=['POST'])
+def procesar_pago_reserva():
+    try:
+        datos = request.form  # <-- FORM DATA
+
+        if not datos.get('idReserva'):
+            return jsonify({'ok': False, 'mensaje': 'El ID de la reserva es requerido'})
+        if not datos.get('idPago'):
+            return jsonify({'ok': False, 'mensaje': 'El ID del pago es requerido'})
+        if not datos.get('monto'):
+            return jsonify({'ok': False, 'mensaje': 'Monto de la reserva requerido'})
+
+        resultado = registrar_pago_reserva(
+            idReserva=int(datos['idReserva']),
+            idPago=int(datos['idPago']),
+            monto=float(datos['monto'])
+        )
+
+        if resultado['ok']:
+            return jsonify(resultado), 201
+
+    except Exception as e:
+        print(f'Error al procesar el detalle pago reserva: {e}')
+        return jsonify({'ok': False, 'mensaje': f'Error interno: {str(e)}'}), 500
+
+
 
 # ======================================================
 # 🔹 LISTAR TODOS LOS PAGOS

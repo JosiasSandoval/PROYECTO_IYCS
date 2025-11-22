@@ -238,8 +238,6 @@ def obtener_datos_perfil():
         # Puede ser un 404 si el usuario existe pero no está en la tabla feligres
         return jsonify({"ok": False, "mensaje": "Datos de feligrés no encontrados o error interno."}), 404
 
-from flask import request, jsonify
-
 @usuario_bp.route('/buscar_solicitante/<path:nombre>', methods=['GET'])
 def buscar_solicitante(nombre):
     """

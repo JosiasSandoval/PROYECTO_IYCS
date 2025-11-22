@@ -268,15 +268,30 @@ CREATE TABLE METODO_PAGO (
     estadoMetodo BOOLEAN NOT NULL
 );
 
+-- TABLA PAGO
+DROP TABLE IF EXISTS PAGO;
 CREATE TABLE PAGO (
-    idPago INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    montoTotal DECIMAL(8,2) NOT NULL,
-    f_transaccion DATETIME NOT NULL,
-    numTarjeta VARCHAR(30) NULL,
-    tipoPago VARCHAR(50) NOT NULL,
-    estadoPago VARCHAR(50) NOT NULL,
-    idReserva INT NOT NULL,
-    CONSTRAINT fk_pago_reserva FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva)
+    idPago INT PRIMARY KEY AUTO_INCREMENT,
+    -- idReserva y la restricción UNIQUE han sido movidos a la tabla PAGO_RESERVA
+    f_pago DATETIME NULL,
+    montoTotal DECIMAL(10, 2) NULL, -- Suma de todos los detalles, debe coincidir con la suma de las reservas
+    metodoPago VARCHAR(50) NULL, -- Ej: 'Tarjeta', 'Efectivo', 'Transferencia'
+    numeroTransaccion VARCHAR(100), -- ID de la transacción bancaria/digital o nota manual
+    estadoPago ENUM('PENDIENTE', 'APROBADO', 'CANCELADO') NOT NULL DEFAULT 'PENDIENTE'
+);
+
+-- TABLA PAGO_RESERVA (NUEVA TABLA DE UNIÓN)
+DROP TABLE IF EXISTS PAGO_RESERVA;
+CREATE TABLE PAGO_RESERVA (
+    idPagoReserva INT PRIMARY KEY AUTO_INCREMENT,
+    idPago INT NOT NULL,    -- Clave foránea al pago (Un pago puede tener muchas reservas)
+    idReserva INT NOT NULL, -- Clave foránea a la reserva (Una reserva solo puede estar aquí una vez)
+    montoReserva INT NOT NULL,
+    FOREIGN KEY (idPago) REFERENCES PAGO(idPago),
+    FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva),
+    
+    -- RESTRICCIÓN CLAVE: Una reserva solo puede aparecer una vez en esta tabla.
+    CONSTRAINT UQ_Reserva_En_Pago UNIQUE (idReserva) 
 );
 
 -- =========================

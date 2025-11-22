@@ -526,4 +526,4 @@ INSERT INTO CONFIGURACION_ACTO (
 
 -- Matrimonio (Traslado) (idActo = 6)
 -- Similar al Normal, pero con tiempos de aprobación de documentos más estrictos
-(6, 120, 30, 60, 90, 90, 7, 90, null, 1, 'dias', 'meses', TRUE);
+(6, 120, 30, 60, 90, 90, 7, 90, null, 1, 'dias', 'dias', TRUE);
