@@ -80,14 +80,6 @@ def cambiar_estado_reserva(idReserva, accion='continuar'):
                 nuevo_estado = 'CONFIRMADO'
             elif estado_actual == 'CONFIRMADO':
                 nuevo_estado = 'ATENDIDO'               
-            
-            # Solo actualizamos si hubo cambio
-            if nuevo_estado != estado_actual:
-                cursor.execute(
-                    "UPDATE reserva SET estadoReserva = %s WHERE idReserva = %s",
-                    (nuevo_estado, idReserva)
-                )
-                conexion.commit()
 
         # CORREGIDO: Retornamos tupla (Exito, Datos) para mantener consistencia con route
         return True, nuevo_estado

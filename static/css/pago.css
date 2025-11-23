@@ -1,533 +1,597 @@
 /* ===========================
-  VARIABLES Y RESET
-  =========================== */
+ * 1. VARIABLES Y RESET
+ * =========================== */
 :root {
-  --primary-color: #97bdf1;
-  --primary-dark: #667eea;
-  --success-color: #10b981;
-  --danger-color: #ef4444;
-  --warning-color: #f59e0b;
-  --bg-light: #f8f9fa;
-  --bg-white: #ffffff;
-  --text-dark: #1a1a2e;
-  --text-gray: #666;
-  --border-color: #e0e0e0;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.2);
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --transition: all 0.3s ease;
+    /* Paleta de colores moderna y profesional */
+    --color-primary: #5c67f2;       /* Azul principal (para botones, acentos) */
+    --color-secondary: #00bcd4;     /* Turquesa (para destacados/montos) */
+    --color-background: #f8f9fa;    /* Fondo general claro */
+    --color-surface: #ffffff;       /* Superficie de las tarjetas/columnas */
+    --color-text-dark: #212529;     /* Texto principal */
+    --color-text-light: #6c757d;    /* Texto secundario/placeholder */
+    --color-border: #dee2e6;        /* Bordes y divisores sutiles */
+    --color-success: #28a745;
+    
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --radius-base: 8px;
+    --transition-fast: all 0.2s ease-in-out;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-
+/* Reset Box Model y Espaciado */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
+
+/* Base Font Size para usar REMs intuitivos (1rem = 10px) */
+html {
+    font-size: 62.5%; 
+}
+
+/* ===========================
+ * 2. LAYOUT Y SCROLL CONTROL
+ * =========================== */
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-  color: var(--text-dark);
-  /* Dejamos overflow-y: auto para que, si es estrictamente necesario, el body permita scroll */
-  overflow-y: auto; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1.6rem; /* 16px */
+    color: var(--color-text-dark);
+    background-color: var(--color-background);
+    height: 100vh;
+    /* CRÍTICO: Aseguramos que el body nunca tenga scroll */
+    overflow: hidden; 
 }
 
-/* ===========================
-  LAYOUT PRINCIPAL
-  =========================== */
 .grid {
     display: grid;
-    grid-template-columns: 250px 5fr;
-    grid-template-rows: 1fr;
-    grid-template-areas: "enlaces acto";
-    /* Eliminamos height: 100vh y overflow: hidden */
-}
-.funciones {
-  padding: 25px; /* Reducido de 40px a 25px */
-  animation: fadeIn 0.5s ease;
+    /* Barra lateral (220px) y área principal (1fr). Asumiendo una barra lateral oculta */
+    grid-template-columns: 220px 1fr; 
+    height: 100%; 
+    overflow: hidden;
 }
 
-/* ===========================
-  BARRA LATERAL (Añadido para quitar bordes/sombras) */
-
-.funciones {
-  border-radius: 24px;
-  /* El padding se maneja arriba */
-  animation: fadeIn 0.5s ease;
+.contenedor-principal {
+    padding: 3rem;
+    /* Permite el scroll SÓLO aquí para el contenido general (fuera de las columnas) */
+    overflow-y: auto; 
+    height: 100%;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.titulo-pagina {
+    font-size: 3.2rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 3rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
 }
 
 /* ===========================
-  TÍTULOS
-  =========================== */
-h2 {
-  font-size: 1.8rem; /* Reducido */
-  color: var(--text-dark);
-  margin-bottom: 25px; /* Reducido de 35px */
-  text-align: center;
-  font-weight: 700;
+ * 3. CONTENEDOR DE 3 COLUMNAS (SCROLL INTERNO CONTROLADO)
+ * =========================== */
+
+.contenedor-pago-consolidado {
+    display: grid;
+    /* Definición del layout de 3 columnas */
+    grid-template-columns: 1.2fr 1.8fr 1fr;
+    gap: 2.5rem;
+    align-items: start; 
 }
 
-h3 {
-  font-size: 1.3rem; /* Reducido */
-  color: var(--text-dark);
-  margin-bottom: 15px; /* Reducido de 20px */
-  font-weight: 600;
+/* Estilos base de las tarjetas de columna */
+.reservas-columna,
+.formulario-columna,
+.resumen-columna {
+    background-color: var(--color-surface);
+    padding: 2.5rem;
+    border-radius: var(--radius-base);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-fast);
+    min-width: 0; 
+    
+    /* Mantenemos el máximo de altura para las 3 columnas y el scroll principal en el contenedor-principal */
+    max-height: calc(100vh - 22vh); 
+    overflow-y: hidden; /* Importante: quitamos el scroll individual de la columna, lo manejaremos en el formulario */
+}
+
+/* Columna 1 y 3 se hacen sticky y controlan su altura */
+.reservas-columna,
+.resumen-columna {
+    position: sticky;
+    top: 3rem; 
+    /* Si el contenido de estas dos columnas sobrepasa, deben manejar su propio scroll */
+    overflow-y: auto; 
+}
+
+.titulo-columna {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 2rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--color-border);
 }
 
 /* ===========================
-  CONTENEDOR DE PAGO
-  =========================== */
-.contenedor-pago {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 30px; /* Reducido de 40px */
-  margin-top: 20px; /* Reducido de 30px */
+ * 4. COLUMNA 1: RESERVAS (SIN CAMBIOS)
+ * =========================== */
+
+.instruccion-reserva {
+    font-size: 1.4rem;
+    color: var(--color-text-light);
+    margin-bottom: 2rem;
+}
+
+.tabla-reservas-container {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-base);
+    overflow: hidden;
+}
+
+.reserva-row {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem; 
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    transition: background-color 0.2s;
+}
+
+.reserva-row:hover {
+    background-color: #f7f7f7;
+}
+
+.reserva-row:last-child {
+    border-bottom: none;
+}
+
+.reserva-checkbox {
+    margin-right: 1.5rem;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+}
+
+.reserva-row label {
+    flex-grow: 1;
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.reserva-monto {
+    font-weight: 700;
+    color: var(--color-primary);
+    font-size: 1.6rem;
+}
+
+.total-seleccionado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--color-primary); 
+    font-size: 1.8rem;
+}
+
+.monto-total-sel {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--color-secondary);
 }
 
 /* ===========================
-  MÉTODOS DE PAGO
-  =========================== */
+ * 5. COLUMNA 2: MÉTODOS Y FORMULARIO 
+ * =========================== */
+
+/* *** AJUSTES CRÍTICOS INICIAN AQUÍ *** */
+
+/* 1. Establecer la Columna 2 (el contenedor de todo: título, métodos, formulario) con una altura fija 
+   para que no cambie al alternar formularios. */
+.formulario-columna {
+    /* Altura que funciona bien para la tarjeta visual + inputs o el método más largo */
+    /* Valor estimado, si el contenido del efectivo en oficina es más corto, este valor fija la altura visual. */
+    height: 75rem; /* Altura Fija. Ajusta este valor si es necesario, pero DEBE ser fijo */
+    overflow-y: hidden; /* CRÍTICO: Quitamos el scroll de la columna, lo manejamos dentro del formulario. */
+    display: flex;
+    flex-direction: column; /* Permite que los hijos flexbox (título, métodos, formulario) se organicen */
+}
+
+
+/* MÉTODOS DE PAGO (SIN CAMBIOS) */
 .metodos-pago {
-  display: flex;
-  gap: 10px; /* Reducido de 12px */
-  margin-bottom: 20px; /* Reducido de 30px */
-  flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 3rem;
+    flex-shrink: 0; /* Asegura que el área de métodos mantenga su altura y no se comprima */
 }
 
-.metodo-btn {
-  flex: 1;
-  min-width: 100px;
-  padding: 12px 10px; /* Reducido */
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-white);
-  cursor: pointer;
-  transition: var(--transition);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px; /* Reducido de 8px */
-  font-family: inherit;
+/* Estilos de Botón de Método de Pago (SIN CAMBIOS EN FUNCIONALIDAD) */
+.metodo-card {
+    border: none;
+    background: none;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-base);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    text-align: center;
+    background-color: var(--color-surface); 
+    line-height: 1.2; 
+    
+    min-height: 8rem;
+    justify-content: center;
 }
 
-.metodo-btn:hover {
-  border-color: var(--primary-color);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.25);
+.metodo-card:hover,
+.metodo-card:focus { 
+    border-color: var(--color-primary);
+    box-shadow: 0 0 10px rgba(92, 103, 242, 0.25); 
+    outline: none; 
 }
 
-.metodo-icon {
-  font-size: 1.8rem; /* Reducido de 2rem */
-  line-height: 1;
+.metodo-card.active {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    box-shadow: 0 4px 10px rgba(92, 103, 242, 0.4);
 }
 
-.metodo-nombre {
-  font-size: 0.85rem; /* Ligeramente reducido */
-  font-weight: 600;
-  color: var(--text-dark);
-}
-
-/* ===========================
-  FORMULARIO
-  =========================== */
-.form-container {
-  width: 100%;
-}
-
-.formulario-pago {
-  display: flex;
-  flex-direction: column;
-  gap: 15px; /* Reducido de 22px */
-}
-
-.form-section {
-  display: none;
-  animation: slideIn 0.4s ease;
-}
-
-.form-section.active {
-  display: block;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* ===========================
-  TARJETA VISUAL
-  =========================== */
-.tarjeta-visual {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  border-radius: var(--radius-lg);
-  padding: 20px; /* Reducido de 28px */
-  color: white;
-  margin-bottom: 20px; /* Reducido de 25px */
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); /* Sombra más suave */
-  min-height: 160px; /* Reducido de 190px */
-  position: relative;
-  overflow: hidden;
-}
-
-.tarjeta-visual::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
-  animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-
-  50% {
-    transform: translate(-10%, -10%);
-  }
-}
-
-.tarjeta-chip {
-  width: 40px; /* Reducido de 50px */
-  height: 30px; /* Reducido de 38px */
-  background: linear-gradient(135deg, #ffd89b, #19547b);
-  border-radius: var(--radius-sm);
-  margin-bottom: 15px; /* Reducido de 22px */
-  position: relative;
-  z-index: 1;
-}
-
-.tarjeta-numero {
-  font-size: 1.2rem; /* Reducido de 1.4rem */
-  letter-spacing: 2px; /* Reducido el espaciado */
-  margin: 15px 0; /* Reducido de 22px */
-  font-family: 'Courier New', monospace;
-  position: relative;
-  z-index: 1;
-}
-
-.tarjeta-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem; /* Reducido */
-  position: relative;
-  z-index: 1;
-}
-
-/* ===========================
-  INPUTS Y LABELS
-  =========================== */
-label {
-  display: block;
-  font-weight: 600;
-  color: var(--text-dark);
-  margin-bottom: 5px; /* Reducido de 8px */
-  font-size: 0.9rem; /* Reducido */
-}
-
-input,
-select {
-  width: 100%;
-  padding: 12px 14px; /* Reducido de 14px 16px */
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.95rem; /* Ligeramente reducido */
-  transition: var(--transition);
-  font-family: inherit;
-  background: var(--bg-white);
-}
-
-input:hover {
-  border-color: #bbb;
-}
-
-input:focus,
-select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-input::placeholder {
-  color: #999;
-}
-
-.fila {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px; /* Reducido de 16px */
-}
-
-/* ===========================
-  INFO DE MÉTODOS
-  =========================== */
-.info-metodo {
-  text-align: center;
-  padding: 25px; /* Reducido de 30px */
-  background: var(--bg-light);
-  border-radius: var(--radius-lg);
-  margin-bottom: 20px; /* Reducido de 25px */
+.metodo-card.active:hover,
+.metodo-card.active:focus { 
+    box-shadow: 0 6px 15px rgba(92, 103, 242, 0.5); 
 }
 
 .icono-metodo {
-  font-size: 3rem; /* Reducido de 3.5rem */
-  margin-bottom: 10px; /* Reducido de 15px */
+    font-size: 2.8rem; 
+    margin-bottom: 0.5rem;
 }
 
-.info-metodo h3 {
-  margin-bottom: 8px; /* Reducido */
-  font-size: 1.2rem; /* Reducido */
+.metodo-card[data-metodo="tarjeta"] .icono-metodo { color: var(--color-primary); }
+.metodo-card[data-metodo="yape"] .icono-metodo { color: #5c359d; } 
+.metodo-card[data-metodo="efectivo"] .icono-metodo { color: var(--color-success); }
+.metodo-card[data-metodo="transferencia"] .icono-metodo { color: var(--color-secondary); }
+
+.nombre-metodo {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--color-text-dark); 
 }
 
-.info-metodo p {
-  color: var(--text-gray);
-  margin-bottom: 15px; /* Reducido de 20px */
+.metodo-card.active .icono-metodo,
+.metodo-card.active .nombre-metodo {
+    color: var(--color-surface) !important; 
 }
 
+
+/* FORMULARIO GENERAL */
+.formulario-pago {
+    /* CRÍTICO: Hacer que el formulario use todo el espacio restante de la columna 2 */
+    flex-grow: 1; 
+    min-height: 0; /* Necesario para el correcto comportamiento de flexbox */
+    overflow-y: hidden; /* El scroll lo manejará el contenido interno */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 2. Contenedor de las Secciones de Formulario */
+.form-content-area {
+    flex-grow: 1; /* Ocupa el espacio restante entre .metodos-pago y .btn-pagar */
+    min-height: 0;
+    overflow-y: hidden; /* Quitamos el scroll aquí, lo aplicamos al active form */
+    padding-bottom: 2rem; /* Espacio antes del botón de pagar */
+}
+
+.form-section {
+    display: none; /* Oculto por defecto, JS maneja la clase .active */
+}
+
+.form-section.active {
+    display: block;
+    /* CRÍTICO: Si el contenido del formulario activo es más grande, se aplica el scroll INTERNO. */
+    /* El 100% de la altura disponible dentro de .form-content-area */
+    max-height: 100%; 
+    overflow-y: auto; 
+    /* Quitamos el padding aquí y lo dejamos en .form-content-area para mejor cálculo */
+    padding-right: 1.5rem; /* Espacio para que la barra de scroll no choque con el borde derecho */
+}
+
+
+.subtitulo-seccion {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 1.5rem;
+}
+
+/* INPUTS (SIN CAMBIOS) */
+label {
+    display: block;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 1.4rem;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="tel"] {
+    width: 100%;
+    padding: 1.2rem 1.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-base);
+    font-size: 1.6rem;
+    transition: var(--transition-fast);
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(92, 103, 242, 0.2);
+}
+
+.fila {
+    display: flex;
+    gap: 2rem;
+}
+.fila > div {
+    flex: 1;
+}
+
+/* Tarjeta Visual (SIN CAMBIOS) */
+.tarjeta-visual {
+    background: linear-gradient(135deg, var(--color-primary), #4b0082);
+    color: var(--color-surface);
+    border-radius: 1.2rem;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    height: 19rem; 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.tarjeta-chip {
+    width: 4.5rem;
+    height: 3rem;
+    background-color: #ffc400;
+    border-radius: 0.5rem;
+}
+.tarjeta-numero {
+    font-size: 2.2rem;
+    letter-spacing: 0.3rem;
+    font-family: monospace;
+    font-weight: 600;
+}
+.tarjeta-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+}
+.small-text {
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+/* Info Métodos (Yape, Plin, Efectivo) (SIN CAMBIOS) */
+.info-metodo {
+    padding: 2rem;
+    background-color: var(--color-background);
+    border-radius: var(--radius-base);
+    margin-bottom: 2rem;
+    text-align: center;
+}
 .qr-placeholder {
-  width: 180px; /* Reducido de 220px */
-  height: 180px; /* Reducido de 220px */
-  background: var(--bg-white);
-  margin: 15px auto; /* Reducido de 20px */
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-sm);
+    width: 15rem;
+    height: 15rem;
+    background-color: var(--color-surface);
+    margin: 1.5rem auto;
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-
-.qr-code {
-  font-size: 4rem; /* Reducido de 5rem */
-  margin-bottom: 8px; /* Reducido */
-}
-
-.qr-texto {
-  font-size: 0.8rem; /* Reducido */
-  color: var(--text-gray);
-}
-
-.datos-transferencia {
-  background: var(--bg-white);
-  padding: 15px; /* Reducido de 20px */
-  border-radius: var(--radius-md);
-  margin-top: 10px; /* Reducido de 15px */
-  text-align: left;
-}
-
 .dato-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0; /* Reducido de 10px */
-  border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    padding: 0.8rem 0;
+    border-bottom: 1px dotted var(--color-border);
+    font-size: 1.5rem;
 }
-
-.dato-item:last-child {
-  border-bottom: none;
-}
-
 .dato-label {
-  font-weight: 600;
-  color: var(--text-gray);
+    font-weight: 600;
 }
 
-.dato-valor {
-  font-weight: 700;
-  color: var(--text-dark);
-}
-
-.info-efectivo {
-  background: var(--bg-white);
-  padding: 15px; /* Reducido de 20px */
-  border-radius: var(--radius-md);
-  margin-top: 10px; /* Reducido de 15px */
-  text-align: left;
-}
-
-.info-efectivo p {
-  margin: 10px 0; /* Reducido de 12px */
-  color: var(--text-dark);
-}
-
-/* ===========================
-  BOTÓN DE PAGO
-  =========================== */
+/* Botón de Pago */
 .btn-pagar {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  color: white;
-  border: none;
-  padding: 14px; /* Reducido de 18px */
-  border-radius: var(--radius-md);
-  font-size: 1rem; /* Reducido de 1.1rem */
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  margin-top: 10px; /* Reducido de 15px */
-  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
-  font-family: inherit;
+    width: 100%;
+    /* ... otros estilos */
+    margin-top: auto; /* CRÍTICO: Lo empuja al final del .formulario-pago */
+    transition: var(--transition-fast);
+    /* Fondo degradado por defecto (para Tarjeta) */
+    background: linear-gradient(to right, #6d7bff, var(--color-primary)); 
+    flex-shrink: 0; /* Evita que el botón se comprima, mantiene su altura */
+    
+    background-color: var(--color-success);
+    color: var(--color-surface);
+    padding: 1.5rem 2rem;
+    font-size: 1.8rem;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius-base);
+    cursor: pointer;
+}
+.btn-pagar.btn-yape {
+    background: linear-gradient(to right, #7952b3, #5c359d);
+}
+.btn-pagar.btn-efectivo {
+    background: linear-gradient(to right, #4cd964, var(--color-success));
+}
+.btn-pagar.btn-transferencia {
+    background: linear-gradient(to right, #00c9ff, var(--color-secondary));
 }
 
-.btn-pagar:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+.btn-pagar:hover,
+.btn-pagar:focus {
+    opacity: 0.9;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2); 
+    transform: translateY(-1px); 
+    outline: none; 
 }
 
 /* ===========================
-  RESUMEN DEL PAGO
-  =========================== */
+ * 6. COLUMNA 3: RESUMEN (SIN CAMBIOS)
+ * =========================== */
+
 .resumen-pago {
-  background: linear-gradient(135deg, var(--bg-light), #e9ecef);
-  border-radius: var(--radius-lg);
-  padding: 25px; /* Reducido de 32px */
-  height: fit-content;
-  position: sticky;
-  top: 15px; /* Reducido de 20px */
+    /* El background y padding ya están definidos en .resumen-columna */
 }
 
-.resumen-pago h3 {
-  color: var(--text-dark);
-  margin-bottom: 20px; /* Reducido de 25px */
-  font-size: 1.3rem; /* Reducido */
+.detalle-linea {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    font-size: 1.5rem;
+    border-bottom: 1px dashed var(--color-border);
 }
 
-.resumen-pago p {
-  margin: 12px 0; /* Reducido de 16px */
-  color: var(--text-dark);
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem; /* Reducido */
+.detalle-linea:last-of-type {
+    border-bottom: none;
 }
 
-.resumen-pago hr {
-  border: none;
-  border-top: 1px solid #ddd; /* Grosor reducido */
-  margin: 15px 0; /* Reducido de 22px */
+.label {
+    color: var(--color-text-light);
 }
 
-.total-line {
-  font-size: 1.05rem; /* Ligeramente reducido */
-  padding-top: 5px; /* Reducido de 10px */
+.valor {
+    font-weight: 500;
+}
+
+.impuestos-linea {
+    font-weight: 600;
+    color: var(--color-secondary);
+}
+
+.divisor-resumen {
+    margin: 2rem 0;
+    border: 0;
+    border-top: 2px solid var(--color-border);
+}
+
+.total-linea {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    font-size: 2rem;
+    font-weight: 700;
 }
 
 .total-amount {
-  font-size: 1.8rem; /* Reducido de 2rem */
-  font-weight: 700;
-  color: var(--primary-color);
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--color-primary);
 }
 
-/* ===========================
-  BADGE DE SEGURIDAD
-  =========================== */
+/* Badge de Seguridad */
 .seguridad-badge {
-  display: flex;
-  align-items: center;
-  gap: 12px; /* Reducido de 15px */
-  background: var(--bg-white);
-  padding: 15px; /* Reducido de 18px */
-  border-radius: var(--radius-md);
-  margin-top: 20px; /* Reducido de 25px */
-  font-size: 0.85rem; /* Reducido */
-  color: var(--text-gray);
-  box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background-color: #e9f7ef;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 1.5rem;
+    border-radius: var(--radius-base);
+    margin-top: 2rem;
 }
 
 .icono-seguridad {
-  font-size: 1.6rem; /* Reducido de 2rem */
+    font-size: 3rem;
 }
 
 .seguridad-badge strong {
-  display: block;
-  color: var(--text-dark);
-  margin-bottom: 2px; /* Reducido de 4px */
+    font-size: 1.6rem;
+    color: #155724;
 }
 
 .texto-seguridad {
-  font-size: 0.8rem; /* Reducido */
+    font-size: 1.3rem;
 }
 
 /* ===========================
-  RESPONSIVE
-  =========================== */
-@media (max-width: 1024px) {
-  .contenedor-pago {
-    grid-template-columns: 1fr;
-  }
+ * 7. RESPONSIVIDAD (Media Queries) (SIN CAMBIOS MAYORES)
+ * =========================== */
 
-  .resumen-pago {
-    position: static;
-  }
+@media (max-width: 1100px) {
+    /* 1. Colapsar el layout principal: Elimina la barra lateral y hace que el contenido ocupe todo */
+    .grid {
+        grid-template-columns: 1fr;
+    }
 }
 
-@media (max-width: 768px) {
-  .funciones {
-    padding: 20px; /* Ajuste responsive */
-  }
+@media (max-width: 950px) {
+    /* 2. Colapsar el contenedor de 3 columnas a 1 columna para evitar el desbordamiento horizontal */
+    .contenedor-pago-consolidado {
+        grid-template-columns: 1fr;
+    }
 
-  h2 {
-    font-size: 1.5rem; /* Ajuste responsive */
-  }
-
-  .metodo-btn {
-    min-width: 80px;
-    padding: 10px 8px; /* Ajuste responsive */
-  }
-
-  .tarjeta-visual {
-    padding: 18px; /* Ajuste responsive */
-    min-height: 150px;
-  }
-
-  .tarjeta-numero {
-    font-size: 1.1rem; /* Ajuste responsive */
-  }
-
-  .fila {
-    grid-template-columns: 1fr;
-  }
+    /* 3. Las columnas que tenían scroll interno controlado ahora vuelven a ser fluidas */
+    .reservas-columna,
+    .formulario-columna, 
+    .resumen-columna {
+        position: static; 
+        max-height: none; 
+        overflow-y: visible; 
+        height: auto; /* CRÍTICO: En móvil, la altura vuelve a ser automática */
+        display: block; /* Vuelve al flujo normal */
+    }
+    
+    /* 4. Ajustar el espaciado para móviles si es necesario */
+    .contenedor-principal {
+        padding: 2rem;
+    }
+    
+    /* 5. Ajustar el grid de métodos de pago */
+    .metodos-pago {
+        grid-template-columns: repeat(2, 1fr); 
+    }
+    
+    /* 6. Ajustar las filas del formulario */
+    .fila {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    /* RESTAURAR la altura de los formularios en móvil para que sean fluidos */
+    .formulario-pago {
+        height: auto;
+        min-height: auto;
+        overflow-y: visible;
+        display: block;
+    }
+    
+    .form-content-area {
+        height: auto;
+        min-height: auto;
+        overflow-y: visible;
+    }
+    .form-section.active {
+        max-height: none;
+        overflow-y: visible;
+        padding-right: 0;
+    }
 }
 
-@media (max-width: 480px) {
-  .grid {
-    grid-template-columns: 1fr;
-    padding: 10px;
-  }
-
-  .funciones {
-    padding: 15px; /* Ajuste responsive */
-    border-radius: 12px;
-  }
-
-  h2 {
-    font-size: 1.3rem; /* Ajuste responsive */
-    margin-bottom: 20px;
-  }
+/* Ajustes finos para móviles muy pequeños */
+@media (max-width: 500px) {
+    .metodos-pago {
+        grid-template-columns: 1fr; 
+    }
 }

@@ -101,6 +101,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeBtn = document.querySelector(".modal .close");
     if (closeBtn) closeBtn.addEventListener("click", cerrarModal);
 
+    /**
+     * Calcula la hora de finalización de un evento.
+     * @param {string} horaInicio - Hora en formato 'HH:MM:SS'.
+     * @param {string} fechaReserva - Fecha en formato 'YYYY-MM-DD'.
+     * @param {number} duracionMinutos - Duración del evento en minutos.
+     * @returns {string} La hora final en formato 'HH:MM:SS' o 'N/A'.
+     */
+    function calcularHoraFinal(horaInicio, fechaReserva, duracionMinutos) {
+        const duracion = parseInt(duracionMinutos);
+        if (isNaN(duracion) || !horaInicio || !fechaReserva) {
+            return 'N/A';
+        }
+
+        try {
+            const fechaHoraInicio = new Date(`${fechaReserva}T${horaInicio}`);
+            const fechaHoraFinal = new Date(fechaHoraInicio.getTime() + duracion * 60000);
+
+            return fechaHoraFinal.toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+        } catch (e) {
+            return 'Inválida';
+        }
+    }
     // ============================
     // CARGAR RESERVAS (Se modifica para cargar la config y asegurar la vigencia)
     // ============================
@@ -369,21 +396,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (reserva) alert(mensajeFechaLimite(reserva, 'documento'));
 
         try {
-            // 💡 COMPROBACIÓN DE VIGENCIA AL ABRIR
-            if (reserva && reserva.fecha && reserva.hora && tiempoLimite !== null && tiempoLimite !== undefined) {
-                const fechaReserva = new Date(`${reserva.fecha}T${reserva.hora}`);
-                const fechaLimite = calcularFechaLimite(fechaReserva, tiempoLimite, unidad);
-                
-                if (new Date() > fechaLimite) {
-                    const cancelled = await cancelarReservaPorVigencia(idReserva);
-                    if (cancelled) {
-                        alert(`La fecha límite para subir documentos (${fechaLimite.toLocaleString()}) se venció. La reserva ha sido cancelada.`);
-                        cerrarModal();
-                        cargarReservas();
-                        return;
-                    }
-                }
-            }
+            // Se elimina la lógica de cancelación automática. El frontend solo informa.
             
             const response = await fetch(`/api/requisito/obtener_documento_faltante/${idReserva}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -436,21 +449,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
 
-                    // 💡 COMPROBACIÓN DE VIGENCIA AL SUBIR (VERIFICACIÓN FINAL)
-                    if (tiempoLimite !== null && tiempoLimite !== undefined) {
-                         const fechaReserva = new Date(`${reserva.fecha}T${reserva.hora}`);
-                         const fechaLimite = calcularFechaLimite(fechaReserva, tiempoLimite, unidad);
-                         
-                         if (new Date() > fechaLimite) {
-                            const cancelled = await cancelarReservaPorVigencia(idReserva);
-                            if (cancelled) {
-                                alert(`La fecha límite para subir documentos (${fechaLimite.toLocaleString()}) se venció. La reserva ha sido cancelada.`);
-                                cerrarModal();
-                                cargarReservas();
-                                return;
-                            }
-                        }
-                    }
+                    // Se elimina la lógica de cancelación automática.
 
                     statusEl.textContent = 'Subiendo...';
                     const uploadResult = await uploadFileToServer(file, idDocumento, idReserva, idActoRequisito);
@@ -514,21 +513,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (reserva) alert(mensajeFechaLimite(reserva, 'documento'));
 
         try {
-            // 💡 COMPROBACIÓN DE VIGENCIA AL ABRIR
-            if (reserva && reserva.fecha && reserva.hora && tiempoLimite !== null && tiempoLimite !== undefined) {
-                const fechaReserva = new Date(`${reserva.fecha}T${reserva.hora}`);
-                const fechaLimite = calcularFechaLimite(fechaReserva, tiempoLimite, unidad);
-                
-                if (new Date() > fechaLimite) {
-                    const cancelled = await cancelarReservaPorVigencia(idReserva);
-                    if (cancelled) {
-                        alert(`La fecha límite para modificar documentos (${fechaLimite.toLocaleString()}) se venció. La reserva ha sido cancelada.`);
-                        cerrarModal();
-                        cargarReservas();
-                        return;
-                    }
-                }
-            }
+            // Se elimina la lógica de cancelación automática. El frontend solo informa.
 
             const response = await fetch(`/api/requisito/obtener_documentos_reserva/${idReserva}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -578,23 +563,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const file = input.files[0];
                     const idDocumento = input.dataset.idDocumento;
                     const idActoRequisito = input.dataset.idActoRequisito || null;
-
-                    // 💡 COMPROBACIÓN DE VIGENCIA AL MODIFICAR (VERIFICACIÓN FINAL)
-                    if (tiempoLimite !== null && tiempoLimite !== undefined) {
-                         const fechaReserva = new Date(`${reserva.fecha}T${reserva.hora}`);
-                         const fechaLimite = calcularFechaLimite(fechaReserva, tiempoLimite, unidad);
-                         
-                         if (new Date() > fechaLimite) {
-                            const cancelled = await cancelarReservaPorVigencia(idReserva);
-                            if (cancelled) {
-                                alert(`La fecha límite para modificar documentos (${fechaLimite.toLocaleString()}) se venció. La reserva ha sido cancelada.`);
-                                cerrarModal();
-                                cargarReservas();
-                                return;
-                            }
-                        }
-                    }
                     
+                    // Se elimina la lógica de cancelación automática.
                     statusEl.textContent = 'Subiendo...';
                     btn.disabled = true;
 
@@ -652,6 +622,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const reserva = reservasGlobal.find(r => r.idReserva == idReserva);
         if (!reserva) { alert("Error: no se encontró la reserva."); return; }
 
+        // Calcular la hora final usando la duración del acto desde la configuración
+        const duracion = reserva.configActo?.tiempoDuracion || 0;
+        const horaFinal = calcularHoraFinal(reserva.hora, reserva.fecha, duracion);
+
         modalTitle.textContent = "Detalle de la Reserva";
 
         let participantes = "SIN PARTICIPANTES";
@@ -671,7 +645,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <p><strong>Acto:</strong> ${reserva.nombreActo}</p>
                 <p><strong>Costo:</strong> ${reserva.costoBase}</p>
                 <p><strong>Fecha:</strong> ${reserva.fecha}</p>
-                <p><strong>Hora:</strong> ${reserva.hora}</p>
+                <p><strong>Hora de Inicio:</strong> ${reserva.hora}</p>
+                <p><strong>Hora de Fin:</strong> ${horaFinal}</p>
                 <p><strong>Parroquia:</strong> ${reserva.nombreParroquia}</p>
                 <p><strong>Mención:</strong> ${reserva.mencion || '---'}</p>
                 <p><strong>Estado:</strong> ${reserva.estadoReserva}</p>
@@ -700,37 +675,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // CORRECCIÓN: Usar la configuración adjunta a la reserva
         const config = reserva.configActo || {};
         const ahora = new Date();
-        
-        // 1. LÓGICA DE NEGOCIO: Verificar límite SÓLO si el estado es CONFIRMADO
-        if (reserva.estadoReserva === 'CONFIRMADO') {
-            // Formato ISO string para tu calcularFechaLimite: YYYY-MM-DDTTHH:MM:SS
-            const fechaHoraBase = `${reserva.fecha}T${reserva.hora}`;
 
-            // Calcular la fecha límite de CANCELACIÓN (Devuelve un objeto Date)
-            const limiteDate = calcularFechaLimite(
-                fechaHoraBase, 
-                config.tiempoMaxCancelacion, 
-                config.unidadTiempoAcciones
-            );
-
-            // Comprobación de seguridad para fecha inválida
-            if (isNaN(limiteDate.getTime())) {
-                alert("Error al calcular la fecha límite de cancelación. Verifique los formatos de fecha/hora de la reserva.");
-                return;
-            }
-
-            if (ahora > limiteDate) {
-                // 🛑 Bloqueo: El tiempo límite ha pasado.
-                const limiteFormateado = limiteDate.toLocaleString('es-ES', { 
-                    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' 
-                });
-                alert(`No se puede cancelar la reserva CONFIRMADA. El límite para esta acción fue el ${limiteFormateado}.`);
-                return; // Detiene la ejecución
-            }
-            // Si no ha pasado el límite, la cancelación procede.
-        } 
-        // Si el estado no es CONFIRMADO, se permite la cancelación sin restricción temporal.
-
+        alert(mensajeFechaLimite(reserva, 'cancelacion'));
         // 2. Confirmación al usuario
         if (!window.confirm("¿Estás seguro de cancelar esta reserva?")) return;
 
@@ -767,38 +713,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // CORRECCIÓN: Usar la configuración adjunta a la reserva
-        const config = reserva.configActo || {};
-
-        // 1. Crear la fecha/hora base de la reserva en formato ISO
-        const fechaHoraBase = `${reserva.fecha}T${reserva.hora}`;
-
-        // 2. Calcular la fecha límite de PAGO (Devuelve un objeto Date)
-        const limiteDate = calcularFechaLimite(
-            fechaHoraBase, 
-            config.tiempoMaxPago, 
-            config.unidadTiempoAcciones
-        );
-
-        // Comprobación de seguridad en caso de fallo de parseo
-        if (isNaN(limiteDate.getTime())) {
-            alert("Error al calcular la fecha límite de pago. Verifique los formatos de fecha/hora de la reserva.");
-            return; // Detiene la función
-        }
-        
-        // 3. Formatear la fecha límite para guardar en sessionStorage (para visualización)
-        const limitePagoFormateado = limiteDate.toLocaleString('es-ES', { 
-                year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' 
-            });
-
+        // Muestra el mensaje con la fecha límite para el pago.
+        alert(mensajeFechaLimite(reserva, 'pago'));
 
         sessionStorage.setItem('reservaPago', JSON.stringify({
             idReserva: reserva.idReserva,
-            acto: reserva.nombreActo,
-            fecha: reserva.fecha,
-            hora: reserva.hora,
-            costoBase: reserva.costoBase,
-            vigencia: limitePagoFormateado, // Fecha límite para mostrar en la vista de pago
         }));
 
         // Redirección a la página de pago
