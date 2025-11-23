@@ -48,18 +48,30 @@
             </a>
 
         
-            <button>
-                <img src="{{ url_for('static', filename='img/pago.png') }}" alt="">
-                Pago</button>
-            <button>
-                <img src="{{ url_for('static', filename='img/calendario.png') }}" alt="">
-                Calendario</button>
-            <button>
-                <img src="{{ url_for('static', filename='img/requisito.png') }}" alt="">
-                Requisitos</button>
-            <button>
-                <img src="{{ url_for('static', filename='img/reporte.png') }}" alt="">
-                Reportes</button>
+            <a href="{{ url_for('pago_cliente') }}">
+                <button>
+                    <img src="{{ url_for('static', filename='img/pago.png') }}" alt="">
+                    Pago
+                </button>
+            </a>
+            <a href="{{ url_for('calendario_cliente') }}">
+                <button>
+                    <img src="{{ url_for('static', filename='img/calendario.png') }}" alt="">
+                    Calendario
+                </button>
+            </a>
+            <a href="{{ url_for('requisitos_admi') }}">
+                <button>
+                    <img src="{{ url_for('static', filename='img/requisito.png') }}" alt="">
+                    Requisitos
+                </button>
+            </a>
+            <a href="{{ url_for('lista_reporte_admi') }}">
+                <button>
+                    <img src="{{ url_for('static', filename='img/reporte.png') }}" alt="">
+                    Reportes
+                </button>
+            </a>
             </div>
         </div>
     </main>
