@@ -180,6 +180,63 @@ def crear_app():
     @app.route('/admi/personal')
     def personal_admi():    
         return render_template('administradores/usuario_personal.html')
+
+    # Rutas adicionales para páginas de administrador
+    @app.route('/admi/acto_liturgico')
+    def acto_liturgico_admi():
+        return render_template('administradores/acto_liturgico.html')
+
+    @app.route('/admi/auditoria_parroquia')
+    def auditoria_parroquia_admi():
+        return render_template('administradores/auditoria_parroquia.html')
+
+    @app.route('/admi/auditoria_reserva')
+    def auditoria_reserva_admi():
+        return render_template('administradores/auditoria_reserva.html')
+
+    @app.route('/admi/auditoria_usuario')
+    def auditoria_usuario_admi():
+        return render_template('administradores/auditoria_usuario.html')
+
+    @app.route('/admi/configuracion')
+    def configuracion_admi():
+        return render_template('administradores/configuracion.html')
+
+    @app.route('/admi/disponibilidad')
+    def disponibilidad_admi():
+        return render_template('administradores/disponibilidad.html')
+
+    @app.route('/admi/documento_requisito')
+    def documento_requisito_admi():
+        return render_template('administradores/documento_requisito.html')
+
+    @app.route('/admi/excepcion_personal')
+    def excepcion_personal_admi():
+        return render_template('administradores/excepcion_personal.html')
+
+    @app.route('/admi/lista_reporte')
+    def lista_reporte_admi():
+        return render_template('administradores/lista_reporte.html')
+
+    @app.route('/admi/pago')
+    def pago_admi():
+        return render_template('administradores/pago.html')
+
+    @app.route('/admi/parroquia_personal')
+    def parroquia_personal_admi():
+        return render_template('administradores/parroquia_personal.html')
+
+    @app.route('/admi/reporte')
+    def reporte_admi():
+        return render_template('administradores/reporte.html')
+
+    @app.route('/admi/requisitos')
+    def requisitos_admi():
+        return render_template('administradores/requisitos.html')
+
+    @app.route('/admi/reserva')
+    def reserva_admi():
+        return render_template('administradores/reserva.html')
     
     @app.route('/cerrar_sesion')
     def cerrar_sesion():

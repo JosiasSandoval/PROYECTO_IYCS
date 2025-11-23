@@ -1,6 +1,5 @@
 <!doctype html>
 <html lang="es">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -13,59 +12,58 @@
   <div class="barra-lateral">
     <nav class="menu-lateral">
 
-    <a href="#" class="menu-item">
-      <img src="/static/img/inicio.png" alt="inicio" /> Inicio
-    </a>
+      <a href="/principal" class="menu-item">
+        <img src="/static/img/inicio.png" alt="inicio" /> Inicio
+      </a>
 
-    <!-- PARROQUIA -->
-    <div class="menu-grupo">
-      <button class="menu-item boton-desplegable">
-        <img src="/static/img/parroquia.png" alt="parroquia" /> Parroquia
-        <span class="flecha">▸</span>
-      </button>
-      <div class="submenu">
-        <a href="#" class="submenu-item">Mostrar Mapa</a>
-        <a href="#" class="submenu-item">Consultar Información</a>
-        <a href="#" class="submenu-item">Gestionar Parroquia</a>
+      <!-- PARROQUIA -->
+      <div class="menu-grupo">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/parroquia.png" alt="parroquia" /> Parroquia
+          <span class="flecha">▸</span>
+        </button>
+        <div class="submenu">
+          <a href="/cliente/parroquia" class="submenu-item">Mostrar Mapa</a>
+          <a href="/admi/parroquia" class="submenu-item">Consultar Información</a>
+          <a href="/admi/parroquia" class="submenu-item">Gestionar Parroquia</a>
+        </div>
       </div>
-    </div>
 
-    <!-- RESERVAS -->
-    <div class="menu-grupo">
-      <button class="menu-item boton-desplegable">
-        <img src="/static/img/reserva.png" alt="reserva" /> Reservas
-        <span class="flecha">▸</span>
-      </button>
-      <div class="submenu">
-        <a href="#" class="submenu-item">Registrar Reserva</a>
-        <a href="#" class="submenu-item">Gestionar Reserva</a>
+      <!-- RESERVAS -->
+      <div class="menu-grupo">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/reserva.png" alt="reserva" /> Reservas
+          <span class="flecha">▸</span>
+        </button>
+        <div class="submenu">
+          <a href="/cliente/reserva" class="submenu-item">Registrar Reserva</a>
+          <a href="/admi/reserva" class="submenu-item">Gestionar Reserva</a>
+        </div>
       </div>
-    </div>
 
-    <!-- ACTOS LITURGICOS -->
-
-    <div class="menu-grupo">
-      <button class="menu-item boton-desplegable">
-        <img src="/static/img/acto.png" alt="acto" /> Actos litúrgicos
-        <span class="flecha">▸</span>
-      </button>
-      <div class="submenu">
-        <a href="#" class="submenu-item">Mostrar Información</a>
-        <a href="#" class="submenu-item">Gestionar</a>
+      <!-- ACTOS LITÚRGICOS -->
+      <div class="menu-grupo">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/acto.png" alt="acto" /> Actos litúrgicos
+          <span class="flecha">▸</span>
+        </button>
+        <div class="submenu">
+          <a href="/cliente/acto_liturgico" class="submenu-item">Mostrar Información</a>
+          <a href="/admi/acto_liturgico" class="submenu-item">Gestionar</a>
+        </div>
       </div>
-    </div>
 
-     <!-- PAGO -->
-        <div class="menu-grupo">
-      <button class="menu-item boton-desplegable">
-        <img src="/static/img/pago.png" alt="pago" /> Pago
-        <span class="flecha">▸</span>
-      </button>
-      <div class="submenu">
-        <a href="#" class="submenu-item">Pagos</a>
-        <a href="#" class="submenu-item">Gestionar Metodo Pago</a>
+      <!-- PAGO -->
+      <div class="menu-grupo">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/pago.png" alt="pago" /> Pago
+          <span class="flecha">▸</span>
+        </button>
+        <div class="submenu">
+          <a href="/cliente/pago" class="submenu-item">Pagos</a>
+          <a href="/admi/metodo_pago" class="submenu-item">Gestionar Método Pago</a>
+        </div>
       </div>
-    </div>
 
       <!-- CALENDARIO -->
       <div class="menu-grupo">
@@ -74,8 +72,8 @@
           <span class="flecha">▸</span>
         </button>
         <div class="submenu">
-          <a href="#" class="submenu-item">Consultar disponibilidad</a>
-          <a href="#" class="submenu-item">Gestionar</a>
+          <a href="/cliente/calendario" class="submenu-item">Consultar disponibilidad</a>
+          <a href="/admi/disponibilidad" class="submenu-item">Gestionar</a>
         </div>
       </div>
 
@@ -86,7 +84,7 @@
           <span class="flecha">▸</span>
         </button>
         <div class="submenu">
-          <a href="#" class="submenu-item">Gestionar</a>
+          <a href="/admi/requisitos" class="submenu-item">Gestionar</a>
         </div>
       </div>
 
@@ -97,13 +95,13 @@
           <span class="flecha">▸</span>
         </button>
         <div class="submenu">
-          <a href="#" class="submenu-item">Generar Reportes</a>
+          <a href="/admi/lista_reporte" class="submenu-item">Generar Reportes</a>
         </div>
       </div>
 
     </nav>
   </div>
+
   <script src="/static/js/barra_lateral.js"></script>
 </body>
-
 </html>
