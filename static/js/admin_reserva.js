@@ -1,361 +1,396 @@
 // ================== VARIABLES GLOBALES ==================
 let reservas = [];
 let reservasFiltradas = null;
+let reservaEditandoId = null;
 
-const tabla = document.querySelector("#tablaDocumentos tbody");
+const tabla = document.querySelector("#tablaReservas tbody");
 const paginacion = document.getElementById("paginacionContainer");
-
-// Modales
-const modalFormulario = crearModalFormulario();
+const inputBusqueda = document.getElementById("inputBusqueda");
+const sugerenciasContainer = document.createElement("div");
 
 let paginaActual = 1;
 const elementosPorPagina = 10;
-let ordenActual = { campo: null, ascendente: true };
 
-// ================== FUNCIONES ==================
-// Renderizar tabla
+// ================== INICIALIZACIÓN ==================
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("Iniciando Admin Reserva...");
+    
+    // 1. Crear modal en el DOM
+    crearModalHTML(); 
+    
+    // 2. Configurar sugerencias de búsqueda
+    configurarSugerenciasHTML(); 
+    
+    // 3. Cargar datos
+    cargarReservasAPI(); 
+
+    // 4. Evento buscar
+    const btnBuscar = document.getElementById("btn_buscar");
+    if(btnBuscar) btnBuscar.addEventListener("click", filtrarReservas);
+    
+    if(inputBusqueda) inputBusqueda.addEventListener("input", manejarInputBusqueda);
+    
+    // 5. Evento AGREGAR (El botón +) - CORREGIDO CON NUEVO ID
+    const btnAgregar = document.getElementById("btn_agregar_reserva");
+    if(btnAgregar) {
+        console.log("Botón agregar encontrado");
+        // Aseguramos que no envíe formulario
+        btnAgregar.type = "button"; 
+        btnAgregar.addEventListener("click", (e) => {
+            console.log("Click en agregar nueva reserva");
+            e.preventDefault(); 
+            e.stopPropagation();
+            agregarReserva(); 
+        });
+    } else {
+        console.error("ERROR CRÍTICO: No se encontró el botón con ID 'btn_agregar_reserva' en el HTML.");
+    }
+});
+
+// ================== API ==================
+async function cargarReservasAPI() {
+    try {
+        const res = await fetch('/api/reserva/admin/listado');
+        const data = await res.json();
+        
+        if (data.success) {
+            reservas = data.datos;
+            renderTabla();
+        } else {
+            console.error("Error en datos:", data.mensaje);
+        }
+    } catch (error) {
+        console.error("Error API:", error);
+        tabla.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:red;">Error de conexión con el servidor.</td></tr>';
+    }
+}
+
+async function guardarCambiosAPI() {
+    // Si no hay ID editando, significa que estamos CREANDO
+    if(!reservaEditandoId) {
+        alert("La creación de reservas desde admin está en construcción. Use la vista de feligrés.");
+        return;
+    }
+
+    const id = reservaEditandoId;
+    const fecha = document.getElementById('modalFecha').value;
+    const hora = document.getElementById('modalHora').value;
+    const mencion = document.getElementById('modalMencion').value;
+
+    try {
+        const res = await fetch(`/api/reserva/reprogramar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                idReserva: id, 
+                fecha: fecha, 
+                hora: hora, 
+                observaciones: mencion 
+            })
+        });
+        const data = await res.json();
+        
+        if (data.ok) {
+            alert("Reserva actualizada correctamente");
+            cerrarModal();
+            cargarReservasAPI();
+        } else {
+            alert("Error: " + data.mensaje);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error al guardar");
+    }
+}
+
+async function cancelarReservaAPI(id) {
+    if (!confirm("¿Estás seguro de CANCELAR esta reserva? Esta acción no se puede deshacer fácilmente.")) return;
+
+    try {
+        const res = await fetch(`/api/reserva/cambiar_estado/${id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accion: 'cancelar' })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            alert("Reserva cancelada.");
+            cargarReservasAPI();
+        } else {
+            alert("Error: " + data.mensaje);
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// ================== LOGICA DE TABLA ==================
 function renderTabla() {
-  tabla.innerHTML = "";
+    tabla.innerHTML = "";
+    const lista = reservasFiltradas ?? reservas;
 
-  const lista = reservasFiltradas ?? reservas;
+    if (lista.length === 0) {
+        tabla.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">No se encontraron reservas.</td></tr>';
+        paginacion.innerHTML = "";
+        return;
+    }
 
-  // Ordenar si aplica
-  if (ordenActual.campo) {
-    lista.sort((a, b) => {
-      const campo = ordenActual.campo;
-      const valorA = a[campo] ? a[campo].toString().toLowerCase() : "";
-      const valorB = b[campo] ? b[campo].toString().toLowerCase() : "";
-      if (valorA < valorB) return ordenActual.ascendente ? -1 : 1;
-      if (valorA > valorB) return ordenActual.ascendente ? 1 : -1;
-      return 0;
+    lista.sort((a, b) => new Date(b.f_reserva) - new Date(a.f_reserva));
+
+    const inicio = (paginaActual - 1) * elementosPorPagina;
+    const fin = inicio + elementosPorPagina;
+    const pageData = lista.slice(inicio, fin);
+
+    pageData.forEach((r, i) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td class="col-id">${inicio + i + 1}</td>
+            <td class="col-solicitante">${r.solicitante || 'Anónimo'}</td>
+            <td class="col-acto">${r.nombreActo || '---'}</td>
+            <td class="col-fecha">${r.f_reserva} <br> <small>${r.h_reserva}</small></td>
+            <td class="col-parroquia">${r.nombreParroquia || ''}</td>
+            <td class="col-estado"><span class="estado-texto">${r.estadoReserva}</span></td>
+            <td class="col-acciones">
+                <button class="btn-sm btn-info" onclick="verReserva(${r.idReserva})" title="Ver Detalles">
+                    <img src="/static/img/ojo.png" alt="ver">
+                </button>
+                <button class="btn-sm btn-warning" onclick="editarReserva(${r.idReserva})" title="Editar Fecha/Hora">
+                    <img src="/static/img/lapiz.png" alt="editar">
+                </button>
+                ${r.estadoReserva !== 'CANCELADO' ? 
+                    `<button class="btn-sm btn-danger" onclick="cancelarReservaAPI(${r.idReserva})" title="Cancelar Reserva">
+                        <img src="/static/img/x.png" alt="cancelar">
+                    </button>` : 
+                    `<button class="btn-sm btn-secondary" disabled title="Ya cancelado">
+                        <img src="/static/img/x.png" alt="cancelado" style="filter: grayscale(100%);">
+                    </button>`
+                }
+            </td>
+        `;
+        tabla.appendChild(row);
     });
-  }
 
-  const inicio = (paginaActual - 1) * elementosPorPagina;
-  const fin = inicio + elementosPorPagina;
-  const reservasPagina = lista.slice(inicio, fin);
-
-  reservasPagina.forEach((res, index) => {
-    const esActivo = res.estado === "activo";
-    const botonColor = esActivo ? "btn-orange" : "btn-success";
-    const rotacion = esActivo ? "" : "transform: rotate(180deg);";
-
-    const fila = document.createElement("tr");
-    fila.innerHTML = `
-      <td class="col-id">${inicio + index + 1}</td>
-      <td class="col-dirigido">${res.dirigido}</td>
-      <td class="col-dirigido">${res.dirigido2}</td>
-      <td class="col-f_reserva">${res.f_reserva}</td>
-      <td class="col-f_acto">${res.f_acto}</td>
-      <td class="col-acto">${res.acto}</td>
-      <td class="col-observaciones">${res.observaciones}</td>
-      <td class="col-acciones">
-        <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="verReserva(${res.id})" title="Ver">
-            <img src="/static/img/ojo.png" alt="ver">
-          </button>
-          <button class="btn btn-warning btn-sm" onclick="editarReserva(${res.id})" title="Editar">
-            <img src="/static/img/lapiz.png" alt="editar">
-          </button>
-          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${res.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
-            <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarReserva(${res.id})" title="Eliminar">
-            <img src="/static/img/x.png" alt="eliminar">
-          </button>
-        </div>
-      </td>
-    `;
-    tabla.appendChild(fila);
-  });
-
-  renderPaginacion();
+    renderPaginacion(lista.length);
 }
 
 // ================== PAGINACIÓN ==================
-function renderPaginacion() {
-  paginacion.innerHTML = "";
-  const totalPaginas = Math.ceil(reservas.length / elementosPorPagina);
-  if (totalPaginas <= 1) return;
+function renderPaginacion(totalItems) {
+    paginacion.innerHTML = "";
+    const totalPaginas = Math.ceil(totalItems / elementosPorPagina);
+    if (totalPaginas <= 1) return;
 
-  const ul = document.createElement("ul");
-  ul.className = "pagination";
+    const ul = document.createElement("ul");
+    ul.className = "pagination";
 
-  const crearItem = (numero, activo = false, disabled = false, texto = null) => {
-    const li = document.createElement("li");
-    li.className = `page-item ${activo ? "active" : ""} ${disabled ? "disabled" : ""}`;
-    li.innerHTML = `<button class="page-link" onclick="cambiarPagina(${numero})">${texto || numero}</button>`;
-    return li;
-  };
+    const crearBtn = (pag, texto, activo = false) => {
+        const li = document.createElement("li");
+        li.className = `page-item ${activo ? 'active' : ''}`;
+        li.innerHTML = `<button class="page-link">${texto}</button>`;
+        li.onclick = () => { paginaActual = pag; renderTabla(); };
+        return li;
+    };
 
-  ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, "<"));
+    if (paginaActual > 1) ul.appendChild(crearBtn(paginaActual - 1, "<"));
+    
+    let start = Math.max(1, paginaActual - 2);
+    let end = Math.min(totalPaginas, paginaActual + 2);
 
-  const start = Math.max(1, paginaActual - 2);
-  const end = Math.min(totalPaginas, paginaActual + 2);
+    for (let i = start; i <= end; i++) {
+        ul.appendChild(crearBtn(i, i, i === paginaActual));
+    }
 
-  if (start > 1) {
-    ul.appendChild(crearItem(1, paginaActual === 1));
-    if (start > 2) ul.appendChild(crearItem(null, false, true, "..."));
-  }
+    if (paginaActual < totalPaginas) ul.appendChild(crearBtn(paginaActual + 1, ">"));
 
-  for (let i = start; i <= end; i++) {
-    ul.appendChild(crearItem(i, paginaActual === i));
-  }
-
-  if (end < totalPaginas) {
-    if (end < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, "..."));
-    ul.appendChild(crearItem(totalPaginas, paginaActual === totalPaginas));
-  }
-
-  ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, ">"));
-
-  paginacion.appendChild(ul);
+    paginacion.appendChild(ul);
 }
 
-function cambiarPagina(pagina) {
-  if (pagina < 1 || pagina > Math.ceil(reservas.length / elementosPorPagina)) return;
-  paginaActual = pagina;
-  renderTabla();
+// ================== BÚSQUEDA Y SUGERENCIAS ==================
+function configurarSugerenciasHTML() {
+    sugerenciasContainer.id = "sugerenciasContainer";
+    const group = document.querySelector(".input-group-search");
+    if(group) group.appendChild(sugerenciasContainer);
+    
+    document.addEventListener("click", (e) => {
+        if (group && !group.contains(e.target)) {
+            sugerenciasContainer.style.display = "none";
+        }
+    });
 }
 
-// ================== CRUD ==================
-function agregarReserva(dirigido, dirigido2, f_reserva, f_acto, acto, observaciones) {
-  reservas.push({
-    id: Date.now(),
-    dirigido,
-    dirigido2,
-    f_reserva,
-    f_acto,
-    acto,
-    observaciones,
-    estado: "activo",
-  });
-  renderTabla();
+function manejarInputBusqueda(e) {
+    const termino = e.target.value.toLowerCase();
+    sugerenciasContainer.innerHTML = "";
+    
+    if (termino.length < 1) {
+        sugerenciasContainer.style.display = "none";
+        reservasFiltradas = null;
+        renderTabla();
+        return;
+    }
+
+    const matches = reservas.filter(r => r.solicitante && r.solicitante.toLowerCase().includes(termino));
+    const nombresUnicos = [...new Set(matches.map(r => r.solicitante))].slice(0, 5);
+
+    if (nombresUnicos.length > 0) {
+        nombresUnicos.forEach(nombre => {
+            const div = document.createElement("div");
+            div.className = "sugerencia-item";
+            div.textContent = nombre;
+            div.onclick = () => {
+                if(inputBusqueda) inputBusqueda.value = nombre;
+                sugerenciasContainer.style.display = "none";
+                filtrarReservas();
+            };
+            sugerenciasContainer.appendChild(div);
+        });
+        sugerenciasContainer.style.display = "block";
+    } else {
+        sugerenciasContainer.style.display = "none";
+    }
+}
+
+function filtrarReservas() {
+    if(!inputBusqueda) return;
+    const termino = inputBusqueda.value.toLowerCase();
+    if (!termino) {
+        reservasFiltradas = null;
+    } else {
+        reservasFiltradas = reservas.filter(r => 
+            (r.solicitante && r.solicitante.toLowerCase().includes(termino)) ||
+            (r.nombreActo && r.nombreActo.toLowerCase().includes(termino))
+        );
+    }
+    paginaActual = 1;
+    renderTabla();
+}
+
+// ================== MODAL ==================
+function crearModalHTML() {
+    if(document.getElementById("modalReservaAdmin")) return;
+
+    const html = `
+    <div id="modalReservaAdmin" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitulo">Editar Reserva</h5>
+                <button type="button" class="btn-cerrar" onclick="cerrarModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="formModalAdmin">
+                    <div class="mb-3">
+                        <label class="form-label">Solicitante</label>
+                        <input type="text" id="modalSolicitante" class="form-control" disabled placeholder="Seleccionar usuario (en construcción)">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Acto</label>
+                        <input type="text" id="modalActo" class="form-control" disabled placeholder="Seleccionar acto (en construcción)">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Fecha</label>
+                            <input type="date" id="modalFecha" class="form-control">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Hora</label>
+                            <input type="time" id="modalHora" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones / Mención</label>
+                        <textarea id="modalMencion" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-secondary" onclick="cerrarModal()">Cerrar</button>
+                <button id="btnGuardarModal" class="btn-modal btn-primary" onclick="guardarCambiosAPI()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function abrirModal() {
+    const m = document.getElementById("modalReservaAdmin");
+    if(m) {
+        m.classList.add("activo");
+        m.style.display = "flex"; // Asegurar que se muestre
+    } else {
+        console.error("No se encontró el modal para abrir");
+    }
+}
+
+function cerrarModal() {
+    const m = document.getElementById("modalReservaAdmin");
+    if(m) {
+        m.classList.remove("activo");
+        setTimeout(() => m.style.display = "none", 300); // Esperar transición si hubiera
+    }
+}
+
+function agregarReserva() {
+    console.log("Abriendo modal de agregar...");
+    reservaEditandoId = null;
+    
+    // Asegurar que el modal exista
+    if(!document.getElementById("modalReservaAdmin")) crearModalHTML();
+    
+    const titulo = document.getElementById("modalTitulo");
+    if(titulo) titulo.textContent = "Nueva Reserva";
+    
+    try {
+        document.getElementById("modalSolicitante").value = "";
+        document.getElementById("modalActo").value = "";
+        document.getElementById("modalFecha").value = "";
+        document.getElementById("modalHora").value = "";
+        document.getElementById("modalMencion").value = "";
+        
+        document.getElementById("modalSolicitante").disabled = false;
+        document.getElementById("modalActo").disabled = false; 
+        document.getElementById("modalFecha").disabled = false;
+        document.getElementById("modalHora").disabled = false;
+        document.getElementById("modalMencion").disabled = false;
+        document.getElementById("btnGuardarModal").style.display = "block";
+        
+        abrirModal();
+    } catch(e) {
+        console.error("Error al preparar modal:", e);
+    }
 }
 
 function editarReserva(id) {
-  const res = reservas.find((r) => r.id === id);
-  if (!res) return;
-  abrirModalFormulario("editar", res);
-}
+    const r = reservas.find(x => x.idReserva === id);
+    if (!r) return;
+    
+    // Asegurar que el modal exista
+    if(!document.getElementById("modalReservaAdmin")) crearModalHTML();
 
-function eliminarReserva(id) {
-  const res = reservas.find((r) => r.id === id);
-  if (!res) return;
-  if (!confirm(`¿Seguro que deseas eliminar la reserva de "${res.dirigido}"?`)) return;
-  reservas = reservas.filter((r) => r.id !== id);
-  renderTabla();
-}
+    reservaEditandoId = id;
+    document.getElementById("modalTitulo").textContent = "Editar Reserva"; 
+    
+    document.getElementById("modalSolicitante").value = r.solicitante;
+    document.getElementById("modalActo").value = r.nombreActo;
+    document.getElementById("modalFecha").value = r.f_reserva;
+    document.getElementById("modalHora").value = r.h_reserva;
+    document.getElementById("modalMencion").value = r.mencion || "";
+    
+    document.getElementById("modalSolicitante").disabled = true;
+    document.getElementById("modalActo").disabled = true;
+    document.getElementById("modalFecha").disabled = false;
+    document.getElementById("modalHora").disabled = false;
+    document.getElementById("modalMencion").disabled = false;
+    document.getElementById("btnGuardarModal").style.display = "block";
 
-function darDeBaja(id) {
-  const res = reservas.find((r) => r.id === id);
-  if (!res) return;
-  res.estado = res.estado === "activo" ? "inactivo" : "activo";
-  renderTabla();
+    abrirModal();
 }
 
 function verReserva(id) {
-  const res = reservas.find((r) => r.id === id);
-  if (!res) return;
-  abrirModalFormulario("ver", res);
+    editarReserva(id);
+    document.getElementById("modalTitulo").textContent = "Detalle de Reserva";
+    
+    document.getElementById("modalFecha").disabled = true;
+    document.getElementById("modalHora").disabled = true;
+    document.getElementById("modalMencion").disabled = true;
+    document.getElementById("btnGuardarModal").style.display = "none";
 }
 
-// ================== MODALES ==================
-function crearModalFormulario() {
-  const modalHTML = document.createElement("div");
-  modalHTML.innerHTML = `
-    <div class="modal" id="modalFormulario">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="modalFormularioTitulo"></h5>
-            <button type="button" class="btn-cerrar" onclick="cerrarModal('modalFormulario')">&times;</button>
-          </div>
-          <div class="modal-body">
-            <form id="formModalReserva">
-
-              <div class="mb-3">
-                <label for="modalDirigido" class="form-label">Dirigido</label>
-                <input type="text" id="modalDirigido" class="form-control" required>
-              </div>
-
-              <div class="mb-3">
-                <label for="modalDirigido2" class="form-label">Dirigido 2</label>
-                <input type="text" id="modalDirigido2" class="form-control" required>
-              </div>
-
-              <div class="mb-3">
-                <label for="modalFechaReserva" class="form-label">Fecha reserva</label>
-                <input type="date" id="modalFechaReserva" class="form-control" required>
-              </div>
-
-              <div class="mb-3">
-                <label for="modalFechaActo" class="form-label">Fecha acto</label>
-                <input type="date" id="modalFechaActo" class="form-control" required>
-              </div>
-
-              <div class="mb-3">
-                <label for="modalActo" class="form-label">Acto</label>
-                <input type="text" id="modalActo" class="form-control" required>
-              </div>
-
-              <div class="mb-3">
-                <label for="modalObservaciones" class="form-label">Observaciones</label>
-                <textarea id="modalObservaciones" class="form-control" rows="3"></textarea>
-              </div>
-
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar">Aceptar</button>
-              </div>
-
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modalHTML);
-  return document.getElementById("modalFormulario");
-}
-
-function abrirModal(id) {
-  const modal = document.getElementById(id);
-  if (modal) modal.classList.add("activo");
-}
-
-function cerrarModal(id) {
-  const modal = document.getElementById(id);
-  if (modal) modal.classList.remove("activo");
-}
-
-function abrirModalFormulario(modo, res = null) {
-  const titulo = document.getElementById("modalFormularioTitulo");
-  const inputDirigido = document.getElementById("modalDirigido");
-  const inputDirigido2 = document.getElementById("modalDirigido2");
-  const inputFechaReserva = document.getElementById("modalFechaReserva");
-  const inputFechaActo = document.getElementById("modalFechaActo");
-  const inputActo = document.getElementById("modalActo");
-  const inputObservaciones = document.getElementById("modalObservaciones");
-  const botonGuardar = document.getElementById("btnGuardar");
-  const form = document.getElementById("formModalReserva");
-  const modalFooter = document.querySelector("#modalFormulario .modal-footer");
-
-  modalFooter.innerHTML = "";
-  inputDirigido.disabled = false;
-  inputDirigido2.disabled = false;
-  inputFechaReserva.disabled = false;
-  inputFechaActo.disabled = false;
-  inputActo.disabled = false;
-  inputObservaciones.disabled = false;
-
-  if (modo === "agregar") {
-    titulo.textContent = "Agregar reserva";
-    inputDirigido.value = "";
-    inputDirigido2.value = "";
-    inputFechaReserva.value = "";
-    inputFechaActo.value = "";
-    inputActo.value = "";
-    inputObservaciones.value = "";
-
-    modalFooter.appendChild(botonGuardar);
-    form.onsubmit = (e) => {
-      e.preventDefault();
-      agregarReserva(
-        inputDirigido.value.trim(),
-        inputDirigido2.value.trim(),
-        inputFechaReserva.value,
-        inputFechaActo.value,
-        inputActo.value.trim(),
-        inputObservaciones.value.trim()
-      );
-      cerrarModal("modalFormulario");
-    };
-  } else if (modo === "editar" && res) {
-    titulo.textContent = "Editar reserva";
-    inputDirigido.value = res.dirigido;
-    inputDirigido2.value = res.dirigido2;
-    inputFechaReserva.value = res.f_reserva;
-    inputFechaActo.value = res.f_acto;
-    inputActo.value = res.acto;
-    inputObservaciones.value = res.observaciones;
-
-    modalFooter.appendChild(botonGuardar);
-    form.onsubmit = (e) => {
-      e.preventDefault();
-      res.dirigido = inputDirigido.value.trim();
-      res.dirigido2 = inputDirigido2.value.trim();
-      res.f_reserva = inputFechaReserva.value;
-      res.f_acto = inputFechaActo.value;
-      res.acto = inputActo.value.trim();
-      res.observaciones = inputObservaciones.value.trim();
-      cerrarModal("modalFormulario");
-      renderTabla();
-    };
-  } else if (modo === "ver" && res) {
-    titulo.textContent = "Detalle de reserva";
-    inputDirigido.value = res.dirigido;
-    inputDirigido2.value = res.dirigido2;
-    inputFechaReserva.value = res.f_reserva;
-    inputFechaActo.value = res.f_acto;
-    inputActo.value = res.acto;
-    inputObservaciones.value = res.observaciones;
-    inputDirigido.disabled = true;
-    inputDirigido2.disabled = true;
-    inputFechaReserva.disabled = true;
-    inputFechaActo.disabled = true;
-    inputActo.disabled = true;
-    inputObservaciones.disabled = true;
-
-    modalFooter.appendChild(botonGuardar);
-    botonGuardar.textContent = "Cerrar";
-    botonGuardar.onclick = () => cerrarModal("modalFormulario");
-  }
-
-  abrirModal("modalFormulario");
-}
-
-// ================== BUSQUEDA ==================
-const inputReserva = document.getElementById("inputDocumento");
-const btnBuscar = document.getElementById("btn_buscar");
-
-btnBuscar.addEventListener("click", () => {
-  const termino = inputReserva.value.trim().toLowerCase();
-  reservasFiltradas =
-    termino === ""
-      ? null
-      : reservas.filter((r) => r.dirigido.toLowerCase().includes(termino));
-  paginaActual = 1;
-  renderTabla();
-});
-
-// ================== EVENTO FORM PRINCIPAL ==================
-document.getElementById("formDocumento").addEventListener("submit", (e) => {
-  e.preventDefault();
-  abrirModalFormulario("agregar");
-});
-
-// ================== DATOS DE EJEMPLO ==================
-reservas = [
-  {
-    id: 1,
-    dirigido: "Juan Pérez",
-    dirigido2: "María López",
-    f_reserva: "2025-10-01",
-    f_acto: "2025-10-05",
-    acto: "Misa de matrimonio",
-    observaciones: "Confirmar con el sacerdote",
-    estado: "activo",
-  },
-  {
-    id: 2,
-    dirigido: "Carlos Gómez",
-    dirigido2: "Ana Torres",
-    f_reserva: "2025-10-02",
-    f_acto: "2025-10-06",
-    acto: "Bautizo",
-    observaciones: "Documentos completos",
-    estado: "activo",
-  }
-];
-
-renderTabla();

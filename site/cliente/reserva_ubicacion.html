@@ -10,7 +10,14 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
 </head>
-<body data-rol="{{ session['rol'] }}" data-id="{{ session['idUsuario'] }}" data-parroquia="{{ session['parroquia_usuario'] }}">
+
+<!-- 
+    CORRECCIÓN: 'data-rol' ahora usa 'rol_sistema' para coincidir con el login.
+-->
+<body data-rol="{{ session.get('rol_sistema') }}" 
+      data-id="{{ session.get('idUsuario') }}" 
+      data-parroquia="{{ session.get('idParroquia') }}">
+
     <div id="header-placeholder"></div>
     <div class="grid">
         <div id="barra_lateral-placeholder"></div>
@@ -54,15 +61,14 @@
                 </div>
                 <div id="form-container">
                     <div class="form-step current" data-step="0">
-                        <!-- Usamos la misma estructura de input-group que en parroquia_cliente -->
-                    <div class="consulta">
-                        <label for="input-parroquia">Nombre de la parroquia:</label>
-                        <div class="input-group">
-                            <input type="text" id="input-parroquia" placeholder="Ej. San Roque">
-                            <button id="btn-buscar">Buscar</button>
+                        <div class="consulta">
+                            <label for="input-parroquia">Nombre de la parroquia:</label>
+                            <div class="input-group">
+                                <input type="text" id="input-parroquia" placeholder="Ej. San Roque">
+                                <button id="btn-buscar">Buscar</button>
+                            </div>
+                            <ul id="sugerencias" class="sugerencias-lista"></ul>
                         </div>
-                        <ul id="sugerencias" class="sugerencias-lista"></ul>
-                    </div>
                         <div id="mapa"> 
                             <div id="gps"></div> 
                         </div> 
@@ -79,6 +85,8 @@
             </div>
         </div>
     </div>
+    
+    <!-- Scripts -->
     <script src="/static/js/header.js"></script>
     <script src="/static/js/barra_lateral.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>

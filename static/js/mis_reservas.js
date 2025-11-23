@@ -805,6 +805,123 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/cliente/pago';
     };
 
+    window.reprogramarReserva = async (idReserva) => {
+        const reserva = reservasGlobal.find(r => r.idReserva == idReserva);
+        if (!reserva) { alert("Reserva no encontrada"); return; }
+
+        // 1. Obtener Configuración y Validar Tiempo Límite
+        const config = reserva.configActo || {};
+        const tiempoLimite = config.tiempoMaxReprogramacion; 
+        const unidad = config.unidadTiempoAcciones || 'horas';
+        
+        // Si existe un límite configurado, validamos vigencia
+        if (tiempoLimite !== null && tiempoLimite !== undefined) {
+            const fechaHoraBase = `${reserva.fecha}T${reserva.hora}`;
+            const fechaLimite = calcularFechaLimite(fechaHoraBase, tiempoLimite, unidad);
+
+            if (new Date() > fechaLimite) {
+                alert(`Ya no es posible reprogramar. La fecha límite fue: ${fechaLimite.toLocaleString()}`);
+                return;
+            }
+        }
+
+        // 2. Preparar el Modal
+        const modal = document.getElementById("modalReserva");
+        const modalBody = document.getElementById("modal-body");
+        const modalTitle = document.getElementById("modal-title");
+        const modalFooter = document.getElementById("modal-footer");
+
+        modalTitle.textContent = "Reprogramar Reserva";
+
+        // 3. Renderizar Formulario
+        modalBody.innerHTML = `
+            <div class="form-reprogramar">
+                <p class="info-text">Reserva actual: <strong>${reserva.fecha}</strong> a las <strong>${reserva.hora}</strong></p>
+                <p class="info-text">Acto: ${reserva.nombreActo}</p>
+                <hr>
+                
+                <div class="form-group">
+                    <label for="nuevaFecha">Nueva Fecha:</label>
+                    <input type="date" id="nuevaFecha" class="input-form" min="${new Date().toISOString().split('T')[0]}">
+                </div>
+
+                <div class="form-group">
+                    <label for="nuevaHora">Nueva Hora:</label>
+                    <input type="time" id="nuevaHora" class="input-form">
+                </div>
+
+                <div class="form-group">
+                    <label for="motivoReprogramacion">Motivo del cambio:</label>
+                    <textarea id="motivoReprogramacion" class="input-form" rows="3" placeholder="Indique la razón del cambio..."></textarea>
+                </div>
+                
+                <div id="mensaje-error" class="mensaje-error"></div>
+            </div>
+        `;
+
+        // 4. Configurar Botones
+        modalFooter.innerHTML = `
+            <button class="btn-accion cancelar" id="btnCancelarRep">Cancelar</button>
+            <button class="btn-accion guardar" id="btnGuardarRep">Guardar Cambios</button>
+        `;
+
+        // Eventos
+        document.getElementById("btnCancelarRep").onclick = cerrarModal;
+        
+        document.getElementById("btnGuardarRep").onclick = async () => {
+            const nuevaFecha = document.getElementById("nuevaFecha").value;
+            const nuevaHora = document.getElementById("nuevaHora").value;
+            const motivo = document.getElementById("motivoReprogramacion").value.trim();
+            const errorDiv = document.getElementById("mensaje-error");
+
+            // Validaciones básicas
+            if (!nuevaFecha || !nuevaHora) {
+                errorDiv.textContent = "Por favor, seleccione fecha y hora.";
+                return;
+            }
+            if (!motivo) {
+                errorDiv.textContent = "Debe indicar un motivo para la reprogramación.";
+                return;
+            }
+
+            // Llamada a la API
+            try {
+                const btn = document.getElementById("btnGuardarRep");
+                btn.disabled = true;
+                btn.textContent = "Procesando...";
+
+                const response = await fetch('/api/reserva/reprogramar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        idReserva: idReserva,
+                        fecha: nuevaFecha,
+                        hora: nuevaHora,
+                        observaciones: motivo
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.ok) {
+                    alert("✅ Reserva reprogramada exitosamente.");
+                    cerrarModal();
+                    cargarReservas(); // Recargar tabla
+                } else {
+                    errorDiv.textContent = `Error: ${data.mensaje}`;
+                }
+            } catch (error) {
+                console.error("Error al reprogramar:", error);
+                errorDiv.textContent = "Error de conexión con el servidor.";
+            } finally {
+                document.getElementById("btnGuardarRep").disabled = false;
+                document.getElementById("btnGuardarRep").textContent = "Guardar Cambios";
+            }
+        };
+
+        modal.style.display = "block";
+    };
+
 
     // ============================
     // PESTAÑAS

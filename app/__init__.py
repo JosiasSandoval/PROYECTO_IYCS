@@ -12,7 +12,8 @@ from app.pago.route_pago import pago_bp
 from app.pago_metodo.route_pago_metodo import pago_metodo_bp
 from app.reserva.route_reserva import reserva_bp
 from app.acto_liturgico_requisito.route_requisito import requisito_bp
-
+from app.disponibilidad.route_disponibilidad import disponibilidad_bp
+from app.acto_liturgico.route_actoLiturgico import acto_liturgico_bp
 
 def crear_app():
     # Obtiene la ruta absoluta de la carpeta 'app'
@@ -39,8 +40,8 @@ def crear_app():
     app.register_blueprint(pago_metodo_bp, url_prefix='/api/metodo_pago') 
     app.register_blueprint(reserva_bp,url_prefix='/api/reserva')
     app.register_blueprint(requisito_bp,url_prefix='/api/requisito')
-
-   
+    app.register_blueprint(disponibilidad_bp,url_prefix='/api/disponibilidad')
+    app.register_blueprint(acto_liturgico_bp,url_prefix='/api/acto_liturgico')
     
     @app.route("/")
     def iniciar_sesion():
@@ -181,13 +182,21 @@ def crear_app():
     def personal_admi():    
         return render_template('administradores/usuario_personal.html')
     
+    @app.route('/admi/disponibilidad')
+    def disponibilidad_admi():
+        return render_template('administradores/disponibilidad.html')
+    
+    @app.route('/admi/reserva')
+    def reserva_admi():
+        return render_template('administradores/reserva.html')
+    
+    @app.route('/admi/acto_liturgico')
+    def acto_liturgico_admi():
+        return render_template('administradores/acto_liturgico.html')
+
     @app.route('/cerrar_sesion')
     def cerrar_sesion():
         session.clear()
         return redirect(url_for('iniciar_sesion'))
     
-    
     return app
-
-
-

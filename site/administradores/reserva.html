@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link rel="stylesheet" href="/static/css/admin_reserva.css">
-    <title>LITBOOK | Reserva</title>
+    <link rel="stylesheet" href="/static/css/admin_reserva.css">
+    <title>LITBOOK | Gestión de Reservas</title>
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -12,47 +12,47 @@
         <div id="barra_lateral_administrador-placeholder"></div>
         <div class="contenido-principal">
             <div class="contenido">   
-            <h3 class="titulo-seccion">RESERVAS
-            </h3>
-              <!--Busqueda-->
-              <form id="formDocumento">
-                <!-- Label -->
-                <label for="inputDocumento">Nombre de la Reserva:</label>
+                <h3 class="titulo-seccion">GESTIÓN DE RESERVAS</h3>
+                
+                <!-- Buscador -->
+                <form id="formBusqueda">
+                    <label for="inputBusqueda">Buscar por Solicitante:</label>
+                    <div class="input-group-search">
+                        <input type="text" id="inputBusqueda" placeholder="Ingrese el nombre del feligrés" autocomplete="off"/>
+                        
+                        <button type="button" id="btn_buscar" class="btn-icon" title="Buscar">
+                            <img src="/static/img/lupa.png" alt="Buscar" />
+                        </button>
+                        
+                        <!-- Botón AGREGAR (+) con NUEVO ID -->
+                        <button type="button" id="btn_agregar_reserva" class="btn-icon" title="Nueva Reserva">
+                            <img src="/static/img/mas.png" alt="Agregar" />
+                        </button>
+                    </div>
+                </form>
 
-                <!-- Input -->
-                <input type="text" id="inputDocumento" placeholder="Ingrese nombre de la reserva"/>
-
-                <!-- Botones -->
-                <button type="button" id="btn_buscar" class="btn-icon" title="Buscar">
-                    <img src="/static/img/lupa.png" alt="Buscar" />
-                </button>
-
-                <button type="submit" id="btn_guardar" class="btn-icon" title="Agregar">
-                    <img src="/static/img/mas.png" alt="Agregar" />
-                </button>
-            </form>
-
-            <!--Tabla-->
-            <div class="tabla-documentos">
-              <table id="tablaDocumentos">
-                <thead>
-                  <tr>
-                    <th class="col-id">#</th>
-                    <th class="col-dirigido">Dirigido</th>
-                    <th class="col-dirigido">Dirigido</th>
-                    <th class="col-f_reserva">Fecha reserva</th>
-                    <th class="col-f_acto">Fecha acto</th>
-                    <th class="col-acto">Acto</th>
-                    <th class="col-observaciones">Observaciones</th>
-                    <th class="col-acciones">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+                <!-- Tabla -->
+                <div class="tabla-documentos">
+                    <table id="tablaReservas">
+                        <thead>
+                            <tr>
+                                <th class="col-id">#</th>
+                                <th class="col-solicitante">Solicitante</th>
+                                <th class="col-acto">Acto</th>
+                                <th class="col-fecha">Fecha Evento</th>
+                                <th class="col-parroquia">Parroquia</th>
+                                <th class="col-estado">Estado</th>
+                                <th class="col-acciones">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="paginacionContainer"></div>
             </div>
-            <div id="paginacionContainer"></div>
         </div>
-        </div>
+    </main>
+
     <script src="/static/js/barra_lateral_administrador.js"></script>
     <script src="/static/js/header.js"></script>
     <script src="/static/js/admin_reserva.js"></script>

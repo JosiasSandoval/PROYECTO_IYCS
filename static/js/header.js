@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const headerPlaceholder = document.getElementById('header-placeholder');
 
     if (!headerPlaceholder) {
-        console.error('❌ No se encontró el placeholder del header');
+        console.error('❌ No se encontró el placeholder del header. Asegúrate de tener <div id="header-placeholder"></div> en tu HTML.');
         return;
     }
 
@@ -22,8 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const btnUsuario = headerPlaceholder.querySelector('#btn_usuario');
             const modalUsuario = headerPlaceholder.querySelector('#modal_usuario');
             const btnCerrarSesion = headerPlaceholder.querySelector('#btn_cerrar_sesion');
+            
+            // Elementos de texto a actualizar
             const nombreEl = document.getElementById('header_nombre_usuario');
             const cargoEl = document.getElementById('header_cargo_usuario');
+            const rolEl = document.getElementById('rol_actual'); // 💡 AGREGADO
 
             // ============================================================
             // 2. LÓGICA VISUAL: MODAL DE USUARIO
@@ -62,16 +65,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (userData.success) {
                         if (nombreEl) nombreEl.textContent = userData.nombre;
                         if (cargoEl) cargoEl.textContent = userData.cargo;
+                        if (rolEl) rolEl.textContent = userData.rol; // 💡 ACTUALIZACIÓN DEL ROL
                     } else {
                         // Si no hay sesión válida
                         if (nombreEl) nombreEl.textContent = "Visitante";
                         if (cargoEl) cargoEl.textContent = "Invitado";
+                        if (rolEl) rolEl.textContent = "Invitado";
                     }
                 })
                 .catch(err => {
                     console.error("Error al cargar datos de sesión:", err);
                     if (nombreEl) nombreEl.textContent = "Visitante";
-                    if (cargoEl) cargoEl.textContent = "Invitado";
                 });
 
             // ============================================================
@@ -79,8 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // ============================================================
             if (btnCerrarSesion) {
                 btnCerrarSesion.addEventListener('click', (e) => {
-                    e.preventDefault(); // Prevenir comportamiento por defecto si es un link
-                    // Usamos la ruta de API que es más robusta según tu segundo script
+                    e.preventDefault(); 
                     window.location.href = '/api/auth/cerrar_sesion';
                 });
             }
@@ -88,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(error => {
             console.error('❌ Error crítico al cargar el header:', error);
-            headerPlaceholder.innerHTML = "<div style='color: red; text-align: center; padding: 10px;'>Error de carga.</div>";
+            headerPlaceholder.innerHTML = "<div style='color: red; text-align: center; padding: 10px;'>Error de carga del encabezado.</div>";
         });
 });
+

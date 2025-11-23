@@ -6,7 +6,8 @@
     <title>LITBOOK | Mis reservas</title>
     <link rel="stylesheet" href="/static/css/mis_reservas.css">
 </head>
-<body data-rol="{{ session['rol'] }}" data-id="{{ session['idUsuario'] }}">
+<body data-rol="{{ session.get('rol_sistema') }}" data-id="{{ session.get('idUsuario') }}">
+    
     <div id="header-placeholder"></div>
 
     <div class="grid">
@@ -88,29 +89,32 @@
         </main>
     </div>
 
-                <!-- Modal -->
-            <div id="modalReserva" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2 id="modal-title">Detalle de reserva</h2>
-                    <div id="modal-body">
-                        <!-- Contenido dinámico según acción -->
-                    </div>
-                    <div id="modal-footer">
-                        <!-- Botones dinámicos -->
-                    </div>
-                </div>
+    <!-- Modal Detalle Reserva -->
+    <div id="modalReserva" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-title">Detalle de reserva</h2>
+            <div id="modal-body">
+                <!-- Contenido dinámico según acción -->
             </div>
+            <div id="modal-footer">
+                <!-- Botones dinámicos -->
+            </div>
+        </div>
+    </div>
 
-            <div id="modalArchivo" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                        <h2 id="modal-archivo-title">Documento Adjunto</h2> <span class="close" id="cerrarModalArchivo">&times;</span>
-                    </div>
-                    <div id="modal-archivo-body" style="text-align:center; padding:10px;">
-                        </div>
-                </div>
+    <!-- Modal Archivo (Previsualización) -->
+    <div id="modalArchivo" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <h2 id="modal-archivo-title">Documento Adjunto</h2> 
+                <span class="close" id="cerrarModalArchivo">&times;</span>
             </div>
+            <div id="modal-archivo-body" style="text-align:center; padding:10px;">
+                <!-- Aquí se carga la imagen o PDF -->
+            </div>
+        </div>
+    </div>
 
 
     <script src="/static/js/header.js"></script>

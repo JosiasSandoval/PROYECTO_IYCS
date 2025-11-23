@@ -12,7 +12,7 @@ body {
   color: #212529;
 }
 
-/* ===== BARRA SUPERIOR Y LATERAL ===== */
+/* ===== BARRA SUPERIOR Y LATERAL (Estilos estándar) ===== */
 .barra-superior {
   background: #adc5e0;
   padding: 10px 20px;
@@ -27,21 +27,6 @@ body {
   gap: 10px;
   font-size: 20px;
   color: #000;
-}
-.info-usuario {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-}
-.info-usuario .avatar {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-}
-.texto-rol {
-  font-size: 12px;
-  color: #6b7280;
 }
 .grid {
   display: grid;
@@ -101,6 +86,7 @@ body {
   width: 100%;
   gap: 12px;
   margin-bottom: 20px;
+  position: relative; 
 }
 #formDocumento label {
   font-weight: bold;
@@ -157,40 +143,20 @@ body {
 #btn_guardar:hover {
   background-color: #2563eb;
 }
-.btn-info {
-  background-color: #17a2b8;
-}
-.btn-info:hover {
-  background-color: #117a8b;
-}
-.btn-warning {
-  background-color: #ffc107;
-}
-.btn-warning:hover {
-  background-color: #e0a800;
-}
-.btn-orange {
-  background-color: #fd7e14;
-}
-.btn-orange:hover {
-  background-color: #e8590c;
-}
-.btn-success {
-  background-color: #28a745;
-}
-.btn-success:hover {
-  background-color: #218838;
-}
-.btn-danger {
-  background-color: #dc3545;
-}
-.btn-danger:hover {
-  background-color: #c82333;
-}
+.btn-info { background-color: #17a2b8; }
+.btn-info:hover { background-color: #117a8b; }
+.btn-warning { background-color: #ffc107; }
+.btn-warning:hover { background-color: #e0a800; }
+.btn-orange { background-color: #fd7e14; }
+.btn-orange:hover { background-color: #e8590c; }
+.btn-success { background-color: #28a745; }
+.btn-success:hover { background-color: #218838; }
+.btn-danger { background-color: #dc3545; }
+.btn-danger:hover { background-color: #c82333; }
 
 /* ===== TABLAS ===== */
 .tabla-documentos {
-  max-height: 60vh;
+  max-height: 65vh;
   overflow-y: auto;
   margin-top: 20px;
 }
@@ -200,6 +166,7 @@ body {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  table-layout: fixed;
 }
 .tabla-documentos th,
 .tabla-documentos td {
@@ -207,6 +174,9 @@ body {
   font-size: 15px;
   padding: 10px;
   border: 1px solid #dee2e6;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 .tabla-documentos thead {
   background-color: #343a40;
@@ -215,35 +185,12 @@ body {
 .tabla-documentos tbody tr:hover {
   background-color: #f0f0f0;
 }
-.table-active {
-  background-color: #cce5ff !important;
-}
-/* Columnas */
-
-.col-id {
-  width: 5%;
-}
-.col-porcentaje {
-  width: 5%;
-  text-align: center;
-}
-.col-fechaInicio {
-  width: 10%;
-  text-align: center;
-}
-.col-fechaFin {
-  width: 10%;
-  text-align: center;
-}
-.col-condicion {
-  width: 50%;
-  text-align: left;
-}
-.col-acciones {
-  width: 20%;
-  white-space: nowrap;
-  text-align: center;
-}
+/* === COLUMNAS (NUEVAS) === */
+.col-id { width: 10%; text-align: center; }
+.col-diaSemana { width: 30%; text-align: left; }
+.col-horaInicioDis { width: 20%; text-align: center; }
+.col-horaFinDis { width: 20%; text-align: center; }
+.col-acciones { width: 20%; text-align: center; }
 
 /* ===== MODALES ===== */
 .modal {
@@ -257,6 +204,8 @@ body {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  overflow-y: auto;
+  padding: 20px;
 }
 .modal.activo {
   display: flex;
@@ -264,10 +213,11 @@ body {
 .modal-dialog {
   background: #fff;
   border-radius: 12px;
-  max-width: 500px;
+  max-width: 500px; /* Ancho estándar para este modal */
   width: 90%;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
   animation: aparecer 0.3s ease;
+  margin: auto;
 }
 .modal-header,
 .modal-body {
@@ -326,10 +276,6 @@ body {
 }
 
 /* ===== UTILIDADES ===== */
-.d-flex { display: flex; }
-.justify-content-center { justify-content: center; }
-.flex-wrap { flex-wrap: wrap; }
-.gap-1 { gap: 0.25rem; }
 .mb-3 { margin-bottom: 1rem; }
 .form-label {
   display: block;
@@ -342,20 +288,19 @@ body {
   line-height: 1.5;
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+  appearance: auto;
+  background-color: #fff;
 }
-.text-end { text-align: right; }
-.d-none { display: none; }
+.form-control[type="time"] {
+    line-height: 1.5; /* Ajuste para inputs de tiempo */
+}
+.d-flex { display: flex; }
+.justify-content-center { justify-content: center; }
+.flex-wrap { flex-wrap: wrap; }
+.gap-1 { gap: 0.25rem; }
 
-/* ===== PIE DE PÁGINA ===== */
-.footer {
-  text-align: center;
-  padding: 10px 20px;
-  background: #adc5e0;
-  color: #000;
-  font-size: 14px;
-  margin-top: 20px;
-  border-top: 1px solid #dee2e6;
-}
 /* ===== PAGINACIÓN ===== */
 #paginacionContainer {
   margin-top: 20px;
@@ -363,7 +308,6 @@ body {
   justify-content: center;
   gap: 8px;
 }
-
 .pagination {
   list-style: none;
   display: flex;
@@ -371,11 +315,9 @@ body {
   margin: 0;
   gap: 5px;
 }
-
 .page-item {
   display: inline-block;
 }
-
 .page-link {
   display: block;
   padding: 8px 12px;
@@ -386,29 +328,67 @@ body {
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
   cursor: pointer;
 }
-
 .page-link:hover {
   background-color: #e9ecef;
   color: #007bff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-
 .page-item.active .page-link {
   background-color: #007bff;
   color: white;
   border-color: #007bff;
   font-weight: bold;
 }
-
 .page-item.disabled .page-link {
   background-color: #f8f9fa;
   color: #adb5bd;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+}
+
+/* ===== ESTILOS PARA SUGERENCIAS (DINÁMICO) ===== */
+#sugerenciasContainer {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 9998;
+  display: none;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.sugerencia-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.sugerencia-item:hover {
+  background-color: #f0f0f0;
+}
+
+/* ===== ESTILOS PARA NOTIFICACIONES (TOAST) ===== */
+.alerta-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 16px;
+  color: #fff;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.alerta-toast.mostrar {
+  opacity: 1;
+  transform: translateX(0);
+}
+.alerta-toast.success {
+  background-color: #28a745;
+}
+.alerta-toast.error {
+  background-color: #dc3545;
 }
