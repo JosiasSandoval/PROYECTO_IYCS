@@ -4,43 +4,55 @@ from datetime import datetime
 # ===========================
 # REGISTRAR NUEVO PAGO
 # ===========================
-def registrar_pago(montoTotal,numTarjeta,tipoPago, idReserva):
-    """
-    Registra un nuevo pago en el sistema
-    
-    Args:
-        montoTotal: Monto total del pago
-        numTarjeta: Número de tarjeta (puede ser None para otros métodos)
-        estadoPago: Estado del pago (Completado, Pendiente, Rechazado)
-        idMetodo: ID del método de pago
-        idReserva: ID de la reserva asociada
-    
-    Returns:
-        dict con ok, idPago y mensaje
-    """
+def registrar_pago(f_pago, montoTotal, metodoPago, numeroTransaccion, estadoPago):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            
             cursor.execute(
                 """INSERT INTO pago 
-                (montoTotal, f_transaccion, numTarjeta,tipoPago, estadoPago, idReserva) 
-                VALUES (%s, CURRENTE_DATE, %s, %s,'APROBADO', %s)""",
-                (montoTotal, numTarjeta, tipoPago,  idReserva)
+                (f_pago, montoTotal, metodoPago, numeroTransaccion, estadoPago)
+                VALUES (%s, %s, %s, %s, %s)""",
+                (f_pago, montoTotal, metodoPago, numeroTransaccion, estadoPago)
             )
+
+            id_pago = cursor.lastrowid  # ← IMPORTANTE
             conexion.commit()
-            
+
             return {
                 'ok': True,
+                'idPago': id_pago,
                 'mensaje': 'Pago registrado exitosamente'
             }
-            
+
     except Exception as e:
         print(f'Error al registrar pago: {e}')
         return {
             'ok': False,
             'mensaje': f'Error al procesar el pago: {str(e)}'
         }
+    finally:
+        conexion.close()
+
+# ===========================
+# REGISTRO DE PAGO RESERVAS
+# ===========================
+def registrar_pago_reserva(idPago, idReserva, monto):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute(
+                """INSERT INTO pago_reserva (idPago, idReserva, montoReserva)
+                VALUES (%s, %s, %s)""",
+                (idPago, idReserva, monto)
+            )
+            conexion.commit()
+
+            return {'ok': True, 'mensaje': 'Pago de reserva registrado'}
+
+    except Exception as e:
+        print(f'Error al registrar pago reserva: {e}')
+        return {'ok': False, 'mensaje': f'Error al procesar el pago reserva: {str(e)}'}
+
     finally:
         conexion.close()
 
