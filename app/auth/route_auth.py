@@ -70,6 +70,23 @@ def registro():
         try:
             id_tipo_doc = int(data.get('tipo-doc'))
         except (ValueError, TypeError):
+            id_tipo_documento = None
+
+        sexo_letra = sexo[0].upper() if sexo else ''
+
+        # ⚡ Parámetros corregidos
+        exito, error = registrar_usuario_feligres(
+            nombres,        # nombFel
+            apePaterno,     # apePaFel
+            apeMaterno,     # apeMaFel
+            documento,      # numDocFel
+            f_nacimiento,
+            sexo_letra,
+            direccion,
+            telefono,
+            id_tipo_documento,
+            email,
+            clave
             id_tipo_doc = None
 
         exito, error = registrar_feligres(
@@ -96,6 +113,8 @@ def registro():
             return jsonify({"error": f"Error al registrar: {msg_error}"}), 500
 
     except Exception as e:
+        print("Error general:", e)
+        return jsonify({"error": "Error interno del servidor. Revisar logs de BD."}), 500
         print(f"Error crítico en ruta registro: {e}")
         return jsonify({"error": "Error interno del servidor."}), 500
 

@@ -6,7 +6,6 @@ from app.acto_liturgico_requisito.controlador_requisito import (
     obtener_requisito_acto,
     registrar_documento_db,
     cambiar_cumplimiento_documento,
-    agregar_observacion_documento,
     obtener_documento_faltante,
     modificar_documento_requisito,
     get_requisitos,
@@ -16,7 +15,9 @@ from app.acto_liturgico_requisito.controlador_requisito import (
     eliminar_requisito,
     verificar_relacion_requisito,
     obtener_documentos_reserva,
-    archivo_documento
+    archivo_documento,
+    aprobar_documentos_reserva_parcial,
+    rechazar_documento
 )
 
 requisito_bp = Blueprint('requisito', __name__)
@@ -51,20 +52,67 @@ def cambiar_estado_documento_route():
     return jsonify(resultado), 200
 
 # =============================
-#     DOCUMENTO — OBSERVACIÓN
+#     DOCUMENTO — APROBAR
 # =============================
-@requisito_bp.route('/agregar_observacion_documento', methods=['POST'])
-def agregar_observacion_documento_route():
-    """Agrega o actualiza la observación de un documento."""
-    data = request.get_json()
-    idDocumento = data.get('idDocumento')
-    observacion = data.get('observacion')
+@requisito_bp.route('/documento/aprobar/<int:idReserva>', methods=['POST'])
+def aprobar_documento_route(idReserva):
+    """
+    Aprueba todos los documentos que cumplen. Actualiza estado de reserva
+    a PENDIENTE_PAGO si todos están aprobados.
+    """
+    resultado = aprobar_documentos_reserva_parcial(idReserva)
+    if resultado.get("ok"):
+        return jsonify({"success": True, "mensaje": resultado.get("mensaje")}), 200
+    else:
+        return jsonify({"success": False, "error": resultado.get("error") or resultado.get("mensaje")}), 400
 
-    if not idDocumento:
-        return jsonify({"ok": False, "mensaje": "idDocumento es obligatorio"}), 400
 
-    resultado = agregar_observacion_documento(idDocumento, observacion)
-    return jsonify(resultado), 200
+# =============================
+# RUTA PARA APROBAR DOCUMENTOS (PARCIAL)
+# =============================
+@requisito_bp.route('/documento/aprobar_parcial/<int:idReserva>', methods=['POST'])
+def aprobar_documentos_parcial_route(idReserva):
+    """
+    Aprueba todos los documentos que cumplen.
+    Deja los demás pendientes.
+    Actualiza estado de reserva solo si todos están aprobados.
+    """
+    resultado = aprobar_documentos_reserva_parcial(idReserva)
+    if resultado.get("ok"):
+        return jsonify({
+            "success": True,
+            "mensaje": resultado.get("mensaje"),
+            "aprobados": resultado.get("aprobados", [])
+        }), 200
+    else:
+        return jsonify({"success": False, "error": resultado.get("error") or resultado.get("mensaje")}), 400
+
+
+# =============================
+# RUTA PARA RECHAZAR UN DOCUMENTO INDIVIDUAL
+# =============================
+@requisito_bp.route('/documento/rechazar', methods=['POST'])
+def rechazar_documento_route():
+    """
+    Rechaza un único documento según el JSON recibido:
+    { "idDocumento": int, "idReserva": int, "observacion": "texto opcional" }
+    Actualiza el estado de la reserva según documentos restantes.
+    """
+    data = request.get_json() or {}
+    idDocumento = data.get("idDocumento")
+    idReserva = data.get("idReserva")
+    observacion = data.get("observacion", "")
+
+    if not idDocumento or not idReserva:
+        return jsonify({"success": False, "error": "Se requieren idDocumento e idReserva"}), 400
+
+    resultado = rechazar_documento(idDocumento, idReserva, observacion)
+    if resultado.get("ok"):
+        return jsonify({"success": True, "mensaje": resultado.get("mensaje")}), 200
+    else:
+        return jsonify({"success": False, "error": resultado.get("error")}), 400
+
+
 
 # =============================
 #     DOCUMENTO — REGISTRO
@@ -75,54 +123,35 @@ BASE_UPLOAD = 'static/uploads/reservas/'
 @requisito_bp.route('/registrar_documento', methods=['POST'])
 def registrar_documento_route():
     try:
-        # Obtener datos del formulario
         idReserva = request.form.get('idReserva')
         idActoRequisito = request.form.get('idActoRequisito')
         estadoCumplimiento = request.form.get('estadoCumplimiento')
         observacion = request.form.get('observacion')
         vigencia = request.form.get('vigenciaDocumento')
         aprobado = request.form.get('aprobado', 0)
+
+        # Campos opcionales enviados desde frontend
+        rutaArchivo = request.form.get('rutaArchivo')
+        tipoArchivo = request.form.get('tipoArchivo')
+        f_subido = request.form.get('f_subido')
+
         file = request.files.get('file')
 
-        # ================================================
-        #   Crear carpeta si no existe (siempre)
-        # ================================================
+        # Carpeta de la reserva
         carpeta_reserva = os.path.join(BASE_UPLOAD, f"reserva_{idReserva}")
         if not os.path.exists(carpeta_reserva):
             os.makedirs(carpeta_reserva)
 
-        # ================================================
-        #   Caso: NO SUBE ARCHIVO (solo metadata)
-        # ================================================
-        if not file:
-            resultado = registrar_documento_db(
-                idActoRequisito=idActoRequisito,
-                idReserva=idReserva,
-                rutaArchivo=None,
-                tipoArchivo=None,
-                f_subido=None,
-                estadoCumplimiento=estadoCumplimiento,
-                observacion=observacion,
-                vigencia=vigencia,
-                aprobado=aprobado
-            )
-            return jsonify(resultado), 201 if resultado['ok'] else 500
+        # Si llega un archivo físico, sobrescribir ruta, tipo y fecha
+        if file:
+            extension = file.filename.split('.')[-1]
+            nombre_archivo = f"acto_{idActoRequisito}_{date.today().strftime('%Y%m%d')}.{extension}"
+            rutaArchivo = os.path.join(carpeta_reserva, nombre_archivo)
+            file.save(rutaArchivo)
+            tipoArchivo = file.content_type
+            f_subido = date.today()
 
-        # ================================================
-        #   Guardar archivo cuando SI llega
-        # ================================================
-        extension = file.filename.split('.')[-1]
-        nombre_archivo = f"acto_{idActoRequisito}_{date.today().strftime('%Y%m%d')}.{extension}"
-
-        rutaArchivo = os.path.join(carpeta_reserva, nombre_archivo)
-        file.save(rutaArchivo)
-
-        tipoArchivo = file.content_type
-        f_subido = date.today()
-
-        # ================================================
-        #   Guardar referencia en BD
-        # ================================================
+        # Registrar en BD
         resultado = registrar_documento_db(
             idActoRequisito=idActoRequisito,
             idReserva=idReserva,
@@ -275,5 +304,23 @@ def obtener_documentos_reserva_route(idReserva):
 
 @requisito_bp.route('/archivo/<int:idDocumento>', methods=['GET'])
 def archivo_documento_route(idDocumento):
-    datos=archivo_documento(idDocumento)
-    return jsonify({"success": True, "mensaje": "Documento encontrado correctamente", "datos": datos}), 200
+    datos = archivo_documento(idDocumento)
+
+    if not datos:
+        return jsonify({"success": False, "mensaje": "No se encontró el archivo"}), 404
+
+    ruta_relativa = datos["rutaArchivo"]
+
+    # Normalizar slashes
+    ruta_relativa = ruta_relativa.replace("app/", "").replace("app\\", "")
+
+    # Construir ruta absoluta
+    ruta_absoluta = os.path.join(os.getcwd(), ruta_relativa)
+
+    print("Ruta final:", ruta_absoluta)
+
+    if not os.path.exists(ruta_absoluta):
+        print("❌ Ruta inexistente:", ruta_absoluta)
+        return jsonify({"success": False, "mensaje": "Archivo no encontrado"}), 500
+
+    return send_file(ruta_absoluta, as_attachment=True)

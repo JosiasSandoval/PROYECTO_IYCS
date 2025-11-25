@@ -219,63 +219,66 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-// ---------------------------------------------------------------------------------------------------
 
-    // =========================================================
-    // 4. Lógica de Registro de APIs (Funciones auxiliares)
-    // =========================================================
+    // =========================================================
+    // 4. Lógica de Registro de APIs (Funciones auxiliares)
+    // =========================================================
 async function registrarDocumentoAPI(documento, idReserva) {
-    if (!documento.idActoRequisito) {
-        console.error('Documento omitido por falta de idActoRequisito');
-        return { ok: false, mensaje: 'Falta idActoRequisito' };
-    }
-    if (!idReserva) {
-        console.error('Documento omitido por falta de idReserva');
-        return { ok: false, mensaje: 'Falta idReserva' };
-    }
+    if (!documento.idActoRequisito) {
+        console.error('Documento omitido por falta de idActoRequisito');
+        return { ok: false, mensaje: 'Falta idActoRequisito' };
+    }
+    if (!idReserva) {
+        console.error('Documento omitido por falta de idReserva');
+        return { ok: false, mensaje: 'Falta idReserva' };
+    }
 
-    const fechaActual = new Date().toISOString().split('T')[0];
-    const fechaSubida = documento.f_subido || fechaActual;
-    const vigenciaFinal = documento.vigenciaDocumento || '2050-12-31';
+    const fechaActual = new Date().toISOString().split('T')[0];
+    const fechaSubida = documento.f_subido || fechaActual;
+    const vigenciaFinal = documento.vigenciaDocumento || '2050-12-31';
 
-    // 🟢 Cambiado: solo se marca como "CUMPLIDO" si hay archivo
-    const estadoFinal = documento.file ? (documento.estadoCumplido || 'CUMPLIDO') : 'NO_CUMPLIDO';
+    // ❌ LÍNEA ORIGINAL ELIMINADA: const estadoFinal = documento.estadoCumplimiento || 'NO_CUMPLIDO';
+    // ✅ CORRECCIÓN: Usar directamente el estado que viene con el documento. 
+    // Si la propiedad no está (lo cual no debería ocurrir después de los requisitos), 
+    // se usa un valor seguro, aunque el API espera el valor correcto.
+    const estadoFinal = documento.estadoCumplimiento || 'SIN_ESTADO_DEFINIDO'; 
 
-    const formData = new FormData();
+    // Convertir aprobado a entero (1 = true, 0 = false)
+    const aprobadoInt = documento.aprobado ? 1 : 0;
 
-    formData.append('idActoRequisito', String(documento.idActoRequisito));
-    formData.append('idReserva', String(idReserva));
-    formData.append('estadoCumplimiento', estadoFinal);
-    formData.append('observacion', documento.observacion || '');
-    formData.append('vigenciaDocumento', documento.vigenciaDocumento);
-    formData.append('fecha', fechaSubida);
+    const formData = new FormData();
+    formData.append('idActoRequisito', String(documento.idActoRequisito));
+    formData.append('idReserva', String(idReserva));
+    formData.append('estadoCumplimiento', estadoFinal); // <-- USANDO estadoFinal
+    formData.append('observacion', documento.observacion || '');
+    formData.append('vigenciaDocumento', vigenciaFinal);
+    formData.append('aprobado', aprobadoInt);
+    formData.append('f_subido', fechaSubida);
 
-    // Solo agregar campos de archivo si hay file
-    if (documento.file) {
-        formData.append('file', documento.file);
-        if (documento.rutaArchivo) formData.append('ruta', documento.rutaArchivo);
-        if (documento.tipoArchivo) formData.append('tipoArchivo', documento.tipoArchivo);
-    }
+    if (documento.file) {
+        formData.append('file', documento.file);
+        if (documento.rutaArchivo) formData.append('rutaArchivo', documento.rutaArchivo);
+        if (documento.tipoArchivo) formData.append('tipoArchivo', documento.tipoArchivo);
+    }
 
-    try {
-        const response = await fetch(API_URL_REGISTRAR_DOC, {
-            method: 'POST',
-            body: formData
-        });
+    try {
+        const response = await fetch('/api/requisito/registrar_documento', {
+            method: 'POST',
+            body: formData
+        });
 
-        const result = await response.json();
-        if (!response.ok || !result.ok) {
-            throw new Error(result.mensaje || `Fallo al registrar documento ${documento.idActoRequisito}`);
-        }
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            throw new Error(result.mensaje || `Fallo al registrar documento ${documento.idActoRequisito}`);
+        }
 
-        return { ok: true, mensaje: result.mensaje || `Documento ${documento.idActoRequisito} registrado` };
-    } catch (error) {
-        console.error(`❌ Error registrar documento ${documento.idActoRequisito}:`, error);
-        return { ok: false, mensaje: error.message };
-    }
+        return { ok: true, mensaje: result.mensaje || `Documento ${documento.idActoRequisito} registrado` };
+    } catch (error) {
+        console.error(`❌ Error registrar documento ${documento.idActoRequisito}:`, error);
+        return { ok: false, mensaje: error.message };
+    }
 }
-
-
+// ... (El resto del código sigue igual)
     // B. Registrar Participante
     async function registrarParticipanteAPI(rol, nombre, idActo, idReserva) {
         if (!nombre || String(nombre).trim() === '') return { ok: true, mensaje: 'Participante omitido (vacío)' };
@@ -494,37 +497,49 @@ async function enviarReserva(data) {
     cargarParticipantes();     
     
     // 3. Configuración del botón Confirmar
-if(btnConfirmar) { 
-        if(exitoCargaSolicitante){
-            
-            // ELIMINAMOS la restricción del rolUsuario.
-            // Si la carga fue exitosa, ACTIVAMOS el botón para CUALQUIER rol.
-            
-            btnConfirmar.disabled = false;
-            btnConfirmar.textContent = 'Confirma reserva';
-            
-            // Mensaje informativo actualizado para todos los roles
-            // (Opcional, se puede eliminar si no se necesita un mensaje constante)
-            mostrarMensaje('Procede a la confirmación de la reserva.','info');
+if (btnConfirmar) { 
+    if (exitoCargaSolicitante) {
 
-            // 🛑 El click en el botón principal usa window.confirm() e inicia la transacción.
-            btnConfirmar.addEventListener('click', () => {
-                 const isConfirmed = window.confirm("¿Está seguro de que desea confirmar y registrar esta reserva? Esta acción es final y creará el registro definitivo.");
-                 
-                 if (isConfirmed) {
-                      enviarReserva(reservaData);
-                 } else {
-                      mostrarMensaje('Confirmación cancelada por el usuario.', 'info');
-                 }
-            });
-            
-        } else {
-             // Fallo total en la carga de IDs críticos (Esta lógica se mantiene para seguridad)
-             btnConfirmar.disabled = true;
-             btnConfirmar.textContent = 'Error de Carga (Recargar)';
-             mostrarMensaje('No se pudieron establecer los IDs críticos de Solicitante/Usuario. Por favor, recarga la página.','error');
-        }
+        btnConfirmar.disabled = false;
+        btnConfirmar.textContent = 'Confirma reserva';
+        mostrarMensaje('Procede a la confirmación de la reserva.','info');
+
+        btnConfirmar.addEventListener('click', async () => {
+            const isConfirmed = window.confirm("¿Está seguro de que desea confirmar y registrar esta reserva? Esta acción es final y creará el registro definitivo.");
+
+            if (!isConfirmed) {
+                mostrarMensaje('Confirmación cancelada por el usuario.', 'info');
+                return;
+            }
+
+            // 1️⃣ Enviar la reserva primero
+            await enviarReserva(reservaData);
+
+            // 2️⃣ Redirección según rol
+            if (rolUsuario === 'feligres') {
+                // Feligres va a "Mis reservas" (cliente/mis_reserva)
+                window.location.href = '/cliente/mis_reservas';
+            } else if (rolUsuario === 'secretaria' || rolUsuario === 'administrador') {
+                if (['PENDIENTE_DOCUMENTO', 'PENDIENTE_REVISION'].includes(reservaData.estadoReserva)) {
+                    window.location.href = '/principal';
+                } else if (reservaData.estadoReserva === 'PENDIENTE_PAGO') {
+                    window.location.href = '/cliente/pago';
+                } else {
+                    window.location.href = '/principal'; // fallback por seguridad
+                }
+            } else {
+                // Por seguridad, fallback a principal
+                window.location.href = '/principal';
+            }
+        });
+
+    } else {
+        btnConfirmar.disabled = true;
+        btnConfirmar.textContent = 'Error de Carga (Recargar)';
+        mostrarMensaje('No se pudieron establecer los IDs críticos de Solicitante/Usuario. Por favor, recarga la página.','error');
     }
+}
+
     
     // 4. Botón Atrás
     btnAtras?.addEventListener('click', () => { 
