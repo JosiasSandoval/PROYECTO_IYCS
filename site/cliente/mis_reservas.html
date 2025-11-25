@@ -6,7 +6,9 @@
     <title>LITBOOK | Mis reservas</title>
     <link rel="stylesheet" href="/static/css/mis_reservas.css">
 </head>
-<body data-rol="{{ session['rol'] }}" data-id="{{ session['idUsuario'] }}">
+<body     data-rol="{{ session.get('rol_sistema', '') }}"
+    data-id="{{ session.get('idUsuario', '') }}">
+    
     <div id="header-placeholder"></div>
 
     <div class="grid">
