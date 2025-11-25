@@ -13,6 +13,8 @@ from app.pago_metodo.route_pago_metodo import pago_metodo_bp
 from app.reserva.route_reserva import reserva_bp
 from app.acto_liturgico_requisito.route_requisito import requisito_bp
 
+from app.reportes.route_reporte import reportes_bp
+
 
 def crear_app():
     # Obtiene la ruta absoluta de la carpeta 'app'
@@ -39,6 +41,8 @@ def crear_app():
     app.register_blueprint(pago_metodo_bp, url_prefix='/api/metodo_pago') 
     app.register_blueprint(reserva_bp,url_prefix='/api/reserva')
     app.register_blueprint(requisito_bp,url_prefix='/api/requisito')
+
+    app.register_blueprint(reportes_bp, url_prefix='/api/reportes')
 
    
     
