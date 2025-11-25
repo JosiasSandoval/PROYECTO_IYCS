@@ -14,6 +14,8 @@ from app.pago_metodo.route_pago_metodo import pago_metodo_bp
 from app.reserva.route_reserva import reserva_bp
 from app.acto_liturgico_requisito.route_requisito import requisito_bp
 
+from app.reportes.route_reporte import reportes_bp
+
 
 def crear_app():
     # Obtiene la ruta absoluta de la carpeta 'app'
@@ -49,6 +51,10 @@ def crear_app():
     #   RUTAS DEL FRONTEND
     # ==========================
 
+    app.register_blueprint(reportes_bp, url_prefix='/api/reportes')
+
+   
+    
     @app.route("/")
     def iniciar_sesion():
         return render_template('iniciar_sesion.html')

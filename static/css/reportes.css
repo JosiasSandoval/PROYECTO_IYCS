@@ -1,0 +1,107 @@
+/* ==============================
+   ESTILOS GENERALES
+============================== */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f6f9;
+}
+
+/* ==============================
+   TARJETAS / CONTENEDORES
+============================== */
+.card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 18px;
+    margin: 20px auto;
+    max-width: 950px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+/* ==============================
+   TITULOS
+============================== */
+.titulo-reporte {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+/* ==============================
+   FORMULARIO DE FILTRO
+============================== */
+.filtros {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.filtros input {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.boton-filtrar {
+    padding: 8px 14px;
+    background: #007bff;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.boton-filtrar:hover {
+    background: #0059c9;
+}
+
+/* ==============================
+   TABLAS
+============================== */
+.tabla-reporte {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.tabla-reporte thead {
+    background: #007bff;
+    color: white;
+}
+
+.tabla-reporte th, .tabla-reporte td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+.tabla-reporte tr:nth-child(even) {
+    background: #f1f1f1;
+}
+
+/* ==============================
+   GRÁFICOS
+============================== */
+.contenedor-grafico {
+    width: 95%;
+    margin: 20px auto;
+    text-align: center;
+}
+
+/* ==============================
+   ALERTAS
+============================== */
+.alerta {
+    padding: 10px;
+    text-align: center;
+    background: #ffebbb;
+    border: 1px solid #d8b56b;
+    margin-top: 20px;
+    border-radius: 5px;
+}
