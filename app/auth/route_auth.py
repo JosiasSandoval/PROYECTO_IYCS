@@ -93,11 +93,12 @@ def registrar_feligres():
 
         sexo_letra = sexo[0].upper() if sexo else ''
 
+        # ⚡ Parámetros corregidos
         exito, error = registrar_usuario_feligres(
-            documento,
-            nombres,
-            apePaterno,
-            apeMaterno,
+            nombres,        # nombFel
+            apePaterno,     # apePaFel
+            apeMaterno,     # apeMaFel
+            documento,      # numDocFel
             f_nacimiento,
             sexo_letra,
             direccion,

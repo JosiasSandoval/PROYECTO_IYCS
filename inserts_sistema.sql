@@ -527,3 +527,114 @@ INSERT INTO CONFIGURACION_ACTO (
 -- Matrimonio (Traslado) (idActo = 6)
 -- Similar al Normal, pero con tiempos de aprobación de documentos más estrictos
 (6, 120, 30, 60, 90, 90, 7, 90, null, 1, 'dias', 'dias', TRUE);
+
+/*PARA ACTO LITURGICOS DE MISAS*/
+-- ===============================================
+-- INSERTS PARA LA MISA DOMINICAL (ACTO INTERNO)
+-- ===============================================
+
+-- 1. INSERTAR EL ACTO LITÚRGICO: MISA DOMINICAL
+-- Se asume un costo base de 0.00 y que el único participante 'requerido'
+-- es el Sacerdote celebrante. El número de participantes es el cupo máximo
+-- (aquí usamos 1, asumiendo que solo se registra al clero principal,
+-- pero en una implementación real para una misa pública se usaría el
+-- cupo de la iglesia, ej: 200).
+INSERT INTO ACTO_LITURGICO (
+    nombActo, 
+    descripcion, 
+    numParticipantes, 
+    tipoParticipantes, 
+    costoBase, 
+    estadoActo, 
+    imgActo
+) VALUES (
+    'Misa Dominical',
+    'Celebración Eucarística semanal, con la posibilidad de añadir intenciones (menciones) internas de la Parroquia.',
+    1, -- Mínimo de participantes requeridos: El Sacerdote
+    'Sacerdote',
+    0.00,
+    TRUE,
+    '/img/actos/misa_dominical.jpg'
+);
+
+-- Guardar el ID del acto recién creado para la configuración
+SET @idActoMisaDominical = LAST_INSERT_ID();
+
+
+-- 2. INSERTAR LA CONFIGURACIÓN DEL ACTO
+-- Nota Importante: La tabla CONFIGURACION_ACTO tiene restricciones NOT NULL
+-- en varios campos de tiempo y unidades. Para cumplir con la lógica de un
+-- evento público que no tiene límites de reserva externos (como el caso de 
+-- una Misa Dominical interna), se aplican los siguientes valores:
+--
+-- - Campos permitidos NULL (para simular "sin límite"):
+--   tiempoMinimoReserva, tiempoMaximoReserva, maxActosPorDia.
+--
+-- - Campos NOT NULL (se les asigna 0 o un valor base mínimo):
+--   tiempoMaxCancelacion, tiempoMaxReprogramacion, etc., se establecen a 0
+--   días/horas, ya que no aplican para la reserva interna.
+--   tiempoDuracion se establece a 60 minutos como estándar para una misa.
+INSERT INTO CONFIGURACION_ACTO (
+    idActo,
+    tiempoDuracion, 
+    tiempoMaxCancelacion, 
+    tiempoMaxReprogramacion, 
+    tiempoAprobacionRequisitos, 
+    tiempoCambioDocumentos, 
+    tiempoMaxPago, 
+    tiempoMinimoReserva, 
+    tiempoMaximoReserva, 
+    maxActosPorDia, 
+    unidadTiempoAcciones, 
+    unidadTiempoReserva, 
+    estadoConfiguracion
+) VALUES (
+    @idActoMisaDominical,
+    60,           -- Duración estándar en minutos
+    0,            -- No aplica cancelación
+    0,            -- No aplica reprogramación
+    0,            -- No hay requisitos de documentos
+    0,            -- No hay requisitos de documentos
+    0,            -- No hay pago asociado
+    NULL,         -- Rango de reserva mínimo: No aplica (NULL)
+    NULL,         -- Rango de reserva máximo: No aplica (NULL)
+    NULL,         -- Máximo de actos por día: No aplica (NULL)
+    'dias',       -- Unidad de tiempo para las acciones (necesario por NOT NULL)
+    'dias',       -- Unidad de tiempo para la reserva (necesario por NOT NULL)
+    TRUE
+);
+
+-- Limpiar la variable de sesión
+SET @idActoMisaDominical = NULL;
+
+INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo) VALUES
+-- Chiclayo (IDs 1-8)
+(7, 1, 'Dom', '12:00:00'), -- Parroquia Santa María Catedral
+(7, 2, 'Dom', '12:00:00'), -- Parroquia San Antonio de Padua
+(7, 3, 'Dom', '12:00:00'), -- Parroquia San Pedro (Chiclayo)
+(7, 4, 'Dom', '12:00:00'), -- Parroquia San Vicente de Paúl
+(7, 5, 'Dom', '12:00:00'), -- Parroquia San José Obrero
+(7, 6, 'Dom', '12:00:00'), -- Parroquia Cristo Rey
+(7, 7, 'Dom', '12:00:00'), -- Parroquia Nuestra Señora de Fátima
+(7, 8, 'Dom', '12:00:00'), -- Parroquia San Juan Bautista (Chiclayo)
+
+-- Lambayeque (IDs 9-14)
+(7, 9, 'Dom', '12:00:00'), -- Parroquia San Pedro Apóstol
+(7, 10, 'Dom', '12:00:00'), -- Parroquia San Roque
+(7, 11, 'Dom', '12:00:00'), -- Parroquia Santa Lucía (Lambayeque)
+(7, 12, 'Dom', '12:00:00'), -- Parroquia San Martín de Porres
+(7, 13, 'Dom', '12:00:00'), -- Parroquia Sagrado Corazón de Jesús
+(7, 14, 'Dom', '12:00:00'), -- Parroquia Virgen del Carmen
+
+-- Ferreñafe (IDs 15-19)
+(7, 15, 'Dom', '12:00:00'), -- Parroquia Santa Lucía de Ferreñafe
+(7, 16, 'Dom', '12:00:00'), -- Parroquia San Martín de Tours
+(7, 17, 'Dom', '12:00:00'), -- Parroquia Señor de los Milagros
+(7, 18, 'Dom', '12:00:00'), -- Parroquia Virgen de la Merced
+(7, 19, 'Dom', '12:00:00'), -- Parroquia San Pablo
+
+-- Rurales / Distritos (IDs 20-23)
+(7, 20, 'Dom', '12:00:00'), -- Parroquia San Isidro Labrador (Monsefú)
+(7, 21, 'Dom', '12:00:00'), -- Parroquia Nuestra Señora del Rosario (Pimentel)
+(7, 22, 'Dom', '12:00:00'), -- Parroquia San Juan Bautista de Eten
+(7, 23, 'Dom', '12:00:00'); -- Parroquia Santa Rosa de Lima

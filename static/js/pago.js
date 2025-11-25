@@ -1,8 +1,3 @@
-/**
- * pago.js (versión corregida)
- * - Adaptado a FormData para tus routes Flask.
- * - Registra pago -> registra pago_reserva -> cambia estado (si aplica).
- */
 
 // ---------- UTILIDADES ----------
 function onlyDigitsAndDot(str) {
@@ -17,13 +12,11 @@ function generarTxnIdTarjeta(length = 8) {
 }
 
 function validarTarjetaSimple(numero, nombre, exp, cvv) {
-    // validaciones simples (no PCI)
     const numClean = numero.replace(/\s+/g, '');
     if (!/^\d{13,19}$/.test(numClean)) return { ok: false, msg: 'Número de tarjeta inválido' };
     if (!nombre || nombre.trim().length < 3) return { ok: false, msg: 'Nombre del titular inválido' };
     if (!/^\d{2}\/\d{2}$/.test(exp)) return { ok: false, msg: 'Expiración inválida (MM/AA)' };
     if (!/^\d{3,4}$/.test(cvv)) return { ok: false, msg: 'CVV inválido' };
-    // comprobar mes
     const [mm, yy] = exp.split('/').map(x => parseInt(x, 10));
     if (mm < 1 || mm > 12) return { ok: false, msg: 'Mes de expiración inválido' };
     return { ok: true };
@@ -44,7 +37,7 @@ const btnSubmit = document.getElementById('btn-submit');
 const metodosContainer = document.getElementById('metodos-container');
 const formSections = document.querySelectorAll('.form-section');
 
-// ---------- RENDER Y CARGA ----------
+// ---------- RENDERIZADO DE RESERVAS ----------
 function renderizarReservas(reservas) {
     listaReservas.innerHTML = '';
     if (!reservas || reservas.length === 0) {
@@ -53,47 +46,64 @@ function renderizarReservas(reservas) {
     }
 
     reservas.forEach(reserva => {
-        const montoReserva = reserva.costoBase;
+        const montoNumerico = parseFloat(reserva.costoBase) || 0;
         const id = reserva.idReserva;
         const fecha = reserva.fecha;
-        const nombreServicio = reserva.mencion || reserva.nombreActo || `Servicio de Reserva #${id}`;
-        const fechaFormateada = new Date(fecha).toLocaleDateString('es-ES');
-        const montoNumerico = parseFloat(montoReserva);
-        const montoFormateado = isNaN(montoNumerico) ? '0.00' : montoNumerico.toFixed(2);
+
+        // Usamos acto > mencion > fallback
+        const nombreServicio = reserva.acto?.trim() 
+                                || reserva.mencion?.trim() 
+                                || `Servicio #${id}`;
+
+        // Formateo de fecha dd/mm/yyyy
+        let fechaFormateada = fecha;
+        const d = new Date(fecha);
+        if (!isNaN(d)) {
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            fechaFormateada = `${day}/${month}/${year}`;
+        }
+
+        // Combinar nombre y fecha entre paréntesis
+        const textoMostrar = `${nombreServicio} (${fechaFormateada})`;
 
         const reservaHTML = `
-            <div class="reserva-row" data-id="${id}" data-monto="${montoNumerico || 0.00}">
+            <div class="reserva-row" data-id="${id}" data-monto="${montoNumerico}">
               <input type="checkbox" class="reserva-checkbox" id="check-${id}">
-              <label for="check-${id}">
-                Reserva - ${nombreServicio} (${fechaFormateada})
-              </label>
-              <span class="reserva-monto">S/ ${montoFormateado}</span>
+              <label for="check-${id}">${textoMostrar}</label>
+              <span class="reserva-monto">S/ ${montoNumerico.toFixed(2)}</span>
             </div>
         `;
         listaReservas.insertAdjacentHTML('beforeend', reservaHTML);
     });
 }
 
-async function cargarReservasPendientes() {
+
+// ---------- CARGA DE RESERVAS ----------
+async function cargarReservas() {
     if (!ID_USUARIO || !ROL_USUARIO) {
-        console.error("ID de Usuario o Rol no definidos en el body.");
         listaReservas.innerHTML = `<div class="mensaje-error">Error: Datos de usuario no disponibles.</div>`;
         return;
     }
 
-    const url = `/api/reserva/reserva_usuario/${ID_USUARIO}/${ROL_USUARIO}`;
+    const rol = ROL_USUARIO.toUpperCase();
+    let url = '';
+    if (rol === 'SECRETARIA') url = `/api/reserva/secretaria/${ID_USUARIO}`;
+    else if (rol === 'FELIGRES') url = `/api/reserva/feligres/${ID_USUARIO}`;
+    else return console.error("Rol no reconocido:", ROL_USUARIO);
+
     try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
         const data = await response.json();
 
-        if (data.ok && data.datos) {
+        if (data.success && Array.isArray(data.datos)) {
             const reservasFiltradas = data.datos.filter(r => r.estadoReserva === 'PENDIENTE_PAGO');
             renderizarReservas(reservasFiltradas);
             actualizarResumenPago();
         } else {
             listaReservas.innerHTML = `<div class="mensaje-info">No se pudo cargar la lista de reservas.</div>`;
-            console.error("API response error:", data.mensaje);
         }
     } catch (err) {
         console.error("Error al cargar reservas:", err);
@@ -101,24 +111,21 @@ async function cargarReservasPendientes() {
     }
 }
 
-// ---------- RESUMEN Y BOTÓN ----------
+// ---------- RESUMEN DE PAGO ----------
 function actualizarResumenPago() {
     let totalMonto = 0;
     let contadorReservas = 0;
     let idsSeleccionados = [];
 
     const checkboxes = listaReservas.querySelectorAll('.reserva-checkbox');
-    checkboxes.forEach(checkbox => {
-        if (checkbox.checked) {
-            const row = checkbox.closest('.reserva-row');
-            const montoStr = row.getAttribute('data-monto');
-            const idReserva = row.getAttribute('data-id');
-            const monto = parseFloat(montoStr);
-            if (!isNaN(monto)) {
-                totalMonto += monto;
-                contadorReservas++;
-                idsSeleccionados.push(idReserva);
-            }
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            const row = cb.closest('.reserva-row');
+            const monto = parseFloat(row.dataset.monto) || 0;
+            const idReserva = row.dataset.id;
+            totalMonto += monto;
+            contadorReservas++;
+            idsSeleccionados.push(idReserva);
         }
     });
 
@@ -134,127 +141,83 @@ function actualizarResumenPago() {
         btnSubmit.textContent = 'Selecciona una Reserva';
     } else {
         btnSubmit.disabled = false;
-        const metodoActivo = document.querySelector('.metodo-card.active')?.getAttribute('data-metodo') || 'tarjeta';
+        const metodoActivo = document.querySelector('.metodo-card.active')?.dataset.metodo || 'tarjeta';
         actualizarBotonSubmit(metodoActivo, totalFormateado);
     }
 }
 
 function actualizarBotonSubmit(metodo, total) {
     btnSubmit.classList.remove('btn-tarjeta', 'btn-yape', 'btn-plin', 'btn-efectivo');
-    const montoLimpio = total.slice(3);
+    const montoLimpio = total.replace('S/ ', '');
     switch (metodo) {
-        case 'tarjeta':
-            btnSubmit.textContent = `Pagar S/ ${montoLimpio} con Tarjeta`;
-            btnSubmit.classList.add('btn-tarjeta'); break;
-        case 'yape':
-            btnSubmit.textContent = `Yapear S/ ${montoLimpio}`; btnSubmit.classList.add('btn-yape'); break;
-        case 'plin':
-            btnSubmit.textContent = `Pagar S/ ${montoLimpio} con Plin`; btnSubmit.classList.add('btn-plin'); break;
-        case 'efectivo':
-            btnSubmit.textContent = 'Confirmar Pago en Oficina'; btnSubmit.classList.add('btn-efectivo'); break;
-        default:
-            btnSubmit.textContent = 'Procesar Pago';
+        case 'tarjeta': btnSubmit.textContent = `Pagar S/ ${montoLimpio} con Tarjeta`; btnSubmit.classList.add('btn-tarjeta'); break;
+        case 'yape': btnSubmit.textContent = `Yapear S/ ${montoLimpio}`; btnSubmit.classList.add('btn-yape'); break;
+        case 'plin': btnSubmit.textContent = `Pagar S/ ${montoLimpio} con Plin`; btnSubmit.classList.add('btn-plin'); break;
+        case 'efectivo': btnSubmit.textContent = 'Confirmar Pago en Oficina'; btnSubmit.classList.add('btn-efectivo'); break;
+        default: btnSubmit.textContent = 'Procesar Pago';
     }
 }
 
 function cambiarMetodoPago(metodoSeleccionado) {
-    const tarjetas = metodosContainer.querySelectorAll('.metodo-card');
-    tarjetas.forEach(card => {
-        card.classList.remove('active');
-        if (card.getAttribute('data-metodo') === metodoSeleccionado) card.classList.add('active');
+    metodosContainer.querySelectorAll('.metodo-card').forEach(card => {
+        card.classList.toggle('active', card.dataset.metodo === metodoSeleccionado);
     });
-
     formSections.forEach(section => {
-        section.classList.remove('active');
-        const dataMetodo = section.getAttribute('data-metodo') === 'transferencia' ? 'plin' : section.getAttribute('data-metodo');
-        if (dataMetodo === metodoSeleccionado) section.classList.add('active');
+        const dataMetodo = section.dataset.metodo === 'transferencia' ? 'plin' : section.dataset.metodo;
+        section.classList.toggle('active', dataMetodo === metodoSeleccionado);
     });
-
-    const totalActual = totalPagarSpan.textContent;
-    actualizarBotonSubmit(metodoSeleccionado, totalActual);
+    actualizarBotonSubmit(metodoSeleccionado, totalPagarSpan.textContent);
 }
 
 // ---------- EVENTOS INICIALES ----------
 document.addEventListener('DOMContentLoaded', () => {
-    cargarReservasPendientes();
+    cargarReservas();
 
-    listaReservas.addEventListener('change', (e) => {
+    listaReservas.addEventListener('change', e => {
         if (e.target.classList.contains('reserva-checkbox')) actualizarResumenPago();
     });
 
-    metodosContainer.addEventListener('click', (e) => {
-        const metodoCard = e.target.closest('.metodo-card');
-        if (metodoCard) {
-            const metodo = metodoCard.getAttribute('data-metodo');
-            cambiarMetodoPago(metodo);
-        }
+    metodosContainer.addEventListener('click', e => {
+        const card = e.target.closest('.metodo-card');
+        if (card) cambiarMetodoPago(card.dataset.metodo);
     });
 
     cambiarMetodoPago('tarjeta');
 });
 
-// ---------- PARTE 4: PROCESAR PAGO ----------
-btnSubmit.addEventListener('click', async (e) => {
+// ---------- PROCESAR PAGO ----------
+btnSubmit.addEventListener('click', async e => {
     e.preventDefault();
 
     const metodo = document.querySelector('.metodo-card.active')?.dataset.metodo;
     const ids = idReservasInput.value.trim();
-
-    if (!ids) {
-        alert("Selecciona al menos una reserva para pagar.");
-        return;
-    }
+    if (!ids) return alert("Selecciona al menos una reserva para pagar.");
 
     const idReservas = ids.split(',').map(id => id.trim());
-    // limpiar S/ y espacios
-    const totalStr = totalPagarSpan.textContent.replace(/[^\d.]/g, '');
-    const total = parseFloat(totalStr) || 0;
+    const total = parseFloat(totalPagarSpan.textContent.replace(/[^\d.]/g, '')) || 0;
 
-    // determinar estadoPago correcto para el ENUM en BD
-    // DB acepta: 'PENDIENTE', 'APROBADO', 'CANCELADO'
     let estadoPago = '';
     let archivoComprobante = null;
 
-    if (metodo === 'efectivo') {
-        estadoPago = 'PENDIENTE';
-    } else if (metodo === 'yape' || metodo === 'plin') {
+    if (metodo === 'efectivo') estadoPago = 'PENDIENTE';
+    else if (metodo === 'yape' || metodo === 'plin') {
         estadoPago = 'APROBADO';
-
         archivoComprobante = document.getElementById('file-comprobante')?.files[0];
-        // Además validar que exista el código si aplica
         const codigoYape = document.getElementById('yape-codigo')?.value?.trim();
         const codigoPlin = document.getElementById('plin-codigo')?.value?.trim();
-
-        if (!archivoComprobante && !codigoYape && !codigoPlin) {
-            alert('Debes subir un comprobante o ingresar código para Yape/Plin.');
-            return;
-        }
+        if (!archivoComprobante && !codigoYape && !codigoPlin) return alert('Debes subir un comprobante o ingresar código para Yape/Plin.');
     } else if (metodo === 'tarjeta') {
         estadoPago = 'APROBADO';
-
-        // validar inputs de tarjeta (ids: numero, nombre-titular, exp, cvv)
         const numero = document.getElementById('numero')?.value || '';
         const nombre = document.getElementById('nombre-titular')?.value || '';
         const exp = document.getElementById('exp')?.value || '';
         const cvv = document.getElementById('cvv')?.value || '';
-
         const validCard = validarTarjetaSimple(numero, nombre, exp, cvv);
-        if (!validCard.ok) {
-            alert(validCard.msg);
-            return;
-        }
-    } else {
-        alert('Método de pago no válido.');
-        return;
-    }
+        if (!validCard.ok) return alert(validCard.msg);
+    } else return alert('Método de pago no válido.');
 
-    // número de transacción:
-    let numeroTransaccion = 'PAGO-' + Date.now();
-    if (metodo === 'tarjeta') numeroTransaccion = generarTxnIdTarjeta(8);
+    let numeroTransaccion = metodo === 'tarjeta' ? generarTxnIdTarjeta(8) : 'PAGO-' + Date.now();
 
-    // -----------------------
-    // 1) Registrar PAGO (FormData)
-    // -----------------------
     try {
         const formData = new FormData();
         formData.append('f_pago', new Date().toISOString().slice(0, 10));
@@ -262,53 +225,27 @@ btnSubmit.addEventListener('click', async (e) => {
         formData.append('metodoPago', (metodo || '').toUpperCase());
         formData.append('numeroTransaccion', numeroTransaccion);
         formData.append('estadoPago', estadoPago);
-
         if (archivoComprobante) formData.append('file', archivoComprobante);
 
-        const respPago = await fetch('/api/pago/registrar_pago', {
-            method: 'POST',
-            body: formData
-        });
-
+        const respPago = await fetch('/api/pago/registrar_pago', { method: 'POST', body: formData });
         const dataPago = await respPago.json();
-        if (!respPago.ok || !dataPago.ok) {
-            console.error('Error al registrar pago:', dataPago);
-            alert(dataPago.mensaje || 'Error al registrar el pago.');
-            return;
-        }
+        if (!respPago.ok || !dataPago.ok) return alert(dataPago.mensaje || 'Error al registrar el pago.');
 
         const idPago = dataPago.idPago;
-        if (!idPago) {
-            alert('No se devolvió idPago desde el servidor.');
-            return;
-        }
+        if (!idPago) return alert('No se devolvió idPago desde el servidor.');
 
-        // -----------------------
-        // 2) Registrar pago_reserva por cada reserva (FormData)
-        // -----------------------
         for (const idRes of idReservas) {
-            const montoReserva = document.querySelector(`.reserva-row[data-id="${idRes}"]`)?.dataset?.monto;
+            const montoReserva = parseFloat(document.querySelector(`.reserva-row[data-id="${idRes}"]`)?.dataset?.monto || 0);
             const fdDetalle = new FormData();
             fdDetalle.append('idPago', idPago);
             fdDetalle.append('idReserva', idRes);
-            fdDetalle.append('monto', parseFloat(montoReserva || 0).toString());
+            fdDetalle.append('monto', montoReserva.toString());
 
-            const respDetalle = await fetch('/api/pago/registrar_pago_reserva', {
-                method: 'POST',
-                body: fdDetalle
-            });
-
+            const respDetalle = await fetch('/api/pago/registrar_pago_reserva', { method: 'POST', body: fdDetalle });
             const dataDetalle = await respDetalle.json();
-            if (!respDetalle.ok || !dataDetalle.ok) {
-                console.error('Error al registrar pago_reserva:', dataDetalle);
-                alert(dataDetalle.mensaje || `Error al asociar reserva ${idRes}.`);
-                return;
-            }
+            if (!respDetalle.ok || !dataDetalle.ok) return alert(dataDetalle.mensaje || `Error al asociar reserva ${idRes}.`);
         }
 
-        // -----------------------
-        // 3) Cambiar estado de reservas (solo si no es efectivo)
-        // -----------------------
         if (metodo !== 'efectivo') {
             for (const idRes of idReservas) {
                 const respEstado = await fetch(`/api/reserva/cambiar_estado/${idRes}`, {
@@ -316,22 +253,14 @@ btnSubmit.addEventListener('click', async (e) => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ accion: 'continuar' })
                 });
-
                 const dataEstado = await respEstado.json();
-                if (!respEstado.ok || !dataEstado.ok) {
-                    console.error('Error al cambiar estado reserva:', idRes, dataEstado);
-                    alert(dataEstado.mensaje || `No se pudo actualizar reserva ${idRes}.`);
-                    return;
-                }
+                if (!respEstado.ok || !dataEstado.ok) return alert(dataEstado.mensaje || `No se pudo actualizar reserva ${idRes}.`);
             }
             alert('Pago realizado correctamente. Estado de las reservas actualizado.');
         } else {
             alert('Pago registrado como EFECTIVO. Completa el pago en oficina.');
         }
 
-        // -----------------------
-        // 4) Redirección final
-        // -----------------------
         window.location.href = '/cliente/mis_reservas';
     } catch (err) {
         console.error('Excepción en proceso de pago:', err);

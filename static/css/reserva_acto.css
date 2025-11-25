@@ -12,7 +12,7 @@ body {
     display: grid;
     grid-template-columns: 220px 1fr;
     grid-template-areas: "enlaces main-content";
-    height: 93vh;
+    height: 100vh;
     overflow: hidden;
 }
 
@@ -72,7 +72,7 @@ aside {
     width: 100%;
     max-width: 1700px;
     background-color: #fff;
-    padding: 20px 25px;
+    padding: 15px 25px;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
@@ -158,7 +158,7 @@ aside {
 
 .form-step {
     display: none;
-    padding: 15px;
+    padding: 12px;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     animation: fadeIn 0.5s ease-in-out;
@@ -182,13 +182,11 @@ aside {
 .navigation-buttons {
     display: flex;
     justify-content: space-between;
-    margin-top: 15px;
 }
 
 .btn {
     padding: 10px 25px;
     font-size: 16px;
-    border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s, color 0.3s;
@@ -218,43 +216,49 @@ aside {
 }
 
 /* =========================================================
-   🚀 MODIFICACIÓN CLAVE: ORGANIZACIÓN ACTOS LITÚRGICOS (Grid)
-   - Campos en columna y calendario más grande
-   ========================================================= */
+    🚀 MODIFICACIÓN CLAVE: ORGANIZACIÓN ACTOS LITÚRGICOS (Grid)
+    - Campos en columna y calendario más grande
+    ========================================================= */
 
 .form-act-liturgico {
     display: grid;
     /* 1. Definimos 2 columnas: 300px para selects, 1fr para calendario */
     grid-template-columns: 300px 1fr; 
     /* 2. Definimos 4 filas: 3 para selects, 1 para el espacio sobrante */
-    grid-template-rows: auto auto auto 1fr; 
+    grid-template-rows: auto auto auto auto 1fr; /* Añadimos una fila 'auto' para el switch */
     gap: 20px;
     min-height: 400px; 
 }
 
 /* Posicionamiento de los selects en la columna izquierda, uno debajo del otro */
 
-/* Acto (1ra fila, Columna 1) */
-.form-act-liturgico > .form-group:nth-child(1) {
+/* Modo de Reserva (Nueva fila) */
+.form-act-liturgico > .modo-reserva-control {
     grid-column: 1 / 2;
     grid-row: 1 / 2;
 }
 
-/* Fecha (2da fila, Columna 1) */
+/* Acto (1ra fila, Columna 1) - Desplazado a la 2da fila */
 .form-act-liturgico > .form-group:nth-child(2) {
     grid-column: 1 / 2;
     grid-row: 2 / 3;
 }
 
-/* Horario (3ra fila, Columna 1) */
+/* Fecha (2da fila, Columna 1) - Desplazado a la 3ra fila */
 .form-act-liturgico > .form-group:nth-child(3) {
     grid-column: 1 / 2;
     grid-row: 3 / 4;
 }
 
+/* Horario (3ra fila, Columna 1) - Desplazado a la 4ta fila */
+.form-act-liturgico > .form-group:nth-child(4) {
+    grid-column: 1 / 2;
+    grid-row: 4 / 5;
+}
+
 .form-group.full-width {
     /* Mantenemos el grid-column: span 3; para la otra forma, 
-       pero en este contexto no se usa. */
+        pero en este contexto no se usa. */
     /* Para esta forma, debe ser reajustado si se usara. */
     grid-column: unset; 
 }
@@ -262,7 +266,6 @@ aside {
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
 }
 
 .form-group label {
@@ -291,8 +294,8 @@ aside {
 .fechas {
     /* 🚀 MODIFICACIÓN CLAVE: Ocupa toda la segunda columna */
     grid-column: 2 / 3; 
-    /* 🚀 MODIFICACIÓN CLAVE: Ocupa las 4 filas de altura */
-    grid-row: 1 / 5; 
+    /* 🚀 MODIFICACIÓN CLAVE: Ocupa las 5 filas de altura (incluyendo el switch) */
+    grid-row: 1 / 6; 
     
     /* Mantenemos el centrado vertical dentro de su área GRID */
     align-self: center; 
@@ -307,36 +310,100 @@ aside {
     overflow: auto; 
 }
 
-/* =======================
-    FULLCALENDAR PERSONALIZADO
-======================= */
+/* =========================================================
+    🚀 NUEVOS ESTILOS PARA EL CONTROL DE MODO DE RESERVA
+    ========================================================= */
+
+.modo-reserva-control {
+    /* Estilo del contenedor para darle un poco de énfasis */
+    padding: 10px;
+    border: 1px solid #e9e9e9;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.modo-reserva-control > label {
+    font-weight: bold;
+    color: #007bff; /* Color principal */
+    margin-bottom: 5px;
+    display: block;
+}
+
+.form-check.form-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Estilo para el input switch (Bootstrap 5) */
+.form-check-input:checked {
+    background-color: #198754; /* Color verde para indicar "Público/Activo" */
+    border-color: #198754;
+}
+
+#labelModoReserva {
+    font-weight: 600;
+    color: #333;
+    font-size: 15px;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* =========================================================
+    🚀 FULLCALENDAR PERSONALIZADO (AJUSTES DE DISEÑO Y BOTONES)
+    ========================================================= */
 
 /* Contenedor principal del calendario */
 #fullcalendar-litbook {
     color: #1e293b;
-    height: 550px; /* o el tamaño que desees */
-    max-height: 600px;
+    /* Aumentamos la altura visible */
+    height: 450px !important; 
+    max-height: 500px !important;
+    overflow: hidden !important;
 }
 
 /* Encabezado del calendario (toolbar) */
 .fc .fc-toolbar {
     background-color: #f8fafc;
     border-radius: 12px;
-    padding: 10px 20px; 
+    padding: 12px 20px; /* Un poco más de padding */
     margin-bottom: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); 
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra más definida */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
+/* Título del Mes/Año */
 .fc .fc-toolbar-title {
-    font-size: 1.4rem;
+    font-size: 1.5rem; /* Un poco más grande */
     font-weight: 700;
     color: #0f172a;
     text-transform: uppercase;
+    flex-grow: 1; /* Permite que ocupe espacio y centre */
+    text-align: center; /* Centrar el título */
+    margin: 0 10px; /* Margen para no chocar con botones */
+}
+
+/* Contenedor de los grupos de botones para separarlos */
+.fc-toolbar-chunk:nth-child(1) {
+    /* Prev/Next/Today */
+    display: flex;
+    gap: 5px;
+}
+
+.fc-toolbar-chunk:nth-child(3) {
+    /* Month/Week/Day */
+    display: flex;
+    gap: 5px;
 }
 
 /* Botones de navegación (Hoy, Mes, Semana, Día) */
 .fc .fc-button-primary {
-    background-color: #1d4ed8; 
+    /* Estilos base */
+    background-color: #007bff; /* Usamos el azul primario */
     border: none;
     border-radius: 8px;
     padding: 8px 15px;
@@ -344,25 +411,33 @@ aside {
     color: #fff;
     transition: background-color 0.2s ease, box-shadow 0.2s;
     text-transform: capitalize; 
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2); /* Sombra azul */
 }
 
 .fc .fc-button-primary:not(:disabled):hover {
-    background-color: #2563eb; 
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    background-color: #0056b3; /* Azul más oscuro al pasar el mouse */
+    box-shadow: 0 6px 12px rgba(0, 123, 255, 0.3);
 }
 
 .fc .fc-button-primary:not(:disabled).fc-button-active {
-    background-color: #1e3a8a; 
-    box-shadow: none;
+    background-color: #0056b3; /* Mismo color para el activo */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2); /* Sombra interna para indicar activo */
+}
+
+/* Botones de flecha (Prev, Next) */
+.fc .fc-button-group > .fc-button-primary {
+    padding: 8px 12px; /* Más pequeño para solo las flechas */
 }
 
 /* Cabecera de los días (DOM, LUN, MAR...) */
 .fc .fc-col-header-cell {
-    background-color: #e0e7ff; 
-    color: #1e3a8a;
+    background-color: #e6f0ff; /* Azul claro */
+    color: #0056b3; /* Azul oscuro */
     font-weight: 600;
     padding: 10px 0;
     border: none;
+    text-transform: uppercase;
+    font-size: 0.9rem;
 }
 
 /* Celdas de los días */
@@ -372,12 +447,12 @@ aside {
 }
 
 .fc-daygrid-day:hover {
-    background-color: #f3f4f6; 
+    background-color: #f0f8ff; /* Azul muy claro al pasar el mouse */
 }
 
 /* Día actual (número) */
 .fc .fc-day-today {
-    background-color: #bfdbfe; 
+    background-color: #d1e5ff; /* Azul medio claro */
 }
 
 /* Número del día dentro de la celda (círculo) */
@@ -402,6 +477,7 @@ aside {
     border-radius: 4px;
     font-size: 0.8rem;
     padding: 2px 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* =======================
@@ -429,31 +505,31 @@ aside {
 }
 
 .fc a {
-    color: inherit !important;  /* respeta tu color original */
+    color: inherit !important; 
     text-decoration: none !important;
 }
 
 /* === AJUSTE TOTAL DEL CALENDARIO === */
 #fullcalendar-litbook {
-    height: 250px !important;   /* 🔥 reduce la altura general */
-    max-height: 250px !important;
+    height: 450px !important; /* Incrementado para mejor visibilidad */
+    max-height: 500px !important;
     overflow: hidden !important;
 }
 
 /* === AJUSTE DE LAS FILAS DEL MES === */
 .fc .fc-daygrid-day-frame {
-    min-height: 20x !important; /* 🔥 reduce altura de cada celda del mes */
-    padding: 2px !important;
+    /* Ajustamos el padding para dar más espacio interno */
+    min-height: 25px !important; 
+    padding: 5px !important;
 }
 
 /* === AJUSTE DEL CONTENEDOR PADRE === */
 .fc .fc-view-harness {
-    height: 350px !important;
-    max-height: 350px !important;
+    height: 400px !important; /* Ajustado para contener la nueva altura */
+    max-height: 450px !important;
 }
 
 /* === EVITA DESBORDES Y SCROLL EXTRA === */
 .fc-scrollgrid, .fc-view-harness-active {
     overflow: hidden !important;
 }
-

@@ -9,7 +9,7 @@ def registrar_usuario_feligres(nombFel, apePaFel, apeMaFel, numDocFel, f_nacimie
                 INSERT INTO usuario (email, clave, estadoCuenta)
                 VALUES (%s, %s, TRUE)
             """, (email, clave))
-            id_usuario = cursor.lastrowid
+            id_usuario = cursor.lastrowid  # MySQL
 
             # Insertar feligrés
             cursor.execute("""
@@ -43,6 +43,7 @@ def registrar_usuario_feligres(nombFel, apePaFel, apeMaFel, numDocFel, f_nacimie
         if conexion:
             conexion.close()
 
+
 def verificar_usuario(email, clave):
     conexion = obtener_conexion()
     try:
@@ -52,19 +53,18 @@ def verificar_usuario(email, clave):
                     us.idUsuario, 
                     r.nombRol, 
                     pp.idParroquia, 
-                    fe.idFeligres  -- <--- AGREGAR EL ID DEL FELIGRES
+                    fe.idFeligres
                 FROM usuario us
                 INNER JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
                 INNER JOIN rol r ON r.idRol = ru.idRol
-                LEFT JOIN personal pe ON us.idUsuario=pe.idUsuario
-                LEFT JOIN feligres fe ON us.idUsuario=fe.idUsuario -- fe.idFeligres o fe.idUsuario, depende de tu tabla
-                LEFT JOIN parroquia_personal pp ON pe.idPersonal=pp.idPersonal
+                LEFT JOIN personal pe ON us.idUsuario = pe.idUsuario
+                LEFT JOIN feligres fe ON us.idUsuario = fe.idUsuario
+                LEFT JOIN parroquia_personal pp ON pe.idPersonal = pp.idPersonal
                 WHERE us.email = %s AND us.clave = %s
             """, (email, clave))
-            # Ahora devuelve (idUsuario, nombRol, idParroquia, idFeligres) o None
-            usuario = cursor.fetchone() 
+            # Devuelve (idUsuario, nombRol, idParroquia, idFeligres) o None
+            usuario = cursor.fetchone()
 
         return usuario
     finally:
         conexion.close()
-

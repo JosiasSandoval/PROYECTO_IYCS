@@ -130,7 +130,7 @@ function guardarRequisitos() {
             const archivoPresente = archivoNuevo || archivoPrevio;
 
             let f_subido = archivoPresente ? (archivoNuevo ? fechaHoy : meta.f_subido || null) : null;
-            let nombreArchivo = archivoPresente ? (archivoNuevo ? archivoData.file.name : meta.nombreArchivo) : 'NO CUMPLIDO';
+            let nombreArchivo = archivoPresente ? (archivoNuevo ? archivoData.file.name : meta.nombreArchivo) : 'NO_CUMPLIDO';
             let rutaArchivo = archivoPresente ? (archivoNuevo ? `/temporal/${id}_${archivoData.file.name}` : meta.rutaArchivo) : null;
             let tipoArchivo = archivoPresente ? (archivoNuevo ? archivoData.tipo : meta.tipoArchivo) : null;
 
@@ -165,13 +165,16 @@ function guardarRequisitos() {
             let tipoArchivo = meta.tipoArchivo || null;
             let f_subido = null;
             let estadoCumplido;
+            let aprobado;
 
             if (chk.checked) {
                 estadoCumplido = 'CUMPLIDO';
+                aprobado = true;
                 f_subido = fechaHoy;
                 if (nombreArchivo === 'NO CUMPLIDO') nombreArchivo = 'ENTREGADO (Manual)';
             } else {
                 estadoCumplido = 'NO_CUMPLIDO';
+                aprobado = false;
                 nombreArchivo = 'NO CUMPLIDO';
                 rutaArchivo = null;
                 tipoArchivo = null;
@@ -189,26 +192,24 @@ function guardarRequisitos() {
                 tipoArchivo,
                 f_subido,
                 vigenciaDocumento: fechaLimiteConfig || plazoSieteDias,
-                aprobado: false,
+                aprobado,
                 entregado: chk.checked,
                 estadoCumplido
             };
         });
+
+        // ====== ESTADO GLOBAL SECRETARIA ======
+        const todosCumplidosYaprobados = Object.values(datosRequisitosNuevos)
+            .filter(r => r.nombreArchivo !== undefined)
+            .every(r => r.estadoCumplido === 'CUMPLIDO' && r.aprobado === true);
+
+        reservaData.requisitos.estado = todosCumplidosYaprobados ? 'PENDIENTE_PAGO' : 'PENDIENTE_DOCUMENTO';
     }
 
     // Fusionar datos nuevos
     Object.keys(datosRequisitosNuevos).forEach(id => {
         reservaData.requisitos[id] = { ...reservaData.requisitos[id], ...datosRequisitosNuevos[id] };
     });
-
-    // Actualizar estado global de requisitos
-    const tipoActoStr = (reservaData.tipoActo || reservaData.nombreActo || '').toLowerCase();
-    if (tipoActoStr.includes('misa')) reservaData.requisitos.estado = "PENDIENTE_PAGO";
-    else {
-        const count = Object.keys(reservaData.requisitos).filter(k => k !== 'estado').length;
-        const archivosSubidos = Object.values(reservaData.requisitos).filter(r => r.archivoListo).length;
-        reservaData.requisitos.estado = count === 0 ? "PENDIENTE_DOCUMENTO" : (archivosSubidos > 0 ? "PENDIENTE_REVISION" : "PENDIENTE_DOCUMENTO");
-    }
 
     sessionStorage.setItem('reserva', JSON.stringify(reservaData));
     console.log('📌 Requisitos guardados:', reservaData.requisitos);
@@ -269,7 +270,7 @@ function generarUIRequisitos(lista, container, rol, reservaData) {
 
         if (rol === 'feligres') {
             const archivoYaCargado = !!meta.rutaArchivo || !!archivosSeleccionados[id];
-            if (archivoYaCargado && meta.nombreArchivo && meta.nombreArchivo !== 'NO CUMPLIDO') {
+            if (archivoYaCargado && meta.nombreArchivo && meta.nombreArchivo !== 'NO_CUMPLIDO') {
                 const infoExistente = document.createElement('p');
                 infoExistente.className = 'text-success small font-weight-bold';
                 infoExistente.innerHTML = `<i class="fas fa-check-circle"></i> Archivo previamente subido: <strong>${meta.nombreArchivo}</strong>`;
