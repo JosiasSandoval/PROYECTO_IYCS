@@ -52,43 +52,31 @@ def login():
 # ============================================================
 @auth_bp.route('/registrar_feligres', methods=['POST'])
 def registro():
-    # Usamos request.form porque viene de un formulario HTML clásico (no JSON)
     data = request.form
     
-    # Validación básica de campos obligatorios
+    # Validación de campos obligatorios
     campos_obligatorios = ['email', 'contraseña', 'nombre', 'documento']
     if not all(data.get(c) for c in campos_obligatorios):
-         return jsonify({"error": "Faltan campos obligatorios."}), 400
+        return jsonify({"error": "Faltan campos obligatorios."}), 400
 
     try:
-        # Preparar datos para el controlador
-        # Nota: data.get('sexo') devuelve 'Masculino'/'Femenino', tomamos la inicial 'M'/'F'
-        sexo_input = data.get('sexo')
+        # ---------------------------
+        # SEXO: tomar inicial M / F
+        # ---------------------------
+        sexo_input = data.get('sexo')  # "Masculino" / "Femenino"
         sexo_letra = sexo_input[0].upper() if sexo_input else None
-        
-        # Conversión segura de tipo documento
+
+        # ---------------------------
+        # Tipo de documento
+        # ---------------------------
         try:
             id_tipo_doc = int(data.get('tipo-doc'))
         except (ValueError, TypeError):
-            id_tipo_documento = None
-
-        sexo_letra = sexo[0].upper() if sexo else ''
-
-        # ⚡ Parámetros corregidos
-        exito, error = registrar_usuario_feligres(
-            nombres,        # nombFel
-            apePaterno,     # apePaFel
-            apeMaterno,     # apeMaFel
-            documento,      # numDocFel
-            f_nacimiento,
-            sexo_letra,
-            direccion,
-            telefono,
-            id_tipo_documento,
-            email,
-            clave
             id_tipo_doc = None
 
+        # ---------------------------
+        # Enviar datos al controlador
+        # ---------------------------
         exito, error = registrar_feligres(
             nombFel=data.get('nombre'),
             apePaFel=data.get('apePaterno'),
@@ -106,18 +94,17 @@ def registro():
         if exito:
             return jsonify({"mensaje": "Registro exitoso"}), 201
         else:
-            # Manejo de errores específicos de BD (ej: duplicados)
             msg_error = str(error)
+
+            # Error por duplicado (correo o documento)
             if "Duplicate" in msg_error or "Unique" in msg_error:
                 return jsonify({"error": "El correo o documento ya están registrados."}), 409
+            
             return jsonify({"error": f"Error al registrar: {msg_error}"}), 500
 
     except Exception as e:
-        print("Error general:", e)
-        return jsonify({"error": "Error interno del servidor. Revisar logs de BD."}), 500
         print(f"Error crítico en ruta registro: {e}")
         return jsonify({"error": "Error interno del servidor."}), 500
-
 
 # ============================================================
 # 3. DATOS DE SESIÓN (API PARA HEADER.JS)
