@@ -1,33 +1,57 @@
-document.addEventListener('DOMContentLoaded', function () { 
+document.addEventListener('DOMContentLoaded', async function () {
+
     const contenedorFechas = document.querySelector('.fechas');
-    const rol = contenedorFechas.dataset.rol; // "usuario", "secretaria", "sacerdote"
 
-    const usuarios = ['usuario1', 'usuario2', 'usuario3'];
-    const actosLiturgicos = [...new Set(['Misa dominical', 'Bautizo', 'Misa especial', 'Confesión', 'Matrimonio'])];
+    // === DATOS DESDE EL BODY ===
+    const rol = document.body.dataset.rol?.toLowerCase();
+    const idUsuario = document.body.dataset.id;
+    const idParroquia = document.body.dataset.parroquia;
 
-    // =============================
-    // Filtrado para secretaria
-    // =============================
-    if (rol === 'secretaria') {
-        const accionesDiv = document.querySelector('.acciones-calendario');
-        const filtroDiv = document.createElement('div');
-        filtroDiv.style.display = 'flex';
-        filtroDiv.style.alignItems = 'center';
-        filtroDiv.style.gap = '5px';
-        filtroDiv.innerHTML = `
-            <label for="filtroUsuario" style="margin-bottom:0; font-weight:500; color:#1e3a8a;">Filtrar:</label>
-            <select id="filtroUsuario" class="form-select">
-                <option value="todos">Todos</option>
-                ${usuarios.map(u => `<option value="${u}">${u}</option>`).join('')}
-            </select>
-        `;
-        accionesDiv.insertBefore(filtroDiv, accionesDiv.firstChild);
+    console.log("ROL:", rol, "ID:", idUsuario, "PARROQUIA:", idParroquia);
+
+    // =====================================================
+    // 1. CARGAR RESERVAS DESDE API
+    // =====================================================
+    async function cargarReservasDesdeAPI() {
+        try {
+            let url = "";
+            if (rol === "feligres") url = `/api/reserva/feligres/${idUsuario}`;
+            else if (rol === "secretaria") url = `/api/reserva/secretaria/${idUsuario}`;
+            else if (rol === "sacerdote") url = `/api/reserva/sacerdote/${idParroquia}`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+            console.log("DATA:", data);
+
+            if (!data.success) return [];
+
+            return data.datos.map(r => ({
+                titulo: r.acto || r.nombreActo || "Sin nombre",
+                fecha: r.fecha ? r.fecha.slice(0, 10) : null,
+                hora: r.hora ? r.hora.slice(0, 5) : "00:00",
+                estado: r.estadoReserva || "SIN_ESTADO",
+                participantes: r.participantes || "desconocido",
+                descripcion: r.descripcion || "",
+                idReserva: r.idReserva || null,
+                costoBase: r.costoBase || null,
+                parroquia: r.nombreParroquia || ""
+            }));
+
+        } catch (error) {
+            console.error("Error cargando API:", error);
+            return [];
+        }
     }
 
-    // =============================
-    // Filtrado para sacerdote
-    // =============================
-    if (rol === 'sacerdote') {
+    let reservasEjemplo = await cargarReservasDesdeAPI();
+    let reservasFiltradas = [...reservasEjemplo];
+
+    // =====================================================
+    // 2. FILTROS INICIALES
+    // =====================================================
+    const actosLiturgicos = [...new Set(reservasEjemplo.map(r => r.titulo))];
+
+    if (rol === 'secretaria' || rol === 'sacerdote') {
         const accionesDiv = document.querySelector('.acciones-calendario');
         const filtroDiv = document.createElement('div');
         filtroDiv.style.display = 'flex';
@@ -43,30 +67,16 @@ document.addEventListener('DOMContentLoaded', function () {
         accionesDiv.insertBefore(filtroDiv, accionesDiv.firstChild);
     }
 
-    // =============================
-    // Reservas de ejemplo
-    // =============================
-    const reservasEjemplo = [
-        { titulo: 'Misa dominical', fecha: '2025-11-03', hora: '09:00', estado: 'confirmado', info: 'Iglesia principal, traer Biblia', usuario: 'usuario1' },
-        { titulo: 'Bautizo', fecha: '2025-11-03', hora: '17:00', estado: 'pendiente', info: 'Traer toalla y ropa blanca', usuario: 'usuario2' },
-        { titulo: 'Misa especial', fecha: '2025-11-12', hora: '08:00', estado: 'confirmado', info: 'Iglesia secundaria, llegada 15 min antes', usuario: 'usuario2' },
-        { titulo: 'Confesión', fecha: '2025-11-12', hora: '10:00', estado: 'pendiente', info: 'Solo adultos', usuario: 'usuario1' },
-        { titulo: 'Matrimonio', fecha: '2025-11-15', hora: '16:00', estado: 'pendiente', info: 'Llegar 30 min antes', usuario: 'usuario3' },
-    ];
-
-    // =============================
-    // Inicializar reservas filtradas
-    // =============================
-    let reservasFiltradas;
-    if (rol === 'usuario') {
-        reservasFiltradas = reservasEjemplo.filter(r => r.usuario === 'usuario1');
-    } else {
-        reservasFiltradas = reservasEjemplo;
+    if (rol === 'feligres') {
+        // Asegurarse de que reservasEjemplo tenga al menos un elemento antes de acceder a sus propiedades
+        if (reservasEjemplo.length > 0) {
+            reservasFiltradas = reservasEjemplo.filter(r => r.participantes.includes(reservasEjemplo[0]?.participantes.split(';')[0]));
+        }
     }
 
-    // =============================
-    // Crear calendario
-    // =============================
+    // =====================================================
+    // 3. CREAR CALENDARIO
+    // =====================================================
     const calendarEl = document.createElement('div');
     calendarEl.id = 'calendar';
     contenedorFechas.appendChild(calendarEl);
@@ -76,266 +86,165 @@ document.addEventListener('DOMContentLoaded', function () {
         height: 'auto',
         initialView: rol === 'sacerdote' ? 'timeGridWeek' : 'dayGridMonth',
         selectable: rol !== 'sacerdote',
-        slotDuration: '01:00:00', 
-        slotLabelInterval: '01:00', 
-        allDaySlot: false,   
+        slotDuration: '01:00:00',
+        slotLabelInterval: '01:00',
+        allDaySlot: true,
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
             right: rol === 'sacerdote' ? 'timeGridWeek' : 'dayGridMonth,timeGridWeek'
         },
         events: reservasFiltradas.map(r => ({
-            title: rol === 'secretaria' ? `${r.titulo} (${r.usuario})` : r.titulo,
-            start: `${r.fecha}T${r.hora}`,
-            color: r.estado === 'confirmado' ? '#4caf50' : '#fbc02d'
+            title: rol === 'secretaria' ? `${r.titulo}` : r.titulo,
+            start: r.fecha,
+            // AQUI ESTÁ EL AJUSTE CLAVE: Incluir 'ATENDIDO' para que no caiga en el default rojo
+            color: r.estado === 'CONFIRMADO' ? '#4caf50' 
+                : r.estado === 'ATENDIDO' ? '#2196f3' // <-- Nuevo caso para ATENDIDO (azul/info)
+                : r.estado === 'PENDIENTE_PAGO' ? '#fbc02d' 
+                : '#f44336', // Default (CANCELADO)
+            allDay: true
         })),
         dateClick: function(info) {
-            const fecha = info.dateStr;
-            if (rol === 'secretaria' || rol === 'sacerdote') {
-                mostrarReservasDelDia(fecha);
-            } else if (rol === 'usuario') {
-                if (info.view.type.startsWith('dayGrid')) {
-                    mostrarHorarios(info.dateStr);
-                } else {
-                    const hora = info.dateStr.slice(11,16); 
-                    mostrarConfirmacion(info.dateStr.slice(0,10), hora);
-                }
-            }
+            mostrarReservasDelDia(info.dateStr.slice(0, 10));
         },
         eventClick: function(info) {
-            const fecha = info.event.startStr.slice(0,10);
-            if (rol === 'secretaria' || rol === 'sacerdote') {
-                mostrarReservasDelDia(fecha);
-            } else {
-                const hora = info.event.startStr.slice(11,16);
-                if (info.view.type.startsWith('timeGrid')) {
-                    mostrarConfirmacion(fecha, hora);
-                } else {
-                    mostrarDetallesReserva(info.event);
-                }
-            }
+            mostrarReservasDelDia(info.event.startStr.slice(0,10));
         }
     });
 
     calendar.render();
 
-    // =============================
-    // Filtros dinámicos
-    // =============================
-    if (rol === 'secretaria') {
-        document.getElementById('filtroUsuario').addEventListener('change', (e) => {
-            const valor = e.target.value;
-            reservasFiltradas = valor === 'todos' 
-                ? reservasEjemplo 
-                : reservasEjemplo.filter(r => r.usuario === valor);
-
-            actualizarEventos();
-        });
-    }
-
-    if (rol === 'sacerdote') {
+    // =====================================================
+    // 4. FILTROS DINÁMICOS
+    // =====================================================
+    if (rol === 'secretaria' || rol === 'sacerdote') {
         document.getElementById('filtroActo').addEventListener('change', (e) => {
             const valor = e.target.value;
-            reservasFiltradas = valor === 'todos' 
-                ? reservasEjemplo 
+            reservasFiltradas = valor === 'todos'
+                ? reservasEjemplo
                 : reservasEjemplo.filter(r => r.titulo === valor);
-
             actualizarEventos();
         });
     }
 
-    function actualizarEventos() {
-        calendar.getEvents().forEach(ev => ev.remove());
-        reservasFiltradas.forEach(r => {
-            calendar.addEvent({
-                title: rol === 'secretaria' ? `${r.titulo} (${r.usuario})` : r.titulo,
-                start: `${r.fecha}T${r.hora}`,
-                color: r.estado === 'confirmado' ? '#4caf50' : '#fbc02d'
-            });
-        });
-    }
+// ================= MODAL ===================
+function mostrarReservasDelDia(fecha) {
+    const reservasDelDia = reservasFiltradas.filter(r => r.fecha === fecha);
 
-    // =============================
-    // Mostrar reservas de un día (mejorada)
-    // =============================
-    function mostrarReservasDelDia(fecha) {
-        const reservasDelDia = reservasFiltradas.filter(r => r.fecha === fecha);
-        const modalTitulo = document.getElementById('modalTitulo');
-        const modalCuerpo = document.getElementById('modalCuerpo');
-        const modalFooter = document.querySelector('#infoModal .modal-footer');
+    const modalTitulo = document.getElementById('modalTitulo');
+    const modalCuerpo = document.getElementById('modalCuerpo');
+    const modalFooter = document.querySelector('#infoModal .modal-footer');
 
-        modalTitulo.textContent = `Reservas del ${fecha}`;
-        modalCuerpo.innerHTML = reservasDelDia.length === 0
-            ? `<p class="text-center">No hay reservas para este día.</p>`
-            : reservasDelDia.map((r, index) => `
-                <div class="reserva-item border rounded p-2 mb-2 shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center">
+    modalTitulo.textContent = `Reservas del ${fecha}`;
+    modalCuerpo.innerHTML = '';
+
+    if (reservasDelDia.length === 0) {
+        modalCuerpo.innerHTML = `<p class="text-center">No hay reservas para este día.</p>`;
+    } else {
+        reservasDelDia.forEach((r, index) => {
+            // Definir color según estado
+            let colorClase = '';
+            switch(r.estado) {
+                case 'CONFIRMADO': colorClase = 'bg-success'; break;
+                case 'ATENDIDO': colorClase = 'bg-info'; break; // Ya tienes 'bg-info' para ATENDIDO en el modal
+                case 'PENDIENTE_PAGO': colorClase = 'bg-warning'; break;
+                case 'CANCELADO': colorClase = 'bg-danger'; break;
+                default: colorClase = 'bg-secondary';
+            }
+
+            // Formato agradable de participantes
+            const participantesHtml = r.participantes.split(';').map(p => {
+                let [rol, nombre] = p.split(':').map(s => s.trim());
+                if(!rol || !nombre) return '';
+                if(rol.toLowerCase() === 'beneficiario_s_') rol = 'Beneficiario(s)';
+                else rol = rol.charAt(0).toUpperCase() + rol.slice(1);
+                return `<p class="mb-1"><span class="fw-bold">${rol}:</span> ${nombre}</p>`;
+            }).join('');
+
+            const descripcionHtml = r.descripcion ? `<p class="mb-1 text-muted"><strong>Descripción:</strong> ${r.descripcion}</p>` : '';
+
+            modalCuerpo.innerHTML += `
+                <div class="reserva-item border rounded p-3 mb-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
                         <div>
-                            <strong>${r.titulo}</strong> 
-                            <span class="text-muted">(${r.usuario})</span> 
-                            <span class="badge bg-${r.estado === 'confirmado' ? 'success' : 'warning'} ms-1">${r.estado}</span>
-                            <div><small><i class="bi bi-clock"></i> ${r.hora}</small></div>
+                            <i class="bi bi-clock-fill me-1 text-primary"></i> 
+                            <strong class="fs-5 text-primary">${r.hora}</strong>
+                            <span class="badge ${colorClase} ms-2">${r.estado}</span>
                         </div>
                         <button class="btn btn-sm btn-outline-primary btn-ver-detalles" data-index="${index}">▼</button>
                     </div>
-                    <div class="detalles mt-2 ps-3" style="display:none;">
-                        <p class="mb-1"><strong>Descripción:</strong> ${r.info}</p>
+                    <div class="info-reserva" style="display:none;">
+                        <p class="mb-1"><strong>Acto:</strong> ${r.titulo}</p>
+                        <p class="mb-1"><strong>Parroquia:</strong> ${r.parroquia}</p>
+                        ${participantesHtml}
+                        ${descripcionHtml}
                     </div>
                 </div>
-            `).join('');
+            `;
+        });
+    }
 
-        modalFooter.innerHTML = '';
-        const cerrarBtn = document.createElement('button');
-        cerrarBtn.className = 'btn btn-secondary';
-        cerrarBtn.setAttribute('data-bs-dismiss', 'modal');
-        cerrarBtn.textContent = 'Cerrar';
-        modalFooter.appendChild(cerrarBtn);
+    modalFooter.innerHTML = '';
+    const cerrarBtn = document.createElement('button');
+    cerrarBtn.className = 'btn btn-secondary';
+    cerrarBtn.setAttribute('data-bs-dismiss','modal');
+    cerrarBtn.textContent = 'Cerrar';
+    modalFooter.appendChild(cerrarBtn);
 
-        if (rol !== 'sacerdote') {
-            const agregarBtn = document.createElement('button');
-            agregarBtn.className = 'btn btn-success';
-            agregarBtn.textContent = 'Agregar reserva';
-            agregarBtn.style.marginLeft = '10px';
-            agregarBtn.addEventListener('click', () => mostrarHorarios(fecha));
-            modalFooter.appendChild(agregarBtn);
+    const nuevaReservaBtn = document.createElement('button');
+    nuevaReservaBtn.className = 'btn btn-primary';
+    nuevaReservaBtn.textContent = 'Nueva Reserva';
+    nuevaReservaBtn.addEventListener('click', () => {
+        window.location.href = '/cliente/reserva';
+    });
+    modalFooter.appendChild(nuevaReservaBtn);
+
+    // Asegurarse de que 'infoModal' y 'bootstrap' estén definidos
+    // Este código asume que tienes el modal HTML y la librería Bootstrap cargados
+    try {
+        const modal = new bootstrap.Modal(document.getElementById('infoModal'));
+        modal.show();
+    } catch(e) {
+        console.error("Error al mostrar el modal. Asegúrate de que Bootstrap y el elemento #infoModal estén cargados.", e);
+    }
+
+
+    // Flechas ▲▼ para mostrar/ocultar detalles
+    document.querySelectorAll('.btn-ver-detalles').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const infoDiv = btn.closest('.reserva-item').querySelector('.info-reserva');
+            if(infoDiv.style.display === 'none'){
+                infoDiv.style.display = 'block';
+                btn.textContent = '▲';
+            } else {
+                infoDiv.style.display = 'none';
+                btn.textContent = '▼';
+            }
+        });
+    });
+}
+
+// ================= COLOR EVENTOS ===================
+function actualizarEventos() {
+    calendar.getEvents().forEach(ev => ev.remove());
+    reservasFiltradas.forEach(r => {
+        let color = '';
+        switch(r.estado){
+            case 'CONFIRMADO': color = '#4caf50'; break; // Verde
+            case 'ATENDIDO': color = '#2196f3'; break; // Azul
+            case 'PENDIENTE_PAGO': color = '#fbc02d'; break; // Amarillo/Naranja
+            case 'CANCELADO': color = '#f44336'; break; // Rojo
+            default: color = '#9e9e9e'; // Gris
         }
 
-        const modal = new bootstrap.Modal(document.getElementById('infoModal'));
-        modal.show();
-
-        document.querySelectorAll('.btn-ver-detalles').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const detalles = btn.closest('.reserva-item').querySelector('.detalles');
-                detalles.style.display = detalles.style.display === 'block' ? 'none' : 'block';
-                btn.textContent = detalles.style.display === 'block' ? '▲' : '▼';
-            });
+        calendar.addEvent({
+            title: rol === 'secretaria' ? `${r.titulo}` : r.titulo,
+            start: r.fecha,
+            color: color,
+            allDay: true
         });
-    }
+    });
+}
 
-    // =============================
-    // Mostrar horarios disponibles
-    // =============================
-    function mostrarHorarios(fecha) {
-        if (rol === 'sacerdote') return;
-        const horas = ['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
-        const horasBloqueadas = reservasFiltradas.filter(r => r.fecha === fecha).map(r => r.hora);
 
-        const modalTitulo = document.getElementById('modalTitulo');
-        const modalCuerpo = document.getElementById('modalCuerpo');
-        const modalFooter = document.querySelector('#infoModal .modal-footer');
-
-        modalTitulo.textContent = `Selecciona una hora para ${fecha}`;
-        modalCuerpo.innerHTML = `
-            <div class="titulo-horarios">Horas disponibles</div>
-            <div class="grid-horas">
-                ${horas.map(h => `
-                    <button class="hora-btn ${horasBloqueadas.includes(h) ? 'bloqueada' : ''}" 
-                        data-hora="${h}" ${horasBloqueadas.includes(h) ? 'disabled' : ''}>
-                        ${h}
-                    </button>
-                `).join('')}
-            </div>
-        `;
-
-        modalFooter.innerHTML = '';
-        const cerrarBtn = document.createElement('button');
-        cerrarBtn.className = 'btn btn-secondary';
-        cerrarBtn.setAttribute('data-bs-dismiss', 'modal');
-        cerrarBtn.textContent = 'Cerrar';
-        modalFooter.appendChild(cerrarBtn);
-
-        const modal = new bootstrap.Modal(document.getElementById('infoModal'));
-        modal.show();
-
-        document.querySelectorAll('.hora-btn:not(.bloqueada)').forEach(btn => {
-            btn.addEventListener('click', () => mostrarConfirmacion(fecha, btn.dataset.hora));
-        });
-    }
-
-    // =============================
-    // Confirmación de reserva
-    // =============================
-    function mostrarConfirmacion(fecha, hora) {
-        if (rol === 'sacerdote') return;
-
-        const modalTitulo = document.getElementById('modalTitulo');
-        const modalCuerpo = document.getElementById('modalCuerpo');
-        const modalFooter = document.querySelector('#infoModal .modal-footer');
-
-        modalTitulo.textContent = 'Confirmar reserva';
-        modalCuerpo.innerHTML = `<p class="confirmacion-texto">¿Deseas realizar tu reserva el <strong>${fecha}</strong> a las <strong>${hora}</strong>?</p>`;
-
-        modalFooter.innerHTML = '';
-        const cerrarBtn = document.createElement('button');
-        cerrarBtn.className = 'btn btn-secondary';
-        cerrarBtn.setAttribute('data-bs-dismiss', 'modal');
-        cerrarBtn.textContent = 'Cerrar';
-
-        const confirmarBtn = document.createElement('button');
-        confirmarBtn.className = 'btn btn-success';
-        confirmarBtn.textContent = 'Sí, confirmar';
-        confirmarBtn.style.marginLeft = '10px';
-
-        modalFooter.appendChild(cerrarBtn);
-        modalFooter.appendChild(confirmarBtn);
-
-        const modal = new bootstrap.Modal(document.getElementById('infoModal'));
-        modal.show();
-
-        confirmarBtn.addEventListener('click', () => {
-            registrarReservaDemo(fecha, hora);
-            modal.hide();
-        });
-    }
-
-    // =============================
-    // Mostrar detalles de un evento
-    // =============================
-    function mostrarDetallesReserva(event) {
-        const modalTitulo = document.getElementById('modalTitulo');
-        const modalCuerpo = document.getElementById('modalCuerpo');
-        const modalFooter = document.querySelector('#infoModal .modal-footer');
-
-        modalTitulo.textContent = 'Detalles de la reserva';
-        modalCuerpo.innerHTML = `
-            <p><strong>Evento:</strong> ${event.title}</p>
-            <p><strong>Fecha:</strong> ${event.start.toLocaleDateString()}</p>
-            <p><strong>Hora:</strong> ${event.start.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
-        `;
-
-        modalFooter.innerHTML = '';
-        const cerrarBtn = document.createElement('button');
-        cerrarBtn.className = 'btn btn-secondary';
-        cerrarBtn.setAttribute('data-bs-dismiss', 'modal');
-        cerrarBtn.textContent = 'Cerrar';
-        modalFooter.appendChild(cerrarBtn);
-
-        const modal = new bootstrap.Modal(document.getElementById('infoModal'));
-        modal.show();
-    }
-
-    // =============================
-    // Función registrarReservaDemo
-    // =============================
-    function registrarReservaDemo(fecha, hora) {
-        if (rol === 'sacerdote') return;
-
-        const nueva = {
-            title: rol === 'secretaria' ? `Reserva nueva (usuario1)` : 'Reserva nueva',
-            start: `${fecha}T${hora}`,
-            color: '#fbc02d',
-            usuario: 'usuario1'
-        };
-
-        reservasFiltradas.push({
-            titulo: 'Reserva nueva',
-            fecha,
-            hora,
-            estado: 'pendiente',
-            info: 'Información adicional',
-            usuario: 'usuario1'
-        });
-
-        calendar.addEvent(nueva);
-    }
 });

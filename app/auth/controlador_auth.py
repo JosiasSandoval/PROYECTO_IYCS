@@ -13,7 +13,7 @@ def registrar_feligres(nombFel, apePaFel, apeMaFel, numDocFel, f_nacimiento, sex
                 INSERT INTO usuario (email, clave, estadoCuenta)
                 VALUES (%s, %s, TRUE)
             """, (email, clave))
-            id_usuario = cursor.lastrowid
+            id_usuario = cursor.lastrowid  # MySQL
 
             # 2. Insertar en la tabla FELIGRES
             cursor.execute("""
@@ -67,6 +67,19 @@ def autenticar_usuario(email, clave_ingresada):
             sql = """
                 SELECT 
                     us.idUsuario, 
+                    r.nombRol, 
+                    pp.idParroquia, 
+                    fe.idFeligres
+                FROM usuario us
+                INNER JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
+                INNER JOIN rol r ON r.idRol = ru.idRol
+                LEFT JOIN personal pe ON us.idUsuario = pe.idUsuario
+                LEFT JOIN feligres fe ON us.idUsuario = fe.idUsuario
+                LEFT JOIN parroquia_personal pp ON pe.idPersonal = pp.idPersonal
+                WHERE us.email = %s AND us.clave = %s
+            """, (email, clave))
+            # Devuelve (idUsuario, nombRol, idParroquia, idFeligres) o None
+            usuario = cursor.fetchone()
                     us.clave, 
                     us.estadoCuenta,
                     pe.idPersonal,
@@ -134,6 +147,7 @@ def autenticar_usuario(email, clave_ingresada):
         return None
 
     finally:
+        conexion.close()
         if conexion:
             conexion.close()
 
