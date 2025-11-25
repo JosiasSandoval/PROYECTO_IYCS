@@ -7,7 +7,11 @@
   <link rel="stylesheet" href="/static/css/pago.css" />
 </head>
 
-<body data-rol="{{ session['rol'] }}" data-id="{{ session['idUsuario'] }}" data-parroquia="{{ session['parroquia_usuario'] }}">
+<body 
+    data-rol="{{ session.get('rol_sistema', '') }}"
+    data-id="{{ session.get('idUsuario', '') }}"
+    data-parroquia="{{ session.get('idParroquia', '') }}"
+>
 
   <!-- HEADER DINÁMICO -->
   <div id="header-placeholder"></div>
@@ -32,6 +36,9 @@
           
           <h3 class="titulo-columna">1. Selecciona Reservas Pendientes</h3>
           <p class="instruccion-reserva">Marca las reservas que deseas pagar en esta transacción.</p>
+
+          <label for="filtro-reservas">Buscar por beneficiario:</label>
+          <input type="text" id="filtro-reservas" placeholder="Ingresa nombre de la persona..." />
 
           <div class="tabla-reservas-container" id="reservas-lista">
 

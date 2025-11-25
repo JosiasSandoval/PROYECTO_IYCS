@@ -24,7 +24,7 @@ let map, markerClusterGroup, markersByName = {};
 let marcadorResaltado = null;
 
 // --- ROL Y USUARIO ---
-const rolUsuario = document.body.dataset.rol;
+const rolUsuario = document.body.dataset.rol?.toLowerCase();
 const idUsuario = document.body.dataset.id;
 const idParroquiaUsuario = document.body.dataset.parroquia;
 

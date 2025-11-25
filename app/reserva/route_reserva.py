@@ -5,7 +5,9 @@ from app.reserva.controlador_reserva import (
     eliminar_reserva,
     reprogramar_reserva,
     get_reservas_sacerdote,
-    get_reservas_id_usuario
+    get_reservas_feligres,
+    get_reservas_parroquia,
+    listar_reservas_por_rol
 )
 
 reserva_bp = Blueprint('reserva', __name__)
@@ -62,7 +64,7 @@ def route_cambiar_estado(idReserva):
     except Exception as e:
         return jsonify({"ok": False, "mensaje": f"Ocurrió un error: {str(e)}"}), 500
 
-@reserva_bp.route('/reserva_sacerdote/<string:nombre>', methods=['GET'])
+@reserva_bp.route('/sacerdote/<string:nombre>', methods=['GET'])
 def route_get_reservas_sacerdote(nombre):
     try:
         reservas = get_reservas_sacerdote(nombre)
@@ -70,11 +72,32 @@ def route_get_reservas_sacerdote(nombre):
     except Exception as e:
         return jsonify({"ok": False, "mensaje": f"Error al obtener las reservas: {str(e)}"}),
 
-@reserva_bp.route('/reserva_usuario/<int:idUsuario>/<string:rol>', methods=['GET'])
-def route_get_reservas_id_usuario(idUsuario, rol):
+@reserva_bp.route('/secretaria/<int:idUsuario>', methods=['GET'])
+def reservas_parroquia_route(idUsuario):
     try:
-        idParroquia = request.args.get('idParroquia')
-        reservas = get_reservas_id_usuario(idUsuario, rol, idParroquia)
-        return jsonify({"ok": True, "datos": reservas}), 200
+        reservas = get_reservas_parroquia(idUsuario)  # ya retorna lista de diccionarios
+        return jsonify({'success': True, 'datos': reservas})
     except Exception as e:
-        return jsonify({"ok": False, "mensaje": f"Error al obtener las reservas: {str(e)}"})
+        return jsonify({'success': False, 'mensaje': str(e)}), 500
+
+# ==========================
+# Route: Reservas de Feligres
+# ==========================
+@reserva_bp.route('/feligres/<int:idUsuario>', methods=['GET'])
+def reservas_feligres_route(idUsuario):
+    try:
+        reservas = get_reservas_feligres(idUsuario)  # ya retorna lista de diccionarios
+        return jsonify({'success': True, 'datos': reservas})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': str(e)}), 500
+    
+@reserva_bp.route('/listar_reservas_pago', methods=['GET'])
+def listar_reservas():
+    rol = request.args.get('rol')  # Feligrés, Secretaria, Administrador
+    idUsuario = request.args.get('idUsuario')  # Opcional, si necesitas filtrar por usuario
+    try:
+        datos = listar_reservas_por_rol(rol, idUsuario)
+        return jsonify({'ok': True, 'datos': datos, 'total': len(datos)})
+    except Exception as e:
+        print(f'Error al listar reservas: {e}')
+        return jsonify({'ok': False, 'datos': [], 'mensaje': 'Error interno'}), 500
