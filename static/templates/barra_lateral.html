@@ -8,13 +8,14 @@
 </head>
 
 <body>
-  <!-- Barra lateral -->
   <div class="barra-lateral">
     <nav class="menu-lateral">
 
+      <!-- INICIO -->
       <a href="/principal" class="menu-item">
         <img src="/static/img/inicio.png" alt="inicio" /> Inicio
       </a>
+
 
       <!-- PARROQUIA -->
       <div class="menu-grupo">
@@ -22,12 +23,23 @@
           <img src="/static/img/parroquia.png" alt="parroquia" /> Parroquia
           <span class="flecha">▸</span>
         </button>
+
         <div class="submenu">
-          <a href="/cliente/parroquia" class="submenu-item">Mostrar Mapa</a>
-          <a href="/admi/parroquia" class="submenu-item">Consultar Información</a>
-          <a href="/admi/parroquia" class="submenu-item">Gestionar Parroquia</a>
+          <!-- Feligres / Secretaria -->
+          <a href="/cliente/parroquia" class="submenu-item feligres-only secretaria-only">
+            Mostrar Mapa
+          </a>
+
+          <a href="/cliente/detalle_parroquia" class="submenu-item feligres-only secretaria-only">
+            Detalle parroquia
+          </a>
+
+          <!-- Administrador -->
+          <a href="/admi/parroquia" class="submenu-item admin-only">Gestionar parroquia</a>
+          <a href="/admi/parroquia_personal" class="submenu-item admin-only">Personal parroquia</a>
         </div>
       </div>
+
 
       <!-- RESERVAS -->
       <div class="menu-grupo">
@@ -35,11 +47,24 @@
           <img src="/static/img/reserva.png" alt="reserva" /> Reservas
           <span class="flecha">▸</span>
         </button>
+
         <div class="submenu">
-          <a href="/cliente/reserva" class="submenu-item">Registrar Reserva</a>
-          <a href="/admi/reserva" class="submenu-item">Gestionar Reserva</a>
+          <!-- Feligres / Secretaria -->
+          <a href="/cliente/reserva" class="submenu-item feligres-only secretaria-only">
+            Registrar Reserva
+          </a>
+
+          <a href="/cliente/mis_reservas" class="submenu-item feligres-only secretaria-only">
+            Mis Reservas
+          </a>
+
+          <!-- Administrador -->
+          <a href="/admi/reserva" class="submenu-item admin-only">
+            Gestionar Reserva
+          </a>
         </div>
       </div>
+
 
       <!-- ACTOS LITÚRGICOS -->
       <div class="menu-grupo">
@@ -47,11 +72,20 @@
           <img src="/static/img/acto.png" alt="acto" /> Actos litúrgicos
           <span class="flecha">▸</span>
         </button>
+
         <div class="submenu">
-          <a href="/cliente/acto_liturgico" class="submenu-item">Mostrar Información</a>
-          <a href="/admi/acto_liturgico" class="submenu-item">Gestionar</a>
+          <!-- Feligres / Secretaria -->
+          <a href="/cliente/acto_liturgico" class="submenu-item feligres-only secretaria-only">
+            Mostrar Información
+          </a>
+
+          <!-- Administrador -->
+          <a href="/admi/acto_liturgico" class="submenu-item admin-only">
+            Gestionar
+          </a>
         </div>
       </div>
+
 
       <!-- PAGO -->
       <div class="menu-grupo">
@@ -59,11 +93,19 @@
           <img src="/static/img/pago.png" alt="pago" /> Pago
           <span class="flecha">▸</span>
         </button>
+
         <div class="submenu">
-          <a href="/cliente/pago" class="submenu-item">Pagos</a>
-          <a href="/admi/metodo_pago" class="submenu-item">Gestionar Método Pago</a>
+          <!-- Feligres / Secretaria -->
+          <a href="/cliente/pago" class="submenu-item feligres-only secretaria-only">
+            Pagos
+          </a>
+
+          <!-- Administrador -->
+          <a href="/admi/metodo_pago" class="submenu-item admin-only">Gestionar Método Pago</a>
+          <a href="/admi/pago" class="submenu-item admin-only">Lista de Pagos</a>
         </div>
       </div>
+
 
       <!-- CALENDARIO -->
       <div class="menu-grupo">
@@ -71,29 +113,42 @@
           <img src="/static/img/calendario.png" alt="calendario" /> Calendario
           <span class="flecha">▸</span>
         </button>
+
         <div class="submenu">
-          <a href="/cliente/calendario" class="submenu-item">Consultar disponibilidad</a>
-          <a href="/admi/disponibilidad" class="submenu-item">Gestionar</a>
+          <!-- Feligres / Secretaria / Sacerdote -->
+          <a href="/cliente/calendario" class="submenu-item feligres-only secretaria-only sacerdote-only">
+            Consultar disponibilidad
+          </a>
+
+          <!-- Administrador -->
+          <a href="/admi/disponibilidad" class="submenu-item admin-only">
+            Gestionar Disponibilidad
+          </a>
         </div>
       </div>
 
-      <!-- REQUISITOS -->
-      <div class="menu-grupo">
+
+      <!-- REQUISITOS (solo administrador) -->
+      <div class="menu-grupo admin-only">
         <button class="menu-item boton-desplegable">
           <img src="/static/img/requisito.png" alt="requisito" /> Requisitos
           <span class="flecha">▸</span>
         </button>
+
         <div class="submenu">
-          <a href="/admi/requisitos" class="submenu-item">Gestionar</a>
+          <a href="/admi/requisitos" class="submenu-item">Gestionar Requisitos</a>
+          <a href="/admi/documento_requisito" class="submenu-item">Documentos de Requisitos</a>
         </div>
       </div>
 
-      <!-- REPORTES -->
-      <div class="menu-grupo">
+
+      <!-- REPORTES (solo administrador) -->
+      <div class="menu-grupo admin-only">
         <button class="menu-item boton-desplegable">
           <img src="/static/img/reporte.png" alt="reporte" /> Reportes
           <span class="flecha">▸</span>
         </button>
+
         <div class="submenu">
           <a href="/admi/lista_reporte" class="submenu-item">Generar Reportes</a>
         </div>

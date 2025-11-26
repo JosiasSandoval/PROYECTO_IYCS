@@ -55,23 +55,21 @@ def registrar_feligres(nombFel, apePaFel, apeMaFel, numDocFel, f_nacimiento, sex
 def autenticar_usuario(email, clave_ingresada):
     """
     Verifica credenciales y devuelve un diccionario con toda la info de sesión necesaria.
+    Devuelve todos los roles asignados al usuario y el primer rol como rol principal.
     """
     conexion = obtener_conexion()
     usuario_data = None
-    
+
     try:
         with conexion.cursor() as cursor:
 
             # ================================
-            # PRIMERA CONSULTA: validar usuario
+            # VALIDAR USUARIO
             # ================================
             sql_validar = """
-                SELECT 
-                    us.idUsuario, 
-                    us.clave,
-                    us.estadoCuenta
-                FROM usuario us
-                WHERE us.email = %s
+                SELECT idUsuario, clave, estadoCuenta
+                FROM usuario
+                WHERE email = %s
             """
             cursor.execute(sql_validar, (email,))
             usuario = cursor.fetchone()
@@ -79,99 +77,90 @@ def autenticar_usuario(email, clave_ingresada):
             if not usuario:
                 return None
 
-            idUsuario      = usuario[0]
-            clave_db       = usuario[1]
-            estado_cuenta  = usuario[2]
+            idUsuario, clave_db, estado_cuenta = usuario
 
-            # Validar clave (según tu sistema: texto plano)
+            # Validar clave (texto plano)
             if clave_db != clave_ingresada or not estado_cuenta:
                 return None
 
-            # ==============================================
-            # SEGUNDA CONSULTA: obtener perfil completo
-            # ==============================================
-            sql_datos = """
+            # ================================
+            # PERFIL COMPLETO (PERSONAL / FELIGRÉS)
+            # ================================
+            sql_perfil = """
                 SELECT 
-                    us.idUsuario,
-                    us.clave,
-                    us.estadoCuenta,
-
                     pe.idPersonal,
                     pe.nombPers,
                     pe.apePatPers,
-
                     fe.idFeligres,
                     fe.nombFel,
                     fe.apePatFel,
-
                     pp.idParroquia,
-                    c.nombCargo,
-                    r.nombRol
-
+                    c.nombCargo
                 FROM usuario us
                 LEFT JOIN personal pe ON us.idUsuario = pe.idUsuario
                 LEFT JOIN feligres fe ON us.idUsuario = fe.idUsuario
-
                 LEFT JOIN parroquia_personal pp 
-                    ON pe.idPersonal = pp.idPersonal 
-                    AND pp.vigenciaParrPers = TRUE
-
+                    ON pe.idPersonal = pp.idPersonal AND pp.vigenciaParrPers = TRUE
                 LEFT JOIN cargo c ON pp.idCargo = c.idCargo
-
-                LEFT JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
-                LEFT JOIN rol r ON ru.idRol = r.idRol
-
                 WHERE us.idUsuario = %s
             """
-            cursor.execute(sql_datos, (idUsuario,))
-            resultado = cursor.fetchone()
+            cursor.execute(sql_perfil, (idUsuario,))
+            perfil = cursor.fetchone()
 
-            if not resultado:
-                return None
+            if perfil:
+                (
+                    idPersonal,
+                    nombPers,
+                    apePatPers,
+                    idFeligres,
+                    nombFel,
+                    apePatFel,
+                    idParroquia,
+                    nombCargo
+                ) = perfil
+            else:
+                idPersonal = idFeligres = idParroquia = None
+                nombPers = apePatPers = nombFel = apePatFel = nombCargo = None
 
-            # === MAPEO SEGÚN TU SELECT ===
-            (
-                idUsuario,
-                _,
-                _,
-                idPersonal,
-                nombPers,
-                apePatPers,
-                idFeligres,
-                nombFel,
-                apePatFel,
-                idParroquia,
-                nombCargo,
-                nombRol
-            ) = resultado
+            # ================================
+            # OBTENER TODOS LOS ROLES
+            # ================================
+            sql_roles = """
+                SELECT r.nombRol
+                FROM rol_usuario ru
+                INNER JOIN rol r ON ru.idRol = r.idRol
+                WHERE ru.idUsuario = %s
+                ORDER BY ru.idRolUsuario ASC
+            """
+            cursor.execute(sql_roles, (idUsuario,))
+            roles = [rol[0] for rol in cursor.fetchall()]
 
-            # ===========================================================
-            # DETERMINAR NOMBRE Y CARGO EXACTAMENTE COMO TÚ LO DEFINISTE
-            # ===========================================================
-            if idPersonal:  # Es personal
+            rol_principal = roles[0] if roles else None
+
+            # ================================
+            # DETERMINAR NOMBRE Y CARGO
+            # ================================
+            if idPersonal:
                 nombre_completo = f"{nombPers} {apePatPers}"
                 cargo_mostrar = nombCargo if nombCargo else "Personal"
-
-            elif idFeligres:  # Es feligrés
+            elif idFeligres:
                 nombre_completo = f"{nombFel} {apePatFel}"
                 cargo_mostrar = "Feligrés"
-
             else:
                 nombre_completo = "Usuario Sistema"
                 cargo_mostrar = "Sin Perfil"
 
-            # ===========================================================
+            # ================================
             # DEVOLVER OBJETO DE SESIÓN
-            # ===========================================================
+            # ================================
             usuario_data = {
                 "success": True,
                 "idUsuario": idUsuario,
                 "email": email,
-
                 "nombre_usuario": nombre_completo,
                 "cargo_usuario": cargo_mostrar,
-                "rol_sistema": nombRol,  # rol real del sistema
-
+                "rol_sistema": rol_principal,   # primer rol
+                "roles_disponibles": roles,    # todos los roles
                 "idFeligres": idFeligres,
                 "idPersonal": idPersonal,
                 "idParroquia": idParroquia
