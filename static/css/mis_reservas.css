@@ -489,3 +489,107 @@ html, body {
     font-size: 14px;
     color: #555;
 }
+
+/* Modal archivo */
+#modalArchivo {
+    display: none; 
+    position: fixed; 
+    z-index: 1001; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%;
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.6); 
+}
+
+#modalArchivo .modal-content {
+    background-color: #fefefe;
+    margin: 8% auto; 
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 600px;
+    position: relative;
+}
+
+#modalArchivo .close {
+    color: #aaa;
+    position: absolute;
+    right: 12px;
+    top: 10px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#modalArchivo .close:hover {
+    color: black;
+}
+
+/* === Estilos para el Formulario de Reprogramación (AGREGADO) === */
+.form-reprogramar {
+    padding: 10px;
+}
+
+.info-text {
+    margin-bottom: 5px;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.input-form {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box; /* Asegura que el padding no rompa el ancho */
+    transition: border-color 0.3s;
+}
+
+.input-form:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+}
+
+.mensaje-error {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    text-align: center;
+    font-weight: bold;
+    min-height: 20px;
+}
+
+/* Botón Guardar específico */
+.btn-accion.guardar {
+    background-color: #28a745;
+    color: white;
+    padding: 8px 16px;
+}
+
+.btn-accion.guardar:hover {
+    background-color: #218838;
+}
+
+/* Ajustes responsive para el modal */
+@media (max-width: 500px) {
+    .modal-content {
+        width: 95%;
+        margin: 20% auto;
+    }
+}

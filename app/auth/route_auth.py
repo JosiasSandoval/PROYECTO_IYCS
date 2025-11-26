@@ -146,17 +146,12 @@ def get_session_data():
         return jsonify({
             "success": False,
             "nombre": "Visitante",
-            "cargo": "Invitado",
-            "rol_actual": None,
-            "roles_disponibles": []
+            "cargo": "Invitado"
         }), 200
-
-
 
 # ============================================================
 # 4. LOGOUT (CERRAR SESIÓN)
 # ============================================================
-@auth_bp.route('/cerrar_sesion')
 def logout():
     session.clear()
     flash('Has cerrado sesión correctamente.', 'info')
@@ -172,6 +167,6 @@ def logout():
 def dashboard():
     if not session.get('logged_in'):
         return redirect(url_for('iniciar_sesion'))
-    
+
     # Aquí puedes pasar datos extra a la plantilla usando la sesión
     return f"Bienvenido al Dashboard, {session.get('nombre_usuario')}"

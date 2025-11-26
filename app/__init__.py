@@ -14,6 +14,8 @@ from app.pago.route_pago import pago_bp
 from app.pago_metodo.route_pago_metodo import pago_metodo_bp
 from app.reserva.route_reserva import reserva_bp
 from app.acto_liturgico_requisito.route_requisito import requisito_bp
+from app.disponibilidad.route_disponibilidad import disponibilidad_bp
+from app.acto_liturgico.route_actoLiturgico import acto_liturgico_bp
 from app.reportes.route_reporte import reportes_bp
 
 
@@ -55,16 +57,19 @@ def crear_app():
     app.register_blueprint(tipoDocumento_bp, url_prefix='/api/tipoDocumento')
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(usuario_bp, url_prefix='/api/usuario')
-    app.register_blueprint(parroquia_bp, url_prefix='/api/parroquia')
-    app.register_blueprint(cargo_bp, url_prefix='/api/cargo')
-    app.register_blueprint(pago_bp, url_prefix='/api/pago')
-    app.register_blueprint(rol_bp, url_prefix='/api/rol')
-    app.register_blueprint(permiso_bp, url_prefix='/api/permiso')
-    app.register_blueprint(acto_bp, url_prefix='/api/acto')
-    app.register_blueprint(pago_metodo_bp, url_prefix='/api/metodo_pago')
-    app.register_blueprint(reserva_bp, url_prefix='/api/reserva')
-    app.register_blueprint(requisito_bp, url_prefix='/api/requisito')
+    app.register_blueprint(parroquia_bp,url_prefix='/api/parroquia')
+    app.register_blueprint(cargo_bp,url_prefix='/api/cargo')
+    app.register_blueprint(pago_bp,url_prefix='/api/pago')
+    app.register_blueprint(rol_bp,url_prefix='/api/rol')
+    app.register_blueprint(permiso_bp,url_prefix='/api/permiso')
+    app.register_blueprint(acto_bp,url_prefix='/api/acto')
+    app.register_blueprint(pago_metodo_bp, url_prefix='/api/metodo_pago') 
+    app.register_blueprint(reserva_bp,url_prefix='/api/reserva')
+    app.register_blueprint(requisito_bp,url_prefix='/api/requisito')
+    app.register_blueprint(disponibilidad_bp,url_prefix='/api/disponibilidad')
+    app.register_blueprint(acto_liturgico_bp,url_prefix='/api/acto_liturgico')
     app.register_blueprint(reportes_bp, url_prefix='/api/reportes')
+  
 
     # ============================================
     # RUTAS DEL FRONTEND
@@ -250,10 +255,16 @@ def crear_app():
     @requires_roles('Administrador')
     def reserva_admi():
         return render_template('administradores/reserva.html')
+    
+    @app.route('/admi/disponibilidad')
+    def disponibilidad_admi():
+        return render_template('administradores/disponibilidad.html')
+    
 
     @app.route('/cerrar_sesion')
     def cerrar_sesion():
         session.clear()
         return redirect(url_for('iniciar_sesion'))
+    
 
     return app

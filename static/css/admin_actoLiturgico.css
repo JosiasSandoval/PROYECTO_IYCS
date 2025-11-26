@@ -227,11 +227,23 @@ body {
   width: 5%;
 }
 .col-nombre {
-  width: 70%;
+  width: 15%;
+  text-align: left;
+}
+.col-descripcion {
+  width: 40%;
+  text-align: left;
+}
+.col-numParticipantes {
+  width: 3%;
+  text-align: center;
+}
+.tipoParticipantes {
+  width: 10%;
   text-align: left;
 }
 .col-precio {
-  width: 5%;
+  width: 7%;
   text-align: center;
 }
 .col-acciones {
@@ -240,7 +252,8 @@ body {
   text-align: center;
 }
 
-/* ===== MODALES ===== */
+/* ===== MODALES (MODIFICADO PARA SCROLL) ===== */
+/* ===== MODALES (SCROLL FIX) ===== */
 .modal {
   position: fixed;
   top: 0;
@@ -250,29 +263,58 @@ body {
   background: rgba(0, 0, 0, 0.6);
   display: none;
   justify-content: center;
-  align-items: center;
+  align-items: center; /* Centra el modal verticalmente */
   z-index: 1000;
+  padding: 20px; /* Margen de seguridad para que no pegue a los bordes */
 }
+
 .modal.activo {
   display: flex;
 }
+
 .modal-dialog {
-  background: #fff;
-  border-radius: 12px;
   max-width: 500px;
   width: 90%;
+  margin: auto;
+  /* El display flex aquí es opcional, la magia va en modal-content */
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
   animation: aparecer 0.3s ease;
+  
+  /* --- ESTO ES LO QUE AGREGA EL SCROLL --- */
+  max-height: 85vh;       /* El modal nunca medirá más del 85% de la altura de pantalla */
+  display: flex;          /* Usamos Flexbox para organizar las partes */
+  flex-direction: column; /* Apilamos Header, Body y Footer verticalmente */
+  overflow: hidden;       /* Recorta lo que sobre de las esquinas redondeadas */
 }
-.modal-header,
-.modal-body {
-  padding: 15px;
-}
+
 .modal-header {
+  padding: 15px;
   border-bottom: 1px solid #ddd;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0; /* Mantiene la cabecera fija, no deja que se encoja */
+}
+
+.modal-body {
+  padding: 15px;
+  
+  /* --- AQUÍ APARECE LA BARRA DE DESPLAZAMIENTO --- */
+  overflow-y: auto; /* Scroll vertical automático solo en el cuerpo */
+  flex-grow: 1;     /* Ocupa todo el espacio disponible entre cabecera y pie */
+}
+
+.modal-footer {
+  padding: 15px;
+  border-top: 1px solid #ddd;
+  text-align: right;
+  flex-shrink: 0;   /* Mantiene el pie fijo, no deja que se encoja */
+  background-color: #fff; 
 }
 .modal-title {
   font-size: 18px;
@@ -286,11 +328,6 @@ body {
   width: auto;
   height: auto;
   padding: 0;
-}
-.modal-footer {
-  padding: 15px;
-  border-top: 1px solid #ddd;
-  text-align: right;
 }
 .btn-modal {
   padding: 10px 20px;
@@ -406,4 +443,29 @@ body {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* ===================================== */
+/* === SUGERENCIAS === */
+/* ===================================== */
+#sugerenciasContainer {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 9998;
+  display: none;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.sugerencia-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.sugerencia-item:hover {
+  background-color: #f0f0f0;
 }
