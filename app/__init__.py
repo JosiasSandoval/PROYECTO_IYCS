@@ -255,11 +255,6 @@ def crear_app():
     @requires_roles('Administrador')
     def reserva_admi():
         return render_template('administradores/reserva.html')
-    
-    @app.route('/admi/disponibilidad')
-    def disponibilidad_admi():
-        return render_template('administradores/disponibilidad.html')
-    
 
     @app.route('/cerrar_sesion')
     def cerrar_sesion():
