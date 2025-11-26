@@ -23,29 +23,44 @@ def login():
 
     if resultado_auth and resultado_auth['success']:
         # --- GESTIÓN DE SESIÓN ---
-        session.clear() # Limpiamos cualquier sesión residual
+        session.clear()  # Limpiamos cualquier sesión residual
         session['logged_in'] = True
-        
+
         # Guardamos datos básicos para visualización (Header)
         session['idUsuario'] = resultado_auth['idUsuario']
         session['email'] = resultado_auth['email']
         session['nombre_usuario'] = resultado_auth['nombre_usuario']
         session['cargo_usuario'] = resultado_auth['cargo_usuario']
-        
+
         # Guardamos datos técnicos para lógica de negocio (Reservas, Permisos)
-        session['rol_sistema'] = resultado_auth['rol_sistema']
+        session['rol_sistema'] = resultado_auth['rol_sistema']  # primer rol
+        session['roles_disponibles'] = resultado_auth.get('roles_disponibles', [])  # todos los roles
         session['idFeligres'] = resultado_auth.get('idFeligres')
         session['idPersonal'] = resultado_auth.get('idPersonal')
-        session['idParroquia'] = resultado_auth.get('idParroquia') # Útil para el insert de reservas
+        session['idParroquia'] = resultado_auth.get('idParroquia')  # Útil para insert de reservas
 
         return jsonify({
-            "success": True, 
+            "success": True,
             "mensaje": "Autenticación exitosa",
-            "redirect": url_for('auth.dashboard') # Opcional: URL a donde ir
+            "redirect": url_for('auth.dashboard')  # URL a donde ir
         })
     else:
         return jsonify({"success": False, "error": "Email o contraseña incorrectos."}), 401
 
+@auth_bp.route('/cambiar_rol', methods=['POST'])
+def cambiar_rol():
+    if not session.get('logged_in'):
+        return jsonify({"success": False, "error": "No está logueado"}), 401
+
+    data = request.get_json()
+    nuevo_rol = data.get('rol')
+
+    roles_disponibles = session.get('roles_usuario', [])
+    if nuevo_rol not in roles_disponibles:
+        return jsonify({"success": False, "error": "Rol no permitido"}), 403
+
+    session['rol_sistema'] = nuevo_rol
+    return jsonify({"success": True, "mensaje": f"Rol cambiado a {nuevo_rol}"})
 
 # ============================================================
 # 2. REGISTRO DE FELIGRÉS
@@ -112,21 +127,30 @@ def registro():
 @auth_bp.route('/get_session_data')
 def get_session_data():
     """
-    Devuelve JSON con nombre y cargo para pintar el header dinámicamente.
+    Devuelve JSON con nombre, cargo y roles disponibles.
     """
     if session.get('logged_in'):
+        # Ejemplo: roles = ['Administrador', 'Secretaria', 'Feligrés']
+        # Si solo tienes un rol, la lista tendrá un elemento
+        roles = session.get('roles_usuario', [session.get('rol_sistema')])
+        rol_actual = session.get('rol_sistema')
+        
         return jsonify({
             "success": True,
             "nombre": session.get('nombre_usuario', 'Usuario'),
             "cargo": session.get('cargo_usuario', 'Feligrés'),
-            "idUsuario": session.get('idUsuario')
+            "rol_actual": rol_actual,
+            "roles_disponibles": roles
         })
     else:
         return jsonify({
             "success": False,
             "nombre": "Visitante",
-            "cargo": "Invitado"
-        }), 200 # Devolvemos 200 para que el JS no falle, simplemente muestra "Visitante"
+            "cargo": "Invitado",
+            "rol_actual": None,
+            "roles_disponibles": []
+        }), 200
+
 
 
 # ============================================================

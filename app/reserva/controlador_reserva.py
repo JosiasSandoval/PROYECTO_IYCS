@@ -102,11 +102,19 @@ def eliminar_reserva(idReserva):
         if conexion:
             conexion.close()
 
-def get_reservas_sacerdote(nombre): 
+def get_reservas_sacerdote(idUsuario): 
     conexion = obtener_conexion()
     try:
         resultados = []
         with conexion.cursor() as cursor:
+            cursor.execue("""SELECT f.nombFel, f.apePatFel, f.apeMatFel 
+                          FROM USUARIO us INNER JOIN ROL_USUARIO rs ON us.idUsuario = rs.idUsuario 
+                          INNER JOIN ROL r ON rs.idRol = r.idRol INNER JOIN FELIGRES f ON us.idUsuario = f.idUsuario 
+                          WHERE us.idUsuario = %s AND r.nombRol = 'SACERDOTE';""",(idUsuario))
+            fila = cursor.fetchone()
+            if not fila:
+                return []  # No es sacerdote
+            nombre = f"{fila[0]} {fila[1]} {fila[2]}"
             cursor.execute("""
             SELECT 
                 r.idReserva,
@@ -141,7 +149,6 @@ def get_reservas_sacerdote(nombre):
             )
             GROUP BY r.idReserva, al.nombActo;
             """, (f"%{nombre}%",))
-
             resultados = cursor.fetchall()
             for filas in resultados:
                 resultados.append({

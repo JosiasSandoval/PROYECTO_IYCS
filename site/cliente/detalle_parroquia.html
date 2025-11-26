@@ -6,7 +6,9 @@
     <title>LITBOOK | Información de parroquia</title>
     <link rel="stylesheet" href="/static/css/detalle_parroquia.css">
 </head>
-<body data-rol="{{ session['rol'] }}" data-id="{{ session['idUsuario'] }}">
+<body     
+    data-rol="{{ session.get('rol_sistema', '') }}"
+    data-id="{{ session.get('idUsuario', '') }}">
     <div id="header-placeholder"></div>
 
     <div class="grid">
