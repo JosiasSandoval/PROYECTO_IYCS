@@ -339,3 +339,15 @@ CREATE TABLE EXCEPCION_PERSONAL (
     idPersonal INT NOT NULL,
     CONSTRAINT fk_excepcion_personal FOREIGN KEY (idPersonal) REFERENCES PERSONAL(idPersonal)
 );
+
+CREATE TABLE NOTIFICACION (
+    idNotificacion INT AUTO_INCREMENT PRIMARY KEY,
+    idUsuario INT NOT NULL,
+    titulo VARCHAR(100),
+    mensaje TEXT,
+    leido TINYINT(1) DEFAULT 0, -- 0: No leído, 1: Leído
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    enlace VARCHAR(255), -- Ejemplo: '/cliente/mis_reservas'
+    icono VARCHAR(50) DEFAULT 'info', -- 'info', 'check', 'warning'
+    CONSTRAINT fk_notif_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario)
+);

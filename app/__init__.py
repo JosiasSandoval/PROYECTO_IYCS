@@ -17,7 +17,7 @@ from app.acto_liturgico_requisito.route_requisito import requisito_bp
 from app.disponibilidad.route_disponibilidad import disponibilidad_bp
 from app.acto_liturgico.route_actoLiturgico import acto_liturgico_bp
 from app.reportes.route_reporte import reportes_bp
-
+from app.notificacion.route_notificacion import notificacion_bp
 
 # ============================================
 # DECORADOR DE CONTROL DE ROLES
@@ -69,7 +69,7 @@ def crear_app():
     app.register_blueprint(disponibilidad_bp,url_prefix='/api/disponibilidad')
     app.register_blueprint(acto_liturgico_bp,url_prefix='/api/acto_liturgico')
     app.register_blueprint(reportes_bp, url_prefix='/api/reportes')
-  
+    app.register_blueprint(notificacion_bp, url_prefix='/api/notificacion')
 
     # ============================================
     # RUTAS DEL FRONTEND
