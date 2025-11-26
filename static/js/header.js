@@ -1,97 +1,100 @@
 document.addEventListener('DOMContentLoaded', () => {
     const headerPlaceholder = document.getElementById('header-placeholder');
 
-    if (!headerPlaceholder) {
-        console.error('❌ No se encontró el placeholder del header. Asegúrate de tener <div id="header-placeholder"></div> en tu HTML.');
-        return;
-    }
+    if (!headerPlaceholder) return;
 
-    // ============================================================
-    // 1. CARGA DEL HTML ESTÁTICO (header.html)
-    // ============================================================
     fetch('/static/templates/header.html')
-        .then(response => {
-            if (!response.ok) throw new Error('No se pudo cargar header.html');
-            return response.text();
-        })
-        .then(data => {
-            // Insertar el HTML en el DOM
-            headerPlaceholder.innerHTML = data;
+        .then(res => res.text())
+        .then(html => {
+            headerPlaceholder.innerHTML = html;
 
-            // Referencias a elementos del DOM recién insertados
-            const btnUsuario = headerPlaceholder.querySelector('#btn_usuario');
+            const nombreEl = headerPlaceholder.querySelector('#header_nombre_usuario');
+            const cargoEl = headerPlaceholder.querySelector('#header_cargo_usuario');
+            const rolActualEl = headerPlaceholder.querySelector('#rol_actual');
             const modalUsuario = headerPlaceholder.querySelector('#modal_usuario');
+            const btnUsuario = headerPlaceholder.querySelector('#btn_usuario');
             const btnCerrarSesion = headerPlaceholder.querySelector('#btn_cerrar_sesion');
-            
-            // Elementos de texto a actualizar
-            const nombreEl = document.getElementById('header_nombre_usuario');
-            const cargoEl = document.getElementById('header_cargo_usuario');
-            const rolEl = document.getElementById('rol_actual'); // 💡 AGREGADO
 
-            // ============================================================
-            // 2. LÓGICA VISUAL: MODAL DE USUARIO
-            // ============================================================
+            // ---------- Abrir/Cerrar modal ----------
             if (btnUsuario && modalUsuario) {
-                // Abrir/Cerrar al hacer click en el icono
-                btnUsuario.addEventListener('click', (e) => {
+                btnUsuario.addEventListener('click', e => {
                     e.preventDefault();
-                    e.stopPropagation(); // Evita que el click se propague al document
+                    e.stopPropagation();
                     modalUsuario.classList.toggle('mostrar');
                 });
 
-                // Cerrar si se hace click fuera del modal
-                document.addEventListener('click', (e) => {
-                    if (modalUsuario.classList.contains('mostrar') && 
-                        !modalUsuario.contains(e.target) && 
+                document.addEventListener('click', e => {
+                    if (modalUsuario.classList.contains('mostrar') &&
+                        !modalUsuario.contains(e.target) &&
                         !btnUsuario.contains(e.target)) {
                         modalUsuario.classList.remove('mostrar');
                     }
                 });
 
-                // Cerrar con tecla ESC
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        modalUsuario.classList.remove('mostrar');
-                    }
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'Escape') modalUsuario.classList.remove('mostrar');
                 });
             }
 
-            // ============================================================
-            // 3. LÓGICA DE DATOS: OBTENER SESIÓN Y RELLENAR DATOS
-            // ============================================================
+            // ---------- Obtener sesión ----------
             fetch('/api/auth/get_session_data', { credentials: 'same-origin' })
                 .then(res => res.json())
-                .then(userData => {
-                    if (userData.success) {
-                        if (nombreEl) nombreEl.textContent = userData.nombre;
-                        if (cargoEl) cargoEl.textContent = userData.cargo;
-                        if (rolEl) rolEl.textContent = userData.rol; // 💡 ACTUALIZACIÓN DEL ROL
+                .then(data => {
+                    if (data.success) {
+                        if (nombreEl) nombreEl.textContent = data.nombre;
+                        if (cargoEl) cargoEl.textContent = data.cargo;
+                        if (rolActualEl) rolActualEl.textContent = data.rol_actual;
+
+                        // Renderizar roles disponibles (opcional selector)
+                        if (data.roles_disponibles.length > 1) {
+                            const rolSelector = document.createElement('select');
+                            rolSelector.id = 'rol_selector';
+                            data.roles_disponibles.forEach(rol => {
+                                const opt = document.createElement('option');
+                                opt.value = rol;
+                                opt.textContent = rol;
+                                if (rol === data.rol_actual) opt.selected = true;
+                                rolSelector.appendChild(opt);
+                            });
+                            rolActualEl.replaceWith(rolSelector);
+
+                            rolSelector.addEventListener('change', async () => {
+                                const nuevoRol = rolSelector.value;
+                                try {
+                                    const res = await fetch('/api/auth/cambiar_rol', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ rol: nuevoRol }),
+                                        credentials: 'same-origin'
+                                    });
+                                    const resp = await res.json();
+                                    if (resp.success) {
+                                        alert(`Rol cambiado a ${nuevoRol}`);
+                                        cargoEl.textContent = nuevoRol;
+                                    }
+                                } catch (err) {
+                                    console.error('Error al cambiar rol:', err);
+                                }
+                            });
+                        }
+
                     } else {
-                        // Si no hay sesión válida
                         if (nombreEl) nombreEl.textContent = "Visitante";
                         if (cargoEl) cargoEl.textContent = "Invitado";
-                        if (rolEl) rolEl.textContent = "Invitado";
                     }
-                })
-                .catch(err => {
-                    console.error("Error al cargar datos de sesión:", err);
-                    if (nombreEl) nombreEl.textContent = "Visitante";
                 });
 
-            // ============================================================
-            // 4. LOGOUT (CIERRE DE SESIÓN)
-            // ============================================================
+            // ---------- Logout ----------
             if (btnCerrarSesion) {
-                btnCerrarSesion.addEventListener('click', (e) => {
-                    e.preventDefault(); 
-                    window.location.href = '/api/auth/cerrar_sesion';
+                btnCerrarSesion.addEventListener('click', async e => {
+                    e.preventDefault();
+                    try {
+                        const res = await fetch('/api/auth/cerrar_sesion', { credentials: 'same-origin' });
+                        if (res.ok) window.location.href = '/';
+                    } catch (err) {
+                        console.error('Error al cerrar sesión:', err);
+                    }
                 });
             }
-
-        })
-        .catch(error => {
-            console.error('❌ Error crítico al cargar el header:', error);
-            headerPlaceholder.innerHTML = "<div style='color: red; text-align: center; padding: 10px;'>Error de carga del encabezado.</div>";
         });
 });
-

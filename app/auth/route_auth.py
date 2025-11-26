@@ -41,7 +41,7 @@ def login():
         return jsonify({
             "success": True, 
             "mensaje": "Autenticación exitosa",
-            "redirect": url_for('principal') # Redirige a la página principal
+            "redirect": url_for('auth.dashboard') # Opcional: URL a donde ir
         })
     else:
         return jsonify({"success": False, "error": "Email o contraseña incorrectos."}), 401
@@ -113,23 +113,34 @@ def get_session_data():
             "success": True,
             "nombre": session.get('nombre_usuario', 'Usuario'),
             "cargo": session.get('cargo_usuario', 'Feligrés'),
-            "rol": session.get('rol_sistema', 'Usuario'), # 💡 AGREGADO: Para el modal
             "idUsuario": session.get('idUsuario')
         })
     else:
         return jsonify({
             "success": False,
             "nombre": "Visitante",
-            "cargo": "Invitado",
-            "rol": "Invitado"
+            "cargo": "Invitado"
         }), 200
 
 
 # ============================================================
 # 4. LOGOUT (CERRAR SESIÓN)
 # ============================================================
-@auth_bp.route('/cerrar_sesion')
 def logout():
     session.clear()
     flash('Has cerrado sesión correctamente.', 'info')
-    return redirect(url_for('iniciar_sesion'))
+    # Redirigir al login (asumiendo que tienes una ruta 'login_page' o similar)
+    # Si tu ruta de vista login se llama diferente, ajusta 'iniciar_sesion'
+    return redirect(url_for('iniciar_sesion')) 
+
+
+# ============================================================
+# 5. DASHBOARD (EJEMPLO DE RUTA PROTEGIDA)
+# ============================================================
+@auth_bp.route('/dashboard')
+def dashboard():
+    if not session.get('logged_in'):
+        return redirect(url_for('iniciar_sesion'))
+
+    # Aquí puedes pasar datos extra a la plantilla usando la sesión
+    return f"Bienvenido al Dashboard, {session.get('nombre_usuario')}"

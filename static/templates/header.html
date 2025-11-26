@@ -11,42 +11,41 @@
 <body>
   <!-- Barra superior -->
   <div class="barra-superior">
-  <!-- Título a la izquierda -->
-  <div class="titulo-left">
-    <h3>
-      <img src="/static/img/logotipo_litbook.png" alt="icono_iglesia" />
-      Litbook
-    </h3>
-  </div>
-
-  <!-- Info de usuario a la derecha -->
-  <div class="info-usuario">
-    <button id="btn_usuario" class="btn-icon" aria-label="Perfil">
-      <a href="#"><img src="/static/img/usuario.png" alt="usuario" /></a>
-    </button>
-
-    <div class="user-text">
-      <strong id="header_nombre_usuario">Cargando...</strong>
-      <div class="texto-rol" id="header_cargo_usuario">Usuario</div>
+    <!-- Título a la izquierda -->
+    <div class="titulo-left">
+      <h3>
+        <img src="/static/img/logotipo_litbook.png" alt="icono_iglesia" />
+        Litbook
+      </h3>
     </div>
 
-    <button id="btn_notificaciones" class="btn-icon" aria-label="notificaciones">
-      <img src="/static/img/notificaciones.png" alt="notificaciones" /></a>
-    </button>
+    <!-- Info de usuario a la derecha -->
+    <div class="info-usuario">
+      <button id="btn_usuario" class="btn-icon" aria-label="Perfil">
+        <a href="#"><img src="/static/img/usuario.png" alt="usuario" /></a>
+      </button>
 
-    <button id="btn_cerrar_sesion" class="btn-icon" aria-label="Cerrar Sesión">
-      <img src="/static/img/salida.png" alt="Cerrar Sesión" /></a>
-    </button>
+      <div class="user-text">
+        <strong id="header_nombre_usuario">Cargando...</strong>
+        <div class="texto-rol" id="header_cargo_usuario">Usuario</div>
+      </div>
 
-    <!-- Modal de Usuario -->
-    <div id="modal_usuario" class="modal-usuario">
-      <a href="/cliente/perfil">👤 Mi perfil</a>
-      <a href="/cliente/mis_reservas">Mis reservas</a>
-      <hr>
-      <a href="#">⚙️ Mi rol: <span id="rol_actual">Usuario</span></a>
+      <button id="btn_notificaciones" class="btn-icon" aria-label="notificaciones">
+        <img src="/static/img/notificaciones.png" alt="notificaciones" /></a>
+      </button>
+
+      <button id="btn_cerrar_sesion" class="btn-icon" aria-label="Cerrar Sesión">
+        <img src="/static/img/salida.png" alt="Cerrar Sesión" /></a>
+      </button>
+
+        <div id="modal_usuario" class="modal-usuario">
+        <a href="/cliente/perfil">👤 Mi perfil</a>
+        <a href="/cliente/mis_reservas">Mis reservas</a>
+        <hr>
+        <a href="#">⚙️ Mi rol: <span id="rol_actual">Usuario</span></a>
+      </div>
+
     </div>
-
-  </div>
   </div>
   <script src="/static/js/header.js"></script>
 </body>
