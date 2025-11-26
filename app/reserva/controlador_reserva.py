@@ -63,7 +63,7 @@ def cambiar_estado_reserva(idReserva, accion='continuar'):
             cursor.execute("SELECT estadoReserva FROM reserva WHERE idReserva = %s", (idReserva,))
             resultado = cursor.fetchone()
 
-            if result is None:
+            if resultado is None:
                 return False, 'Reserva no encontrada'
 
             estado_actual = resultado[0]
