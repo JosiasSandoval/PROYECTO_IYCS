@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     const headerPlaceholder = document.getElementById('header-placeholder');
-
     if (!headerPlaceholder) return;
 
     fetch('/static/templates/header.html')
@@ -45,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (cargoEl) cargoEl.textContent = data.cargo;
                         if (rolActualEl) rolActualEl.textContent = data.rol_actual;
 
-                        // Renderizar roles disponibles (opcional selector)
+                        // Renderizar selector de roles si hay más de uno
                         if (data.roles_disponibles.length > 1) {
                             const rolSelector = document.createElement('select');
                             rolSelector.id = 'rol_selector';
@@ -89,8 +88,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnCerrarSesion.addEventListener('click', async e => {
                     e.preventDefault();
                     try {
-                        const res = await fetch('/api/auth/cerrar_sesion', { credentials: 'same-origin' });
-                        if (res.ok) window.location.href = '/';
+                        const res = await fetch('/api/auth/cerrar_sesion', { 
+                            method: 'GET',
+                            credentials: 'same-origin'
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            window.location.href = '/'; // Redirige al home después de logout
+                        } else {
+                            console.error('Error al cerrar sesión:', data.mensaje || 'Desconocido');
+                        }
                     } catch (err) {
                         console.error('Error al cerrar sesión:', err);
                     }
