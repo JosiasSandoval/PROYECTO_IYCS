@@ -13,7 +13,7 @@ def registrar_feligres(nombFel, apePaFel, apeMaFel, numDocFel, f_nacimiento, sex
                 INSERT INTO usuario (email, clave, estadoCuenta)
                 VALUES (%s, %s, TRUE)
             """, (email, clave))
-            id_usuario = cursor.lastrowid
+            id_usuario = cursor.lastrowid  # MySQL
 
             # 2. Insertar en la tabla FELIGRES
             cursor.execute("""
@@ -54,80 +54,117 @@ def registrar_feligres(nombFel, apePaFel, apeMaFel, numDocFel, f_nacimiento, sex
 
 def autenticar_usuario(email, clave_ingresada):
     """
-    Verifica credenciales y devuelve un diccionario con toda la info de sesión necesaria
-    (IDs técnicos y nombres para mostrar).
+    Verifica credenciales y devuelve un diccionario con toda la info de sesión necesaria.
+    Devuelve todos los roles asignados al usuario y el primer rol como rol principal.
     """
     conexion = obtener_conexion()
     usuario_data = None
-    
+
     try:
         with conexion.cursor() as cursor:
-            # Consulta unificada para obtener datos de Usuario, Personal, Feligrés y Cargos
-            # Se prioriza la información de PERSONAL si existe, sino se usa la de FELIGRES
-            sql = """
+
+            # ================================
+            # VALIDAR USUARIO
+            # ================================
+            sql_validar = """
+                SELECT idUsuario, clave, estadoCuenta
+                FROM usuario
+                WHERE email = %s
+            """
+            cursor.execute(sql_validar, (email,))
+            usuario = cursor.fetchone()
+
+            if not usuario:
+                return None
+
+            idUsuario, clave_db, estado_cuenta = usuario
+
+            # Validar clave (texto plano)
+            if clave_db != clave_ingresada or not estado_cuenta:
+                return None
+
+            # ================================
+            # PERFIL COMPLETO (PERSONAL / FELIGRÉS)
+            # ================================
+            sql_perfil = """
                 SELECT 
-                    us.idUsuario, 
-                    us.clave, 
-                    us.estadoCuenta,
                     pe.idPersonal,
-                    pe.nombPers, 
+                    pe.nombPers,
                     pe.apePatPers,
                     fe.idFeligres,
-                    fe.nombFel, 
+                    fe.nombFel,
                     fe.apePatFel,
                     pp.idParroquia,
-                    c.nombCargo,
-                    r.nombRol
+                    c.nombCargo
                 FROM usuario us
                 LEFT JOIN personal pe ON us.idUsuario = pe.idUsuario
                 LEFT JOIN feligres fe ON us.idUsuario = fe.idUsuario
-                LEFT JOIN parroquia_personal pp ON pe.idPersonal = pp.idPersonal AND pp.vigenciaParrPers = TRUE
+                LEFT JOIN parroquia_personal pp 
+                    ON pe.idPersonal = pp.idPersonal AND pp.vigenciaParrPers = TRUE
                 LEFT JOIN cargo c ON pp.idCargo = c.idCargo
-                LEFT JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
-                LEFT JOIN rol r ON ru.idRol = r.idRol
-                WHERE us.email = %s
+                WHERE us.idUsuario = %s
             """
-            cursor.execute(sql, (email,))
-            resultado = cursor.fetchone()
+            cursor.execute(sql_perfil, (idUsuario,))
+            perfil = cursor.fetchone()
 
-            # Estructura de 'resultado' basada en el SELECT:
-            # 0: idUsuario, 1: clave, 2: estadoCuenta
-            # 3: idPersonal, 4: nombPers, 5: apePatPers
-            # 6: idFeligres, 7: nombFel, 8: apePatFel
-            # 9: idParroquia, 10: nombCargo, 11: nombRol
+            if perfil:
+                (
+                    idPersonal,
+                    nombPers,
+                    apePatPers,
+                    idFeligres,
+                    nombFel,
+                    apePatFel,
+                    idParroquia,
+                    nombCargo
+                ) = perfil
+            else:
+                idPersonal = idFeligres = idParroquia = None
+                nombPers = apePatPers = nombFel = apePatFel = nombCargo = None
 
-            if resultado:
-                db_clave = resultado[1]
-                estado_cuenta = resultado[2]
+            # ================================
+            # OBTENER TODOS LOS ROLES
+            # ================================
+            sql_roles = """
+                SELECT r.nombRol
+                FROM rol_usuario ru
+                INNER JOIN rol r ON ru.idRol = r.idRol
+                WHERE ru.idUsuario = %s
+                ORDER BY ru.idRolUsuario ASC
+            """
+            cursor.execute(sql_roles, (idUsuario,))
+            roles = [rol[0] for rol in cursor.fetchall()]
 
-                # Verificar contraseña (texto plano según tu código anterior)
-                if db_clave == clave_ingresada and estado_cuenta:
-                    
-                    # Lógica para determinar Nombre y Cargo a mostrar
-                    if resultado[3]: # Es PERSONAL
-                        nombre_completo = f"{resultado[4]} {resultado[5]}"
-                        cargo_mostrar = resultado[10] if resultado[10] else "Personal"
-                    elif resultado[6]: # Es FELIGRES
-                        nombre_completo = f"{resultado[7]} {resultado[8]}"
-                        cargo_mostrar = "Feligrés"
-                    else:
-                        nombre_completo = "Usuario Sistema"
-                        cargo_mostrar = "Sin Perfil"
+            rol_principal = roles[0] if roles else None
 
-                    # Construir diccionario de sesión robusto
-                    usuario_data = {
-                        "success": True,
-                        "idUsuario": resultado[0],
-                        "email": email,
-                        "nombre_usuario": nombre_completo,
-                        "cargo_usuario": cargo_mostrar,
-                        "rol_sistema": resultado[11], # Rol técnico (ej: ADMIN, SECRETARIA)
-                        
-                        # IDs específicos útiles para operaciones posteriores
-                        "idFeligres": resultado[6], 
-                        "idPersonal": resultado[3],
-                        "idParroquia": resultado[9] 
-                    }
+            # ================================
+            # DETERMINAR NOMBRE Y CARGO
+            # ================================
+            if idPersonal:
+                nombre_completo = f"{nombPers} {apePatPers}"
+                cargo_mostrar = nombCargo if nombCargo else "Personal"
+            elif idFeligres:
+                nombre_completo = f"{nombFel} {apePatFel}"
+                cargo_mostrar = "Feligrés"
+            else:
+                nombre_completo = "Usuario Sistema"
+                cargo_mostrar = "Sin Perfil"
+
+            # ================================
+            # DEVOLVER OBJETO DE SESIÓN
+            # ================================
+            usuario_data = {
+                "success": True,
+                "idUsuario": idUsuario,
+                "email": email,
+                "nombre_usuario": nombre_completo,
+                "cargo_usuario": cargo_mostrar,
+                "rol_sistema": rol_principal,   # primer rol
+                "roles_disponibles": roles,    # todos los roles
+                "idFeligres": idFeligres,
+                "idPersonal": idPersonal,
+                "idParroquia": idParroquia
+            }
 
     except Exception as e:
         print(f"Error en autenticar_usuario: {e}")

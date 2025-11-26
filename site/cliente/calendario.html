@@ -19,7 +19,11 @@
         <div class="calendario">
             <h2>PARTICIPE EN NUESTRAS FECHAS ESPECIALES</h2>
 
-            <div class="fechas" data-rol="usuario">
+            <div class="fechas" 
+                data-rol="{{ session['rol'] }}" 
+                data-id="{{ session['idUsuario'] }}" 
+                data-parroquia="{{ session.get('idParroquia', '') }}">
+            </div>
                 <div class="acciones-calendario">
                 <a href="{{ url_for('parroquia_cliente') }}">
                     <button type="button" class="btn-regresar">Regresar mapa</button>

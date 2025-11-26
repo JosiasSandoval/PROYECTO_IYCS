@@ -38,7 +38,7 @@ def obtener_requisito_acto(idActo):
 # REGISTRAR DOCUMENTO EN BASE DE DATOS
 # =========================================================
 def registrar_documento_db(idActoRequisito, idReserva, rutaArchivo, tipoArchivo, f_subido,
-                           estadoCumplimiento, observacion, vigencia, aprobado=False):
+                           estadoCumplimiento, observacion, vigencia, aprobado):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
@@ -114,23 +114,110 @@ def cambiar_cumplimiento_documento(idDocumento, estadoCumplimiento):
             conexion.close()
 
 
-# =========================================================
-# AGREGAR OBSERVACIÓN
-# =========================================================
-def agregar_observacion_documento(idDocumento, observacion):
+def aprobar_documentos_reserva_parcial(idReserva):
+    """
+    Aprueba solo los documentos que cumplen y deja los demás pendientes.
+    Cambia estado de reserva solo si todos los documentos están aprobados.
+    """
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
+            # Obtener documentos de la reserva
+            cursor.execute("""
+                SELECT idDocumento, estadoCumplimiento, aprobado
+                FROM DOCUMENTO_REQUISITO 
+                WHERE idReserva = %s
+            """, (idReserva,))
+            documentos = cursor.fetchall()
+
+            if not documentos:
+                return {"ok": False, "mensaje": "No hay documentos para esta reserva"}
+
+            aprobados = []
+            for doc in documentos:
+                idDoc, estadoCumplimiento, aprobado = doc
+                if estadoCumplimiento == "CUMPLIDO" and not aprobado:
+                    # Aprobar solo los que cumplen y no están aprobados
+                    cursor.execute("""
+                        UPDATE DOCUMENTO_REQUISITO
+                        SET aprobado = TRUE
+                        WHERE idDocumento = %s
+                    """, (idDoc,))
+                    aprobados.append(idDoc)
+
+            # Verificar si todos los documentos están aprobados
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM DOCUMENTO_REQUISITO 
+                WHERE idReserva = %s AND aprobado = FALSE
+            """, (idReserva,))
+            pendientes = cursor.fetchone()[0]
+
+            if pendientes == 0:
+                # Todos aprobados → cambiar estado de la reserva
+                cursor.execute("""
+                    UPDATE RESERVA 
+                    SET estadoReserva = 'PENDIENTE_PAGO' 
+                    WHERE idReserva = %s
+                """, (idReserva,))
+                mensaje = "Todos los documentos aprobados. Reserva actualizada a PENDIENTE_PAGO."
+            else:
+                mensaje = f"{len(aprobados)} documentos aprobados. Reserva sigue en PENDIENTE_DOCUMENTO."
+
+        conexion.commit()
+        return {"ok": True, "mensaje": mensaje, "aprobados": aprobados}
+
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+    finally:
+        if conexion:
+            conexion.close()
+
+
+def rechazar_documento(idDocumento, idReserva, observacion=""):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Rechazar el documento individual
             cursor.execute("""
                 UPDATE DOCUMENTO_REQUISITO
-                SET observacion=%s
-                WHERE idDocumento=%s;
+                SET aprobado = FALSE,
+                    estadoCumplimiento = 'NO_CUMPLIDO',
+                    observacion = %s
+                WHERE idDocumento = %s
             """, (observacion, idDocumento))
-            conexion.commit()
-            return {'ok': True, 'mensaje': 'Observación agregada correctamente'}
+
+            # Verificar documentos restantes
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM DOCUMENTO_REQUISITO 
+                WHERE idReserva = %s AND aprobado = FALSE
+            """, (idReserva,))
+            pendientes = cursor.fetchone()[0]
+
+            if pendientes == 0:
+                # Todos aprobados → actualizar reserva
+                cursor.execute("""
+                    UPDATE RESERVA
+                    SET estadoReserva = 'PENDIENTE_PAGO'
+                    WHERE idReserva = %s
+                """, (idReserva,))
+                mensaje = f"Documento {idDocumento} rechazado. Todos los documentos aprobados. Reserva actualizada a PENDIENTE_PAGO."
+            else:
+                # Aún hay documentos pendientes
+                cursor.execute("""
+                    UPDATE RESERVA
+                    SET estadoReserva = 'PENDIENTE_DOCUMENTO'
+                    WHERE idReserva = %s
+                """, (idReserva,))
+                mensaje = f"Documento {idDocumento} rechazado. Reserva sigue en PENDIENTE_DOCUMENTO."
+
+        conexion.commit()
+        return {"ok": True, "mensaje": mensaje}
+
     except Exception as e:
-        print(f'Error al agregar la observacion del documento: {e}')
-        return {'ok': False, 'mensaje': f'Error: {e}'}
+        return {"ok": False, "error": str(e)}
     finally:
         if conexion:
             conexion.close()
@@ -186,15 +273,18 @@ def archivo_documento(idDocumento):
                 WHERE idDocumento=%s
             """, (idDocumento,))
             fila = cursor.fetchone()
+
             if fila:
-                return [{   
+                return {
                     'rutaArchivo': fila[0],
                     'tipoArchivo': fila[1]
-                }]
-            return []
+                }
+
+            return None
+
     except Exception as e:
-        print(f'Error al obtener el archivo del documento: {e}')
-        return []
+        print(f'Error al obtener archivo: {e}')
+        return None
     finally:
         if conexion:
             conexion.close()
@@ -209,7 +299,7 @@ def obtener_documentos_reserva(idReserva):
         documentos = []
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT dr.idDocumento, rq.nombRequisito, dr.rutaArchivo, dr.tipoArchivo, dr.f_subido
+                SELECT dr.idDocumento, rq.nombRequisito, dr.rutaArchivo, dr.tipoArchivo, dr.f_subido,dr.observacion
                 FROM DOCUMENTO_REQUISITO dr
                 INNER JOIN reserva re ON dr.idReserva=re.idReserva
                 INNER JOIN acto_requisito ar ON dr.idActoRequisito=ar.idActoRequisito
@@ -225,7 +315,8 @@ def obtener_documentos_reserva(idReserva):
                     'nombRequisito': fila[1],
                     'rutaArchivo': fila[2],
                     'tipoArchivo': fila[3],
-                    'f_subido': fila[4]
+                    'f_subido': fila[4],
+                    'observacion': fila[5]
                 })
         return documentos
     except Exception as e:

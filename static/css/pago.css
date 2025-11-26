@@ -492,6 +492,22 @@ input:focus {
     font-size: 2rem;
     font-weight: 700;
 }
+/* ====== BUSCADOR DE RESERVAS ====== */
+#filtro-reservas {
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+#filtro-reservas:focus {
+  outline: none;
+  border-color: #4caf50; /* color verde al enfocar */
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
 
 .total-amount {
     font-size: 3rem;
@@ -595,3 +611,4 @@ input:focus {
         grid-template-columns: 1fr; 
     }
 }
+

@@ -1,16 +1,79 @@
-    // --- CONFIGURACIÓN GENERAL ---
-    const API_URL = '/api/parroquia/datos';
-    const mapBounds = [[-7.5, -80.8], [-5.8, -79.0]];
-    const mapCenter = [-6.6, -79.8];
-    const zoomInicial = 10;
+// --- CONFIGURACIÓN GENERAL ---
+const API_URL = '/api/parroquia/datos';
+const mapBounds = [[-7.5, -80.8], [-5.8, -79.0]];
+const mapCenter = [-6.6, -79.8];
+const zoomInicial = 10;
 
-    // --- ICONOS ---
-    const ChurchIcon = L.icon({
-        iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-icon.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34]
-    });
+// --- ICONOS ---
+const ChurchIcon = L.icon({
+    iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-icon.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34]
+});
+
+const ChurchIconHighlight = L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+    iconSize: [50, 50],
+    iconAnchor: [25, 50],
+    popupAnchor: [0, -50]
+});
+
+// --- VARIABLES GLOBALES ---
+let map, markerClusterGroup, markersByName = {};
+let marcadorResaltado = null;
+
+// --- ROL Y USUARIO ---
+const rolUsuario = document.body.dataset.rol?.toLowerCase();
+const idUsuario = document.body.dataset.id;
+const idParroquiaUsuario = document.body.dataset.parroquia;
+
+// --- FUNCIONES ---
+function initMap() {
+    map = L.map('gps', { maxBounds: mapBounds, minZoom: 9.5 }).setView(mapCenter, zoomInicial);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    markerClusterGroup = L.markerClusterGroup().addTo(map);
+}
+
+async function cargarParroquias() {
+    try {
+        markerClusterGroup.clearLayers();
+        markersByName = {};
+
+        const resp = await fetch(API_URL);
+        const { datos } = await resp.json();
+        if (!Array.isArray(datos)) throw new Error("Formato inválido");
+
+        datos.forEach(p => {
+            if (!p.latParroquia || !p.logParroquia) return;
+
+            const mostrarBotonReserva = (rolUsuario === 'feligres') ? ` 
+                <button onclick="mostrarInformacionParroquia('${p.idParroquia}')"
+                    style="background:#00a135;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
+                    Más información
+                </button>` : '';
+
+            const popupContent = `
+                <div style="font-family: Arial, sans-serif; max-width:250px;">
+                    <h4 style="color:#007bff;margin:0">${p.nombParroquia}</h4>
+                    <p style="color:#555;font-style:italic">${p.descripcionBreve || 'Sin descripción breve.'}</p>
+                    <hr>
+                    <p><strong>Dirección:</strong> ${p.direccion || 'No disponible'}</p>
+                    <p><strong>Teléfono:</strong> ${p.telefonoContacto || 'No disponible'}</p>
+                    <p><strong>Horario:</strong> ${p.horaAtencionInicial || ''} - ${p.horaAtencionFinal || 'Cerrado'}</p>
+                    ${mostrarBotonReserva}
+                </div>`;
+
+            const marker = L.marker([p.latParroquia, p.logParroquia], { icon: ChurchIcon })
+                .bindPopup(popupContent);
+
+            markerClusterGroup.addLayer(marker);
+
+            const nombreNorm = p.nombParroquia.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '');
+            markersByName[nombreNorm] = { marker, id: p.idParroquia, nombre: p.nombParroquia };
+        });
 
     const ChurchIconHighlight = L.icon({
         iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
