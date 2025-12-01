@@ -171,6 +171,87 @@ img {
   text-align: center;
   padding: 8px 0;
 }
+/* ===== notificaciones ===== */
+/* Contenedor relativo para poder posicionar el menú */
+.notificacion-container {
+    position: relative;
+    display: inline-block;
+    
+}
+
+/* El globito rojo (Badge) */
+.badge-rojo {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #e74c3c; /* Rojo alerta */
+    color: white;
+    border-radius: 50%;
+    padding: 2px 5px;
+    font-size: 10px;
+    font-weight: bold;
+    border: 2px solid #fff; /* Borde blanco para separar del icono */
+    min-width: 15px;
+    text-align: center;
+}
+
+/* El Menú Desplegable */
+.dropdown-notificaciones {
+    display: none; /* Oculto por defecto */
+    position: absolute;
+    right: 0;
+    top: 50px; /* Ajústalo según la altura de tu header */
+    width: 300px;
+    background-color: white;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    z-index: 1000;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+
+/* Mostrar menú cuando tiene la clase activa */
+.dropdown-notificaciones.active {
+    display: block;
+}
+
+.dropdown-head {
+    background-color: #f8f9fa;
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    font-weight: bold;
+    color: #333;
+}
+
+.dropdown-body {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Estilo de cada item de notificación */
+.notificacion-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f1f1;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.notificacion-item:hover {
+    background-color: #f9f9f9;
+}
+
+.notificacion-item.no-leido {
+    background-color: #e8f4fd; /* Azulito muy suave para las nuevas */
+    border-left: 3px solid #3498db;
+}
+
+.notif-titulo { font-weight: bold; font-size: 13px; color: #2c3e50; }
+.notif-msg { font-size: 12px; color: #7f8c8d; margin-top: 2px; }
+.notif-fecha { font-size: 10px; color: #bdc3c7; align-self: flex-end; margin-top: 5px; }
+
+.txt-vacio { padding: 15px; text-align: center; color: #999; font-size: 13px; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 520px) {

@@ -17,7 +17,7 @@ from app.acto_liturgico_requisito.route_requisito import requisito_bp
 from app.disponibilidad.route_disponibilidad import disponibilidad_bp
 from app.acto_liturgico.route_actoLiturgico import acto_liturgico_bp
 from app.reportes.route_reporte import reportes_bp
-
+from app.notificacion.route_notificacion import notificacion_bp
 
 # ============================================
 # DECORADOR DE CONTROL DE ROLES
@@ -69,7 +69,7 @@ def crear_app():
     app.register_blueprint(disponibilidad_bp,url_prefix='/api/disponibilidad')
     app.register_blueprint(acto_liturgico_bp,url_prefix='/api/acto_liturgico')
     app.register_blueprint(reportes_bp, url_prefix='/api/reportes')
-  
+    app.register_blueprint(notificacion_bp, url_prefix='/api/notificacion')
 
     # ============================================
     # RUTAS DEL FRONTEND
@@ -162,7 +162,6 @@ def crear_app():
         return render_template('administradores/cargo.html')
 
     @app.route('/admi/parroquia')
-    @requires_roles('Administrador')
     def parroquia_admi():
         return render_template('administradores/parroquia_admi.html')
 
@@ -190,22 +189,7 @@ def crear_app():
     @requires_roles('Administrador')
     def acto_liturgico_admi():
         return render_template('administradores/acto_liturgico.html')
-
-    @app.route('/admi/auditoria_parroquia')
-    @requires_roles('Administrador')
-    def auditoria_parroquia_admi():
-        return render_template('administradores/auditoria_parroquia.html')
-
-    @app.route('/admi/auditoria_reserva')
-    @requires_roles('Administrador')
-    def auditoria_reserva_admi():
-        return render_template('administradores/auditoria_reserva.html')
-
-    @app.route('/admi/auditoria_usuario')
-    @requires_roles('Administrador')
-    def auditoria_usuario_admi():
-        return render_template('administradores/auditoria_usuario.html')
-
+    
     @app.route('/admi/configuracion')
     @requires_roles('Administrador')
     def configuracion_admi():
@@ -221,23 +205,13 @@ def crear_app():
     def documento_requisito_admi():
         return render_template('administradores/documento_requisito.html')
 
-    @app.route('/admi/excepcion_personal')
-    @requires_roles('Administrador')
-    def excepcion_personal_admi():
-        return render_template('administradores/excepcion_personal.html')
-
     @app.route('/admi/lista_reporte')
     @requires_roles('Administrador')
     def lista_reporte_admi():
         return render_template('administradores/lista_reporte.html')
 
-    @app.route('/admi/pago')
-    @requires_roles('Administrador')
-    def pago_admi():
-        return render_template('administradores/pago.html')
-
     @app.route('/admi/parroquia_personal')
-    @requires_roles('Administrador')
+    @requires_roles('Administrador','Sacerdote')
     def parroquia_personal_admi():
         return render_template('administradores/parroquia_personal.html')
 
@@ -255,7 +229,7 @@ def crear_app():
     @requires_roles('Administrador')
     def reserva_admi():
         return render_template('administradores/reserva.html')
-
+    
     @app.route('/cerrar_sesion')
     def cerrar_sesion():
         session.clear()

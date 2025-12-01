@@ -116,7 +116,7 @@ body {
   border-radius: 4px;
 }
 
-/* ===== BOTONES ===== */
+/* ===== BOTONES (ESTILO UNIFICADO 40px) ===== */
 .btn {
   border: none;
   border-radius: 5px;
@@ -125,68 +125,59 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 40px;  /* TAMAÑO UNIFICADO */
+  height: 40px; /* TAMAÑO UNIFICADO */
+  transition: background-color 0.2s;
 }
+
 .btn img {
-  width: 20px;
-  height: 20px;
+  width: 20px;  /* ICONO GRANDE */
+  height: 20px; /* ICONO GRANDE */
   transition: transform 0.3s ease;
 }
-#btn_buscar,
-#btn_guardar {
-  color: white;
-  padding: 10px 16px;
+
+/* Botones principales (Buscar / Agregar) */
+.btn-icon {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  border-radius: 6px;
-  width: 42px;
-  height: 42px;
+  flex-shrink: 0;
 }
-#btn_buscar {
-  background-color: #93baea;
-}
-#btn_buscar:hover {
-  background-color: #7daed8;
-}
-#btn_guardar {
-  background-color: #60a5fa;
-}
-#btn_guardar:hover {
-  background-color: #2563eb;
-}
+.btn-icon img { width: 20px; height: 20px; }
+
+/* Colores de Botones */
+#btn_buscar { background-color: #93baea; color: white; }
+#btn_buscar:hover { background-color: #7daed8; }
+
+#btn_guardar { background-color: #60a5fa; color: white; }
+#btn_guardar:hover { background-color: #2563eb; }
+
+/* Botón VER */
 .btn-info {
   background-color: #17a2b8;
 }
 .btn-info:hover {
   background-color: #117a8b;
 }
-.btn-warning {
-  background-color: #ffc107;
-}
-.btn-warning:hover {
-  background-color: #e0a800;
-}
-.btn-orange {
-  background-color: #fd7e14;
-}
-.btn-orange:hover {
-  background-color: #e8590c;
-}
-.btn-success {
-  background-color: #28a745;
-}
-.btn-success:hover {
-  background-color: #218838;
-}
-.btn-danger {
-  background-color: #dc3545;
-}
-.btn-danger:hover {
-  background-color: #c82333;
-}
+
+/* Otros botones */
+.btn-warning { background-color: #ffc107; }
+.btn-warning:hover { background-color: #e0a800; }
+
+.btn-orange { background-color: #fd7e14; }
+.btn-orange:hover { background-color: #e8590c; }
+
+.btn-success { background-color: #28a745; }
+.btn-success:hover { background-color: #218838; }
+
+.btn-danger { background-color: #dc3545; }
+.btn-danger:hover { background-color: #c82333; }
+
 
 /* ===== TABLAS ===== */
 .tabla-documentos {
@@ -235,11 +226,11 @@ body {
   text-align: left;
 }
 .col-numParticipantes {
-  width: 3%;
+  width: 5%;
   text-align: center;
 }
 .tipoParticipantes {
-  width: 10%;
+  width: 5%;
   text-align: left;
 }
 .col-precio {
@@ -468,4 +459,90 @@ body {
 
 .sugerencia-item:hover {
   background-color: #f0f0f0;
+}
+
+/* ============================================================ */
+/* DISEÑO RESPONSIVO OPTIMIZADO (TABLETS, ANDROID, IPHONE)      */
+/* ============================================================ */
+
+/* Tablets / iPads (Horizontal) y Laptops Pequeñas (Hasta 992px) */
+@media (max-width: 992px) {
+    .grid {
+        grid-template-columns: 1fr; /* Colapsar barra lateral */
+    }
+    
+    .contenido {
+        padding: 20px; /* Reducir padding */
+    }
+    
+    /* Tabla scrollable para que no se rompa */
+    .tabla-documentos {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Scroll suave en iPad */
+    }
+    
+    table {
+        min-width: 800px; /* Forzar ancho mínimo para legibilidad */
+    }
+}
+
+/* Móviles Grandes y Tablets Verticales (Hasta 768px) */
+@media (max-width: 768px) {
+    /* Formulario de búsqueda en columna (stack) */
+    #formDocumento {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    /* Ocultar label para ahorrar espacio */
+    #formDocumento label {
+        display: none; 
+    }
+
+    /* Input ocupa todo el ancho */
+    .search-container {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    /* Botones de búsqueda/agregar ocupan todo el ancho */
+    #btn_buscar, #btn_guardar {
+        width: 100%;
+        margin-left: 0;
+        justify-content: center;
+    }
+    
+    /* Botones de acción en tabla un poco más grandes para dedos */
+    .col-acciones .btn {
+        width: 44px; /* Touch target mínimo recomendado */
+        height: 44px;
+    }
+}
+
+/* Móviles Estándar (iPhone, Android - Hasta 480px) */
+@media (max-width: 480px) {
+    .titulo-seccion {
+        font-size: 16px; /* Texto más pequeño */
+    }
+
+    /* Modal casi pantalla completa */
+    .modal-dialog {
+        width: 95%;
+        margin: 10px auto;
+    }
+
+    .modal-body {
+        padding: 15px 10px;
+    }
+
+    /* Fechas en el modal: Una debajo de otra */
+    .modal-body form > div[style*="display:flex"] {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .modal-body form > div[style*="display:flex"] > div {
+        width: 100%;
+    }
 }

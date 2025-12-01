@@ -56,36 +56,103 @@ def reprogramar_reserva(idReserva, fecha, hora, observaciones):
         if conexion:
             conexion.close()
 
-def cambiar_estado_reserva(idReserva, accion='continuar'):
+from app.bd_sistema import obtener_conexion
+# Importamos la función de notificaciones que creamos antes
+from app.notificacion.controlador_notificacion import crear_notificacion 
+
+def cambiar_estado_reserva(idReserva, accion='continuar', motivo_cancelacion=None):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            cursor.execute("SELECT estadoReserva FROM reserva WHERE idReserva = %s", (idReserva,))
+            
+            # 1. MODIFICADO: Traemos también idUsuario y f_reserva para la notificación
+            cursor.execute("SELECT estadoReserva, idUsuario, f_reserva FROM RESERVA WHERE idReserva = %s", (idReserva,))
             resultado = cursor.fetchone()
 
             if resultado is None:
                 return False, 'Reserva no encontrada'
-
+            
             estado_actual = resultado[0]
-            nuevo_estado = estado_actual
+            id_usuario = resultado[1]
+            fecha_reserva = resultado[2]
 
-            # Lógica de estados
+            nuevo_estado = estado_actual
+            
+            # ====================================================
+            # TU LÓGICA DE ESTADOS (INTACTA)
+            # ====================================================
             if accion == 'cancelar':
                 nuevo_estado = 'CANCELADO'
+                
             elif estado_actual == 'PENDIENTE_DOCUMENTO':
-                nuevo_estado = 'PENDIENTE_REVISION'
+                # Pasa a revisión (probablemente cuando sube archivos)
+                nuevo_estado = 'PENDIENTE_REVISION' 
             elif estado_actual == 'PENDIENTE_REVISION':
+                # Secretaria aprueba documentos
                 nuevo_estado = 'PENDIENTE_PAGO'
             elif estado_actual == 'PENDIENTE_PAGO':
+                # Tesorería confirma pago
                 nuevo_estado = 'CONFIRMADO'
             elif estado_actual == 'CONFIRMADO':
-                nuevo_estado = 'ATENDIDO'               
+                # Sacerdote finaliza el acto
+                nuevo_estado = 'ATENDIDO'              
 
-        # CORREGIDO: Retornamos tupla (Exito, Datos) para mantener consistencia con route
-        return True, nuevo_estado
+            # ====================================================
+            # AQUÍ AGREGAMOS "EL RESTO" (UPDATE + NOTIFICACIÓN)
+            # ====================================================
+            
+            if nuevo_estado != estado_actual:
+                # 2. Actualizar el estado en la Base de Datos
+                cursor.execute("UPDATE RESERVA SET estadoReserva = %s WHERE idReserva = %s", (nuevo_estado, idReserva))
+                
+                # 3. Preparar los datos de la notificación
+                titulo = ""
+                mensaje = ""
+                icono = "info"
+                enlace = "/cliente/mis_reservas"
+
+                if nuevo_estado == 'PENDIENTE_REVISION':
+                    titulo = "Documentos en Revisión 📄"
+                    mensaje = "Hemos recibido tus documentos. La secretaría los revisará pronto."
+                    icono = "info"
+                    enlace = "/cliente/reserva_requisito"
+
+                elif nuevo_estado == 'PENDIENTE_PAGO':
+                    titulo = "Documentos Aprobados 💰"
+                    mensaje = "Tus documentos están correctos. Por favor realiza el pago para confirmar."
+                    icono = "warning"
+                    enlace = "/cliente/pago"
+
+                elif nuevo_estado == 'CONFIRMADO':
+                    titulo = "Reserva Confirmada ✅"
+                    mensaje = f"¡Todo listo! Tu reserva para el {fecha_reserva} ha sido confirmada exitosamente."
+                    icono = "check"
+                
+                elif nuevo_estado == 'ATENDIDO':
+                    titulo = "Acto Finalizado ✨"
+                    mensaje = "El acto litúrgico ha concluido. Gracias por su participación."
+                    icono = "check"
+
+                elif nuevo_estado == 'CANCELADO':
+                    titulo = "Reserva Cancelada ❌"
+                    mensaje = "Tu reserva ha sido cancelada."
+                    if motivo_cancelacion:
+                        mensaje += f" Motivo: {motivo_cancelacion}"
+                    icono = "error"
+
+                # 4. Insertar la notificación (si corresponde)
+                if titulo:
+                    crear_notificacion(id_usuario, titulo, mensaje, enlace, icono)
+
+                # 5. Confirmar cambios en BD
+                conexion.commit()
+
+            return True, nuevo_estado
 
     except Exception as e:
         print(f'Error al cambiar estado: {e}')
+        if conexion:
+            conexion.rollback() # Importante regresar atrás si falla algo
         return False, str(e)
 
     finally:

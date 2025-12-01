@@ -79,7 +79,7 @@ def cambiar_estado_acto(idActo):
         return jsonify({"success": False, "mensaje": "Error al actualizar estado"}), 500
 
 # ================== ELIMINAR ==================
-@acto_liturgico_bp.route('/actos/<int:idActo>', methods=['DELETE'])
+@acto_liturgico_bp.route('/actos/<int:idActo>', methods=['DELETE']) 
 def borrar_acto(idActo):
     exito, mensaje = eliminar_acto(idActo)
     if exito:
