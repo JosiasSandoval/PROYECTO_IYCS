@@ -220,15 +220,10 @@ body {
 }
 /* === COLUMNAS === */
 .col-id { width: 5%; text-align: center;}
-.col-nombre { width: 15%; }
-.col-numDocumento { width: 5%; text-align: center;}
-.col-tipoDocumento { width: 5%; text-align: center;}
-.col-correo { width: 10%; }
-.col-telefono { width: 10%; text-align: center;}
-.col-clave { width: 10%; text-align: center;}
-.col-tipo { width: 10%;}
-.col-cargo { width: 10%; }
-.col-acciones { width: 20%; }
+.col-nombre { width: 45%; text-align: left;}
+.col-numDocumento { width: 10%; text-align: center;}
+.col-correo { width: 20%; text-align: left;}
+.col-acciones { width: 20%; text-align: center;}
 
 /* ===== MODALES ===== */
 .modal {

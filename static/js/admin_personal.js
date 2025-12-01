@@ -120,8 +120,10 @@ function renderTabla() {
     pagina.forEach((u, idx) => {
         const esActivo = !!u.estado;
         // color y flecha: activo -> naranja + flecha abajo; inactivo -> verde + flecha arriba
-        const botonStyle = `background:${esActivo ? 'orange' : 'green'};border:none;color:#fff;padding:6px 8px;border-radius:4px;`;
+        const botonColor = esActivo ? "btn-orange" : "btn-success";
         const rotacion = esActivo ? "" : "transform: rotate(180deg);";
+        const tituloBoton = esActivo ? 'Dar de baja' : 'Dar de alta';
+
 
         // roles como etiquetas, sin duplicados (ya dedupe en normalizar)
         const rolesMostrar = (u.roles || []).join(", ");
@@ -140,8 +142,8 @@ function renderTabla() {
                     <button class="btn btn-warning btn-sm" onclick="editarPersonal(${u.id})" title="Editar">
                         <img src="/static/img/lapiz.png" alt="editar">
                     </button>
-                    <button class="btn btn-sm" style="${botonStyle}" onclick="darDeBajaPersonal(${u.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
-                        <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion};width:16px;height:16px;">
+                    <button class="btn ${botonColor} btn-sm"  onclick="darDeBajaPersonal(${u.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
+                        <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}; ">
                     </button>
                     <button class="btn btn-danger btn-sm" onclick="eliminarPersonal(${u.id})" title="Eliminar">
                         <img src="/static/img/x.png" alt="eliminar">
