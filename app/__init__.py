@@ -162,6 +162,7 @@ def crear_app():
         return render_template('administradores/cargo.html')
 
     @app.route('/admi/parroquia')
+    @requires_roles('Administrador')
     def parroquia_admi():
         return render_template('administradores/parroquia_admi.html')
 

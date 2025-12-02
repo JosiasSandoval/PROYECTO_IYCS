@@ -568,7 +568,109 @@ document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
         renderTabla();
     });
 });
+// ================== BLOQUE DE SUGERENCIAS Y BÚSQUEDA ==================
 
+// 1. Lógica del Botón Buscar (Conexión al Backend)
+if (btnBuscarPersonal) {
+    // Reemplazamos el listener anterior para asegurar que usa la nueva ruta
+    // Nota: Si ya tienes un listener arriba, asegúrate de que este sea el único o reemplaza la lógica.
+    btnBuscarPersonal.onclick = async () => {
+        const termino = inputBuscarPersonal.value.trim();
+        
+        // Si el input está vacío, recargamos la lista completa
+        if (!termino) { 
+            personalesFiltrados = null; 
+            paginaActual = 1; 
+            renderTabla(); 
+            return; 
+        }
+
+        try {
+            // Llamamos a la nueva ruta del backend
+            const res = await fetch(`/api/usuario/busqueda_personal/${encodeURIComponent(termino)}`);
+            
+            if (res.status === 404) { 
+                personalesFiltrados = []; 
+                renderTabla(); 
+                return; 
+            }
+            if (!res.ok) throw new Error("Error en búsqueda");
+            
+            const data = await res.json();
+            const items = Array.isArray(data.datos) ? data.datos : [];
+            
+            // Normalizamos los datos recibidos
+            personalesFiltrados = items.map(normalizarPersonal);
+            
+            paginaActual = 1;
+            renderTabla();
+        } catch (err) { 
+            console.error(err); 
+            alert("Error al buscar personal"); 
+        }
+    };
+}
+
+// 2. Lógica de Sugerencias (Autocompletado Local)
+
+// Crear contenedor si no existe
+const contenedorSugerencias = document.createElement("div");
+contenedorSugerencias.id = "sugerenciasContainer";
+document.body.appendChild(contenedorSugerencias);
+
+function posicionarSugerencias() {
+    if (!contenedorSugerencias || contenedorSugerencias.style.display === 'none' || !inputBuscarPersonal) return;
+    const rect = inputBuscarPersonal.getBoundingClientRect(); 
+    contenedorSugerencias.style.top = `${rect.bottom + window.scrollY}px`;
+    contenedorSugerencias.style.left = `${rect.left + window.scrollX}px`;
+    contenedorSugerencias.style.width = `${rect.width}px`; 
+}
+
+function configurarSugerencias() {
+    if (!inputBuscarPersonal) return; 
+    
+    inputBuscarPersonal.addEventListener("input", () => {
+        const termino = inputBuscarPersonal.value.trim().toLowerCase();
+        contenedorSugerencias.innerHTML = "";
+        
+        if (termino.length === 0) {
+            contenedorSugerencias.style.display = "none";
+            return;
+        }
+
+        // --- CORRECCIÓN AQUÍ ---
+        // Cambiamos .includes() por .startsWith()
+        const sugerencias = personales.filter(p => {
+            const nombreCompleto = p.nombreCompleto.toLowerCase();
+            return nombreCompleto.startsWith(termino); 
+        }).slice(0, 5); 
+
+        if (sugerencias.length === 0) {
+            contenedorSugerencias.style.display = "none";
+            return;
+        }
+
+        sugerencias.forEach(p => {
+            const item = document.createElement("div");
+            item.className = "sugerencia-item";
+            item.textContent = p.nombreCompleto;
+            
+            item.onclick = () => {
+                inputBuscarPersonal.value = p.nombreCompleto;
+                contenedorSugerencias.style.display = "none";
+            };
+            contenedorSugerencias.appendChild(item);
+        });
+
+        contenedorSugerencias.style.display = "block";
+        posicionarSugerencias();
+    });
+
+    // ... (el resto de los listeners de click y scroll se quedan igual)
+}
+
+// Inicializar sugerencias
+configurarSugerencias();
 // botón agregar
 const btnAgregar = document.getElementById("btn_guardar");
 if (btnAgregar) btnAgregar.addEventListener("click", () => abrirModalFormularioPersonal("agregar"));

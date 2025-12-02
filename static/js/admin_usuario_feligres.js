@@ -395,15 +395,33 @@ const inputUsuario = document.getElementById("inputDocumento");
 const btnBuscar = document.getElementById("btn_buscar");
 btnBuscar.addEventListener("click", async () => {
     const termino = inputUsuario.value.trim();
-    if(!termino) { usuariosFiltrados = null; paginaActual=1; renderTabla(); return; }
+    
+    // Si está vacío, recargamos todos los usuarios
+    if(!termino) { 
+        usuariosFiltrados = null; 
+        paginaActual = 1; 
+        renderTabla(); 
+        return; 
+    }
+
     try {
+        // Asegúrate que esta URL coincida con la ruta que creamos en el paso 2
         const res = await fetch(`/api/usuario/busqueda_feligres/${encodeURIComponent(termino)}`);
-        if(res.status===404){ usuariosFiltrados=[]; renderTabla(); return; }
+        
         if(!res.ok) throw new Error("Error en búsqueda");
+        
         const data = await res.json();
-        usuariosFiltrados = Array.isArray(data.datos) ? data.datos.map(normalizarUsuario) : [normalizarUsuario(data)];
-        paginaActual=1; renderTabla();
-    } catch(err){ console.error(err); alert("Error al buscar usuario"); }
+        
+        // Asignamos los datos encontrados a usuariosFiltrados
+        usuariosFiltrados = Array.isArray(data.datos) ? data.datos.map(normalizarUsuario) : [];
+        
+        paginaActual = 1; 
+        renderTabla(); // Volvemos a pintar la tabla
+        
+    } catch(err){ 
+        console.error(err); 
+        alert("Error al buscar usuario"); 
+    }
 });
 
 // Orden tabla
@@ -417,7 +435,86 @@ document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index)=>{
         renderTabla();
     });
 });
+// ================== BLOQUE DE SUGERENCIAS (Estándar Referencia) ==================
 
+// 1. Crear el contenedor dinámicamente si no existe
+const contenedorSugerencias = document.createElement("div");
+contenedorSugerencias.id = "sugerenciasContainer";
+document.body.appendChild(contenedorSugerencias);
+
+// 2. Función para posicionar el menú flotante justo debajo del input
+function posicionarSugerencias() {
+    // Usamos la variable 'inputUsuario' que ya definiste en tu código original
+    if (!contenedorSugerencias || contenedorSugerencias.style.display === 'none' || !inputUsuario) return;
+
+    const rect = inputUsuario.getBoundingClientRect(); 
+
+    // Calcula la posición absoluta en el DOCUMENTO
+    contenedorSugerencias.style.top = `${rect.bottom + window.scrollY}px`;
+    contenedorSugerencias.style.left = `${rect.left + window.scrollX}px`;
+    contenedorSugerencias.style.width = `${rect.width}px`; 
+}
+
+// 3. Configurar la lógica de búsqueda y selección
+function configurarSugerencias() {
+    if (!inputUsuario) return; 
+    
+    inputUsuario.addEventListener("input", () => {
+        const termino = inputUsuario.value.trim().toLowerCase();
+        contenedorSugerencias.innerHTML = "";
+        
+        if (termino.length === 0) {
+            contenedorSugerencias.style.display = "none";
+            return;
+        }
+
+        // Filtramos sobre el array global 'usuarios' que ya tienes en tu código
+        // Buscamos coincidencia en Nombre o Apellidos
+        const sugerencias = usuarios.filter(u => {
+            // Reconstruimos el nombre completo para la búsqueda
+            const nombreCompleto = `${u.nombre} ${u.apePat} ${u.apeMat}`.toLowerCase();
+            return nombreCompleto.includes(termino);
+        }).slice(0, 5); // Limitamos a 5 resultados igual que la referencia
+
+        if (sugerencias.length === 0) {
+            contenedorSugerencias.style.display = "none";
+            return;
+        }
+
+        sugerencias.forEach(u => {
+            const item = document.createElement("div");
+            item.className = "sugerencia-item";
+            // Mostramos Nombre + DNI para diferenciar
+            const textoMostrar = `${u.nombre} ${u.apePat} ${u.apeMat}`;
+            item.textContent = textoMostrar;
+            
+            // Al hacer clic, SOLO llenamos el input
+            item.onclick = () => {
+                inputUsuario.value = textoMostrar;
+                contenedorSugerencias.style.display = "none";
+            };
+            contenedorSugerencias.appendChild(item);
+        });
+
+        contenedorSugerencias.style.display = "block";
+        posicionarSugerencias();
+    });
+
+    // Cerrar sugerencias al hacer clic fuera
+    document.addEventListener("click", (e) => {
+        if (contenedorSugerencias && !contenedorSugerencias.contains(e.target) && e.target !== inputUsuario) {
+            contenedorSugerencias.style.display = "none";
+        }
+    });
+
+    // Recalcular posición si cambia el tamaño de ventana o scroll
+    window.addEventListener("resize", posicionarSugerencias);
+    window.addEventListener("scroll", posicionarSugerencias, true);
+}
+
+// 4. Inicializar las sugerencias
+// Llamamos a esta función para activar el sistema
+configurarSugerencias();
 // Botón agregar
 document.getElementById("btn_guardar").addEventListener("click", ()=>abrirModalFormulario("agregar"));
 

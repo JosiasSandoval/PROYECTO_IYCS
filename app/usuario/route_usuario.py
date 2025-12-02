@@ -7,7 +7,8 @@ from app.usuario.controlador_usuario import(
     cambiar_estado_cuenta,
     verificar_relacion_feligres,
     obtener_feligres_por_id,
-    datos_reserva_usuario
+    datos_reserva_usuario,
+    buscar_feligreses_admin,
 )
 
 from app.usuario.controlador_personal import(
@@ -16,7 +17,8 @@ from app.usuario.controlador_personal import(
     agregar_usuario_personal,
     verificar_relacion_personal,
     eliminar_usuario_personal,
-    personal_reserva_datos
+    personal_reserva_datos,
+    buscar_personal_admin,
 )
 
 # ... tus imports anteriores ...
@@ -218,7 +220,12 @@ def eliminar_personal(id):
             "ok": False,
             "mensaje": str(e)
         }), 500
-    
+# Ruta para la búsqueda
+@usuario_bp.route('/busqueda_personal/<path:termino>', methods=['GET'])
+def busqueda_personal_ruta(termino):
+    # Asegúrate de importar la función buscar_personal_admin
+    datos = buscar_personal_admin(termino)
+    return jsonify({'datos': datos}), 200    
 
 @usuario_bp.route('/perfil', methods=['GET'])
 def vista_perfil_usuario():
@@ -328,3 +335,35 @@ def combos_pp():
     
     data = obtener_combos_pp(id_usuario, rol)
     return jsonify({"success": True, **data}), 200
+
+
+
+@usuario_bp.route('/busqueda_feligres/<path:termino>', methods=['GET'])
+def buscar_feligres_tabla(termino):
+    # Usamos la nueva función que devuelve TODOS los campos
+    datos = buscar_feligreses_admin(termino)
+    
+    # Formateamos igual que en 'listar_usuarios_feligres'
+    usuarios = []
+    for u in datos:
+        nombreCompleto = f"{u['nombPers']} {u['apePatPers']} {u['apeMatPers']}"
+        usuarios.append({
+            'id': u['id'],
+            'nombreCompleto': nombreCompleto,
+            'numDocFel': u['numDocPers'],
+            'email': u['email'],
+            'clave': u['clave'],
+            'estado': u['estadoCuenta'],
+            'f_nacimiento': u['f_nacimiento'].strftime("%Y-%m-%d") if u['f_nacimiento'] else None,
+            'sexoPers': u['sexoPers'],
+            'direccionPers': u['direccionPers'],
+            'telefonoPers': u['telefonoPers'],
+            'nombDocumento': u['nombDocumento']
+        })
+    
+    # Si no hay datos, devolvemos lista vacía pero con éxito 200
+    if not usuarios:
+        return jsonify({'datos': []}), 200
+
+    return jsonify({'datos': usuarios}), 200
+
