@@ -377,56 +377,56 @@ INSERT INTO ROL_USUARIO (idRol, idUsuario) VALUES
 (3, 29),
 (3, 30);
 
-INSERT INTO ACTO_LITURGICO (nombActo, descripcion, numParticipantes,tipoParticipantes,costoBase, estadoActo, imgActo) VALUES
-('Misa Individual', 'Celebración de la Eucaristía solicitada para una intención particular (difuntos, acción de gracias, etc.).',2,'Beneficiario(s), sacerdote', 100.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/1717714486912590687_0'),
-('Misa Comunitaria', 'Celebración de la Eucaristía con múltiples intenciones, abierta a la comunidad de la parroquia.',2,'Beneficiario(s), sacerdote', 50.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/5719853306317319414_0'),
-('Bautismo Comunitario', 'Sacramento de Bautismo celebrado en grupo, en fechas y horarios fijos.',5,'Padre,Madre,Padrino,Madrina,Sacerdote', 150.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
-('Bautismo Individual', 'Sacramento de Bautismo celebrado de forma privada, fuera de los horarios comunes.',5,'Padre,Madre,Padrino,Madrina,Sacerdote', 250.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
-('Matrimonio (Normal)', 'Sacramento del Matrimonio de dos feligreses propios de la parroquia.', 7,'Novio,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote',300.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
-('Matrimonio (Traslado)', 'Sacramento del Matrimonio de feligreses externos que solicitan realizarlo en esta parroquia.', 7,'Novio,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote', 500.00, TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0');
+INSERT INTO ACTO_LITURGICO (nombActo, descripcion, numParticipantes,tipoParticipantes, estadoActo, imgActo) VALUES
+('Misa Individual', 'Celebración de la Eucaristía solicitada para una intención particular (difuntos, acción de gracias, etc.).',2,'Beneficiario(s), sacerdote', TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/1717714486912590687_0'),
+('Misa Comunitaria', 'Celebración de la Eucaristía con múltiples intenciones, abierta a la comunidad de la parroquia.',2,'Beneficiario(s), sacerdote', TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/5719853306317319414_0'),
+('Bautismo Comunitario', 'Sacramento de Bautismo celebrado en grupo, en fechas y horarios fijos.',5,'Padre,Madre,Padrino,Madrina,Sacerdote', TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
+('Bautismo Individual', 'Sacramento de Bautismo celebrado de forma privada, fuera de los horarios comunes.',5,'Padre,Madre,Padrino,Madrina,Sacerdote', TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/6921707883363271527_0'),
+('Matrimonio (Normal)', 'Sacramento del Matrimonio de dos feligreses propios de la parroquia.', 7,'Novio,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote', TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0'),
+('Matrimonio (Traslado)', 'Sacramento del Matrimonio de feligreses externos que solicitan realizarlo en esta parroquia.', 7,'Novio,Novia,Testigo 1,Testigo 2,Testigo 3,Testigo 4,Sacerdote', TRUE, 'http://googleusercontent.com/image_collection/image_retrieval/14486673798989280698_0');
 
-INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo) VALUES
--- Misa Individual (08:00)
-(1, 1, 'Lun', '08:00:00'), (1, 2, 'Mar', '08:00:00'), (1, 3, 'Mié', '08:00:00'), (1, 4, 'Jue', '08:00:00'), (1, 5, 'Vie', '08:00:00'),
-(1, 6, 'Sáb', '08:00:00'), (1, 7, 'Dom', '08:00:00'), (1, 8, 'Lun', '08:00:00'), (1, 9, 'Mar', '08:00:00'), (1, 10, 'Mié', '08:00:00'),
-(1, 11, 'Jue', '08:00:00'), (1, 12, 'Vie', '08:00:00'), (1, 13, 'Sáb', '08:00:00'), (1, 14, 'Dom', '08:00:00'), (1, 15, 'Lun', '08:00:00'),
-(1, 16, 'Mar', '08:00:00'), (1, 17, 'Mié', '08:00:00'), (1, 18, 'Jue', '08:00:00'), (1, 19, 'Vie', '08:00:00'), (1, 20, 'Sáb', '08:00:00'),
-(1, 21, 'Dom', '08:00:00'), (1, 22, 'Lun', '08:00:00'), (1, 23, 'Mar', '08:00:00'),
+INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo, costoBase) VALUES
+-- Misa Individual (08:00) - Costo: 100.00
+(1, 1, 'Lun', '08:00:00', 100.00), (1, 2, 'Mar', '08:00:00', 100.00), (1, 3, 'Mié', '08:00:00', 100.00), (1, 4, 'Jue', '08:00:00', 100.00), (1, 5, 'Vie', '08:00:00', 100.00),
+(1, 6, 'Sáb', '08:00:00', 100.00), (1, 7, 'Dom', '08:00:00', 100.00), (1, 8, 'Lun', '08:00:00', 100.00), (1, 9, 'Mar', '08:00:00', 100.00), (1, 10, 'Mié', '08:00:00', 100.00),
+(1, 11, 'Jue', '08:00:00', 100.00), (1, 12, 'Vie', '08:00:00', 100.00), (1, 13, 'Sáb', '08:00:00', 100.00), (1, 14, 'Dom', '08:00:00', 100.00), (1, 15, 'Lun', '08:00:00', 100.00),
+(1, 16, 'Mar', '08:00:00', 100.00), (1, 17, 'Mié', '08:00:00', 100.00), (1, 18, 'Jue', '08:00:00', 100.00), (1, 19, 'Vie', '08:00:00', 100.00), (1, 20, 'Sáb', '08:00:00', 100.00),
+(1, 21, 'Dom', '08:00:00', 100.00), (1, 22, 'Lun', '08:00:00', 100.00), (1, 23, 'Mar', '08:00:00', 100.00),
 
--- Misa Comunitaria (10:00)
-(2, 1, 'Lun', '10:00:00'), (2, 2, 'Mar', '10:00:00'), (2, 3, 'Mié', '10:00:00'), (2, 4, 'Jue', '10:00:00'), (2, 5, 'Vie', '10:00:00'),
-(2, 6, 'Sáb', '10:00:00'), (2, 7, 'Dom', '10:00:00'), (2, 8, 'Lun', '10:00:00'), (2, 9, 'Mar', '10:00:00'), (2, 10, 'Mié', '10:00:00'),
-(2, 11, 'Jue', '10:00:00'), (2, 12, 'Vie', '10:00:00'), (2, 13, 'Sáb', '10:00:00'), (2, 14, 'Dom', '10:00:00'), (2, 15, 'Lun', '10:00:00'),
-(2, 16, 'Mar', '10:00:00'), (2, 17, 'Mié', '10:00:00'), (2, 18, 'Jue', '10:00:00'), (2, 19, 'Vie', '10:00:00'), (2, 20, 'Sáb', '10:00:00'),
-(2, 21, 'Dom', '10:00:00'), (2, 22, 'Lun', '10:00:00'), (2, 23, 'Mar', '10:00:00'),
+-- Misa Comunitaria (10:00) - Costo: 50.00
+(2, 1, 'Lun', '10:00:00', 50.00), (2, 2, 'Mar', '10:00:00', 50.00), (2, 3, 'Mié', '10:00:00', 50.00), (2, 4, 'Jue', '10:00:00', 50.00), (2, 5, 'Vie', '10:00:00', 50.00),
+(2, 6, 'Sáb', '10:00:00', 50.00), (2, 7, 'Dom', '10:00:00', 50.00), (2, 8, 'Lun', '10:00:00', 50.00), (2, 9, 'Mar', '10:00:00', 50.00), (2, 10, 'Mié', '10:00:00', 50.00),
+(2, 11, 'Jue', '10:00:00', 50.00), (2, 12, 'Vie', '10:00:00', 50.00), (2, 13, 'Sáb', '10:00:00', 50.00), (2, 14, 'Dom', '10:00:00', 50.00), (2, 15, 'Lun', '10:00:00', 50.00),
+(2, 16, 'Mar', '10:00:00', 50.00), (2, 17, 'Mié', '10:00:00', 50.00), (2, 18, 'Jue', '10:00:00', 50.00), (2, 19, 'Vie', '10:00:00', 50.00), (2, 20, 'Sáb', '10:00:00', 50.00),
+(2, 21, 'Dom', '10:00:00', 50.00), (2, 22, 'Lun', '10:00:00', 50.00), (2, 23, 'Mar', '10:00:00', 50.00),
 
--- Bautismo Comunitario (09:00)
-(3, 1, 'Lun', '09:00:00'), (3, 2, 'Mar', '09:00:00'), (3, 3, 'Mié', '09:00:00'), (3, 4, 'Jue', '09:00:00'), (3, 5, 'Vie', '09:00:00'),
-(3, 6, 'Sáb', '09:00:00'), (3, 7, 'Dom', '09:00:00'), (3, 8, 'Lun', '09:00:00'), (3, 9, 'Mar', '09:00:00'), (3, 10, 'Mié', '09:00:00'),
-(3, 11, 'Jue', '09:00:00'), (3, 12, 'Vie', '09:00:00'), (3, 13, 'Sáb', '09:00:00'), (3, 14, 'Dom', '09:00:00'), (3, 15, 'Lun', '09:00:00'),
-(3, 16, 'Mar', '09:00:00'), (3, 17, 'Mié', '09:00:00'), (3, 18, 'Jue', '09:00:00'), (3, 19, 'Vie', '09:00:00'), (3, 20, 'Sáb', '09:00:00'),
-(3, 21, 'Dom', '09:00:00'), (3, 22, 'Lun', '09:00:00'), (3, 23, 'Mar', '09:00:00'),
+-- Bautismo Comunitario (09:00) - Costo: 150.00
+(3, 1, 'Lun', '09:00:00', 150.00), (3, 2, 'Mar', '09:00:00', 150.00), (3, 3, 'Mié', '09:00:00', 150.00), (3, 4, 'Jue', '09:00:00', 150.00), (3, 5, 'Vie', '09:00:00', 150.00),
+(3, 6, 'Sáb', '09:00:00', 150.00), (3, 7, 'Dom', '09:00:00', 150.00), (3, 8, 'Lun', '09:00:00', 150.00), (3, 9, 'Mar', '09:00:00', 150.00), (3, 10, 'Mié', '09:00:00', 150.00),
+(3, 11, 'Jue', '09:00:00', 150.00), (3, 12, 'Vie', '09:00:00', 150.00), (3, 13, 'Sáb', '09:00:00', 150.00), (3, 14, 'Dom', '09:00:00', 150.00), (3, 15, 'Lun', '09:00:00', 150.00),
+(3, 16, 'Mar', '09:00:00', 150.00), (3, 17, 'Mié', '09:00:00', 150.00), (3, 18, 'Jue', '09:00:00', 150.00), (3, 19, 'Vie', '09:00:00', 150.00), (3, 20, 'Sáb', '09:00:00', 150.00),
+(3, 21, 'Dom', '09:00:00', 150.00), (3, 22, 'Lun', '09:00:00', 150.00), (3, 23, 'Mar', '09:00:00', 150.00),
 
--- Bautismo Individual (11:00)
-(4, 1, 'Lun', '11:00:00'), (4, 2, 'Mar', '11:00:00'), (4, 3, 'Mié', '11:00:00'), (4, 4, 'Jue', '11:00:00'), (4, 5, 'Vie', '11:00:00'),
-(4, 6, 'Sáb', '11:00:00'), (4, 7, 'Dom', '11:00:00'), (4, 8, 'Lun', '11:00:00'), (4, 9, 'Mar', '11:00:00'), (4, 10, 'Mié', '11:00:00'),
-(4, 11, 'Jue', '11:00:00'), (4, 12, 'Vie', '11:00:00'), (4, 13, 'Sáb', '11:00:00'), (4, 14, 'Dom', '11:00:00'), (4, 15, 'Lun', '11:00:00'),
-(4, 16, 'Mar', '11:00:00'), (4, 17, 'Mié', '11:00:00'), (4, 18, 'Jue', '11:00:00'), (4, 19, 'Vie', '11:00:00'), (4, 20, 'Sáb', '11:00:00'),
-(4, 21, 'Dom', '11:00:00'), (4, 22, 'Lun', '11:00:00'), (4, 23, 'Mar', '11:00:00'),
+-- Bautismo Individual (11:00) - Costo: 250.00
+(4, 1, 'Lun', '11:00:00', 250.00), (4, 2, 'Mar', '11:00:00', 250.00), (4, 3, 'Mié', '11:00:00', 250.00), (4, 4, 'Jue', '11:00:00', 250.00), (4, 5, 'Vie', '11:00:00', 250.00),
+(4, 6, 'Sáb', '11:00:00', 250.00), (4, 7, 'Dom', '11:00:00', 250.00), (4, 8, 'Lun', '11:00:00', 250.00), (4, 9, 'Mar', '11:00:00', 250.00), (4, 10, 'Mié', '11:00:00', 250.00),
+(4, 11, 'Jue', '11:00:00', 250.00), (4, 12, 'Vie', '11:00:00', 250.00), (4, 13, 'Sáb', '11:00:00', 250.00), (4, 14, 'Dom', '11:00:00', 250.00), (4, 15, 'Lun', '11:00:00', 250.00),
+(4, 16, 'Mar', '11:00:00', 250.00), (4, 17, 'Mié', '11:00:00', 250.00), (4, 18, 'Jue', '11:00:00', 250.00), (4, 19, 'Vie', '11:00:00', 250.00), (4, 20, 'Sáb', '11:00:00', 250.00),
+(4, 21, 'Dom', '11:00:00', 250.00), (4, 22, 'Lun', '11:00:00', 250.00), (4, 23, 'Mar', '11:00:00', 250.00),
 
--- Matrimonio Normal (16:00)
-(5, 1, 'Sáb', '16:00:00'), (5, 2, 'Sáb', '16:00:00'), (5, 3, 'Sáb', '16:00:00'), (5, 4, 'Sáb', '16:00:00'), (5, 5, 'Sáb', '16:00:00'),
-(5, 6, 'Sáb', '16:00:00'), (5, 7, 'Sáb', '16:00:00'), (5, 8, 'Sáb', '16:00:00'), (5, 9, 'Sáb', '16:00:00'), (5, 10, 'Sáb', '16:00:00'),
-(5, 11, 'Sáb', '16:00:00'), (5, 12, 'Sáb', '16:00:00'), (5, 13, 'Sáb', '16:00:00'), (5, 14, 'Sáb', '16:00:00'), (5, 15, 'Sáb', '16:00:00'),
-(5, 16, 'Sáb', '16:00:00'), (5, 17, 'Sáb', '16:00:00'), (5, 18, 'Sáb', '16:00:00'), (5, 19, 'Sáb', '16:00:00'), (5, 20, 'Sáb', '16:00:00'),
-(5, 21, 'Sáb', '16:00:00'), (5, 22, 'Sáb', '16:00:00'), (5, 23, 'Sáb', '16:00:00'),
+-- Matrimonio Normal (16:00) - Costo: 300.00
+(5, 1, 'Sáb', '16:00:00', 300.00), (5, 2, 'Sáb', '16:00:00', 300.00), (5, 3, 'Sáb', '16:00:00', 300.00), (5, 4, 'Sáb', '16:00:00', 300.00), (5, 5, 'Sáb', '16:00:00', 300.00),
+(5, 6, 'Sáb', '16:00:00', 300.00), (5, 7, 'Sáb', '16:00:00', 300.00), (5, 8, 'Sáb', '16:00:00', 300.00), (5, 9, 'Sáb', '16:00:00', 300.00), (5, 10, 'Sáb', '16:00:00', 300.00),
+(5, 11, 'Sáb', '16:00:00', 300.00), (5, 12, 'Sáb', '16:00:00', 300.00), (5, 13, 'Sáb', '16:00:00', 300.00), (5, 14, 'Sáb', '16:00:00', 300.00), (5, 15, 'Sáb', '16:00:00', 300.00),
+(5, 16, 'Sáb', '16:00:00', 300.00), (5, 17, 'Sáb', '16:00:00', 300.00), (5, 18, 'Sáb', '16:00:00', 300.00), (5, 19, 'Sáb', '16:00:00', 300.00), (5, 20, 'Sáb', '16:00:00', 300.00),
+(5, 21, 'Sáb', '16:00:00', 300.00), (5, 22, 'Sáb', '16:00:00', 300.00), (5, 23, 'Sáb', '16:00:00', 300.00),
 
--- Matrimonio Traslado (18:00)
-(6, 1, 'Sáb', '18:00:00'), (6, 2, 'Sáb', '18:00:00'), (6, 3, 'Sáb', '18:00:00'), (6, 4, 'Sáb', '18:00:00'), (6, 5, 'Sáb', '18:00:00'),
-(6, 6, 'Sáb', '18:00:00'), (6, 7, 'Sáb', '18:00:00'), (6, 8, 'Sáb', '18:00:00'), (6, 9, 'Sáb', '18:00:00'), (6, 10, 'Sáb', '18:00:00'),
-(6, 11, 'Sáb', '18:00:00'), (6, 12, 'Sáb', '18:00:00'), (6, 13, 'Sáb', '18:00:00'), (6, 14, 'Sáb', '18:00:00'), (6, 15, 'Sáb', '18:00:00'),
-(6, 16, 'Sáb', '18:00:00'), (6, 17, 'Sáb', '18:00:00'), (6, 18, 'Sáb', '18:00:00'), (6, 19, 'Sáb', '18:00:00'), (6, 20, 'Sáb', '18:00:00'),
-(6, 21, 'Sáb', '18:00:00'), (6, 22, 'Sáb', '18:00:00'), (6, 23, 'Sáb', '18:00:00');
+-- Matrimonio Traslado (18:00) - Costo: 500.00
+(6, 1, 'Sáb', '18:00:00', 500.00), (6, 2, 'Sáb', '18:00:00', 500.00), (6, 3, 'Sáb', '18:00:00', 500.00), (6, 4, 'Sáb', '18:00:00', 500.00), (6, 5, 'Sáb', '18:00:00', 500.00),
+(6, 6, 'Sáb', '18:00:00', 500.00), (6, 7, 'Sáb', '18:00:00', 500.00), (6, 8, 'Sáb', '18:00:00', 500.00), (6, 9, 'Sáb', '18:00:00', 500.00), (6, 10, 'Sáb', '18:00:00', 500.00),
+(6, 11, 'Sáb', '18:00:00', 500.00), (6, 12, 'Sáb', '18:00:00', 500.00), (6, 13, 'Sáb', '18:00:00', 500.00), (6, 14, 'Sáb', '18:00:00', 500.00), (6, 15, 'Sáb', '18:00:00', 500.00),
+(6, 16, 'Sáb', '18:00:00', 500.00), (6, 17, 'Sáb', '18:00:00', 500.00), (6, 18, 'Sáb', '18:00:00', 500.00), (6, 19, 'Sáb', '18:00:00', 500.00), (6, 20, 'Sáb', '18:00:00', 500.00),
+(6, 21, 'Sáb', '18:00:00', 500.00), (6, 22, 'Sáb', '18:00:00', 500.00), (6, 23, 'Sáb', '18:00:00', 500.00);
 
 
 
@@ -544,7 +544,6 @@ INSERT INTO ACTO_LITURGICO (
     descripcion, 
     numParticipantes, 
     tipoParticipantes, 
-    costoBase, 
     estadoActo, 
     imgActo
 ) VALUES (
@@ -552,7 +551,6 @@ INSERT INTO ACTO_LITURGICO (
     'Celebración Eucarística semanal, con la posibilidad de añadir intenciones (menciones) internas de la Parroquia.',
     1, -- Mínimo de participantes requeridos: El Sacerdote
     'Sacerdote',
-    0.00,
     TRUE,
     '/img/actos/misa_dominical.jpg'
 );
@@ -607,34 +605,35 @@ INSERT INTO CONFIGURACION_ACTO (
 -- Limpiar la variable de sesión
 SET @idActoMisaDominical = NULL;
 
-INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo) VALUES
+INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo, costoBase) VALUES
+-- Misa Dominical (12:00) - Costo: 0.00
 -- Chiclayo (IDs 1-8)
-(7, 1, 'Dom', '12:00:00'), -- Parroquia Santa María Catedral
-(7, 2, 'Dom', '12:00:00'), -- Parroquia San Antonio de Padua
-(7, 3, 'Dom', '12:00:00'), -- Parroquia San Pedro (Chiclayo)
-(7, 4, 'Dom', '12:00:00'), -- Parroquia San Vicente de Paúl
-(7, 5, 'Dom', '12:00:00'), -- Parroquia San José Obrero
-(7, 6, 'Dom', '12:00:00'), -- Parroquia Cristo Rey
-(7, 7, 'Dom', '12:00:00'), -- Parroquia Nuestra Señora de Fátima
-(7, 8, 'Dom', '12:00:00'), -- Parroquia San Juan Bautista (Chiclayo)
+(7, 1, 'Dom', '12:00:00', 0.00), -- Parroquia Santa María Catedral
+(7, 2, 'Dom', '12:00:00', 0.00), -- Parroquia San Antonio de Padua
+(7, 3, 'Dom', '12:00:00', 0.00), -- Parroquia San Pedro (Chiclayo)
+(7, 4, 'Dom', '12:00:00', 0.00), -- Parroquia San Vicente de Paúl
+(7, 5, 'Dom', '12:00:00', 0.00), -- Parroquia San José Obrero
+(7, 6, 'Dom', '12:00:00', 0.00), -- Parroquia Cristo Rey
+(7, 7, 'Dom', '12:00:00', 0.00), -- Parroquia Nuestra Señora de Fátima
+(7, 8, 'Dom', '12:00:00', 0.00), -- Parroquia San Juan Bautista (Chiclayo)
 
 -- Lambayeque (IDs 9-14)
-(7, 9, 'Dom', '12:00:00'), -- Parroquia San Pedro Apóstol
-(7, 10, 'Dom', '12:00:00'), -- Parroquia San Roque
-(7, 11, 'Dom', '12:00:00'), -- Parroquia Santa Lucía (Lambayeque)
-(7, 12, 'Dom', '12:00:00'), -- Parroquia San Martín de Porres
-(7, 13, 'Dom', '12:00:00'), -- Parroquia Sagrado Corazón de Jesús
-(7, 14, 'Dom', '12:00:00'), -- Parroquia Virgen del Carmen
+(7, 9, 'Dom', '12:00:00', 0.00), -- Parroquia San Pedro Apóstol
+(7, 10, 'Dom', '12:00:00', 0.00), -- Parroquia San Roque
+(7, 11, 'Dom', '12:00:00', 0.00), -- Parroquia Santa Lucía (Lambayeque)
+(7, 12, 'Dom', '12:00:00', 0.00), -- Parroquia San Martín de Porres
+(7, 13, 'Dom', '12:00:00', 0.00), -- Parroquia Sagrado Corazón de Jesús
+(7, 14, 'Dom', '12:00:00', 0.00), -- Parroquia Virgen del Carmen
 
 -- Ferreñafe (IDs 15-19)
-(7, 15, 'Dom', '12:00:00'), -- Parroquia Santa Lucía de Ferreñafe
-(7, 16, 'Dom', '12:00:00'), -- Parroquia San Martín de Tours
-(7, 17, 'Dom', '12:00:00'), -- Parroquia Señor de los Milagros
-(7, 18, 'Dom', '12:00:00'), -- Parroquia Virgen de la Merced
-(7, 19, 'Dom', '12:00:00'), -- Parroquia San Pablo
+(7, 15, 'Dom', '12:00:00', 0.00), -- Parroquia Santa Lucía de Ferreñafe
+(7, 16, 'Dom', '12:00:00', 0.00), -- Parroquia San Martín de Tours
+(7, 17, 'Dom', '12:00:00', 0.00), -- Parroquia Señor de los Milagros
+(7, 18, 'Dom', '12:00:00', 0.00), -- Parroquia Virgen de la Merced
+(7, 19, 'Dom', '12:00:00', 0.00), -- Parroquia San Pablo
 
 -- Rurales / Distritos (IDs 20-23)
-(7, 20, 'Dom', '12:00:00'), -- Parroquia San Isidro Labrador (Monsefú)
-(7, 21, 'Dom', '12:00:00'), -- Parroquia Nuestra Señora del Rosario (Pimentel)
-(7, 22, 'Dom', '12:00:00'), -- Parroquia San Juan Bautista de Eten
-(7, 23, 'Dom', '12:00:00'); -- Parroquia Santa Rosa de Lima
+(7, 20, 'Dom', '12:00:00', 0.00), -- Parroquia San Isidro Labrador (Monsefú)
+(7, 21, 'Dom', '12:00:00', 0.00), -- Parroquia Nuestra Señora del Rosario (Pimentel)
+(7, 22, 'Dom', '12:00:00', 0.00), -- Parroquia San Juan Bautista de Eten
+(7, 23, 'Dom', '12:00:00', 0.00); -- Parroquia Santa Rosa de Lima
