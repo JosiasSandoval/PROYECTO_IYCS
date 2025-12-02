@@ -224,42 +224,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 4. Lógica de Registro de APIs (Funciones auxiliares)
     // =========================================================
 async function registrarDocumentoAPI(documento, idReserva) {
-    if (!documento.idActoRequisito) {
-        console.error('Documento omitido por falta de idActoRequisito');
-        return { ok: false, mensaje: 'Falta idActoRequisito' };
-    }
-    if (!idReserva) {
-        console.error('Documento omitido por falta de idReserva');
-        return { ok: false, mensaje: 'Falta idReserva' };
-    }
+    if (!documento.idActoRequisito) {
+        console.error('Documento omitido por falta de idActoRequisito');
+        return { ok: false, mensaje: 'Falta idActoRequisito' };
+    }
+    if (!idReserva) {
+        console.error('Documento omitido por falta de idReserva');
+        return { ok: false, mensaje: 'Falta idReserva' };
+    }
 
-    const fechaActual = new Date().toISOString().split('T')[0];
-    const fechaSubida = documento.f_subido || fechaActual;
-    const vigenciaFinal = documento.vigenciaDocumento || '2050-12-31';
+    const fechaActual = new Date().toISOString().split('T')[0];
+    const fechaSubida = documento.f_subido || fechaActual;
+    const vigenciaFinal = documento.vigenciaDocumento || '2050-12-31';
 
-    // ❌ LÍNEA ORIGINAL ELIMINADA: const estadoFinal = documento.estadoCumplimiento || 'NO_CUMPLIDO';
-    // ✅ CORRECCIÓN: Usar directamente el estado que viene con el documento. 
-    // Si la propiedad no está (lo cual no debería ocurrir después de los requisitos), 
-    // se usa un valor seguro, aunque el API espera el valor correcto.
-    const estadoFinal = documento.estadoCumplimiento || 'SIN_ESTADO_DEFINIDO'; 
+    // Obtener estadoCumplimiento: primero de estadoCumplimiento, luego de estadoCumplido
+    // estadoCumplido es el nombre usado en reserva_requisito.js
+    const estadoFinal = documento.estadoCumplimiento || documento.estadoCumplido || 'NO_CUMPLIDO';
+    
+    console.log(`Documento ${documento.idActoRequisito}: estadoCumplimiento=${documento.estadoCumplimiento}, estadoCumplido=${documento.estadoCumplido}, estadoFinal=${estadoFinal}`); 
 
-    // Convertir aprobado a entero (1 = true, 0 = false)
-    const aprobadoInt = documento.aprobado ? 1 : 0;
+    // Convertir aprobado a entero (1 = true, 0 = false)
+    const aprobadoInt = documento.aprobado ? 1 : 0;
 
-    const formData = new FormData();
-    formData.append('idActoRequisito', String(documento.idActoRequisito));
-    formData.append('idReserva', String(idReserva));
-    formData.append('estadoCumplimiento', estadoFinal); // <-- USANDO estadoFinal
-    formData.append('observacion', documento.observacion || '');
-    formData.append('vigenciaDocumento', vigenciaFinal);
-    formData.append('aprobado', aprobadoInt);
-    formData.append('f_subido', fechaSubida);
+    const formData = new FormData();
+    formData.append('idActoRequisito', String(documento.idActoRequisito));
+    formData.append('idReserva', String(idReserva));
+    formData.append('estadoCumplimiento', estadoFinal); // <-- USANDO estadoFinal
+    formData.append('observacion', documento.observacion || '');
+    formData.append('vigenciaDocumento', vigenciaFinal);
+    formData.append('aprobado', aprobadoInt);
+    formData.append('f_subido', fechaSubida);
 
-    if (documento.file) {
-        formData.append('file', documento.file);
-        if (documento.rutaArchivo) formData.append('rutaArchivo', documento.rutaArchivo);
-        if (documento.tipoArchivo) formData.append('tipoArchivo', documento.tipoArchivo);
-    }
+    // Intentar obtener el archivo desde window.archivosSeleccionados (de reserva_requisito.js)
+    let archivo = null;
+    if (documento.file) {
+        archivo = documento.file;
+    } else if (documento.tieneArchivoNuevo && documento.idRequisito && window.archivosSeleccionados) {
+        // Buscar el archivo en window.archivosSeleccionados usando idRequisito
+        const archivoData = window.archivosSeleccionados[documento.idRequisito];
+        if (archivoData && archivoData.file) {
+            archivo = archivoData.file;
+        }
+    }
+
+    if (archivo) {
+        formData.append('file', archivo);
+        if (documento.rutaArchivo) formData.append('rutaArchivo', documento.rutaArchivo);
+        if (documento.tipoArchivo) formData.append('tipoArchivo', documento.tipoArchivo);
+    }
 
     try {
         const response = await fetch('/api/requisito/registrar_documento', {
@@ -355,7 +367,18 @@ async function enviarReserva(data) {
         // -------------------------------------------------------
         const documentosCrudos = data.requisitos || data.documentos || {};
         const documentosArray = Object.values(documentosCrudos)
-            .filter(d => d && typeof d === 'object' && d.idActoRequisito);
+            .filter(d => d && typeof d === 'object' && d.idActoRequisito)
+            .map(d => {
+                // Asegurar que estadoCumplimiento esté presente (prioridad: estadoCumplimiento > estadoCumplido)
+                if (!d.estadoCumplimiento && d.estadoCumplido) {
+                    d.estadoCumplimiento = d.estadoCumplido;
+                }
+                // Si no tiene ningún estado, usar NO_CUMPLIDO por defecto
+                if (!d.estadoCumplimiento) {
+                    d.estadoCumplimiento = 'NO_CUMPLIDO';
+                }
+                return d;
+            });
 
         console.log("Documentos a procesar:", documentosArray);
 
@@ -368,7 +391,39 @@ async function enviarReserva(data) {
         // -------------------------------------------------------
         // 🔥 DEFINIR ESTADO DE LA RESERVA (TU CONDICIÓN NUEVA)
         // -------------------------------------------------------
-        const requisitos = data.requisitos ||{};
+        const requisitos = data.requisitos || {};
+        
+        // Obtener estadoReserva: primero de data.estadoReserva, luego de requisitos.estado, o calcularlo
+        let estadoReserva = data.estadoReserva || requisitos.estado;
+        
+        // Si no existe, calcularlo basándose en la lógica
+        if (!estadoReserva) {
+            const rol = document.body.dataset.rol?.toLowerCase() || 'feligres';
+            
+            // Verificar si hay requisitos
+            const listaRequisitos = Object.values(requisitos).filter(r => r.idActoRequisito);
+            
+            // Si no hay requisitos, es misa → PENDIENTE_PAGO
+            if (listaRequisitos.length === 0) {
+                estadoReserva = "PENDIENTE_PAGO";
+            } else {
+                // Hay requisitos: verificar si están todos cumplidos/aprobados
+                if (rol === "feligres") {
+                    const total = listaRequisitos.length;
+                    const subidos = listaRequisitos.filter(r => r.estadoCumplido === "CUMPLIDO").length;
+                    estadoReserva = (subidos < total) ? "PENDIENTE_DOCUMENTO" : "PENDIENTE_REVISION";
+                } else {
+                    // Secretaria/Admin
+                    const todosAprobados = listaRequisitos.every(r => r.aprobado === true);
+                    estadoReserva = todosAprobados ? "PENDIENTE_PAGO" : "PENDIENTE_DOCUMENTO";
+                }
+            }
+            
+            // Si aún no hay estado, usar PENDIENTE_PAGO por defecto
+            if (!estadoReserva) {
+                estadoReserva = "PENDIENTE_PAGO";
+            }
+        }
 
         // -------------------------------------------------------
         // 📝 PASO 1 — REGISTRAR RESERVA
@@ -382,7 +437,7 @@ async function enviarReserva(data) {
             idUsuario: String(data.idUsuario),
             idSolicitante: String(data.idSolicitante),
             idActo: String(data.idActo),
-            estadoReserva: requisitos.estado,
+            estadoReserva: estadoReserva,
             idParroquia: data.idParroquia
         };
 

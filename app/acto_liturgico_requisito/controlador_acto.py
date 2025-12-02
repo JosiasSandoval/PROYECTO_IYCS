@@ -5,7 +5,7 @@ def obtener_acto_parroquia(idParroquia):
     try:
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT al.idActo, al.nombActo,al.costoBase
+                SELECT al.idActo, al.nombActo, ap.costoBase
                 FROM acto_liturgico al
                 INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
                 INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
@@ -33,7 +33,7 @@ def disponibilidad_acto_parroquia(idParroquia,idActo):
     try:    
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT ap.diaSemana, ap.horaInicioActo
+                SELECT ap.idActoParroquia, ap.diaSemana, ap.horaInicioActo
                 FROM acto_liturgico al
                 INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
                 INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
@@ -43,12 +43,72 @@ def disponibilidad_acto_parroquia(idParroquia,idActo):
             resultados = []
             for fila in filas:
                 resultados.append({
-                    'diaSemana': fila[0],
-                    'horaInicioActo': fila[1]
+                    'idActoParroquia': fila[0],
+                    'diaSemana': fila[1],
+                    'horaInicioActo': fila[2]
                 })
             return resultados
     except Exception as e:
         print(f'Error al obtener disponibilidad de acto liturgicos: {e}')
+        return []
+    finally:
+        if conexion:
+            conexion.close()
+
+def obtener_actos_con_horarios_parroquia(idParroquia):
+    """Obtiene todos los actos de una parroquia con sus horarios"""
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    al.idActo,
+                    al.nombActo,
+                    ap.costoBase,
+                    ap.idActoParroquia,
+                    ap.diaSemana,
+                    ap.horaInicioActo
+                FROM acto_liturgico al
+                INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
+                WHERE ap.idParroquia = %s
+                ORDER BY al.nombActo, ap.diaSemana, ap.horaInicioActo;
+            """, (idParroquia,))
+            
+            filas = cursor.fetchall()
+            # Agrupar por acto
+            actos_dict = {}
+            for fila in filas:
+                idActo = fila[0]
+                nombActo = fila[1]
+                costoBase = float(fila[2]) if fila[2] else 0
+                idActoParroquia = fila[3]
+                diaSemana = fila[4]
+                horaInicioActo = fila[5]
+                
+                if idActo not in actos_dict:
+                    actos_dict[idActo] = {
+                        'id': idActo,
+                        'acto': nombActo,
+                        'costoBase': costoBase,
+                        'horarios': []
+                    }
+                
+                # Convertir hora a string si es necesario
+                hora_str = str(horaInicioActo)
+                if hasattr(horaInicioActo, 'strftime'):
+                    hora_str = horaInicioActo.strftime('%H:%M')
+                elif isinstance(horaInicioActo, str) and len(horaInicioActo) > 5:
+                    hora_str = horaInicioActo[:5]
+                
+                actos_dict[idActo]['horarios'].append({
+                    'idActoParroquia': idActoParroquia,
+                    'diaSemana': diaSemana,
+                    'horaInicioActo': hora_str
+                })
+            
+            return list(actos_dict.values())
+    except Exception as e:
+        print(f'Error al obtener actos con horarios: {e}')
         return []
     finally:
         if conexion:
@@ -174,6 +234,70 @@ def obtener_configuracion_acto(idActo):
         # Retornar mensaje de error detallado
         return {'ok': False, 'mensaje': f'Error al consultar la base de datos: {e}'}
         
+    finally:
+        if conexion:
+            conexion.close()
+
+
+# ===========================
+# AGREGAR HORARIO A ACTO_PARROQUIA
+# ===========================
+def agregar_horario_acto_parroquia(idActo, idParroquia, diaSemana, horaInicioActo, costoBase):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Verificar si ya existe el horario
+            cursor.execute("""
+                SELECT idActoParroquia FROM acto_parroquia
+                WHERE idActo = %s AND idParroquia = %s AND diaSemana = %s AND horaInicioActo = %s
+            """, (idActo, idParroquia, diaSemana, horaInicioActo))
+            
+            if cursor.fetchone():
+                return {'ok': False, 'mensaje': 'Este horario ya existe para este acto y parroquia'}
+            
+            # Insertar nuevo horario
+            cursor.execute("""
+                INSERT INTO acto_parroquia (idActo, idParroquia, diaSemana, horaInicioActo, costoBase)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (idActo, idParroquia, diaSemana, horaInicioActo, costoBase))
+            
+            conexion.commit()
+            idActoParroquia = cursor.lastrowid
+            
+            return {
+                'ok': True,
+                'mensaje': 'Horario agregado correctamente',
+                'idActoParroquia': idActoParroquia
+            }
+    except Exception as e:
+        print(f'Error al agregar horario: {e}')
+        conexion.rollback()
+        return {'ok': False, 'mensaje': f'Error al agregar horario: {str(e)}'}
+    finally:
+        if conexion:
+            conexion.close()
+
+# ===========================
+# ELIMINAR HORARIO DE ACTO_PARROQUIA
+# ===========================
+def eliminar_horario_acto_parroquia(idActoParroquia):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Verificar que existe
+            cursor.execute("SELECT idActoParroquia FROM acto_parroquia WHERE idActoParroquia = %s", (idActoParroquia,))
+            if not cursor.fetchone():
+                return {'ok': False, 'mensaje': 'Horario no encontrado'}
+            
+            # Eliminar
+            cursor.execute("DELETE FROM acto_parroquia WHERE idActoParroquia = %s", (idActoParroquia,))
+            conexion.commit()
+            
+            return {'ok': True, 'mensaje': 'Horario eliminado correctamente'}
+    except Exception as e:
+        print(f'Error al eliminar horario: {e}')
+        conexion.rollback()
+        return {'ok': False, 'mensaje': f'Error al eliminar horario: {str(e)}'}
     finally:
         if conexion:
             conexion.close()

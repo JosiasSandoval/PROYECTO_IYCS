@@ -1,6 +1,6 @@
 import os
 import calendar
-from flask import Flask, render_template, redirect, session, url_for
+from flask import Flask, render_template, redirect, session, url_for, request
 from functools import wraps
 
 from app.tipo_documento.route_tipo_documento import tipoDocumento_bp
@@ -102,6 +102,10 @@ def crear_app():
     @app.route('/cliente/calendario')
     @requires_roles('Feligres', 'Secretaria', 'Sacerdote')
     def calendario_cliente():
+        # Obtener idParroquia de los parámetros de la URL si viene desde detalle_parroquia
+        idParroquia = request.args.get('idParroquia')
+        if idParroquia:
+            session['idParroquia'] = idParroquia
         return render_template('cliente/calendario.html')
 
     @app.route('/cliente/acto_liturgico')

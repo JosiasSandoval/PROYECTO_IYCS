@@ -36,7 +36,7 @@ def crear_acto():
     data = request.get_json()
     
     # Campos obligatorios del nuevo modal
-    campos_requeridos = ["nombActo", "numParticipantes", "tipoParticipantes", "costoBase", "imgActo"]
+    campos_requeridos = ["nombActo", "numParticipantes", "tipoParticipantes","imgActo"]
     
     if not data or not all(campo in data for campo in campos_requeridos):
         return jsonify({"success": False, "mensaje": "Datos incompletos. Faltan campos obligatorios."}), 400
@@ -53,7 +53,7 @@ def editar_acto(idActo):
     data = request.get_json()
 
     # Campos obligatorios del nuevo modal
-    campos_requeridos = ["nombActo", "numParticipantes", "tipoParticipantes", "costoBase", "imgActo"]
+    campos_requeridos = ["nombActo", "numParticipantes", "tipoParticipantes", "imgActo"]
 
     if not data or not all(campo in data for campo in campos_requeridos):
         return jsonify({"success": False, "mensaje": "Datos incompletos. Faltan campos obligatorios."}), 400

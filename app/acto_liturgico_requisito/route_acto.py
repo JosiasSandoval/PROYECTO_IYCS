@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, time
 from flask import jsonify,Blueprint,request
 from app.acto_liturgico_requisito.controlador_acto import (
-    obtener_acto_parroquia,disponibilidad_acto_parroquia,participante_acto,registrar_participantes_acto, obtener_configuracion_acto)
+    obtener_acto_parroquia,disponibilidad_acto_parroquia,participante_acto,registrar_participantes_acto, 
+    obtener_configuracion_acto, agregar_horario_acto_parroquia, eliminar_horario_acto_parroquia,
+    obtener_actos_con_horarios_parroquia)
 
 acto_bp=Blueprint('acto',__name__)
 
@@ -86,3 +88,68 @@ def configuracion_acto(id):
         "mensaje": "Actos encontrados correctamente",
         "datos": datos
     }), 200
+
+# =====================================================
+# AGREGAR HORARIO A ACTO_PARROQUIA
+# =====================================================
+@acto_bp.route('/horario/agregar', methods=['POST'])
+def agregar_horario():
+    try:
+        data = request.get_json()
+        
+        if not all([data.get('idActo'), data.get('idParroquia'), data.get('diaSemana'), data.get('horaInicioActo')]):
+            return jsonify({'success': False, 'mensaje': 'Faltan datos requeridos'}), 400
+        
+        resultado = agregar_horario_acto_parroquia(
+            idActo=data['idActo'],
+            idParroquia=data['idParroquia'],
+            diaSemana=data['diaSemana'],
+            horaInicioActo=data['horaInicioActo'],
+            costoBase=data.get('costoBase', 0)
+        )
+        
+        if resultado['ok']:
+            return jsonify(resultado), 201
+        else:
+            return jsonify(resultado), 400
+            
+    except Exception as e:
+        print(f'Error en agregar horario: {e}')
+        return jsonify({'success': False, 'mensaje': f'Error interno: {str(e)}'}), 500
+
+# =====================================================
+# ELIMINAR HORARIO DE ACTO_PARROQUIA
+# =====================================================
+@acto_bp.route('/horario/eliminar/<int:idActoParroquia>', methods=['DELETE'])
+def eliminar_horario(idActoParroquia):
+    try:
+        resultado = eliminar_horario_acto_parroquia(idActoParroquia)
+        
+        if resultado['ok']:
+            return jsonify(resultado), 200
+        else:
+            return jsonify(resultado), 400
+            
+    except Exception as e:
+        print(f'Error en eliminar horario: {e}')
+        return jsonify({'success': False, 'mensaje': f'Error interno: {str(e)}'}), 500
+
+# =====================================================
+# OBTENER ACTOS CON HORARIOS DE UNA PARROQUIA
+# =====================================================
+@acto_bp.route('/parroquia/<int:idParroquia>/actos-horarios', methods=['GET'])
+def actos_con_horarios_parroquia(idParroquia):
+    try:
+        datos = obtener_actos_con_horarios_parroquia(idParroquia)
+        return jsonify({
+            "success": True,
+            "mensaje": "Actos con horarios obtenidos correctamente",
+            "datos": datos
+        }), 200
+    except Exception as e:
+        print(f'Error en actos con horarios: {e}')
+        return jsonify({
+            "success": False,
+            "mensaje": f"Error al obtener actos con horarios: {str(e)}",
+            "datos": []
+        }), 500
