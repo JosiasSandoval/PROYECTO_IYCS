@@ -319,3 +319,61 @@ def personal_reserva_datos(idParroquia):
     finally:
         if conexion:
             conexion.close()
+
+def buscar_personal_admin(termino):
+    conexion = obtener_conexion()
+    try:
+        resultados_dict = {}
+        patron = f"%{termino}%"
+
+        with conexion.cursor() as cursor:
+            # Misma consulta que get_datos_personal pero con WHERE LIKE
+            cursor.execute("""
+                SELECT 
+                    us.idUsuario, us.email, us.clave, us.estadoCuenta, 
+                    pe.numDocPers, ti.nombDocumento, pe.nombPers, 
+                    pe.apePatPers, pe.apeMatPers, pe.sexoPers, 
+                    pe.direccionPers, pe.telefonoPers, pp.f_inicio, 
+                    pp.f_fin, pp.vigenciaParrPers, ca.nombCargo, 
+                    r.nombRol, pa.nombParroquia       
+                FROM usuario us
+                INNER JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
+                INNER JOIN rol r ON r.idRol = ru.idRol
+                INNER JOIN personal pe ON us.idUsuario = pe.idUsuario
+                INNER JOIN tipo_documento ti ON ti.idTipoDocumento = pe.idTipoDocumento
+                INNER JOIN parroquia_personal pp ON pp.idPersonal = pe.idPersonal
+                INNER JOIN cargo ca ON ca.idCargo = pp.idCargo
+                INNER JOIN parroquia pa ON pa.idParroquia = pp.idParroquia
+                WHERE 
+                    CONCAT(pe.nombPers, ' ', pe.apePatPers, ' ', pe.apeMatPers) LIKE %s
+                    OR pe.numDocPers LIKE %s
+                    OR us.email LIKE %s
+                ORDER BY us.idUsuario;
+            """, (patron, patron, patron))
+
+            resultados = cursor.fetchall()
+
+            # Agrupación de roles (mismo lógica que get_datos_personal)
+            for fila in resultados:
+                id_user = fila[0]
+                if id_user not in resultados_dict:
+                    resultados_dict[id_user] = {
+                        'idUsuario': fila[0], 'email': fila[1], 'clave': fila[2],
+                        'estadoCuenta': fila[3], 'numDocPers': fila[4], 'nombDocumento': fila[5],
+                        'nombPers': fila[6], 'apePatPers': fila[7], 'apeMatPers': fila[8],
+                        'sexoPers': fila[9], 'direccionPers': fila[10], 'telefonoPers': fila[11],
+                        'f_inicio': fila[12], 'f_fin': fila[13], 'vigenciaParrPers': fila[14],
+                        'nombCargo': fila[15], 'nombParroquia': fila[17], 'roles': []
+                    }
+                rol = fila[16]
+                if rol not in resultados_dict[id_user]['roles']:
+                    resultados_dict[id_user]['roles'].append(rol)
+
+        return list(resultados_dict.values())
+
+    except Exception as e:
+        print(f'Error al buscar personal: {e}')
+        return []
+    finally:
+        if conexion:
+            conexion.close()

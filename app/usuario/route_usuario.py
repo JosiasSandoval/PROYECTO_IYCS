@@ -7,7 +7,8 @@ from app.usuario.controlador_usuario import(
     cambiar_estado_cuenta,
     verificar_relacion_feligres,
     obtener_feligres_por_id,
-    datos_reserva_usuario
+    datos_reserva_usuario,
+    buscar_feligreses_admin,
 )
 
 from app.usuario.controlador_personal import(
@@ -16,7 +17,18 @@ from app.usuario.controlador_personal import(
     agregar_usuario_personal,
     verificar_relacion_personal,
     eliminar_usuario_personal,
-    personal_reserva_datos
+    personal_reserva_datos,
+    buscar_personal_admin,
+)
+
+# ... tus imports anteriores ...
+from app.usuario.controlador_parroquia_personal import (
+    obtener_asignaciones_pp,
+    registrar_asignacion_pp,
+    actualizar_asignacion_pp,
+    cambiar_vigencia_pp,
+    eliminar_asignacion_pp,
+    obtener_combos_pp
 )
 
 usuario_bp = Blueprint('usuario', __name__)
@@ -208,7 +220,12 @@ def eliminar_personal(id):
             "ok": False,
             "mensaje": str(e)
         }), 500
-    
+# Ruta para la búsqueda
+@usuario_bp.route('/busqueda_personal/<path:termino>', methods=['GET'])
+def busqueda_personal_ruta(termino):
+    # Asegúrate de importar la función buscar_personal_admin
+    datos = buscar_personal_admin(termino)
+    return jsonify({'datos': datos}), 200    
 
 @usuario_bp.route('/perfil', methods=['GET'])
 def vista_perfil_usuario():
@@ -265,7 +282,88 @@ def buscar_solicitante(nombre):
 
     return jsonify({'usuario': usuario}), 200
 
+@usuario_bp.route('/parroquia_personal/listar', methods=['GET'])
+def listar_pp():
+    # Obtener contexto del usuario logueado
+    id_usuario = session.get('idUsuario')
+    rol = session.get('rol_sistema')
+    
+    if not id_usuario:
+        return jsonify({"success": False, "mensaje": "Sesión no válida"}), 401
+
+    datos = obtener_asignaciones_pp(id_usuario, rol)
+    return jsonify({"success": True, "datos": datos}), 200
+
+@usuario_bp.route('/parroquia_personal/guardar', methods=['POST'])
+def guardar_pp():
+    data = request.get_json()
+    if not all(k in data for k in ('idPersonal', 'idCargo', 'idParroquia', 'f_inicio')):
+        return jsonify({"success": False, "mensaje": "Faltan datos obligatorios"}), 400
+    
+    ok, msg = registrar_asignacion_pp(data)
+    if ok:
+        return jsonify({"success": True, "mensaje": msg}), 201
+    return jsonify({"success": False, "mensaje": msg}), 500
+
+@usuario_bp.route('/parroquia_personal/actualizar/<int:id_pp>', methods=['PUT'])
+def actualizar_pp(id_pp):
+    data = request.get_json()
+    ok, msg = actualizar_asignacion_pp(id_pp, data)
+    if ok:
+        return jsonify({"success": True, "mensaje": msg}), 200
+    return jsonify({"success": False, "mensaje": msg}), 500
+
+@usuario_bp.route('/parroquia_personal/estado/<int:id_pp>', methods=['PATCH'])
+def estado_pp(id_pp):
+    data = request.get_json()
+    nuevo_estado = data.get('vigencia')
+    if cambiar_vigencia_pp(id_pp, nuevo_estado):
+        return jsonify({"success": True, "mensaje": "Estado actualizado"}), 200
+    return jsonify({"success": False, "mensaje": "Error al cambiar estado"}), 500
+
+@usuario_bp.route('/parroquia_personal/eliminar/<int:id_pp>', methods=['DELETE'])
+def eliminar_pp(id_pp):
+    ok, msg = eliminar_asignacion_pp(id_pp)
+    if ok:
+        return jsonify({"success": True, "mensaje": msg}), 200
+    return jsonify({"success": False, "mensaje": msg}), 500
+
+@usuario_bp.route('/parroquia_personal/combos', methods=['GET'])
+def combos_pp():
+    id_usuario = session.get('idUsuario')
+    rol = session.get('rol_sistema')
+    
+    data = obtener_combos_pp(id_usuario, rol)
+    return jsonify({"success": True, **data}), 200
 
 
 
+@usuario_bp.route('/busqueda_feligres/<path:termino>', methods=['GET'])
+def buscar_feligres_tabla(termino):
+    # Usamos la nueva función que devuelve TODOS los campos
+    datos = buscar_feligreses_admin(termino)
+    
+    # Formateamos igual que en 'listar_usuarios_feligres'
+    usuarios = []
+    for u in datos:
+        nombreCompleto = f"{u['nombPers']} {u['apePatPers']} {u['apeMatPers']}"
+        usuarios.append({
+            'id': u['id'],
+            'nombreCompleto': nombreCompleto,
+            'numDocFel': u['numDocPers'],
+            'email': u['email'],
+            'clave': u['clave'],
+            'estado': u['estadoCuenta'],
+            'f_nacimiento': u['f_nacimiento'].strftime("%Y-%m-%d") if u['f_nacimiento'] else None,
+            'sexoPers': u['sexoPers'],
+            'direccionPers': u['direccionPers'],
+            'telefonoPers': u['telefonoPers'],
+            'nombDocumento': u['nombDocumento']
+        })
+    
+    # Si no hay datos, devolvemos lista vacía pero con éxito 200
+    if not usuarios:
+        return jsonify({'datos': []}), 200
+
+    return jsonify({'datos': usuarios}), 200
 

@@ -1,34 +1,133 @@
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
+const inputDocumento = document.getElementById("inputDocumento"); // Referencia global al input
 
-const modalDetalle = crearModal();            // crea y añade modal detalle al DOM (igual diseño)
-const modalFormulario = crearModalFormulario(); // crea y añade modal formulario al DOM (igual diseño)
+// Crear modales en el DOM al iniciar
+const modalDetalle = crearModal();
+const modalFormulario = crearModalFormulario(); 
 
-let documentos = [];           // se llenará desde la API
-let documentosFiltrados = null;
+let documentos = [];           // Todos los documentos (memoria)
+let documentosFiltrados = null; // Resultados de búsqueda
 let paginaActual = 1;
-const elementosPorPagina = 10;
+const elementosPorPagina = 7;
 let ordenActual = { campo: null, ascendente: true };
 
+// ================== INICIALIZACIÓN ==================
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Configurar buscador predictivo
+    configurarBuscadorPrincipal();
+    
+    // 2. Cargar datos
+    cargarDocumentos();
+
+    // 3. Eventos botones buscar/guardar
+    document.getElementById("btn_buscar").addEventListener("click", filtrarDatos);
+    inputDocumento.addEventListener("keyup", (e) => { if(e.key === "Enter") filtrarDatos(); });
+
+    document.getElementById("btn_guardar").addEventListener("click", () => {
+        abrirModalFormulario("agregar");
+    });
+
+    // 4. Cerrar sugerencias al hacer clic fuera
+    document.addEventListener("click", (e) => {
+        const lista = document.getElementById("listaBusquedaPrincipal");
+        const wrapper = document.querySelector(".search-container");
+        if (lista && wrapper && !wrapper.contains(e.target)) {
+            lista.classList.remove("active");
+        }
+    });
+});
+
 /* -------------------------
-   Normalizar un documento (soporta distintos formatos de API)
+   LÓGICA BUSCADOR PREDICTIVO (MODIFICADO: SOLO RELLENA)
+   ------------------------- */
+function configurarBuscadorPrincipal() {
+    if (!inputDocumento) return;
+
+    // Crear wrapper y lista dinámicamente para no tocar HTML manual
+    const wrapper = document.createElement("div");
+    wrapper.className = "search-container";
+    
+    inputDocumento.parentNode.insertBefore(wrapper, inputDocumento);
+    wrapper.appendChild(inputDocumento);
+
+    const lista = document.createElement("div");
+    lista.id = "listaBusquedaPrincipal";
+    lista.className = "dropdown-list";
+    wrapper.appendChild(lista);
+
+    const actualizarLista = () => {
+        const texto = inputDocumento.value.toLowerCase().trim();
+        lista.innerHTML = "";
+        
+        if (!documentos || documentos.length === 0) return;
+
+        // Buscar coincidencias en memoria
+        let coincidencias;
+        if (!texto) {
+            coincidencias = documentos; // Mostrar todos si vacío
+        } else {
+            coincidencias = documentos.filter(doc => 
+                doc.nombre.toLowerCase().includes(texto) || 
+                doc.abreviatura.toLowerCase().includes(texto)
+            );
+        }
+
+        if (coincidencias.length === 0) {
+            lista.classList.remove("active");
+        } else {
+            // Mostrar máximo 8 resultados visualmente
+            coincidencias.slice(0, 8).forEach(doc => {
+                const item = document.createElement("div");
+                item.className = "dropdown-item";
+                item.innerHTML = `<strong>${doc.nombre}</strong> <small class="text-muted">(${doc.abreviatura})</small>`;
+                
+                // --- AQUÍ ESTÁ EL CAMBIO SOLICITADO ---
+                item.addEventListener("click", () => {
+                    inputDocumento.value = doc.nombre; // Solo rellena el input
+                    lista.classList.remove("active");  // Cierra la lista
+                    // NO llamamos a filtrarDatos() aquí. El usuario debe dar clic en Buscar.
+                });
+                
+                lista.appendChild(item);
+            });
+            lista.classList.add("active");
+        }
+    };
+
+    inputDocumento.addEventListener("input", actualizarLista);
+    inputDocumento.addEventListener("focus", actualizarLista);
+}
+
+// Función de filtrado usada por el botón LUPA y ENTER
+function filtrarDatos() {
+    const termino = inputDocumento.value.trim().toLowerCase();
+    if (!termino) {
+        documentosFiltrados = null;
+    } else {
+        documentosFiltrados = documentos.filter(doc => 
+            doc.nombre.toLowerCase().includes(termino) ||
+            doc.abreviatura.toLowerCase().includes(termino)
+        );
+    }
+    paginaActual = 1;
+    renderTabla();
+}
+
+/* -------------------------
+   NORMALIZACIÓN Y API
    ------------------------- */
 function normalizar(doc) {
-  const id = doc.id ?? doc.idTipoDocumento ?? doc.id_tipo_documento ?? null;
-  const nombre = doc.nombre ?? doc.nombDocumento ?? doc.nomb_documento ?? "";
+  const id = doc.id ?? doc.idTipoDocumento ?? null;
+  const nombre = doc.nombre ?? doc.nombDocumento ?? "";
   const abreviatura = doc.abreviatura ?? doc.abrev ?? "";
-
   let estado = false;
-
-  // Detecta correctamente: 1, "1", true, "activo"
-  if (doc.estado === 1 || doc.estado === "1" || doc.estado === true || doc.estado === "activo" || doc.estadoDocumento === true || doc.estadoDocumento === 1) {
+  if (doc.estado === 1 || doc.estado === true || doc.estado === "activo" || doc.estadoDocumento === true) {
     estado = true;
   }
-
   return { id, nombre, abreviatura, estado };
 }
 
-// Función genérica para manejar solicitudes a la API
 const manejarSolicitud = async (url, opciones, mensajeError) => {
   try {
     const res = await fetch(url, opciones);
@@ -41,23 +140,15 @@ const manejarSolicitud = async (url, opciones, mensajeError) => {
   }
 };
 
-/* ==========================
-   CARGAR DOCUMENTOS DESDE API
-   ========================== */
 const cargarDocumentos = async () => {
-  documentos = await manejarSolicitud(
-    "/api/tipoDocumento/",
-    {},
-    "Error al obtener documentos"
-  ).then((data) => (Array.isArray(data) ? data.map(normalizar) : []));
+  // Obtenemos TODOS los documentos y filtramos en cliente
+  documentos = await manejarSolicitud("/api/tipoDocumento/", {}, "Error al obtener documentos")
+    .then((data) => (Array.isArray(data) ? data.map(normalizar) : []));
   documentosFiltrados = null;
   paginaActual = 1;
   renderTabla();
 };
 
-/* ==========================
-   EXISTE DOCUMENTO (misma lógica que tenías)
-   ========================== */
 function existeDocumento(nombre, abreviatura, idIgnorar = null) {
   return documentos.some(doc =>
     ((doc.nombre.toLowerCase() === nombre.toLowerCase()) ||
@@ -66,33 +157,40 @@ function existeDocumento(nombre, abreviatura, idIgnorar = null) {
   );
 }
 
-/* ==========================
-   RENDER TABLA (IDÉNTICO VISUAL)
-   ========================== */
+/* -------------------------
+   RENDERIZADO TABLA
+   ------------------------- */
 function renderTabla() {
   tabla.innerHTML = "";
-
   const lista = documentosFiltrados ?? documentos;
 
+  if (lista.length === 0) {
+      tabla.innerHTML = '<tr><td colspan="4" style="text-align:center;">No hay registros encontrados</td></tr>';
+      paginacion.innerHTML = "";
+      return;
+  }
+
+  // Ordenamiento
   if (ordenActual.campo) {
     lista.sort((a, b) => {
-      const campo = ordenActual.campo;
-      const valorA = (a[campo] || "").toString().toLowerCase();
-      const valorB = (b[campo] || "").toString().toLowerCase();
+      const valorA = (a[ordenActual.campo] || "").toString().toLowerCase();
+      const valorB = (b[ordenActual.campo] || "").toString().toLowerCase();
       if (valorA < valorB) return ordenActual.ascendente ? -1 : 1;
       if (valorA > valorB) return ordenActual.ascendente ? 1 : -1;
       return 0;
     });
   }
 
+  // Paginación
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const fin = inicio + elementosPorPagina;
   const documentosPagina = lista.slice(inicio, fin);
 
   documentosPagina.forEach((doc, index) => {
-    const esActivo = doc.estado === true || doc.estado === "activo";
+    const esActivo = doc.estado;
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
+    const titleEstado = esActivo ? "Dar de baja" : "Dar de alta";
 
     const fila = document.createElement("tr");
     fila.innerHTML = `
@@ -101,16 +199,17 @@ function renderTabla() {
       <td class="col-abreviatura">${escapeHtml(doc.abreviatura)}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="verDetalle(${doc.id})" title="Ver">
+          <!-- BOTÓN VER (AZUL) -->
+          <button class="btn btn-info" onclick="verDetalle(${doc.id})" title="Ver Detalle">
             <img src="/static/img/ojo.png" alt="ver">
           </button>
-          <button class="btn btn-warning btn-sm" onclick="editarDocumento(${doc.id})" title="Editar">
+          <button class="btn btn-warning" onclick="editarDocumento(${doc.id})" title="Editar">
             <img src="/static/img/lapiz.png" alt="editar">
           </button>
-          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${doc.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
-            <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
+          <button class="btn ${botonColor}" onclick="darDeBaja(${doc.id})" title="${titleEstado}">
+            <img src="/static/img/flecha-hacia-abajo.png" style="${rotacion}">
           </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarDocumento(${doc.id})" title="Eliminar">
+          <button class="btn btn-danger" onclick="eliminarDocumento(${doc.id})" title="Eliminar">
             <img src="/static/img/x.png" alt="eliminar">
           </button>
         </div>
@@ -124,9 +223,9 @@ function renderTabla() {
 
 const escapeHtml = (text) => String(text || "").replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
 
-/* ==========================
-   PAGINACIÓN (idéntica)
-   ========================== */
+/* -------------------------
+   PAGINACIÓN
+   ------------------------- */
 const renderPaginacion = () => {
   paginacion.innerHTML = "";
   const total = (documentosFiltrados ?? documentos).length;
@@ -169,10 +268,9 @@ function cambiarPagina(pagina) {
   renderTabla();
 }
 
-/* ==========================
-   ACCIONES: agregar, editar, eliminar, estado
-   (llaman a la API y luego recargan)
-   ========================== */
+/* -------------------------
+   ACCIONES (API)
+   ------------------------- */
 const agregarDocumento = (nombre, abreviatura) => manejarSolicitud(
   "/api/tipoDocumento/agregar",
   {
@@ -198,34 +296,24 @@ const eliminarDocumento = async (id) => {
   try {
     const res = await fetch(`/api/tipoDocumento/eliminar/${id}`, { method: "DELETE" });
     const data = await res.json();
-
     if (!res.ok) {
-      // Mostrar mensaje de error específico del servidor
-      alert(data.error || "Error al eliminar el documento");
+      alert(data.error || "Error al eliminar");
       return;
     }
-
-    alert(data.mensaje || "Documento eliminado correctamente");
+    alert(data.mensaje || "Eliminado correctamente");
     cargarDocumentos();
   } catch (err) {
-    console.error("Error al eliminar documento", err);
-    alert("Error inesperado al eliminar el documento");
+    console.error(err);
+    alert("Error inesperado");
   }
 };
 
-/* ==========================
-   CAMBIO DE ESTADO (optimizado)
-   ========================== */
 async function darDeBaja(id) {
   try {
-    // Buscar el documento actual
     const doc = documentos.find(d => d.id === id);
-    if (!doc) return alert("Documento no encontrado");
+    if (!doc) return;
+    const nuevoEstado = !doc.estado;
 
-    // Determinar el nuevo estado (toggle)
-    const nuevoEstado = doc.estado === true || doc.estado === "activo" ? false : true;
-
-    // Llamar a la API
     const res = await fetch(`/api/tipoDocumento/cambiar_estado/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -233,29 +321,10 @@ async function darDeBaja(id) {
     });
 
     if (!res.ok) throw new Error("Error al cambiar estado");
-    const data = await res.json();
-
-    // Actualizar estado local
-    doc.estado = data.nuevo_estado === true || nuevoEstado === true;
-
-    // Actualizar visualmente la fila sin recargar toda la tabla
-    const fila = [...tabla.querySelectorAll("tr")].find(tr => tr.innerText.includes(doc.nombre));
-    if (fila) {
-      const btn = fila.querySelector(".btn-orange, .btn-success");
-      const img = btn.querySelector("img");
-
-      if (doc.estado) {
-        btn.classList.remove("btn-success");
-        btn.classList.add("btn-orange");
-        btn.title = "Dar de baja";
-        img.style.transform = "";
-      } else {
-        btn.classList.remove("btn-orange");
-        btn.classList.add("btn-success");
-        btn.title = "Dar de alta";
-        img.style.transform = "rotate(180deg)";
-      }
-    }
+    
+    // Actualización optimista: cambiamos en local y renderizamos
+    doc.estado = nuevoEstado;
+    renderTabla();
 
   } catch (err) {
     console.error(err);
@@ -263,41 +332,9 @@ async function darDeBaja(id) {
   }
 }
 
-/* ==========================
-   BÚSQUEDA
-   ========================== */
-const inputDocumento = document.getElementById("inputDocumento");
-const btnBuscar = document.getElementById("btn_buscar");
-btnBuscar.addEventListener("click", async () => {
-  const termino = inputDocumento.value.trim();
-  if (termino === "") {
-    documentosFiltrados = null;
-    paginaActual = 1;
-    renderTabla();
-    return;
-  }
-  try {
-    const res = await fetch(`/api/tipoDocumento/busqueda_documento/${encodeURIComponent(termino)}`);
-    if (res.status === 404) {
-      documentosFiltrados = [];
-      renderTabla();
-      return;
-    }
-    if (!res.ok) throw new Error("Error en búsqueda");
-    const data = await res.json();
-    documentosFiltrados = Array.isArray(data) ? data.map(normalizar) : [normalizar(data)];
-    paginaActual = 1;
-    renderTabla();
-  } catch (err) {
-    console.error(err);
-    alert("Error al buscar documento");
-  }
-});
-
-/* ==========================
-   MODALES: crearModal() y crearModalFormulario()
-   (USAN EXACTAMENTE TU MARKUP ORIGINAL)
-   ========================== */
+/* -------------------------
+   MODALES (HTML)
+   ------------------------- */
 function crearModal() {
   const modalHTML = document.createElement("div");
   modalHTML.innerHTML = `
@@ -308,7 +345,20 @@ function crearModal() {
             <h5 class="modal-title">Detalle del Documento</h5>
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalDetalle')">&times;</button>
           </div>
-          <div class="modal-body" id="modalDetalleContenido"></div>
+          <div class="modal-body" id="modalDetalleContenido">
+             <!-- Se rellena dinámicamente -->
+             <div class="mb-3">
+                <label class="form-label">Nombre del documento</label>
+                <input type="text" id="verNombre" class="form-control" disabled>
+             </div>
+             <div class="mb-3">
+                <label class="form-label">Abreviatura</label>
+                <input type="text" id="verAbreviatura" class="form-control" disabled>
+             </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalDetalle')">Cerrar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -328,17 +378,18 @@ function crearModalFormulario() {
             <button type="button" class="btn-cerrar" onclick="cerrarModal('modalFormulario')">&times;</button>
           </div>
           <div class="modal-body">
-            <form id="formModalDocumento">
+            <form id="formModalDocumento" autocomplete="off">
               <div class="mb-3">
-                <label for="modalNombre" class="form-label">Nombre del documento</label>
+                <label for="modalNombre" class="form-label">Nombre del documento <span class="text-danger">*</span></label>
                 <input type="text" id="modalNombre" class="form-control" required>
               </div>
               <div class="mb-3">
-                <label for="modalAbreviatura" class="form-label">Abreviatura</label>
+                <label for="modalAbreviatura" class="form-label">Abreviatura <span class="text-danger">*</span></label>
                 <input type="text" id="modalAbreviatura" class="form-control" required>
               </div>
               <div class="modal-footer">
-                <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar">Aceptar</button>
+                <button type="button" class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalFormulario')">Cancelar</button>
+                <button type="submit" class="btn-modal btn-modal-primary" id="btnGuardarModal">Guardar</button>
               </div>
             </form>
           </div>
@@ -360,102 +411,67 @@ function cerrarModal(modalId) {
   if (modal) modal.classList.remove('activo');
 }
 
-/* ==========================
-   abrirModalFormulario: maneja modos agregar/editar/ver (igual UI)
-   ========================== */
+// Función unificada para manejar Agregar y Editar
 function abrirModalFormulario(modo, doc = null) {
   const titulo = document.getElementById("modalFormularioTitulo");
   const inputNombre = document.getElementById("modalNombre");
   const inputAbreviatura = document.getElementById("modalAbreviatura");
-  const botonGuardar = document.getElementById("btnGuardar");
   const form = document.getElementById("formModalDocumento");
-  const modalFooter = document.querySelector("#modalFormulario .modal-footer");
 
-  // --- INICIO DE LA SOLUCIÓN ---
-// 1. Limpia cualquier evento de envío que el formulario tuviera antes.
-form.onsubmit = null;
+  // Resetear eventos anteriores
+  form.onsubmit = null;
+  form.reset();
 
-// 2. Limpia cualquier evento de clic que el botón tuviera antes.
-botonGuardar.onclick = null;
-// --- FIN DE LA SOLUCIÓN ---
-
-  // reset footer (mantener boton)
-  modalFooter.innerHTML = "";
-  botonGuardar.textContent = "Aceptar";
-  botonGuardar.type = "submit";
-  botonGuardar.classList.remove("d-none");
-  modalFooter.appendChild(botonGuardar);
-
-  inputNombre.disabled = false;
-  inputAbreviatura.disabled = false;
-
-if (modo === "agregar") {
-  titulo.textContent = "Agregar Documento";
-  inputNombre.value = "";
-  inputAbreviatura.value = "";
-
-  form.onsubmit = function (e) {
-    e.preventDefault();
-    const nombre = inputNombre.value.trim();
-    const abreviatura = inputAbreviatura.value.trim();
-    if (!nombre || !abreviatura) return alert("Complete todos los campos");
-    if (existeDocumento(nombre, abreviatura)) return alert("Ya existe un documento con ese nombre o abreviatura");
-    agregarDocumento(nombre, abreviatura)
-      .then(() => cerrarModal("modalFormulario"));
-  };
-
-  // 👉 Esta línea faltaba
-  abrirModal("modalFormulario");
-} else if (modo === "editar" && doc) {
-    titulo.textContent = "Editar Documento";
-    inputNombre.value = doc.nombre;
-    inputAbreviatura.value = doc.abreviatura;
-
-    form.onsubmit = function (e) {
-      e.preventDefault();
-      const nombre = inputNombre.value.trim();
-      const abreviatura = inputAbreviatura.value.trim();
-      if (!nombre || !abreviatura) return alert("Complete todos los campos");
-      if (existeDocumento(nombre, abreviatura, doc.id)) return alert("Ya existe un documento con ese nombre o abreviatura");
-
-      actualizarDocumentoAPI(doc.id, nombre, abreviatura)
-        .then(() => cerrarModal("modalFormulario"));
-    };
-  } else  if (modo === "ver" && doc) {
-    titulo.textContent = "Detalle del Documento";
-    inputNombre.value = doc.nombre;
-    inputAbreviatura.value = doc.abreviatura;
-    inputNombre.disabled = true;
-    inputAbreviatura.disabled = true;
-
-    // Asegúrate de que el botón "Aceptar" solo cierre el modal
-    botonGuardar.onclick = function (e) {
-      e.preventDefault(); // Evitar cualquier acción predeterminada
-      cerrarModal("modalFormulario");
-    };
+  if (modo === "agregar") {
+      titulo.textContent = "Agregar Documento";
+      form.onsubmit = (e) => {
+          e.preventDefault();
+          const nom = inputNombre.value.trim();
+          const abr = inputAbreviatura.value.trim();
+          if (existeDocumento(nom, abr)) return alert("Ya existe un documento con esos datos");
+          agregarDocumento(nom, abr).then(() => cerrarModal("modalFormulario"));
+      };
+  } else if (modo === "editar" && doc) {
+      titulo.textContent = "Editar Documento";
+      inputNombre.value = doc.nombre;
+      inputAbreviatura.value = doc.abreviatura;
+      
+      form.onsubmit = (e) => {
+          e.preventDefault();
+          const nom = inputNombre.value.trim();
+          const abr = inputAbreviatura.value.trim();
+          if (existeDocumento(nom, abr, doc.id)) return alert("Ya existe otro documento con esos datos");
+          actualizarDocumentoAPI(doc.id, nom, abr).then(() => cerrarModal("modalFormulario"));
+      };
   }
 
   abrirModal("modalFormulario");
 }
 
-/* ==========================
-   funciones usadas por botones (mantengo nombres)
-   ========================== */
-function editarDocumento(id) {
+/* -------------------------
+   HELPERS GLOBALES (Onclick en HTML)
+   ------------------------- */
+window.editarDocumento = function(id) {
   const doc = documentos.find(d => d.id === id);
-  if (!doc) return;
-  abrirModalFormulario("editar", doc);
-}
+  if (doc) abrirModalFormulario("editar", doc);
+};
 
-function verDetalle(id) {
+window.verDetalle = function(id) {
   const doc = documentos.find(d => d.id === id);
-  if (!doc) return;
-  abrirModalFormulario("ver", doc);
-  renderTabla();
-}
+  if (doc) {
+      // Usar modal específico de detalle para evitar conflictos
+      document.getElementById('verNombre').value = doc.nombre;
+      document.getElementById('verAbreviatura').value = doc.abreviatura;
+      abrirModal("modalDetalle");
+  }
+};
+
+window.darDeBaja = darDeBaja;
+window.eliminarDocumento = eliminarDocumento;
+window.cerrarModal = cerrarModal;
 
 /* ==========================
-   ORDENAMIENTO (igual)
+   ORDENAMIENTO
    ========================== */
 document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
   th.style.cursor = "pointer";
@@ -473,13 +489,4 @@ document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
     }
     renderTabla();
   });
-});
-
-/* ==========================
-   INICIALIZAR
-   ========================== */
-cargarDocumentos();
-
-document.getElementById("btn_guardar").addEventListener("click", () => {
-  abrirModalFormulario("agregar");
 });

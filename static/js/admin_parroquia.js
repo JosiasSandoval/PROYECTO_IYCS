@@ -1,38 +1,132 @@
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
+const inputDocumento = document.getElementById("inputDocumento"); // Input de búsqueda
 
-const modalDetalle = crearModal();            
+// Crear UN SOLO MODAL para todo (Agregar, Editar, Ver)
 const modalFormulario = crearModalFormulario(); 
 
 let parroquias = [];           
-let parroquiasFiltradas = null;
+let parroquiasFiltradas = null; 
 let paginaActual = 1;
-const elementosPorPagina = 10;
+const elementosPorPagina = 7;
 let ordenActual = { campo: null, ascendente: true };
 
-function normalizar(par) {
-  const id = par.id ?? par.idParroquia ?? par.id_parroquia ?? null;
-  const nombre = par.nombre ?? par.nombParroquia ?? par.nomb_parroquia ?? "";
-  const direccion = par.direccion ?? par.direccionParroquia ?? par.direccion_parroquia ?? "";
-  const historia = par.historia ?? par.historiaParroquia ?? "";
-  const ruc = par.ruc ?? par.rucParroquia ?? "";
-  const contacto = par.contacto ?? par.telefonoContacto ?? par.telefono_contacto ?? par.contactoParroquia ?? "";
-  const color = par.color ?? par.colorParroquia ?? "";
-  const latitud = par.latParroquia ?? par.latitud ?? par.latitudParroquia ?? "";
-  const longitud = par.logParroquia ?? par.longitud ?? par.longitudParroquia ?? "";
+// ================== INICIALIZACIÓN ==================
+document.addEventListener("DOMContentLoaded", () => {
+    configurarBuscadorPrincipal();
+    cargarParroquias();
 
-  let estado = false;
-  if (
-    par.estado === 1 || par.estado === "1" || par.estado === true ||
-    par.estado === "activo" || par.estadoParroquia === true || par.estadoParroquia === 1
-  ) {
-    estado = true;
-  }
+    document.getElementById("btn_buscar").addEventListener("click", filtrarDatos);
+    inputDocumento.addEventListener("keyup", (e) => { if(e.key === "Enter") filtrarDatos(); });
 
-  return { id, nombre, direccion, historia, ruc, contacto, color, latitud, longitud, estado };
+    document.getElementById("btn_guardar").addEventListener("click", (e) => {
+        e.preventDefault(); 
+        abrirModalFormulario("agregar");
+    });
+
+    document.addEventListener("click", (e) => {
+        const lista = document.getElementById("listaBusquedaPrincipal");
+        const wrapper = document.querySelector(".search-container");
+        if (lista && wrapper && !wrapper.contains(e.target)) {
+            lista.classList.remove("active");
+        }
+    });
+});
+
+/* -------------------------------------------------------
+   LÓGICA BUSCADOR PREDICTIVO
+   ------------------------------------------------------- */
+function configurarBuscadorPrincipal() {
+    if (!inputDocumento) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "search-container";
+    inputDocumento.parentNode.insertBefore(wrapper, inputDocumento);
+    wrapper.appendChild(inputDocumento);
+
+    const lista = document.createElement("div");
+    lista.id = "listaBusquedaPrincipal";
+    lista.className = "dropdown-list";
+    wrapper.appendChild(lista);
+
+    const actualizarLista = () => {
+        const texto = inputDocumento.value.toLowerCase().trim();
+        lista.innerHTML = "";
+        
+        if (!parroquias || parroquias.length === 0) return;
+
+        let coincidencias;
+        if (!texto) {
+            coincidencias = parroquias; 
+        } else {
+            coincidencias = parroquias.filter(p => 
+                p.nombre.toLowerCase().startsWith(texto) || 
+                (p.ruc && p.ruc.startsWith(texto))
+            );
+        }
+
+        if (coincidencias.length === 0) {
+            lista.classList.remove("active");
+        } else {
+            coincidencias.slice(0, 8).forEach(p => {
+                const item = document.createElement("div");
+                item.className = "dropdown-item";
+                item.innerHTML = `${p.nombre} <small class="text-muted" style="color:#888">(${p.ruc || 'S/R'})</small>`;
+                item.addEventListener("click", () => {
+                    inputDocumento.value = p.nombre; 
+                    lista.classList.remove("active");
+                });
+                lista.appendChild(item);
+            });
+            lista.classList.add("active");
+        }
+    };
+
+    inputDocumento.addEventListener("input", actualizarLista);
+    inputDocumento.addEventListener("focus", actualizarLista);
 }
 
+function filtrarDatos() {
+    const termino = inputDocumento.value.trim().toLowerCase();
+    if (!termino) {
+        parroquiasFiltradas = null;
+    } else {
+        parroquiasFiltradas = parroquias.filter(p => 
+            p.nombre.toLowerCase().startsWith(termino) || 
+            (p.ruc && p.ruc.startsWith(termino))
+        );
+    }
+    paginaActual = 1;
+    renderTabla();
+}
 
+/* -------------------------
+   NORMALIZACIÓN Y API
+   ------------------------- */
+function normalizar(p) {
+  // Mapeo robusto de campos de la BD a variables JS
+  const id = p.id ?? p.idParroquia ?? null;
+  const nombre = p.nombre ?? p.nombParroquia ?? "";
+  const ruc = p.ruc ?? "";
+  const direccion = p.direccion ?? "";
+  const email = p.email ?? "";
+  const telefono = p.telefono ?? p.telefonoContacto ?? "";
+  const fecha = p.f_creacion ?? "";
+  
+  // Campos adicionales de la tabla completa
+  const historia = p.historia ?? p.historiaParroquia ?? "";
+  const descripcion = p.descripcion ?? p.descripcionBreve ?? "";
+  const color = p.color ?? "#ffffff";
+  const lat = p.lat ?? p.latParroquia ?? "";
+  const log = p.log ?? p.logParroquia ?? "";
+
+  let estado = false;
+  if (p.estado === 1 || p.estado === true || p.estadoParroquia === true || p.estadoParroquia === 1) {
+    estado = true;
+  }
+  // Retornamos objeto plano con TODAS las propiedades
+  return { id, nombre, ruc, direccion, email, telefono, fecha, historia, descripcion, color, lat, log, estado }; 
+}
 
 const manejarSolicitud = async (url, opciones = {}, mensajeError = "Error") => {
   try {
@@ -48,31 +142,32 @@ const manejarSolicitud = async (url, opciones = {}, mensajeError = "Error") => {
 
 const cargarParroquias = async () => {
   try {
-    const data = await manejarSolicitud("/api/parroquia/", {}, "Error al obtener parroquias");
-    parroquias = Array.isArray(data.datos) ? data.datos.map(normalizar) : [];
-    parroquiasFiltradas = null;
-    paginaActual = 1;
-    renderTabla();
-  } catch (err) {
-    console.error("Error cargando parroquias:", err);
-  }
+      const data = await manejarSolicitud("/api/parroquia/", {}, "Error al obtener parroquias");
+      const items = data.datos || data; 
+      parroquias = Array.isArray(items) ? items.map(normalizar) : [];
+      parroquiasFiltrados = null;
+      paginaActual = 1;
+      renderTabla();
+  } catch (e) { console.error(e); }
 };
 
-function existeParroquia(nombre, idIgnorar = null) {
-  return parroquias.some(par =>
-    par.nombre.toLowerCase() === nombre.toLowerCase() && par.id !== idIgnorar
-  );
-}
-
+/* -------------------------
+   RENDERIZADO TABLA
+   ------------------------- */
 function renderTabla() {
   tabla.innerHTML = "";
   const lista = parroquiasFiltradas ?? parroquias;
 
+  if (lista.length === 0) {
+      tabla.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay registros encontrados</td></tr>';
+      paginacion.innerHTML = "";
+      return;
+  }
+
   if (ordenActual.campo) {
     lista.sort((a, b) => {
-      const campo = ordenActual.campo;
-      const valorA = (a[campo] || "").toString().toLowerCase();
-      const valorB = (b[campo] || "").toString().toLowerCase();
+      const valorA = (a[ordenActual.campo] || "").toString().toLowerCase();
+      const valorB = (b[ordenActual.campo] || "").toString().toLowerCase();
       if (valorA < valorB) return ordenActual.ascendente ? -1 : 1;
       if (valorA > valorB) return ordenActual.ascendente ? 1 : -1;
       return 0;
@@ -81,31 +176,33 @@ function renderTabla() {
 
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const fin = inicio + elementosPorPagina;
-  const parroquiasPagina = lista.slice(inicio, fin);
+  const itemsPagina = lista.slice(inicio, fin);
 
-  parroquiasPagina.forEach((par, index) => {
-    const esActivo = par.estado === true || par.estado === "activo";
+  itemsPagina.forEach((p, index) => {
+    const esActivo = p.estado;
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
+    const titleEstado = esActivo ? "Dar de baja" : "Dar de alta";
 
     const fila = document.createElement("tr");
+    // La tabla muestra solo lo esencial
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
-      <td class="col-nombre">${escapeHtml(par.nombre)}</td>
-      <td class="col-direccion">${escapeHtml(par.direccion)}</td>
-      <td class="col-ruc">${escapeHtml(par.ruc)}</td>
+      <td class="col-nombre">${p.nombre}</td>
+      <td class="col-direccion">${p.direccion}</td>
+      <td class="col-ruc">${p.ruc}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="verDetalle(${par.id})" title="Ver">
+          <button class="btn btn-info btn-sm" onclick="verDetalle(${p.id})" title="Ver Detalle">
             <img src="/static/img/ojo.png" alt="ver">
           </button>
-          <button class="btn btn-warning btn-sm" onclick="editarParroquia(${par.id})" title="Editar">
+          <button class="btn btn-warning btn-sm" onclick="editarParroquia(${p.id})" title="Editar">
             <img src="/static/img/lapiz.png" alt="editar">
           </button>
-          <button class="btn ${botonColor} btn-sm" onclick="darDeBaja(${par.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
-            <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
+          <button class="btn ${botonColor} btn-sm" onclick="cambiarEstado(${p.id})" title="${titleEstado}">
+            <img src="/static/img/flecha-hacia-abajo.png" style="${rotacion}">
           </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarParroquia(${par.id})" title="Eliminar">
+          <button class="btn btn-danger btn-sm" onclick="eliminarParroquia(${p.id})" title="Eliminar">
             <img src="/static/img/x.png" alt="eliminar">
           </button>
         </div>
@@ -114,422 +211,253 @@ function renderTabla() {
     tabla.appendChild(fila);
   });
 
-  renderPaginacion();
+  renderPaginacion(lista.length);
 }
 
-const escapeHtml = text =>
-  String(text || "").replace(/[&<>]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
-
-const renderPaginacion = () => {
+const renderPaginacion = (total) => {
   paginacion.innerHTML = "";
-  const total = (parroquiasFiltradas ?? parroquias).length;
   const totalPaginas = Math.ceil(total / elementosPorPagina);
   if (totalPaginas <= 1) return;
 
   const ul = document.createElement("ul");
   ul.className = "pagination";
-
-  const crearItem = (numero, activo, disabled, texto) => {
+  const crearItem = (texto, clickFn, claseExtra = "") => {
     const li = document.createElement("li");
-    li.className = `page-item ${activo ? "active" : ""} ${disabled ? "disabled" : ""}`;
-    li.innerHTML = `<button class="page-link" onclick="cambiarPagina(${numero})">${texto || numero}</button>`;
+    li.className = `page-item ${claseExtra}`;
+    li.innerHTML = `<button class="page-link">${texto}</button>`;
+    if (clickFn) li.onclick = clickFn;
     return li;
   };
 
-  ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, "<"));
-  const range = [Math.max(1, paginaActual - 2), Math.min(totalPaginas, paginaActual + 2)];
-  if (range[0] > 1) {
-    ul.appendChild(crearItem(1, paginaActual === 1));
-    if (range[0] > 2) ul.appendChild(crearItem(null, false, true, "..."));
+  ul.appendChild(crearItem("&laquo;", paginaActual > 1 ? () => { paginaActual--; renderTabla(); } : null, paginaActual === 1 ? "disabled" : ""));
+
+  for (let i = 1; i <= totalPaginas; i++) {
+      ul.appendChild(crearItem(i, () => { paginaActual = i; renderTabla(); }, i === paginaActual ? "active" : ""));
   }
-  for (let i = range[0]; i <= range[1]; i++) ul.appendChild(crearItem(i, paginaActual === i));
-  if (range[1] < totalPaginas) {
-    if (range[1] < totalPaginas - 1) ul.appendChild(crearItem(null, false, true, "..."));
-    ul.appendChild(crearItem(totalPaginas, paginaActual === totalPaginas));
-  }
-  ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, ">"));
+
+  ul.appendChild(crearItem("&raquo;", paginaActual < totalPaginas ? () => { paginaActual++; renderTabla(); } : null, paginaActual === totalPaginas ? "disabled" : ""));
   paginacion.appendChild(ul);
 };
 
-function cambiarPagina(pagina) {
-  const total = Math.ceil((parroquiasFiltradas ?? parroquias).length / elementosPorPagina);
-  if (pagina < 1 || pagina > total) return;
-  paginaActual = pagina;
-  renderTabla();
-}
+/* -------------------------
+   ACCIONES (API)
+   ------------------------- */
+const agregarParroquiaAPI = (data) => manejarSolicitud(
+  "/api/parroquia/agregar", 
+  { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) },
+  "Error al guardar"
+).then(() => cargarParroquias());
 
-// === AGREGAR PARROQUIA ===
-const agregarParroquia = (nombre, historia, ruc, contacto, direccion, color, latitud, longitud) =>
-  manejarSolicitud(
-    "/api/parroquia/agregar",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nombParroquia: nombre,
-        historiaParroquia: historia || null,
-        ruc: ruc || null,
-        telefonoContacto: contacto || null,
-        direccion: direccion || null,
-        color: color || null,
-        latParroquia: latitud || null,
-        logParroquia: longitud || null,
-        estadoParroquia: true
-      }),
-    },
-    "Error al agregar parroquia"
-  ).then(() => cargarParroquias());
+const actualizarParroquiaAPI = (id, data) => manejarSolicitud(
+  `/api/parroquia/actualizar/${id}`,
+  { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) },
+  "Error al actualizar"
+).then(() => cargarParroquias());
 
-const actualizarParroquiaAPI = (id, nombre, historia, ruc, contacto, direccion, color, latitud, longitud) =>
-  manejarSolicitud(
-    `/api/parroquia/actualizar/${id}`,
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nombParroquia: nombre,
-        historiaParroquia: historia || null,
-        ruc: ruc || null,
-        telefonoContacto: contacto || null,
-        direccion: direccion || null,
-        color: color || null,
-        latParroquia: latitud || null,
-        logParroquia: longitud || null
-      }),
-    },
-    "Error al actualizar parroquia"
-  ).then(() => cargarParroquias());
-
-
-const eliminarParroquia = async id => {
-  if (!confirm("¿Está seguro de eliminar esta parroquia?")) return;
-  try {
-    const res = await fetch(`/api/parroquia/eliminar/${id}`, { method: "DELETE" });
-    const data = await res.json();
-    if (!res.ok) alert(data.mensaje || "Error al eliminar la parroquia");
-    else alert(data.mensaje || "Parroquia eliminada correctamente");
-    cargarParroquias();
-  } catch (err) {
-    console.error("Error al eliminar parroquia", err);
-    alert("Error inesperado al eliminar la parroquia");
-  }
+const cambiarEstado = async (id) => {
+    if(!confirm("¿Seguro de cambiar el estado?")) return;
+    try {
+        await manejarSolicitud(`/api/parroquia/cambiar_estado/${id}`, { method: "PUT" }, "Error estado");
+        cargarParroquias();
+    } catch(e) {}
 };
 
-async function darDeBaja(id) {
+const eliminarParroquia = async (id) => {
+  if (!confirm("¿Está seguro de eliminar esta parroquia?")) return;
   try {
-    const par = parroquias.find(d => d.id === id);
-    if (!par) return alert("Parroquia no encontrada");
-    const nuevoEstado = !par.estado;
-    const res = await fetch(`/api/parroquia/cambiar_estado/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: nuevoEstado })
-    });
-    if (!res.ok) throw new Error("Error al cambiar estado");
-    const data = await res.json();
-    par.estado = data.nuevo_estado === true;
-    renderTabla();
-  } catch (err) {
-    console.error(err);
-    alert("Error al actualizar estado");
-  }
+    await manejarSolicitud(`/api/parroquia/eliminar/${id}`, { method: "DELETE" }, "Error al eliminar");
+    cargarParroquias();
+  } catch (err) { console.error(err); }
+};
+
+/* -------------------------
+   MODAL ÚNICO PARA TODO (AGREGAR, EDITAR, VER)
+   ------------------------- */
+function crearModalFormulario() {
+  const html = `
+  <div class="modal" id="modalForm">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="modalTitulo"></h5>
+            <button class="btn-cerrar" onclick="cerrarModal('modalForm')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="formParroquia" autocomplete="off">
+            
+            <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">Nombre *</label>
+                    <input id="pNombre" class="form-control" required>
+                </div>
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">RUC *</label>
+                    <input id="pRuc" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">Dirección *</label>
+                    <input id="pDireccion" class="form-control" required>
+                </div>
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">Teléfono *</label>
+                    <input id="pTelefono" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">Email *</label>
+                    <input id="pEmail" class="form-control" type="email" required>
+                </div>
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">Fecha Creación *</label>
+                    <input id="pFecha" type="date" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Historia de la Parroquia</label>
+                <textarea id="pHistoria" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Descripción Breve</label>
+                <textarea id="pDescripcion" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
+                 <div class="mb-3" style="flex:1; min-width:100px;">
+                    <label class="form-label">Color</label>
+                    <input id="pColor" type="color" class="form-control" style="height:40px; padding:2px;">
+                </div>
+                <div class="mb-3" style="flex:1; min-width:150px;">
+                    <label class="form-label">Latitud</label>
+                    <input id="pLat" class="form-control" type="number" step="any">
+                </div>
+                <div class="mb-3" style="flex:1; min-width:150px;">
+                    <label class="form-label">Longitud</label>
+                    <input id="pLog" class="form-control" type="number" step="any">
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-modal btn-modal-secondary" id="btnCancelar" onclick="cerrarModal('modalForm')">Cancelar</button>
+                <button type="submit" class="btn-modal btn-modal-primary" id="btnGuardar">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  return document.getElementById("modalForm");
 }
 
-const inputParroquia = document.getElementById("inputDocumento");
-const btnBuscar = document.getElementById("btn_buscar");
-btnBuscar.addEventListener("click", async () => {
-  const termino = inputParroquia.value.trim();
-  if (termino === "") {
-    parroquiasFiltradas = null;
-    paginaActual = 1;
-    renderTabla();
-    return;
-  }
-  try {
-    const res = await fetch(`/api/parroquia/buscar/${encodeURIComponent(termino)}`);
-    const data = await res.json();
+function cerrarModal(id) { document.getElementById(id).classList.remove('activo'); }
 
-    if (!data.ok || !Array.isArray(data.datos) || data.datos.length === 0) {
-      parroquiasFiltradas = [];
-      renderTabla();
-      alert("No se encontraron resultados");
-      return;
+// Función Unificada para Abrir Modal (Agregar, Editar, Ver)
+function abrirModalFormulario(modo, p = null) {
+    const modal = document.getElementById("modalForm");
+    const form = document.getElementById("formParroquia");
+    const titulo = document.getElementById("modalTitulo");
+    const btnGuardar = document.getElementById("btnGuardar");
+    const btnCancelar = document.getElementById("btnCancelar");
+    
+    // 1. Resetear formulario y eventos
+    form.reset();
+    form.onsubmit = null;
+    
+    // 2. Configurar Inputs (Habilitar/Deshabilitar según modo)
+    const inputs = form.querySelectorAll("input, textarea, select");
+    const esLectura = (modo === 'ver');
+    
+    inputs.forEach(input => {
+        input.disabled = esLectura;
+    });
+
+    // 3. Configurar Botones y Títulos
+    if (esLectura) {
+        titulo.textContent = "Detalle de Parroquia";
+        btnGuardar.style.display = "none"; // Ocultar botón guardar
+        btnCancelar.textContent = "Cerrar"; // Botón cancelar ahora dice Cerrar
+        
+        if(p) llenarDatosModal(p); // Llenar con datos para ver
+
+    } else {
+        btnGuardar.style.display = "inline-block";
+        btnCancelar.textContent = "Cancelar";
+        
+        if(modo === "agregar") {
+            titulo.textContent = "Nueva Parroquia";
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                const data = recolectarDatos();
+                agregarParroquiaAPI(data).then(() => cerrarModal('modalForm'));
+            };
+        } else if (modo === "editar" && p) {
+            titulo.textContent = "Editar Parroquia";
+            llenarDatosModal(p);
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                const data = recolectarDatos();
+                actualizarParroquiaAPI(p.id, data).then(() => cerrarModal('modalForm'));
+            };
+        }
+    }
+    
+    modal.classList.add('activo');
+}
+
+function llenarDatosModal(p) {
+    document.getElementById("pNombre").value = p.nombre || "";
+    document.getElementById("pRuc").value = p.ruc || "";
+    document.getElementById("pDireccion").value = p.direccion || "";
+    document.getElementById("pTelefono").value = p.telefono || "";
+    document.getElementById("pEmail").value = p.email || "";
+    
+    if(p.fecha) {
+        let fecha = p.fecha;
+        if(fecha.includes(' ')) fecha = fecha.split(' ')[0]; 
+        document.getElementById("pFecha").value = fecha;
     }
 
-    parroquiasFiltradas = data.datos.map(normalizar);
-    paginaActual = 1;
-    renderTabla();
-  } catch (err) {
-    console.error("Error al buscar parroquia:", err);
-    alert("Error al buscar parroquia");
-  }
-});
-
-
-function crearModal() {
-  const modalHTML = document.createElement("div");
-  modalHTML.innerHTML = `
-    <div class="modal" id="modalDetalle">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Detalle de la Parroquia</h5>
-            <button type="button" class="btn-cerrar" onclick="cerrarModal('modalDetalle')">&times;</button>
-          </div>
-          <div class="modal-body" id="modalDetalleContenido"></div>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modalHTML);
-  return document.getElementById("modalDetalle");
+    // Campos adicionales
+    document.getElementById("pHistoria").value = p.historia || "";
+    document.getElementById("pDescripcion").value = p.descripcion || "";
+    document.getElementById("pColor").value = p.color || "#ffffff";
+    document.getElementById("pLat").value = p.lat || "";
+    document.getElementById("pLog").value = p.log || "";
 }
 
-function crearModalFormulario() {
-  const modalHTML = document.createElement("div");
-  modalHTML.innerHTML = `
-    <div class="modal" id="modalFormulario">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="modalFormularioTitulo"></h5>
-            <button type="button" class="btn-cerrar" onclick="cerrarModal('modalFormulario')">&times;</button>
-          </div>
-          <div class="modal-body">
-            <form id="formModalDocumento">
-              <div class="mb-3">
-                <label for="modalNombre" class="form-label">Nombre de la parroquia</label>
-                <input type="text" id="modalNombre" class="form-control" required>
-              </div>
-
-                <div class="mb-3">
-                  <label for="modalHistoria" class="form-label">Historia</label>
-                  <textarea 
-                    id="modalHistoria" 
-                    class="form-control" 
-                    rows="2" 
-                    style="resize: none;"
-                    placeholder="Escribe aquí la historia de la parroquia..."
-                  ></textarea>
-                </div>
-
-              <div class="mb-3">
-                <label for="modalRuc" class="form-label">RUC</label>
-                <input type="text" id="modalRuc" class="form-control">
-              </div>
-
-              <div class="mb-3">
-                <label for="modalContacto" class="form-label">Contacto</label>
-                <input type="text" id="modalContacto" class="form-control">
-              </div>
-
-              <div class="mb-3">
-                <label for="modalDireccion" class="form-label">Dirección</label>
-                <input type="text" id="modalDireccion" class="form-control">
-              </div>
-
-              <div class="mb-3">
-                <label for="modalColor" class="form-label">Color</label>
-                <input type="text" id="modalColor" class="form-control" placeholder="#RRGGBB">
-              </div>
-
-              <div class="mb-3">
-                <label for="modalLatitud" class="form-label">Latitud</label>
-                <input type="text" id="modalLatitud" class="form-control">
-              </div>
-
-              <div class="mb-3">
-                <label for="modalLongitud" class="form-label">Longitud</label>
-                <input type="text" id="modalLongitud" class="form-control">
-              </div>
-
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-modal btn-modal-primary" id="btnGuardar">Aceptar</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modalHTML);
-  return document.getElementById("modalFormulario");
-}
-
-
-function abrirModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) modal.classList.add('activo');
-}
-
-function cerrarModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) modal.classList.remove('activo');
-}
-
-function abrirModalFormulario(modo, par = null) {
-  const titulo = document.getElementById("modalFormularioTitulo");
-  const inputNombre = document.getElementById("modalNombre");
-  const inputHistoria = document.getElementById("modalHistoria");
-  const inputRuc = document.getElementById("modalRuc");
-  const inputContacto = document.getElementById("modalContacto");
-  const inputDireccion = document.getElementById("modalDireccion");
-  const inputLatitud = document.getElementById("modalLatitud");
-  const inputLongitud = document.getElementById("modalLongitud");
-  const inputColor = document.getElementById("modalColor");
-  const botonGuardar = document.getElementById("btnGuardar");
-  const form = document.getElementById("formModalDocumento");
-  const modalFooter = document.querySelector("#modalFormulario .modal-footer");
-
-  // limpiar configuración anterior
-  form.onsubmit = null;
-  botonGuardar.onclick = null;
-  modalFooter.innerHTML = "";
-  botonGuardar.textContent = "Aceptar";
-  botonGuardar.type = "submit";
-  botonGuardar.classList.remove("d-none");
-  modalFooter.appendChild(botonGuardar);
-
-  // habilitar todos los inputs
-  [
-    inputNombre,
-    inputHistoria,
-    inputRuc,
-    inputContacto,
-    inputDireccion,
-    inputLatitud,
-    inputLongitud,
-    inputColor
-  ].forEach(inp => inp.disabled = false);
-
-  // limpiar valores
-  [
-    inputNombre,
-    inputHistoria,
-    inputRuc,
-    inputContacto,
-    inputDireccion,
-    inputLatitud,
-    inputLongitud,
-    inputColor
-  ].forEach(inp => inp.value = "");
-
-  // === MODO AGREGAR ===
-  if (modo === "agregar") {
-    titulo.textContent = "Agregar parroquia";
-
-    form.onsubmit = e => {
-      e.preventDefault();
-      const nombre = inputNombre.value.trim();
-      const historia = inputHistoria.value.trim();
-      const ruc = inputRuc.value.trim();
-      const contacto = inputContacto.value.trim();
-      const direccion = inputDireccion.value.trim();
-      const latitud = inputLatitud.value.trim();
-      const longitud = inputLongitud.value.trim();
-      const color = inputColor.value.trim();
-
-      if (!nombre || !ruc || !contacto || !direccion)
-        return alert("Complete todos los campos obligatorios");
-
-      if (existeParroquia(nombre))
-        return alert("Ya existe una parroquia con ese nombre");
-
-      agregarParroquia(nombre, historia, ruc, contacto, direccion, color, latitud, longitud)
-        .then(() => cerrarModal("modalFormulario"));
+function recolectarDatos() {
+    return {
+        nombParroquia: document.getElementById("pNombre").value,
+        ruc: document.getElementById("pRuc").value,
+        direccion: document.getElementById("pDireccion").value,
+        telefonoContacto: document.getElementById("pTelefono").value,
+        email: document.getElementById("pEmail").value,
+        f_creacion: document.getElementById("pFecha").value,
+        historiaParroquia: document.getElementById("pHistoria").value,
+        descripcionBreve: document.getElementById("pDescripcion").value,
+        color: document.getElementById("pColor").value,
+        latParroquia: document.getElementById("pLat").value || null,
+        logParroquia: document.getElementById("pLog").value || null
     };
-
-  // === MODO EDITAR ===
-  } else if (modo === "editar" && par) {
-    titulo.textContent = "Editar parroquia";
-
-    inputNombre.value = par.nombre || "";
-    inputHistoria.value = par.historia || "";
-    inputRuc.value = par.ruc || "";
-    inputContacto.value = par.contacto || "";
-    inputDireccion.value = par.direccion || "";
-    inputLatitud.value = par.latitud || "";
-    inputLongitud.value = par.longitud || "";
-    inputColor.value = par.color || "#000000";
-
-    form.onsubmit = e => {
-      e.preventDefault();
-      const nombre = inputNombre.value.trim();
-      const historia = inputHistoria.value.trim();
-      const ruc = inputRuc.value.trim();
-      const contacto = inputContacto.value.trim();
-      const direccion = inputDireccion.value.trim();
-      const latitud = inputLatitud.value.trim();
-      const longitud = inputLongitud.value.trim();
-      const color = inputColor.value.trim();
-
-      if (!nombre || !ruc || !contacto || !direccion)
-        return alert("Complete todos los campos obligatorios");
-
-      if (existeParroquia(nombre, par.id))
-        return alert("Ya existe una parroquia con ese nombre");
-
-      actualizarParroquiaAPI(par.id, nombre, historia, ruc, contacto, direccion, color, latitud, longitud)
-        .then(() => cerrarModal("modalFormulario"));
-    };
-
-  // === MODO VER ===
-  } else if (modo === "ver" && par) {
-    titulo.textContent = "Detalle de la parroquia";
-
-    inputNombre.value = par.nombre || "";
-    inputHistoria.value = par.historia || "";
-    inputRuc.value = par.ruc || "";
-    inputContacto.value = par.contacto || "";
-    inputDireccion.value = par.direccion || "";
-    inputLatitud.value = par.latitud || "";
-    inputLongitud.value = par.longitud || "";
-    inputColor.value = par.color || "#000000";
-
-    [
-      inputNombre,
-      inputHistoria,
-      inputRuc,
-      inputContacto,
-      inputDireccion,
-      inputLatitud,
-      inputLongitud,
-      inputColor
-    ].forEach(inp => inp.disabled = true);
-
-    botonGuardar.textContent = "Cerrar";
-    botonGuardar.type = "button";
-    botonGuardar.onclick = () => cerrarModal("modalFormulario");
-  }
-
-  abrirModal("modalFormulario");
 }
 
+// Helpers globales
+window.editarParroquia = (id) => {
+    const p = parroquias.find(x => x.id === id);
+    if(p) abrirModalFormulario("editar", p);
+};
 
+window.verDetalle = (id) => {
+    const p = parroquias.find(x => x.id === id);
+    if(p) abrirModalFormulario("ver", p); // Ahora llama al mismo modal en modo lectura
+};
 
-function editarParroquia(id) {
-  const par = parroquias.find(d => d.id === id);
-  if (par) abrirModalFormulario("editar", par);
-}
-
-function verDetalle(id) {
-  const par = parroquias.find(d => d.id === id);
-  if (par) abrirModalFormulario("ver", par);
-}
-
-document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
-  th.style.cursor = "pointer";
-  th.addEventListener("click", () => {
-    let campo;
-    if (index === 1) campo = "nombre";
-    else if (index === 2) campo = "direccion";
-    else return;
-    if (ordenActual.campo === campo) ordenActual.ascendente = !ordenActual.ascendente;
-    else { ordenActual.campo = campo; ordenActual.ascendente = true; }
-    renderTabla();
-  });
-});
-
-document.getElementById("btn_guardar").addEventListener("click", () => abrirModalFormulario("agregar"));
-
-cargarParroquias();
+window.cambiarEstado = cambiarEstado;
+window.eliminarParroquia = eliminarParroquia;
