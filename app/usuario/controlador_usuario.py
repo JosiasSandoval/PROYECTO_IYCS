@@ -299,3 +299,62 @@ def datos_reserva_usuario(nombre):
         if conexion:
             conexion.close()
 
+# Agrega esto junto a tus otras funciones de base de datos
+def buscar_feligreses_admin(termino):
+    conexion = obtener_conexion()
+    try:
+        usuarios = []
+        with conexion.cursor() as cursor:
+            # Preparamos el patrón de búsqueda para LIKE
+            patron = f"%{termino}%"
+            
+            cursor.execute("""
+                SELECT 
+                    us.idUsuario,
+                    us.email,
+                    us.clave,
+                    us.estadoCuenta,
+                    fe.numDocFel,
+                    ti.nombDocumento,
+                    fe.nombFel,
+                    fe.apePatFel,
+                    fe.apeMatFel,
+                    fe.f_nacimiento,
+                    fe.sexoFel,
+                    fe.direccionFel,
+                    fe.telefonoFel
+                FROM usuario us
+                INNER JOIN feligres fe ON us.idUsuario = fe.idUsuario
+                INNER JOIN tipo_documento ti ON fe.idTipoDocumento = ti.idTipoDocumento
+                WHERE 
+                    CONCAT(fe.nombFel, ' ', fe.apePatFel, ' ', fe.apeMatFel) LIKE %s
+                    OR fe.numDocFel LIKE %s
+                    OR us.email LIKE %s
+            """, (patron, patron, patron))
+            
+            filas = cursor.fetchall()
+            
+            # Mapeamos los datos igual que en 'get_usuario_feligres'
+            for fila in filas:
+                usuarios.append({
+                    'id': fila[0],
+                    'email': fila[1],
+                    'clave': fila[2],
+                    'estadoCuenta': fila[3],
+                    'numDocPers': fila[4],
+                    'nombDocumento': fila[5],
+                    'nombPers': fila[6],
+                    'apePatPers': fila[7],
+                    'apeMatPers': fila[8],
+                    'f_nacimiento': fila[9],
+                    'sexoPers': fila[10],
+                    'direccionPers': fila[11],
+                    'telefonoPers': fila[12],
+                })
+        return usuarios
+    except Exception as e:
+        print(f"Error al buscar usuarios: {e}")
+        return []
+    finally:
+        if conexion:
+            conexion.close()    
