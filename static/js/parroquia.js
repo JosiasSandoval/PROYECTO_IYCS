@@ -108,6 +108,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        // Botón "Ver calendario" - guardar idParroquia en sesión y redirigir
+        const btnVerCalendario = document.getElementById('btn-ver-calendario');
+        if (btnVerCalendario) {
+            btnVerCalendario.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Guardar idParroquia en la sesión del servidor
+                fetch(`/cliente/calendario?idParroquia=${idParroquia}`, {
+                    method: 'GET'
+                }).then(() => {
+                    window.location.href = '/cliente/calendario';
+                }).catch(err => {
+                    console.error('Error al guardar idParroquia:', err);
+                    // Redirigir de todas formas
+                    window.location.href = '/cliente/calendario';
+                });
+            });
+        }
+
     } catch (e) {
         console.error("❌ Error al cargar la información de la parroquia:", e);
         document.body.innerHTML = '<p style="color:red;">Error al cargar la información de la parroquia.</p>';

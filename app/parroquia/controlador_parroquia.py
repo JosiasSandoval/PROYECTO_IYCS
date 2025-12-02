@@ -111,6 +111,36 @@ def obtener_informacion_parroquia(idParroquia):
             conexion.close()
 
 # ======================================================
+# 🔹 OBTENER ID PARROQUIA DE SECRETARIA
+# ======================================================
+def obtener_parroquia_secretaria(idUsuario):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT pp.idParroquia
+                FROM usuario us
+                INNER JOIN rol_usuario rs ON us.idUsuario = rs.idUsuario
+                INNER JOIN rol r ON rs.idRol = r.idRol
+                INNER JOIN personal pe ON us.idUsuario = pe.idUsuario
+                INNER JOIN parroquia_personal pp ON pe.idPersonal = pp.idPersonal
+                WHERE us.idUsuario = %s AND r.nombRol = 'SECRETARIA'
+                AND pp.vigenciaParrPers = TRUE
+                LIMIT 1;
+            """, (idUsuario,))
+            
+            fila = cursor.fetchone()
+            if fila:
+                return {'success': True, 'idParroquia': fila[0]}
+            return {'success': False, 'mensaje': 'No se encontró parroquia para esta secretaria'}
+    except Exception as e:
+        print(f'Error al obtener parroquia de secretaria: {e}')
+        return {'success': False, 'mensaje': str(e)}
+    finally:
+        if conexion:
+            conexion.close()
+
+# ======================================================
 # 🔹 LISTAR PARROQUIAS
 # ======================================================
 def listar_parroquia():

@@ -139,8 +139,7 @@ def registrar_documento_route():
 
         # Carpeta de la reserva
         carpeta_reserva = os.path.join(BASE_UPLOAD, f"reserva_{idReserva}")
-        if not os.path.exists(carpeta_reserva):
-            os.makedirs(carpeta_reserva)
+        os.makedirs(carpeta_reserva, exist_ok=True)
 
         # Si llega un archivo físico, sobrescribir ruta, tipo y fecha
         if file:
@@ -199,6 +198,9 @@ def modificar_documento_requisito_route(idDocumento):
         tipoArchivo = request.form.get('tipoArchivoActual')
         f_subido = request.form.get('f_subidoActual')
 
+        # Obtener estadoCumplimiento del form si viene (para subir documentos)
+        estadoCumplimiento = request.form.get('estadoCumplimiento')
+        
         # SI LLEGA ARCHIVO → REEMPLAZAR
         if file:
             # Si existe archivo anterior y la ruta es válida → sobrescribir
@@ -207,8 +209,7 @@ def modificar_documento_requisito_route(idDocumento):
             else:
                 # Si no existe archivo anterior → crear nombre nuevo
                 carpeta_reserva = os.path.join(BASE_UPLOAD, f"reserva_{idReserva}")
-                if not os.path.exists(carpeta_reserva):
-                    os.makedirs(carpeta_reserva)
+                os.makedirs(carpeta_reserva, exist_ok=True)
 
                 extension = file.filename.split(".")[-1]
                 nombreArchivo = f"acto_{idActoRequisito}_{date.today().strftime('%Y%m%d')}.{extension}"
@@ -222,8 +223,14 @@ def modificar_documento_requisito_route(idDocumento):
             rutaArchivo = rutaGuardar
             tipoArchivo = file.mimetype
             f_subido = date.today()
+            
+            # Si se sube un archivo y viene estadoCumplimiento, actualizarlo también
+            if estadoCumplimiento:
+                # Actualizar estadoCumplimiento directamente
+                from app.acto_liturgico_requisito.controlador_requisito import cambiar_cumplimiento_documento
+                cambiar_cumplimiento_documento(idDocumento, estadoCumplimiento)
 
-        # LLAMAR A LA FUNCIÓN QUE ACTUALIZA BD
+        # LLAMAR A LA FUNCIÓN QUE ACTUALIZA BD (solo rutaArchivo, tipoArchivo, f_subido)
         resultado = modificar_documento_requisito(
             idDocumento=idDocumento,
             rutaArchivo=rutaArchivo,

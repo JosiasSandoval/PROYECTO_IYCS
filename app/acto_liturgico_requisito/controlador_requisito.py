@@ -95,9 +95,8 @@ def modificar_documento_requisito(idDocumento, rutaArchivo, tipoArchivo, f_subid
 def cambiar_cumplimiento_documento(idDocumento, estadoCumplimiento):
     conexion = obtener_conexion()
     try:
-        # Alternar entre 'CUMPLIDO' y 'NO_CUMPLIDO'
-        # Esto asume que estadoCumplimiento viene con el valor actual
-        nuevo_estado = 'CUMPLIDO' if estadoCumplimiento.upper() == 'NO_CUMPLIDO' else 'NO_CUMPLIDO'
+        # Actualizar directamente al estado proporcionado
+        nuevo_estado = estadoCumplimiento.upper() if estadoCumplimiento else 'NO_CUMPLIDO'
         with conexion.cursor() as cursor:
             cursor.execute("""
                 UPDATE DOCUMENTO_REQUISITO
@@ -105,9 +104,10 @@ def cambiar_cumplimiento_documento(idDocumento, estadoCumplimiento):
                 WHERE idDocumento=%s;
             """, (nuevo_estado, idDocumento))
             conexion.commit()
-            return {'ok': True, 'mensaje': f'Estado cambiado a {nuevo_estado}'}
+            return {'ok': True, 'mensaje': f'Estado actualizado a {nuevo_estado}'}
     except Exception as e:
         print(f'Error al cambiar el cumplimiento del documento: {e}')
+        conexion.rollback()
         return {'ok': False, 'mensaje': f'Error: {e}'}
     finally:
         if conexion:
