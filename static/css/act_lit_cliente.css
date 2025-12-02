@@ -125,53 +125,79 @@ aside {
 
 /* Modifica la regla .requisitos-container */
 .requisitos-container {
-    /* Mantenemos el estilo de superposición y animación */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.requisitos-container.oculto {
+    display: none;
+    opacity: 0;
+}
+
+.requisitos-content {
     background-color: #ffffff;
     padding: 30px;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 90%;
     max-width: 600px;
-    z-index: 10;
-    
-    /* Agrega estas propiedades para la animación de entrada */
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
-    transition: all 0.5s ease-in-out;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 /* Modifica la regla .requisitos-container h2 */
 .requisitos-container h2 {
-    color: #4b4b4b;
+    color: #343a40;
     font-weight: 600;
-    /* Elimina el margin-bottom para que se alinee con la imagen */
     margin: 0;
+    font-size: 1.5rem;
 }
 
 /* Agrega un nuevo contenedor para el título y el ícono de cerrar */
 .requisitos-header {
     display: flex;
-    justify-content: space-between; /* Alinea los elementos a los extremos */
-    align-items: center; /* Centra los elementos verticalmente */
-    width: 100%; /* Ocupa todo el ancho disponible */
-    margin-bottom: 25px; /* Espacio debajo del encabezado */
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #007bff;
 }
 
-/* Estilos para el ícono de cerrar (ahora dentro del header) */
+/* Estilos para el ícono de cerrar */
 .requisitos-header img {
-    width: 24px; /* O el tamaño que prefieras */
+    width: 24px;
+    height: 24px;
     cursor: pointer;
-    opacity: 0.8;
-    transition: opacity 0.2s ease-in-out;
+    opacity: 0.7;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .requisitos-header img:hover {
     opacity: 1;
+    transform: scale(1.1);
 }
 
 #lista-requisitos {
@@ -181,23 +207,142 @@ aside {
 }
 
 .requisito-item {
-    background-color: #e9ecef;
+    background-color: #f8f9fa;
     border-left: 4px solid #007bff;
     padding: 15px 20px;
     margin-bottom: 12px;
     border-radius: 8px;
-    text-align: left;
-    color: #333;
-    font-size: 1.1em;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    color: #343a40;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .requisito-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
 }
 
-.requisitos-container.visible {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+.requisito-icono {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.requisito-nombre {
+    flex: 1;
+    font-weight: 500;
+}
+
+.no-requisitos {
+    text-align: center;
+    padding: 30px 20px;
+    color: #28a745;
+    font-size: 1.1rem;
+    background-color: #d4edda;
+    border-radius: 8px;
+    border: 1px solid #c3e6cb;
+}
+
+/* Estilos para mensajes de carga y error */
+.cargando,
+.error-mensaje,
+.no-actos {
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 1.2rem;
+    color: #6c757d;
+    grid-column: 1 / -1;
+}
+
+.error-mensaje {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+}
+
+/* Estilos para información adicional en las tarjetas */
+.info-adicional {
+    margin-bottom: 10px;
+}
+
+.info-item {
+    display: inline-block;
+    padding: 4px 10px;
+    background-color: #e9ecef;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    color: #495057;
+    margin-right: 8px;
+}
+
+/* Scroll personalizado para el modal */
+.requisitos-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.requisitos-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.requisitos-content::-webkit-scrollbar-thumb {
+    background: #007bff;
+    border-radius: 10px;
+}
+
+.requisitos-content::-webkit-scrollbar-thumb:hover {
+    background: #0056b3;
+}
+
+/* ============================================================
+   ESTILOS DE PAGINACIÓN
+   ============================================================ */
+.paginacion {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 40px;
+    padding: 20px;
+    width: 100%;
+}
+
+.btn-pagina {
+    padding: 10px 20px;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    background-color: #007bff;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-pagina:hover:not(:disabled) {
+    background-color: #0056b3;
+    border-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-pagina:disabled {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.info-pagina {
+    font-size: 16px;
+    font-weight: 500;
+    color: #495057;
+    padding: 10px 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
 }

@@ -234,9 +234,7 @@ CREATE TABLE RESERVA (
 );
 
 CREATE TABLE DOCUMENTO_REQUISITO (
-    idDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    rutaArchivo VARCHAR(255) NULL, -- Nombre original del archivo
-    tipoArchivo VARCHAR(100) NULL,      -- MIME type, ej. 'image/png' o 'application/pdf'
+    idDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,     -- MIME type, ej. 'image/png' o 'application/pdf'
     f_subido DATE NULL,
     estadoCumplimiento VARCHAR(50) NOT NULL,
     aprobado BOOLEAN NOT NULL,
