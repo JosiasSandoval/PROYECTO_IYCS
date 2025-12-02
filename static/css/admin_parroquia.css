@@ -157,8 +157,13 @@ body {
 #btn_guardar { background-color: #60a5fa; color: white; }
 #btn_guardar:hover { background-color: #2563eb; }
 
-.btn-info { background-color: #0d6efd; color: white; } /* Azul */
-.btn-info:hover { background-color: #0b5ed7; }
+.btn-info {
+  background-color: #17a2b8;
+}
+.btn-info:hover {
+  background-color: #117a8b;
+}
+
 
 .btn-warning { background-color: #ffc107; }
 .btn-warning:hover { background-color: #e0a800; }
@@ -363,31 +368,87 @@ body {
 }
 
 /* ============================================================ */
-/* DISEÑO RESPONSIVO (TABLET / MÓVIL)                           */
+/* DISEÑO RESPONSIVO OPTIMIZADO (TABLETS, ANDROID, IPHONE)      */
 /* ============================================================ */
-@media (max-width: 992px) {
-    .grid { grid-template-columns: 1fr !important; display: block; }
-    #barra_lateral_administrador-placeholder { display: none; }
-    .contenido { padding: 15px; width: 100%; }
-    
-    #formDocumento { flex-direction: column; align-items: stretch; gap: 10px; overflow: visible; }
-    #formDocumento label { display: none; }
-    .search-container { width: 100%; margin-bottom: 5px; z-index: 100; }
-    
-    #formDocumento #inputDocumento, 
-    .search-container input, 
-    #btn_buscar, 
-    #btn_guardar { 
-        width: 100% !important; 
-        margin: 0; 
-    }
-    .btn-icon { width: 100%; border-radius: 6px; }
 
-    .tabla-documentos { overflow-x: auto; -webkit-overflow-scrolling: touch; display: block; width: 100%; z-index: 1; }
-    table { min-width: 800px; }
+/* Tablets / iPads (Horizontal) y Laptops Pequeñas (Hasta 992px) */
+@media (max-width: 992px) {
+    .grid {
+        grid-template-columns: 1fr; /* Colapsar barra lateral */
+    }
+    
+    .contenido {
+        padding: 20px; /* Reducir padding */
+    }
+    
+    /* Tabla scrollable para que no se rompa */
+    .tabla-documentos {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Scroll suave en iPad */
+    }
+    
+    table {
+        min-width: 800px; /* Forzar ancho mínimo para legibilidad */
+    }
 }
 
+/* Móviles Grandes y Tablets Verticales (Hasta 768px) */
+@media (max-width: 768px) {
+    /* Formulario de búsqueda en columna (stack) */
+    #formDocumento {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    /* Ocultar label para ahorrar espacio */
+    #formDocumento label {
+        display: none; 
+    }
+
+    /* Input ocupa todo el ancho */
+    .search-container {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    /* Botones de búsqueda/agregar ocupan todo el ancho */
+    #btn_buscar, #btn_guardar {
+        width: 100%;
+        margin-left: 0;
+        justify-content: center;
+    }
+    
+    /* Botones de acción en tabla un poco más grandes para dedos */
+    .col-acciones .btn {
+        width: 44px; /* Touch target mínimo recomendado */
+        height: 44px;
+    }
+}
+
+/* Móviles Estándar (iPhone, Android - Hasta 480px) */
 @media (max-width: 480px) {
-    .titulo-seccion { font-size: 16px; }
-    .modal-dialog { width: 95%; margin: 10px auto; }
+    .titulo-seccion {
+        font-size: 16px; /* Texto más pequeño */
+    }
+
+    /* Modal casi pantalla completa */
+    .modal-dialog {
+        width: 95%;
+        margin: 10px auto;
+    }
+
+    .modal-body {
+        padding: 15px 10px;
+    }
+
+    /* Fechas en el modal: Una debajo de otra */
+    .modal-body form > div[style*="display:flex"] {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .modal-body form > div[style*="display:flex"] > div {
+        width: 100%;
+    }
 }

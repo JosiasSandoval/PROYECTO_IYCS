@@ -118,76 +118,46 @@ body {
 
 /* ===== BOTONES ===== */
 /* ===== BOTONES ===== */
-.btn {
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-}
-.btn img {
-  width: 20px;
-  height: 20px;
-  transition: transform 0.3s ease;
-}
-#btn_buscar,
-#btn_guardar {
-  color: white;
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.btn-icon {
   border: none;
   border-radius: 6px;
+  cursor: pointer;
   width: 42px;
   height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
-#btn_buscar {
-  background-color: #93baea;
-}
-#btn_buscar:hover {
-  background-color: #7daed8;
-}
-#btn_guardar {
-  background-color: #60a5fa;
-}
-#btn_guardar:hover {
-  background-color: #2563eb;
-}
+.btn-icon img { width: 20px; height: 20px; }
+
+/* Colores de Botones */
+#btn_buscar { background-color: #93baea; color: white; }
+#btn_buscar:hover { background-color: #7daed8; }
+
+#btn_guardar { background-color: #60a5fa; color: white; }
+#btn_guardar:hover { background-color: #2563eb; }
+
 .btn-info {
   background-color: #17a2b8;
 }
 .btn-info:hover {
   background-color: #117a8b;
 }
-.btn-warning {
-  background-color: #ffc107;
-}
-.btn-warning:hover {
-  background-color: #e0a800;
-}
-.btn-orange {
-  background-color: #fd7e14;
-}
-.btn-orange:hover {
-  background-color: #e8590c;
-}
-.btn-success {
-  background-color: #28a745;
-}
-.btn-success:hover {
-  background-color: #218838;
-}
-.btn-danger {
-  background-color: #dc3545;
-}
-.btn-danger:hover {
-  background-color: #c82333;
-}
+
+
+.btn-warning { background-color: #ffc107; }
+.btn-warning:hover { background-color: #e0a800; }
+
+.btn-orange { background-color: #fd7e14; }
+.btn-orange:hover { background-color: #e8590c; }
+
+.btn-success { background-color: #28a745; }
+.btn-success:hover { background-color: #218838; }
+
+.btn-danger { background-color: #dc3545; }
+.btn-danger:hover { background-color: #c82333; }
+
 
 /* ===== TABLAS ===== */
 .tabla-documentos {
@@ -403,4 +373,29 @@ body {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* ===================================== */
+/* === SUGERENCIAS (Estándar Litbook) === */
+/* ===================================== */
+#sugerenciasContainer {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 9998;
+  display: none;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.sugerencia-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.sugerencia-item:hover {
+  background-color: #f0f0f0;
 }

@@ -2,11 +2,10 @@ const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
 const inputDocumento = document.getElementById("inputDocumento"); // Input de búsqueda
 
-// Crear modales al inicio
-const modalDetalle = crearModal();
+// Crear UN SOLO MODAL para todo (Agregar, Editar, Ver)
 const modalFormulario = crearModalFormulario(); 
 
-let parroquias = [];           // Todos los datos en memoria
+let parroquias = [];           
 let parroquiasFiltradas = null; 
 let paginaActual = 1;
 const elementosPorPagina = 7;
@@ -14,13 +13,9 @@ let ordenActual = { campo: null, ascendente: true };
 
 // ================== INICIALIZACIÓN ==================
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Configurar el buscador predictivo
     configurarBuscadorPrincipal();
-
-    // 2. Cargar datos
     cargarParroquias();
 
-    // 3. Eventos
     document.getElementById("btn_buscar").addEventListener("click", filtrarDatos);
     inputDocumento.addEventListener("keyup", (e) => { if(e.key === "Enter") filtrarDatos(); });
 
@@ -29,7 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
         abrirModalFormulario("agregar");
     });
 
-    // 4. Cerrar sugerencias al hacer clic fuera
     document.addEventListener("click", (e) => {
         const lista = document.getElementById("listaBusquedaPrincipal");
         const wrapper = document.querySelector(".search-container");
@@ -39,21 +33,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-/* -------------------------
-   LÓGICA BUSCADOR PREDICTIVO (STARTSWITH)
-   ------------------------- */
+/* -------------------------------------------------------
+   LÓGICA BUSCADOR PREDICTIVO
+   ------------------------------------------------------- */
 function configurarBuscadorPrincipal() {
     if (!inputDocumento) return;
 
-    // Crear wrapper y lista dinámicamente
     const wrapper = document.createElement("div");
     wrapper.className = "search-container";
-    
-    // Insertar wrapper y mover el input dentro
     inputDocumento.parentNode.insertBefore(wrapper, inputDocumento);
     wrapper.appendChild(inputDocumento);
 
-    // Crear la lista de sugerencias
     const lista = document.createElement("div");
     lista.id = "listaBusquedaPrincipal";
     lista.className = "dropdown-list";
@@ -67,10 +57,8 @@ function configurarBuscadorPrincipal() {
 
         let coincidencias;
         if (!texto) {
-            // Si está vacío, mostramos todos (o los primeros para no saturar)
-            coincidencias = parroquias;
+            coincidencias = parroquias; 
         } else {
-            // ✅ CORRECCIÓN: Usamos startsWith para que busque solo por el inicio
             coincidencias = parroquias.filter(p => 
                 p.nombre.toLowerCase().startsWith(texto) || 
                 (p.ruc && p.ruc.startsWith(texto))
@@ -80,38 +68,29 @@ function configurarBuscadorPrincipal() {
         if (coincidencias.length === 0) {
             lista.classList.remove("active");
         } else {
-            // Mostrar máximo 8 resultados visualmente
             coincidencias.slice(0, 8).forEach(p => {
                 const item = document.createElement("div");
                 item.className = "dropdown-item";
-                // Muestra Nombre y RUC en la sugerencia
                 item.innerHTML = `${p.nombre} <small class="text-muted" style="color:#888">(${p.ruc || 'S/R'})</small>`;
-                
-                // --- AL CLICKAR: SOLO RELLENA INPUT ---
                 item.addEventListener("click", () => {
                     inputDocumento.value = p.nombre; 
-                    lista.classList.remove("active");  // Cierra la lista
+                    lista.classList.remove("active");
                 });
-                
                 lista.appendChild(item);
             });
             lista.classList.add("active");
         }
     };
 
-    // Escuchar input para actualizar mientras escribes
     inputDocumento.addEventListener("input", actualizarLista);
-    // Escuchar focus para mostrar lista al hacer clic
     inputDocumento.addEventListener("focus", actualizarLista);
 }
 
-// Función de filtrado usada por el botón LUPA y ENTER
 function filtrarDatos() {
     const termino = inputDocumento.value.trim().toLowerCase();
     if (!termino) {
         parroquiasFiltradas = null;
     } else {
-        // Filtro para la tabla también con startsWith para ser consistente
         parroquiasFiltradas = parroquias.filter(p => 
             p.nombre.toLowerCase().startsWith(termino) || 
             (p.ruc && p.ruc.startsWith(termino))
@@ -125,16 +104,28 @@ function filtrarDatos() {
    NORMALIZACIÓN Y API
    ------------------------- */
 function normalizar(p) {
+  // Mapeo robusto de campos de la BD a variables JS
   const id = p.id ?? p.idParroquia ?? null;
   const nombre = p.nombre ?? p.nombParroquia ?? "";
   const ruc = p.ruc ?? "";
   const direccion = p.direccion ?? "";
+  const email = p.email ?? "";
+  const telefono = p.telefono ?? p.telefonoContacto ?? "";
+  const fecha = p.f_creacion ?? "";
   
+  // Campos adicionales de la tabla completa
+  const historia = p.historia ?? p.historiaParroquia ?? "";
+  const descripcion = p.descripcion ?? p.descripcionBreve ?? "";
+  const color = p.color ?? "#ffffff";
+  const lat = p.lat ?? p.latParroquia ?? "";
+  const log = p.log ?? p.logParroquia ?? "";
+
   let estado = false;
   if (p.estado === 1 || p.estado === true || p.estadoParroquia === true || p.estadoParroquia === 1) {
     estado = true;
   }
-  return { id, nombre, ruc, direccion, estado, ...p }; 
+  // Retornamos objeto plano con TODAS las propiedades
+  return { id, nombre, ruc, direccion, email, telefono, fecha, historia, descripcion, color, lat, log, estado }; 
 }
 
 const manejarSolicitud = async (url, opciones = {}, mensajeError = "Error") => {
@@ -173,7 +164,6 @@ function renderTabla() {
       return;
   }
 
-  // Ordenamiento
   if (ordenActual.campo) {
     lista.sort((a, b) => {
       const valorA = (a[ordenActual.campo] || "").toString().toLowerCase();
@@ -184,7 +174,6 @@ function renderTabla() {
     });
   }
 
-  // Paginación
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const fin = inicio + elementosPorPagina;
   const itemsPagina = lista.slice(inicio, fin);
@@ -196,6 +185,7 @@ function renderTabla() {
     const titleEstado = esActivo ? "Dar de baja" : "Dar de alta";
 
     const fila = document.createElement("tr");
+    // La tabla muestra solo lo esencial
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
       <td class="col-nombre">${p.nombre}</td>
@@ -231,30 +221,23 @@ const renderPaginacion = (total) => {
 
   const ul = document.createElement("ul");
   ul.className = "pagination";
-
-  const crearItem = (numero, activo, disabled, texto) => {
+  const crearItem = (texto, clickFn, claseExtra = "") => {
     const li = document.createElement("li");
-    li.className = `page-item ${activo ? "active" : ""} ${disabled ? "disabled" : ""}`;
-    li.innerHTML = `<button class="page-link" onclick="cambiarPagina(${numero})">${texto || numero}</button>`;
+    li.className = `page-item ${claseExtra}`;
+    li.innerHTML = `<button class="page-link">${texto}</button>`;
+    if (clickFn) li.onclick = clickFn;
     return li;
   };
 
-  ul.appendChild(crearItem(paginaActual - 1, false, paginaActual === 1, "<"));
+  ul.appendChild(crearItem("&laquo;", paginaActual > 1 ? () => { paginaActual--; renderTabla(); } : null, paginaActual === 1 ? "disabled" : ""));
 
   for (let i = 1; i <= totalPaginas; i++) {
-      ul.appendChild(crearItem(i, paginaActual === i));
+      ul.appendChild(crearItem(i, () => { paginaActual = i; renderTabla(); }, i === paginaActual ? "active" : ""));
   }
 
-  ul.appendChild(crearItem(paginaActual + 1, false, paginaActual === totalPaginas, ">"));
+  ul.appendChild(crearItem("&raquo;", paginaActual < totalPaginas ? () => { paginaActual++; renderTabla(); } : null, paginaActual === totalPaginas ? "disabled" : ""));
   paginacion.appendChild(ul);
 };
-
-function cambiarPagina(pagina) {
-    const total = Math.ceil((parroquiasFiltradas ?? parroquias).length / elementosPorPagina);
-    if (pagina < 1 || pagina > total) return;
-    paginaActual = pagina;
-    renderTabla();
-}
 
 /* -------------------------
    ACCIONES (API)
@@ -288,89 +271,184 @@ const eliminarParroquia = async (id) => {
 };
 
 /* -------------------------
-   MODALES (HTML)
+   MODAL ÚNICO PARA TODO (AGREGAR, EDITAR, VER)
    ------------------------- */
-function crearModal() {
-  const html = `<div class="modal" id="modalDetalle"><div class="modal-dialog"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title">Detalle</h5><button class="btn-cerrar" onclick="cerrarModal('modalDetalle')">&times;</button></div>
-    <div class="modal-body" id="modalDetalleBody"></div>
-    <div class="modal-footer"><button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalDetalle')">Cerrar</button></div>
-  </div></div></div>`;
-  document.body.insertAdjacentHTML('beforeend', html);
-  return document.getElementById("modalDetalle");
-}
-
 function crearModalFormulario() {
-  const html = `<div class="modal" id="modalForm"><div class="modal-dialog"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title" id="modalTitulo"></h5><button class="btn-cerrar" onclick="cerrarModal('modalForm')">&times;</button></div>
-    <div class="modal-body">
-      <form id="formParroquia">
-        <div class="mb-3"><label class="form-label">Nombre *</label><input id="pNombre" class="form-control" required></div>
-        <div class="mb-3"><label class="form-label">RUC *</label><input id="pRuc" class="form-control" required></div>
-        <div class="mb-3"><label class="form-label">Dirección *</label><input id="pDireccion" class="form-control" required></div>
-        <div class="mb-3"><label class="form-label">Teléfono</label><input id="pTelefono" class="form-control"></div>
-        <div class="mb-3"><label class="form-label">Email</label><input id="pEmail" class="form-control" type="email"></div>
-        <div class="mb-3"><label class="form-label">Fecha Creación</label><input id="pFecha" type="date" class="form-control" required></div>
-        <div class="modal-footer"><button type="button" class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalForm')">Cancelar</button>
-        <button type="submit" class="btn-modal btn-modal-primary">Guardar</button></div>
-      </form>
-    </div></div></div></div>`;
+  const html = `
+  <div class="modal" id="modalForm">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="modalTitulo"></h5>
+            <button class="btn-cerrar" onclick="cerrarModal('modalForm')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="formParroquia" autocomplete="off">
+            
+            <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">Nombre *</label>
+                    <input id="pNombre" class="form-control" required>
+                </div>
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">RUC *</label>
+                    <input id="pRuc" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">Dirección *</label>
+                    <input id="pDireccion" class="form-control" required>
+                </div>
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">Teléfono *</label>
+                    <input id="pTelefono" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">Email *</label>
+                    <input id="pEmail" class="form-control" type="email" required>
+                </div>
+                <div class="mb-3" style="flex:1; min-width:200px;">
+                    <label class="form-label">Fecha Creación *</label>
+                    <input id="pFecha" type="date" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Historia de la Parroquia</label>
+                <textarea id="pHistoria" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Descripción Breve</label>
+                <textarea id="pDescripcion" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
+                 <div class="mb-3" style="flex:1; min-width:100px;">
+                    <label class="form-label">Color</label>
+                    <input id="pColor" type="color" class="form-control" style="height:40px; padding:2px;">
+                </div>
+                <div class="mb-3" style="flex:1; min-width:150px;">
+                    <label class="form-label">Latitud</label>
+                    <input id="pLat" class="form-control" type="number" step="any">
+                </div>
+                <div class="mb-3" style="flex:1; min-width:150px;">
+                    <label class="form-label">Longitud</label>
+                    <input id="pLog" class="form-control" type="number" step="any">
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-modal btn-modal-secondary" id="btnCancelar" onclick="cerrarModal('modalForm')">Cancelar</button>
+                <button type="submit" class="btn-modal btn-modal-primary" id="btnGuardar">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>`;
   document.body.insertAdjacentHTML('beforeend', html);
   return document.getElementById("modalForm");
 }
 
 function cerrarModal(id) { document.getElementById(id).classList.remove('activo'); }
 
+// Función Unificada para Abrir Modal (Agregar, Editar, Ver)
 function abrirModalFormulario(modo, p = null) {
+    const modal = document.getElementById("modalForm");
     const form = document.getElementById("formParroquia");
     const titulo = document.getElementById("modalTitulo");
-    form.reset();
+    const btnGuardar = document.getElementById("btnGuardar");
+    const btnCancelar = document.getElementById("btnCancelar");
     
-    if(modo === "agregar") {
-        titulo.textContent = "Nueva Parroquia";
-        form.onsubmit = (e) => {
-            e.preventDefault();
-            const data = {
-                nombParroquia: document.getElementById("pNombre").value,
-                ruc: document.getElementById("pRuc").value,
-                direccion: document.getElementById("pDireccion").value,
-                telefonoContacto: document.getElementById("pTelefono").value,
-                email: document.getElementById("pEmail").value,
-                f_creacion: document.getElementById("pFecha").value,
-                color: "#ffffff" 
-            };
-            agregarParroquiaAPI(data).then(() => cerrarModal('modalForm'));
-        };
+    // 1. Resetear formulario y eventos
+    form.reset();
+    form.onsubmit = null;
+    
+    // 2. Configurar Inputs (Habilitar/Deshabilitar según modo)
+    const inputs = form.querySelectorAll("input, textarea, select");
+    const esLectura = (modo === 'ver');
+    
+    inputs.forEach(input => {
+        input.disabled = esLectura;
+    });
+
+    // 3. Configurar Botones y Títulos
+    if (esLectura) {
+        titulo.textContent = "Detalle de Parroquia";
+        btnGuardar.style.display = "none"; // Ocultar botón guardar
+        btnCancelar.textContent = "Cerrar"; // Botón cancelar ahora dice Cerrar
+        
+        if(p) llenarDatosModal(p); // Llenar con datos para ver
+
     } else {
-        titulo.textContent = "Editar Parroquia";
-        document.getElementById("pNombre").value = p.nombre;
-        document.getElementById("pRuc").value = p.ruc;
-        document.getElementById("pDireccion").value = p.direccion;
-        document.getElementById("pTelefono").value = p.telefonoContacto || "";
-        document.getElementById("pEmail").value = p.email || "";
+        btnGuardar.style.display = "inline-block";
+        btnCancelar.textContent = "Cancelar";
         
-        if(p.f_creacion) {
-            let fecha = p.f_creacion;
-            if(fecha.includes(' ')) fecha = fecha.split(' ')[0]; 
-            document.getElementById("pFecha").value = fecha;
-        }
-        
-        form.onsubmit = (e) => {
-            e.preventDefault();
-            const data = {
-                nombParroquia: document.getElementById("pNombre").value,
-                ruc: document.getElementById("pRuc").value,
-                direccion: document.getElementById("pDireccion").value,
-                telefonoContacto: document.getElementById("pTelefono").value,
-                email: document.getElementById("pEmail").value,
-                f_creacion: document.getElementById("pFecha").value
+        if(modo === "agregar") {
+            titulo.textContent = "Nueva Parroquia";
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                const data = recolectarDatos();
+                agregarParroquiaAPI(data).then(() => cerrarModal('modalForm'));
             };
-            actualizarParroquiaAPI(p.id, data).then(() => cerrarModal('modalForm'));
-        };
+        } else if (modo === "editar" && p) {
+            titulo.textContent = "Editar Parroquia";
+            llenarDatosModal(p);
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                const data = recolectarDatos();
+                actualizarParroquiaAPI(p.id, data).then(() => cerrarModal('modalForm'));
+            };
+        }
     }
-    document.getElementById("modalForm").classList.add('activo');
+    
+    modal.classList.add('activo');
 }
 
+function llenarDatosModal(p) {
+    document.getElementById("pNombre").value = p.nombre || "";
+    document.getElementById("pRuc").value = p.ruc || "";
+    document.getElementById("pDireccion").value = p.direccion || "";
+    document.getElementById("pTelefono").value = p.telefono || "";
+    document.getElementById("pEmail").value = p.email || "";
+    
+    if(p.fecha) {
+        let fecha = p.fecha;
+        if(fecha.includes(' ')) fecha = fecha.split(' ')[0]; 
+        document.getElementById("pFecha").value = fecha;
+    }
+
+    // Campos adicionales
+    document.getElementById("pHistoria").value = p.historia || "";
+    document.getElementById("pDescripcion").value = p.descripcion || "";
+    document.getElementById("pColor").value = p.color || "#ffffff";
+    document.getElementById("pLat").value = p.lat || "";
+    document.getElementById("pLog").value = p.log || "";
+}
+
+function recolectarDatos() {
+    return {
+        nombParroquia: document.getElementById("pNombre").value,
+        ruc: document.getElementById("pRuc").value,
+        direccion: document.getElementById("pDireccion").value,
+        telefonoContacto: document.getElementById("pTelefono").value,
+        email: document.getElementById("pEmail").value,
+        f_creacion: document.getElementById("pFecha").value,
+        historiaParroquia: document.getElementById("pHistoria").value,
+        descripcionBreve: document.getElementById("pDescripcion").value,
+        color: document.getElementById("pColor").value,
+        latParroquia: document.getElementById("pLat").value || null,
+        logParroquia: document.getElementById("pLog").value || null
+    };
+}
+
+// Helpers globales
 window.editarParroquia = (id) => {
     const p = parroquias.find(x => x.id === id);
     if(p) abrirModalFormulario("editar", p);
@@ -378,17 +456,7 @@ window.editarParroquia = (id) => {
 
 window.verDetalle = (id) => {
     const p = parroquias.find(x => x.id === id);
-    if(p) {
-        document.getElementById("modalDetalleBody").innerHTML = `
-            <p><strong>Nombre:</strong> ${p.nombre}</p>
-            <p><strong>RUC:</strong> ${p.ruc}</p>
-            <p><strong>Dirección:</strong> ${p.direccion}</p>
-            <p><strong>Email:</strong> ${p.email || '-'}</p>
-            <p><strong>Teléfono:</strong> ${p.telefonoContacto || '-'}</p>
-            <p><strong>Historia:</strong> ${p.historiaParroquia || '-'}</p>
-        `;
-        document.getElementById("modalDetalle").classList.add('activo');
-    }
+    if(p) abrirModalFormulario("ver", p); // Ahora llama al mismo modal en modo lectura
 };
 
 window.cambiarEstado = cambiarEstado;
