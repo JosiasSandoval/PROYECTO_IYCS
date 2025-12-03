@@ -19,7 +19,8 @@ from app.acto_liturgico.route_actoLiturgico import acto_liturgico_bp
 from app.reportes.route_reporte import reportes_bp
 from app.notificacion.route_notificacion import notificacion_bp
 from app.acto_parroquia.route_acto_parroquia import acto_parroquia_bp
-from app.documento_requisito.routes_documento_requisisto import documento_bp
+from app.documento_requisito.route_documento_requisito import documento_requisito_bp
+
 
 # ============================================
 # DECORADOR DE CONTROL DE ROLES
@@ -34,11 +35,12 @@ def requires_roles(*roles):
             rol = session.get('rol_sistema')
 
             # Administrador SIEMPRE TIENE ACCESO
-            if rol == 'Administrador':
+            if rol and rol.lower() == 'administrador':
                 return fn(*args, **kwargs)
 
-            # Validación normal
-            if rol not in roles:
+            # Validación normal (case-insensitive)
+            roles_lower = [r.lower() for r in roles]
+            if rol and rol.lower() not in roles_lower:
                 return redirect(url_for('principal'))
 
             return fn(*args, **kwargs)
@@ -73,7 +75,9 @@ def crear_app():
     app.register_blueprint(reportes_bp, url_prefix='/api/reportes')
     app.register_blueprint(notificacion_bp, url_prefix='/api/notificacion')
     app.register_blueprint(acto_parroquia_bp, url_prefix='/api/acto_parroquia')
-    app.register_blueprint(documento_bp, url_prefix='/api/documento')
+    app.register_blueprint(documento_requisito_bp, url_prefix='/api/documento_requisito')
+
+
     # ============================================
     # RUTAS DEL FRONTEND
     # ============================================
@@ -86,6 +90,10 @@ def crear_app():
     def registrar():
         return render_template('registrarse.html')
 
+    @app.route('/recuperar_contrasena')
+    def recuperar_contrasena():
+        return render_template('recuperacion_clave.html')
+
     @app.route('/principal')
     @requires_roles('Feligres', 'Secretaria', 'Sacerdote')
     def principal():
@@ -93,12 +101,12 @@ def crear_app():
 
     # ---------------- CLIENTE ----------------
     @app.route('/cliente/parroquia')
-    @requires_roles('Feligres', 'Secretaria')
+    @requires_roles('Feligres', 'Secretaria', 'Sacerdote')
     def parroquia_cliente():
         return render_template('cliente/parroquia_cliente.html')
 
     @app.route('/cliente/detalle_parroquia')
-    @requires_roles('Feligres', 'Secretaria')
+    @requires_roles('Feligres', 'Secretaria', 'Sacerdote')
     def detalle_parroquia():
         return render_template('cliente/detalle_parroquia.html')
 
@@ -112,38 +120,39 @@ def crear_app():
         return render_template('cliente/calendario.html')
 
     @app.route('/cliente/acto_liturgico')
-    @requires_roles('Feligres', 'Secretaria')
+    @requires_roles('Feligres', 'Secretaria', 'Sacerdote')
     def acto_liturgico_cliente():
         return render_template('cliente/actos_liturgicos_cliente.html')
 
     @app.route('/cliente/perfil')
-    @requires_roles('Feligres', 'Secretaria')
+    @requires_roles('Feligres', 'Secretaria', 'Sacerdote', 'Administrador')
     def perfil_cliente():
         return render_template('cliente/perfil.html', id_usuario_logueado=session.get('idUsuario'))
 
     # --- RESERVAS CLIENTE ---
     @app.route('/cliente/reserva')
-    @requires_roles('Feligres', 'Secretaria')
+    @requires_roles('Feligres', 'Secretaria', 'Sacerdote')
     def reserva_cliente():
         return render_template('cliente/reserva_ubicacion.html')
 
     @app.route('/cliente/reserva_acto')
-    @requires_roles('Feligres', 'Secretaria')
+    @requires_roles('Feligres', 'Secretaria','Sacerdote')
     def reserva_acto():
         return render_template('cliente/reserva_acto.html')
 
     @app.route('/cliente/reserva_datos')
-    @requires_roles('Feligres', 'Secretaria')
+    @requires_roles('Feligres', 'Secretaria','Sacerdote')
     def reserva_datos():
         return render_template('cliente/reserva_datos.html')
 
-    @app.route('/cliente/reserva_requisito')
-    @requires_roles('Feligres', 'Secretaria')
-    def reserva_requisito():
-        return render_template('cliente/reserva_requisito.html')
+
+    @app.route('/admi/secretaria_documentos')
+    @requires_roles('Secretaria')
+    def secretaria_documentos():
+        return render_template('administradores/secretaria_documentos.html')
 
     @app.route('/cliente/reserva_resumen')
-    @requires_roles('Feligres', 'Secretaria')
+    @requires_roles('Feligres', 'Secretaria','Sacerdote')
     def reserva_resumen():
         return render_template('cliente/reserva_resumen.html')
 
@@ -226,7 +235,7 @@ def crear_app():
     @app.route('/admi/reporte')
     @requires_roles('Administrador')
     def reporte_admi():
-        return render_template('administradores/reporte.html')
+        return render_template('administradores/reporte_PersonalParroquia.html')
 
     @app.route('/admi/requisitos')
     @requires_roles('Administrador','Sacerdote')

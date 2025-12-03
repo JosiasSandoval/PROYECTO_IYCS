@@ -8,6 +8,7 @@ from app.rol_permiso.controlador_rol_permiso import (
     eliminar_rol,
     verificar_relacion_rol,
     agregar_rol_permiso,
+    eliminar_rol_permiso,
     cambiar_estado_permiso,
     mostrar_permisos_rol,
     get_listar_permiso
@@ -98,6 +99,19 @@ def agregar_rol_permiso_usuario():
         return jsonify(resultado), 200 if resultado['ok'] else 400
     except Exception as e:
         print(f'Error al agregar permiso al rol: {e}')
+        return jsonify({'ok': False, 'mensaje': 'Error interno'}), 500
+
+@permiso_bp.route('/eliminar_rol_permiso', methods=['POST'])
+def eliminar_rol_permiso_usuario():
+    try:
+        datos = request.get_json()
+        resultado = eliminar_rol_permiso(
+            datos.get('idRol'),
+            datos.get('idPermiso')
+        )
+        return jsonify(resultado), 200 if resultado['ok'] else 400
+    except Exception as e:
+        print(f'Error al eliminar permiso del rol: {e}')
         return jsonify({'ok': False, 'mensaje': 'Error interno'}), 500
 
 

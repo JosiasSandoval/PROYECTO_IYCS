@@ -1,16 +1,51 @@
 from app.bd_sistema import obtener_conexion
 
-def obtener_acto_parroquia(idParroquia):
+def obtener_acto_parroquia(idParroquia, rol_usuario=''):
+    """
+    Obtiene los actos litúrgicos de una parroquia filtrados por rol.
+    Agrupa por acto para evitar duplicados (un acto puede tener múltiples horarios).
+    - feligres: actos con numParticipantes > 1
+    - secretaria: todos los actos
+    - sacerdote: actos con numParticipantes = 1
+    """
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            cursor.execute("""
-                SELECT al.idActo, al.nombActo, ap.costoBase
-                FROM acto_liturgico al
-                INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
-                INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
-                WHERE pa.idParroquia = %s;
-            """, (idParroquia,))  
+            # Construir query según rol - usando DISTINCT y GROUP BY para evitar duplicados
+            if rol_usuario == 'feligres':
+                # Feligrés: solo actos con más de 1 participante
+                cursor.execute("""
+                    SELECT DISTINCT al.idActo, al.nombActo, MIN(ap.costoBase) as costoBase
+                    FROM acto_liturgico al
+                    INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
+                    INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
+                    WHERE pa.idParroquia = %s AND al.numParticipantes > 1
+                    GROUP BY al.idActo, al.nombActo
+                    ORDER BY al.nombActo;
+                """, (idParroquia,))
+            elif rol_usuario == 'sacerdote':
+                # Sacerdote: solo actos con exactamente 1 participante
+                cursor.execute("""
+                    SELECT DISTINCT al.idActo, al.nombActo, MIN(ap.costoBase) as costoBase
+                    FROM acto_liturgico al
+                    INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
+                    INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
+                    WHERE pa.idParroquia = %s AND al.numParticipantes = 1
+                    GROUP BY al.idActo, al.nombActo
+                    ORDER BY al.nombActo;
+                """, (idParroquia,))
+            else:
+                # Secretaria o cualquier otro rol: todos los actos
+                cursor.execute("""
+                    SELECT DISTINCT al.idActo, al.nombActo, MIN(ap.costoBase) as costoBase
+                    FROM acto_liturgico al
+                    INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
+                    INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
+                    WHERE pa.idParroquia = %s
+                    GROUP BY al.idActo, al.nombActo
+                    ORDER BY al.nombActo;
+                """, (idParroquia,))
+            
             filas = cursor.fetchall()
             
             resultados = []
@@ -29,6 +64,10 @@ def obtener_acto_parroquia(idParroquia):
             conexion.close()
 
 def disponibilidad_acto_parroquia(idParroquia,idActo):
+    """
+    Obtiene todos los horarios configurados para un acto en una parroquia.
+    Normaliza el formato de diaSemana para que coincida con el frontend.
+    """
     conexion = obtener_conexion()
     try:    
         with conexion.cursor() as cursor:
@@ -37,14 +76,33 @@ def disponibilidad_acto_parroquia(idParroquia,idActo):
                 FROM acto_liturgico al
                 INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
                 INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
-                WHERE pa.idParroquia = %s and al.idActo = %s;
+                WHERE pa.idParroquia = %s and al.idActo = %s
+                ORDER BY ap.diaSemana, ap.horaInicioActo;
             """, (idParroquia,idActo))  
             filas = cursor.fetchall()
             resultados = []
+            
+            # Mapeo de días de la BD al formato del frontend
+            mapeo_dias = {
+                'Dom': 'dom',
+                'Lun': 'lun',
+                'Mar': 'mar',
+                'Mié': 'mi',  # Normalizar Mié a mi
+                'Mie': 'mi',   # Por si acaso viene sin acento
+                'Jue': 'jue',
+                'Vie': 'vie',
+                'Sáb': 'sáb',
+                'Sab': 'sáb'   # Por si acaso viene sin acento
+            }
+            
             for fila in filas:
+                dia_semana_bd = fila[1].strip()
+                # Normalizar el día de la semana
+                dia_semana_normalizado = mapeo_dias.get(dia_semana_bd, dia_semana_bd.lower())
+                
                 resultados.append({
                     'idActoParroquia': fila[0],
-                    'diaSemana': fila[1],
+                    'diaSemana': dia_semana_normalizado,
                     'horaInicioActo': fila[2]
                 })
             return resultados

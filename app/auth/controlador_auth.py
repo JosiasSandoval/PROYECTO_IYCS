@@ -91,9 +91,11 @@ def autenticar_usuario(email, clave_ingresada):
                     pe.idPersonal,
                     pe.nombPers,
                     pe.apePatPers,
+                    pe.apeMatPers,
                     fe.idFeligres,
                     fe.nombFel,
                     fe.apePatFel,
+                    fe.apeMatFel,
                     pp.idParroquia,
                     c.nombCargo
                 FROM usuario us
@@ -112,15 +114,17 @@ def autenticar_usuario(email, clave_ingresada):
                     idPersonal,
                     nombPers,
                     apePatPers,
+                    apeMatPers,
                     idFeligres,
                     nombFel,
                     apePatFel,
+                    apeMatFel,
                     idParroquia,
                     nombCargo
                 ) = perfil
             else:
                 idPersonal = idFeligres = idParroquia = None
-                nombPers = apePatPers = nombFel = apePatFel = nombCargo = None
+                nombPers = apePatPers = apeMatPers = nombFel = apePatFel = apeMatFel = nombCargo = None
 
             # ================================
             # OBTENER TODOS LOS ROLES
@@ -143,12 +147,21 @@ def autenticar_usuario(email, clave_ingresada):
             if idPersonal:
                 nombre_completo = f"{nombPers} {apePatPers}"
                 cargo_mostrar = nombCargo if nombCargo else "Personal"
+                nombre = nombPers
+                apellidoPaterno = apePatPers
+                apellidoMaterno = apeMatPers or ""
             elif idFeligres:
                 nombre_completo = f"{nombFel} {apePatFel}"
                 cargo_mostrar = "Feligrés"
+                nombre = nombFel
+                apellidoPaterno = apePatFel
+                apellidoMaterno = apeMatFel or ""
             else:
                 nombre_completo = "Usuario Sistema"
                 cargo_mostrar = "Sin Perfil"
+                nombre = ""
+                apellidoPaterno = ""
+                apellidoMaterno = ""
 
             # ================================
             # DEVOLVER OBJETO DE SESIÓN
@@ -158,6 +171,9 @@ def autenticar_usuario(email, clave_ingresada):
                 "idUsuario": idUsuario,
                 "email": email,
                 "nombre_usuario": nombre_completo,
+                "nombre": nombre,
+                "apellidoPaterno": apellidoPaterno,
+                "apellidoMaterno": apellidoMaterno,
                 "cargo_usuario": cargo_mostrar,
                 "rol_sistema": rol_principal,   # primer rol
                 "roles_disponibles": roles,    # todos los roles
@@ -175,3 +191,45 @@ def autenticar_usuario(email, clave_ingresada):
             conexion.close()
 
     return usuario_data
+
+def verificar_email_existe(email):
+    """
+    Verifica si existe un usuario con el email proporcionado.
+    Retorna el idUsuario si existe, None si no.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            sql = "SELECT idUsuario, estadoCuenta FROM usuario WHERE email = %s"
+            cursor.execute(sql, (email,))
+            resultado = cursor.fetchone()
+            
+            if resultado and resultado[1]:  # Verificar que la cuenta esté activa
+                return resultado[0]
+            return None
+    except Exception as e:
+        print(f"Error en verificar_email_existe: {e}")
+        return None
+    finally:
+        if conexion:
+            conexion.close()
+
+def cambiar_contrasena(email, nueva_clave):
+    """
+    Cambia la contraseña de un usuario.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            sql = "UPDATE usuario SET clave = %s WHERE email = %s"
+            cursor.execute(sql, (nueva_clave, email))
+        conexion.commit()
+        return True, None
+    except Exception as e:
+        if conexion:
+            conexion.rollback()
+        print(f"Error en cambiar_contrasena: {e}")
+        return False, str(e)
+    finally:
+        if conexion:
+            conexion.close()

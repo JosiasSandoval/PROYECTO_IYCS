@@ -78,10 +78,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         // LECTURA DE DATOS CRÍTICOS DE LA SESIÓN/BODY
         const rolUsuario = bodyElement.dataset.rol ? bodyElement.dataset.rol.toLowerCase() : null;
         const idUsuarioSesion = bodyElement.dataset.id; // El ID del usuario autenticado
+        const idParroquiaSesion = bodyElement.dataset.parroquia; // ID de la parroquia
 
         if (!idUsuarioSesion) {
             solicitanteDataContainer.innerHTML = `<p class="alert alert-danger">Error: ID de Usuario de Sesión no encontrado en el Body.</p>`;
             return false;
+        }
+
+        // 🔹 CASO SACERDOTE: idSolicitante = idParroquia
+        if (rolUsuario === 'sacerdote') {
+            const idParroquiaReserva = reservaData.idParroquia || idParroquiaSesion;
+            
+            if (!idParroquiaReserva) {
+                solicitanteDataContainer.innerHTML = `<p class="alert alert-danger">Error: Parroquia no encontrada para sacerdote.</p>`;
+                return false;
+            }
+
+            // Asignación especial para sacerdote
+            reservaData.idSolicitante = idParroquiaReserva; // La parroquia es quien solicita
+            reservaData.idUsuario = idUsuarioSesion; // El sacerdote quien registra
+            sessionStorage.setItem('reserva', JSON.stringify(reservaData));
+
+            // Mostrar información de la parroquia como solicitante
+            const nombreParroquia = reservaData.nombreParroquia || 'Parroquia';
+            const absorcionPago = reservaData.absorcionPago !== false;
+
+            solicitanteDataContainer.innerHTML = `
+                <p><strong>Solicitante:</strong> ${formatValue(nombreParroquia)}</p>
+                <p><strong>Tipo de reserva:</strong> <span class="badge badge-info">Reserva de Parroquia</span></p>
+                <p><strong>Mención:</strong> ${formatValue(reservaData.observaciones)}</p>
+                ${absorcionPago ? '<p class="badge badge-success">✓ Pago absorbido por la parroquia</p>' : ''}
+            `;
+
+            return true;
         }
 
         if (rolUsuario === 'feligres') {
@@ -389,40 +418,36 @@ async function enviarReserva(data) {
         const idActo = data.idActo;
 
         // -------------------------------------------------------
-        // 🔥 DEFINIR ESTADO DE LA RESERVA (TU CONDICIÓN NUEVA)
+        // 🔥 DEFINIR ESTADO DE LA RESERVA
         // -------------------------------------------------------
-        const requisitos = data.requisitos || {};
+        const rol = document.body.dataset.rol?.toLowerCase() || 'feligres';
         
-        // Obtener estadoReserva: primero de data.estadoReserva, luego de requisitos.estado, o calcularlo
-        let estadoReserva = data.estadoReserva || requisitos.estado;
+        // Obtener estadoReserva: primero de data.estadoReserva, o usar PENDIENTE_PAGO por defecto
+        let estadoReserva = data.estadoReserva;
         
-        // Si no existe, calcularlo basándose en la lógica
+        // Para feligrés: siempre PENDIENTE_PAGO ya que los documentos se entregan físicamente
+        // Para secretaría/administrador: mantener lógica existente si hay requisitos
         if (!estadoReserva) {
-            const rol = document.body.dataset.rol?.toLowerCase() || 'feligres';
-            
-            // Verificar si hay requisitos
-            const listaRequisitos = Object.values(requisitos).filter(r => r.idActoRequisito);
-            
-            // Si no hay requisitos, es misa → PENDIENTE_PAGO
-            if (listaRequisitos.length === 0) {
+            if (rol === "feligres") {
+                // Feligrés siempre va a PENDIENTE_PAGO (documentos se entregan en físico)
                 estadoReserva = "PENDIENTE_PAGO";
             } else {
-                // Hay requisitos: verificar si están todos cumplidos/aprobados
-                if (rol === "feligres") {
-                    const total = listaRequisitos.length;
-                    const subidos = listaRequisitos.filter(r => r.estadoCumplido === "CUMPLIDO").length;
-                    estadoReserva = (subidos < total) ? "PENDIENTE_DOCUMENTO" : "PENDIENTE_REVISION";
+                // Secretaria/Admin: mantener lógica anterior si es necesario
+                const requisitos = data.requisitos || {};
+                const listaRequisitos = Object.values(requisitos).filter(r => r.idActoRequisito);
+                
+                if (listaRequisitos.length === 0) {
+                    estadoReserva = "PENDIENTE_PAGO";
                 } else {
-                    // Secretaria/Admin
                     const todosAprobados = listaRequisitos.every(r => r.aprobado === true);
                     estadoReserva = todosAprobados ? "PENDIENTE_PAGO" : "PENDIENTE_DOCUMENTO";
                 }
             }
-            
-            // Si aún no hay estado, usar PENDIENTE_PAGO por defecto
-            if (!estadoReserva) {
-                estadoReserva = "PENDIENTE_PAGO";
-            }
+        }
+        
+        // Si aún no hay estado, usar PENDIENTE_PAGO por defecto
+        if (!estadoReserva) {
+            estadoReserva = "PENDIENTE_PAGO";
         }
 
         // -------------------------------------------------------
@@ -438,7 +463,8 @@ async function enviarReserva(data) {
             idSolicitante: String(data.idSolicitante),
             idActo: String(data.idActo),
             estadoReserva: estadoReserva,
-            idParroquia: data.idParroquia
+            idParroquia: data.idParroquia,
+            absorcionPago: data.absorcionPago || false
         };
 
         console.log("Payload reserva:", reservaPayload);
@@ -574,6 +600,9 @@ if (btnConfirmar) {
             if (rolUsuario === 'feligres') {
                 // Feligres va a "Mis reservas" (cliente/mis_reserva)
                 window.location.href = '/cliente/mis_reservas';
+            } else if (rolUsuario === 'sacerdote') {
+                // Sacerdote con absorción va directo a principal
+                window.location.href = '/principal';
             } else if (rolUsuario === 'secretaria' || rolUsuario === 'administrador') {
                 if (['PENDIENTE_DOCUMENTO', 'PENDIENTE_REVISION'].includes(reservaData.estadoReserva)) {
                     window.location.href = '/principal';
@@ -598,6 +627,6 @@ if (btnConfirmar) {
     
     // 4. Botón Atrás
     btnAtras?.addEventListener('click', () => { 
-        window.location.href = '/cliente/reserva_requisito'; 
+        window.location.href = '/cliente/reserva_datos'; 
     });
 });

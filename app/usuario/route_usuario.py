@@ -19,6 +19,7 @@ from app.usuario.controlador_personal import(
     eliminar_usuario_personal,
     personal_reserva_datos,
     buscar_personal_admin,
+    actualizar_perfil_personal,
 )
 
 # ... tus imports anteriores ...
@@ -242,18 +243,75 @@ def personal_reserva(idParroquia):
         
 @usuario_bp.route('/perfil/datos', methods=['GET'])
 def obtener_datos_perfil():
+    from app.usuario.controlador_personal import obtener_personal_por_id
+    
+    id_usuario = session.get('idUsuario')
+    rol_sistema = session.get('rol_sistema', '').upper()
+    
+    if not id_usuario:
+        return jsonify({"ok": False, "mensaje": "Usuario no autenticado"}), 401
+    
+    # Intentar primero como feligrés
+    datos_feligres = obtener_feligres_por_id(id_usuario)
+    if datos_feligres:
+        datos_feligres['tipo_perfil'] = 'feligres'
+        return jsonify({"ok": True, "datos": datos_feligres}), 200
+    
+    # Si no es feligrés, intentar como personal
+    datos_personal = obtener_personal_por_id(id_usuario)
+    if datos_personal:
+        datos_personal['tipo_perfil'] = 'personal'
+        return jsonify({"ok": True, "datos": datos_personal}), 200
+    
+    # Si no se encontró ningún perfil
+    return jsonify({"ok": False, "mensaje": "No se encontraron datos de perfil para este usuario."}), 404
+
+@usuario_bp.route('/perfil/actualizar', methods=['PUT'])
+def actualizar_perfil_usuario():
+    """Ruta unificada para actualizar perfil (feligrés o personal)"""
+    from app.usuario.controlador_personal import obtener_personal_por_id
+    
     id_usuario = session.get('idUsuario')
     
     if not id_usuario:
         return jsonify({"ok": False, "mensaje": "Usuario no autenticado"}), 401
     
+    data = request.get_json()
+    
+    # Determinar si es feligrés o personal
     datos_feligres = obtener_feligres_por_id(id_usuario)
     
     if datos_feligres:
-        return jsonify({"ok": True, "datos": datos_feligres}), 200
+        # Es un feligrés, usar la función existente
+        resultado = actualizar_usuario_feligres(
+            email=data.get('email'),
+            clave=data.get('clave', ''),
+            numDocFel=data.get('numDocFel'),
+            nombFel=data.get('nombFel'),
+            apePatFel=data.get('apePatFel'),
+            apeMatFel=data.get('apeMatFel'),
+            f_nacimiento=data.get('f_nacimiento'),
+            sexoFel=data.get('sexoFel'),
+            direccionFel=data.get('direccionFel'),
+            telefonoFel=data.get('telefonoFel'),
+            idRol=data.get('idRol', 2),
+            idTipoDocumento=data.get('idTipoDocumento'),
+            id=id_usuario
+        )
+        return jsonify(resultado), 200 if resultado['ok'] else 400
     else:
-        # Puede ser un 404 si el usuario existe pero no está en la tabla feligres
-        return jsonify({"ok": False, "mensaje": "Datos de feligrés no encontrados o error interno."}), 404
+        # Es personal, usar la función simplificada
+        resultado = actualizar_perfil_personal(
+            idUsuario=id_usuario,
+            email=data.get('email'),
+            clave=data.get('clave', ''),
+            telefono=data.get('telefonoPers'),
+            direccion=data.get('direccionPers'),
+            nombre=data.get('nombPers'),
+            apePaterno=data.get('apePatPers'),
+            apeMaterno=data.get('apeMatPers')
+        )
+        return jsonify(resultado), 200 if resultado['ok'] else 400
 
 @usuario_bp.route('/buscar_solicitante/<path:nombre>', methods=['GET'])
 def buscar_solicitante(nombre):
@@ -273,7 +331,8 @@ def buscar_solicitante(nombre):
     # Tomamos solo el primer resultado
     fila = resultados[0]
     usuario = {
-        'idUsuario': fila[0],
+        'idUsuario': fila[0],        # idFeligres del solicitante
+        'idFeligres': fila[0],       # Mismo ID, para claridad
         'numDocFel': fila[1],
         'nombreCompleto': fila[2],
         'telefonoFel': fila[3],

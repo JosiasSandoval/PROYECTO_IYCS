@@ -142,6 +142,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Renderizar selector de roles si hay más de uno
                         if (data.roles_disponibles.length > 1) {
+                            // Crear etiqueta para el selector
+                            const rolLabel = document.createElement('span');
+                            rolLabel.className = 'rol-label';
+                            rolLabel.textContent = 'Cambiar Rol:';
+                            
                             const rolSelector = document.createElement('select');
                             rolSelector.id = 'rol_selector';
                             data.roles_disponibles.forEach(rol => {
@@ -151,6 +156,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (rol === data.rol_actual) opt.selected = true;
                                 rolSelector.appendChild(opt);
                             });
+                            
+                            // Insertar la etiqueta antes del selector
+                            const container = rolActualEl.parentElement;
+                            container.insertBefore(rolLabel, rolActualEl);
                             rolActualEl.replaceWith(rolSelector);
 
                             rolSelector.addEventListener('change', async () => {
@@ -164,10 +173,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                     });
                                     const resp = await res.json();
                                     if (resp.success) {
-                                        alert(`Rol cambiado a ${nuevoRol}`);
-                                        cargoEl.textContent = nuevoRol;
-                                        // AGREGADO: Recargar página para reflejar permisos o actualizar contador notif
-                                        actualizarContador(); 
+                                        // Mostrar notificación más sutil
+                                        if (cargoEl) cargoEl.textContent = nuevoRol;
+                                        actualizarContador();
+                                        
+                                        // Recargar la página para aplicar permisos del nuevo rol
+                                        setTimeout(() => {
+                                            window.location.reload();
+                                        }, 300);
                                     }
                                 } catch (err) {
                                     console.error('Error al cambiar rol:', err);

@@ -191,11 +191,29 @@ def agregar_rol_permiso(idRol, idPermiso):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
+            # Verificar si ya existe la relación
+            cursor.execute("SELECT idRolPermiso FROM rol_permiso WHERE idRol = %s AND idPermiso = %s", (idRol, idPermiso))
+            if cursor.fetchone():
+                return {"ok": False, "mensaje": "El permiso ya está asignado a este rol"}
             cursor.execute("INSERT INTO rol_permiso (idRol, idPermiso) VALUES (%s, %s)", (idRol, idPermiso))
         conexion.commit()
         return {"ok": True, "mensaje": "Permiso asignado al rol correctamente"}
     except Exception as e:
         print(f"Error al agregar rol_permiso: {e}")
+        return {"ok": False, "mensaje": str(e)}
+    finally:
+        if conexion:
+            conexion.close()
+
+def eliminar_rol_permiso(idRol, idPermiso):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("DELETE FROM rol_permiso WHERE idRol = %s AND idPermiso = %s", (idRol, idPermiso))
+        conexion.commit()
+        return {"ok": True, "mensaje": "Permiso eliminado del rol correctamente"}
+    except Exception as e:
+        print(f"Error al eliminar rol_permiso: {e}")
         return {"ok": False, "mensaje": str(e)}
     finally:
         if conexion:
@@ -210,15 +228,17 @@ def get_listar_permisos():
         resultados = []
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT idPermiso,nombPermiso, estadoPermiso 
+                SELECT idPermiso, nombAccion, tipoOperacion, nombTabla, estadoPermiso 
                 FROM permiso
             """)
-            resultados=cursor.fetchall()
-            for fila in resultados:
+            filas = cursor.fetchall()
+            for fila in filas:
                 resultados.append({
                     'id': fila[0],
-                    'nombre': fila[1],
-                    'estado': fila[2]
+                    'accion': fila[1],
+                    'operacion': fila[2],
+                    'tabla': fila[3] if fila[3] else 'Otros',
+                    'estado': fila[4]
                 })
         return resultados
     except Exception as e:

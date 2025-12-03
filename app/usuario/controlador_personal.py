@@ -1,5 +1,64 @@
 from app.bd_sistema import obtener_conexion
 
+def obtener_personal_por_id(idUsuario):
+    """Obtiene los datos de un personal específico usando su idUsuario."""
+    conexion = obtener_conexion()
+    personal = None
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    pe.idPersonal,
+                    us.email,
+                    pe.nombPers,
+                    pe.apePatPers,
+                    pe.apeMatPers,
+                    pe.telefonoPers,
+                    pe.direccionPers,
+                    pe.sexoPers,
+                    ti.nombDocumento,
+                    pe.numDocPers,
+                    pp.idParroquia,
+                    pa.nombParroquia,
+                    ca.nombCargo
+                FROM usuario us
+                INNER JOIN personal pe ON us.idUsuario = pe.idUsuario
+                INNER JOIN tipo_documento ti ON pe.idTipoDocumento = ti.idTipoDocumento
+                LEFT JOIN parroquia_personal pp ON pe.idPersonal = pp.idPersonal AND pp.vigenciaParrPers = TRUE
+                LEFT JOIN parroquia pa ON pp.idParroquia = pa.idParroquia
+                LEFT JOIN cargo ca ON pp.idCargo = ca.idCargo
+                WHERE us.idUsuario = %s
+                LIMIT 1
+            """, (idUsuario,))
+            
+            fila = cursor.fetchone()
+            
+            if fila:
+                personal = {
+                    'idUsuario': idUsuario,
+                    'idPersonal': fila[0],
+                    'email': fila[1],
+                    'nombPers': fila[2],
+                    'apePatPers': fila[3],
+                    'apeMatPers': fila[4],
+                    'nombreCompleto': f"{fila[2]} {fila[3]} {fila[4]}",
+                    'telefonoPers': fila[5],
+                    'direccionPers': fila[6],
+                    'sexoPers': fila[7],
+                    'nombDocumento': fila[8],
+                    'numDocPers': fila[9],
+                    'idParroquia': fila[10],
+                    'nombParroquia': fila[11] or 'Sin asignación',
+                    'nombCargo': fila[12] or 'Sin cargo',
+                }
+        return personal
+    except Exception as e:
+        print(f"Error al obtener personal por ID: {e}")
+        return None
+    finally:
+        if conexion:
+            conexion.close()
+
 def get_datos_personal():
     conexion = obtener_conexion()
     try:
@@ -215,6 +274,49 @@ def actualizar_usuario_personal(idUsuario, email, clave, numDocPers, nombre, ape
     except Exception as e:
         conexion.rollback()
         print(f"Error al actualizar usuario personal: {e}")
+        return {"ok": False, "mensaje": str(e)}
+
+    finally:
+        if conexion:
+            conexion.close()
+
+def actualizar_perfil_personal(idUsuario, email, clave, telefono, direccion, nombre, apePaterno, apeMaterno):
+    """
+    Actualiza solo los datos básicos del perfil de un personal (sin tocar cargo, parroquia, roles).
+    Usado desde la página de perfil del usuario.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Actualizar email (y contraseña si se proporcionó)
+            if clave:
+                cursor.execute("""
+                    UPDATE usuario
+                    SET email=%s, clave=%s
+                    WHERE idUsuario=%s
+                """, (email, clave, idUsuario))
+            else:
+                cursor.execute("""
+                    UPDATE usuario
+                    SET email=%s
+                    WHERE idUsuario=%s
+                """, (email, idUsuario))
+
+            # Actualizar datos personales
+            cursor.execute("""
+                UPDATE personal
+                SET nombPers=%s, apePatPers=%s, apeMatPers=%s,
+                    direccionPers=%s, telefonoPers=%s
+                WHERE idUsuario=%s
+            """, (nombre, apePaterno, apeMaterno, direccion, telefono, idUsuario))
+
+        conexion.commit()
+        return {"ok": True, "mensaje": "Perfil actualizado correctamente"}
+
+    except Exception as e:
+        if conexion:
+            conexion.rollback()
+        print(f"Error al actualizar perfil personal: {e}")
         return {"ok": False, "mensaje": str(e)}
 
     finally:

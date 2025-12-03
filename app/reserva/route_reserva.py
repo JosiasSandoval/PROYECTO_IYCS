@@ -27,12 +27,27 @@ def nueva_reserva():
         idUsuario = data.get('idUsuario')
         idSolicitante = data.get('idSolicitante')
         idParroquia = data.get('idParroquia')
+        absorcionPago = data.get('absorcionPago', False)
 
         if not fecha or not hora or not idUsuario or not idSolicitante:
             return jsonify({
                 "ok": False,
                 "mensaje": "Faltan datos obligatorios (fecha, hora, idUsuario, idSolicitante)."
             }), 400
+
+        # 🔹 Validar que el horario esté disponible (considerando duración del acto)
+        from app.reserva.controlador_reserva import validar_horario_disponible
+        idActo = data.get('idActo')
+        horario_disponible, mensaje_validacion = validar_horario_disponible(fecha, hora, idParroquia, idActo)
+        if not horario_disponible:
+            return jsonify({
+                "ok": False,
+                "mensaje": mensaje_validacion
+            }), 400
+
+        # 🔹 Si viene con estado RESERVA_PARROQUIA o absorcionPago=True, usar estado especial
+        if estado == 'RESERVA_PARROQUIA' or absorcionPago:
+            estado = 'RESERVA_PARROQUIA'
 
         exito, resultado = agregar_reserva(fecha, hora, mencion, estado, idUsuario, idSolicitante, idParroquia)
         
@@ -129,6 +144,7 @@ def listar_reservas():
     except Exception as e:
         print(f'Error al listar reservas: {e}')
         return jsonify({'ok': False, 'datos': [], 'mensaje': 'Error interno'}), 500
+
     
 # ==========================================
 # EN: app/reserva/routes.py
@@ -157,3 +173,40 @@ def reprogramar_reserva_route():
 
     except Exception as e:
         return jsonify({"ok": False, "mensaje": f"Error interno: {str(e)}"}), 500
+
+# ==========================
+# OBTENER RESERVAS POR FECHA Y PARROQUIA (para validación de horarios)
+# ==========================
+@reserva_bp.route('/reservas_fecha/<int:idParroquia>/<fecha>', methods=['GET'])
+def reservas_por_fecha(idParroquia, fecha):
+    try:
+        from app.reserva.controlador_reserva import obtener_reservas_por_fecha
+        reservas = obtener_reservas_por_fecha(idParroquia, fecha)
+        return jsonify({
+            "ok": True,
+            "reservas": reservas
+        }), 200
+    except Exception as e:
+        print(f"Error al obtener reservas por fecha: {e}")
+        return jsonify({"ok": False, "mensaje": str(e)}), 500
+
+# ==========================
+# OBTENER HORARIOS BLOQUEADOS POR FECHA Y PARROQUIA (considerando duración)
+# ==========================
+@reserva_bp.route('/horarios_bloqueados/<int:idParroquia>/<fecha>', methods=['GET'])
+def horarios_bloqueados(idParroquia, fecha):
+    """
+    Obtiene los horarios bloqueados para una fecha y parroquia específica.
+    Considera la duración de los actos para bloquear horarios solapados.
+    """
+    try:
+        from app.reserva.controlador_reserva import obtener_horarios_bloqueados
+        horarios = obtener_horarios_bloqueados(idParroquia, fecha)
+        return jsonify({
+            "ok": True,
+            "horarios_bloqueados": horarios
+        }), 200
+    except Exception as e:
+        print(f"Error al obtener horarios bloqueados: {e}")
+        return jsonify({"ok": False, "mensaje": str(e)}), 500
+

@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         modal.classList.add('activo');
-        setTimeout(cerrarModal, tipo === 'error' ? 5000 : 1000);
+        setTimeout(cerrarModal, 1000);
     }
 
     if (!login) return;
@@ -58,11 +58,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.href = '/principal'; // Pantalla principal
                 }, 1000);
             } else {
+                // Vaciar los campos cuando hay error
+                login.email.value = '';
+                login.clave.value = '';
                 mostrarMensaje(data.error || "Fallo desconocido al iniciar sesión.", 'error');
             }
 
         } catch (error) {
             console.error('Error de conexión:', error);
+            // Vaciar los campos también cuando hay error de conexión
+            login.email.value = '';
+            login.clave.value = '';
             mostrarMensaje("No se pudo conectar con el servidor. El API podría estar inactivo.", 'error');
         }
     });

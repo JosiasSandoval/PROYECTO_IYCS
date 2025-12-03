@@ -171,6 +171,59 @@ img {
   text-align: center;
   padding: 8px 0;
 }
+
+/* Selector de Rol mejorado */
+#rol_selector {
+  width: 100%;
+  padding: 8px 12px;
+  margin: 8px 0;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #f9fafb;
+  color: #111827;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 32px;
+}
+
+#rol_selector:hover {
+  border-color: #3b82f6;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+#rol_selector:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+#rol_selector option {
+  padding: 10px;
+  background-color: #ffffff;
+  color: #111827;
+}
+
+/* Etiqueta sobre el selector */
+.modal-usuario .rol-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 8px 18px 0;
+  font-weight: 600;
+}
 /* ===== notificaciones ===== */
 /* Contenedor relativo para poder posicionar el menú */
 .notificacion-container {

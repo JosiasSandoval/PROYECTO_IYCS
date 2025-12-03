@@ -9,6 +9,232 @@ def _fecha_a_str(valor):
         return valor.isoformat()
     return str(valor) if valor is not None else None
 
+# --------------------------
+# Validar horario disponible (MEJORADO: considera duración del acto)
+# --------------------------
+def validar_horario_disponible(fecha, hora, idParroquia, idActo=None):
+    """
+    Valida que el horario seleccionado esté disponible.
+    REGLAS:
+    - Solo valida reservas CONFIRMADAS o PAGADAS (no PENDIENTE_DOCUMENTO)
+    - Las MISAS solo bloquean la hora exacta (pueden haber múltiples misas a la misma hora)
+    - Los actos con requisitos bloquean según duración
+    Retorna (True, "") si está disponible, (False, mensaje) si no.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Obtener duración y nombre del acto si se proporciona idActo
+            duracion_minutos = 0
+            nomb_acto = ''
+            es_misa = False
+            
+            if idActo:
+                cursor.execute("""
+                    SELECT ca.tiempoDuracion, al.nombActo
+                    FROM acto_liturgico al
+                    LEFT JOIN configuracion_acto ca ON al.idActo = ca.idActo
+                    WHERE al.idActo = %s
+                """, (idActo,))
+                config = cursor.fetchone()
+                if config:
+                    duracion_minutos = config[0] if config[0] else 60
+                    nomb_acto = config[1].lower() if config[1] else ''
+                    es_misa = 'misa' in nomb_acto
+                else:
+                    duracion_minutos = 60
+            
+            # Verificar reservas en la hora exacta (solo CONFIRMADAS o PAGADAS)
+            cursor.execute("""
+                SELECT COUNT(*) as total
+                FROM reserva
+                WHERE f_reserva = %s 
+                AND h_reserva = %s 
+                AND idParroquia = %s
+                AND estadoReserva NOT IN ('CANCELADA', 'RECHAZADA', 'CANCELADO', 'RECHAZADO', 'PENDIENTE_DOCUMENTO')
+                AND estadoReserva IN ('PENDIENTE_PAGO', 'CONFIRMADO', 'ATENDIDO', 'RESERVA_PARROQUIA')
+            """, (fecha, hora, idParroquia))
+            
+            resultado = cursor.fetchone()
+            total = resultado[0] if resultado else 0
+            
+            # REGLA: Las MISAS pueden tener múltiples reservas a la misma hora
+            # Solo se bloquea si NO es misa y ya hay una reserva
+            if not es_misa and total > 0:
+                return False, f"El horario {hora} del día {fecha} ya está ocupado."
+            
+            # Si es misa, solo validamos la hora exacta (ya lo hicimos arriba)
+            if es_misa:
+                return True, ""
+            
+            # Para actos con requisitos, validar solapamiento considerando duración
+            if not idActo or duracion_minutos == 0:
+                return True, ""
+            
+            # Validar solapamiento considerando duración (solo para actos con requisitos)
+            cursor.execute("""
+                SELECT r.h_reserva, r.estadoReserva, al.nombActo,
+                       COALESCE(ca.tiempoDuracion, 60) as duracion
+                FROM reserva r
+                LEFT JOIN participantes_acto pa ON r.idReserva = pa.idReserva
+                LEFT JOIN acto_liturgico al ON pa.idActo = al.idActo
+                LEFT JOIN configuracion_acto ca ON pa.idActo = ca.idActo
+                WHERE r.f_reserva = %s 
+                AND r.idParroquia = %s
+                AND r.estadoReserva NOT IN ('CANCELADA', 'RECHAZADA', 'CANCELADO', 'RECHAZADO', 'PENDIENTE_DOCUMENTO')
+                AND r.estadoReserva IN ('PENDIENTE_PAGO', 'CONFIRMADO', 'ATENDIDO', 'RESERVA_PARROQUIA')
+                AND (
+                    -- El horario propuesto está dentro de una reserva existente
+                    (r.h_reserva <= %s AND ADDTIME(r.h_reserva, SEC_TO_TIME(COALESCE(ca.tiempoDuracion, 60) * 60)) > %s)
+                    OR
+                    -- Una reserva existente está dentro del horario propuesto
+                    (r.h_reserva < ADDTIME(%s, SEC_TO_TIME(%s * 60)) AND r.h_reserva >= %s)
+                )
+            """, (fecha, idParroquia, hora, hora, hora, duracion_minutos, hora))
+            
+            reservas_solapadas = cursor.fetchall()
+            
+            if reservas_solapadas:
+                # Verificar si alguna de las reservas solapadas es misa (las misas no bloquean por duración)
+                for row in reservas_solapadas:
+                    nomb_acto_existente = str(row[2]).lower() if row[2] else ''
+                    if 'misa' not in nomb_acto_existente:
+                        return False, f"El horario {hora} del día {fecha} se solapa con una reserva existente."
+            
+            return True, ""
+    except Exception as e:
+        print(f'Error validando horario disponible: {e}')
+        return False, f"Error al validar disponibilidad: {str(e)}"
+    finally:
+        if conexion:
+            conexion.close()
+
+def obtener_reservas_por_fecha(idParroquia, fecha):
+    """
+    Obtiene todas las reservas de una parroquia en una fecha específica.
+    Retorna lista de reservas con hora y estado.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT r.idReserva, r.h_reserva, r.estadoReserva, r.mencion,
+                       CASE 
+                           WHEN r.estadoReserva = 'RESERVA_PARROQUIA' THEN p.nombParroquia
+                           ELSE CONCAT(f.nombFel, ' ', f.apePatFel)
+                       END as solicitante
+                FROM reserva r
+                LEFT JOIN feligres f ON r.idSolicitante = f.idFeligres
+                INNER JOIN parroquia p ON r.idParroquia = p.idParroquia
+                WHERE r.idParroquia = %s 
+                AND r.f_reserva = %s
+                AND r.estadoReserva NOT IN ('CANCELADA', 'RECHAZADA')
+                ORDER BY r.h_reserva
+            """, (idParroquia, fecha))
+            
+            reservas = []
+            for row in cursor.fetchall():
+                reservas.append({
+                    'idReserva': row[0],
+                    'hora': str(row[1]),
+                    'estado': row[2],
+                    'mencion': row[3],
+                    'solicitante': row[4]
+                })
+            
+            return reservas
+    except Exception as e:
+        print(f'Error obteniendo reservas por fecha: {e}')
+        return []
+    finally:
+        if conexion:
+            conexion.close()
+
+def obtener_horarios_bloqueados(idParroquia, fecha):
+    """
+    Obtiene los horarios bloqueados para una fecha y parroquia específica.
+    Considera la duración de los actos para bloquear horarios solapados.
+    REGLAS CRÍTICAS:
+    - Las MISAS NUNCA bloquean horarios (pueden haber múltiples misas a la misma hora)
+    - Solo bloquea reservas CONFIRMADAS o PAGADAS (PENDIENTE_PAGO, CONFIRMADO, etc.)
+    - Los actos con requisitos (bautizos, matrimonios) bloquean según duración
+    Retorna una lista de horarios bloqueados (formato HH:MM).
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Obtener todas las reservas activas (solo CONFIRMADAS o PAGADAS) con su duración y tipo de acto
+            # EXCLUIR MISAS completamente
+            cursor.execute("""
+                SELECT r.h_reserva, 
+                       COALESCE(ca.tiempoDuracion, 60) as duracion,
+                       al.nombActo,
+                       r.estadoReserva
+                FROM reserva r
+                LEFT JOIN participantes_acto pa ON r.idReserva = pa.idReserva
+                LEFT JOIN acto_liturgico al ON pa.idActo = al.idActo
+                LEFT JOIN configuracion_acto ca ON pa.idActo = ca.idActo
+                WHERE r.idParroquia = %s 
+                AND r.f_reserva = %s
+                AND r.estadoReserva NOT IN ('CANCELADA', 'RECHAZADA', 'CANCELADO', 'RECHAZADO', 'PENDIENTE_DOCUMENTO')
+                AND r.estadoReserva IN ('PENDIENTE_PAGO', 'CONFIRMADO', 'ATENDIDO', 'RESERVA_PARROQUIA')
+                AND (al.nombActo IS NULL OR LOWER(al.nombActo) NOT LIKE '%%misa%%')
+            """, (idParroquia, fecha))
+            
+            horarios_bloqueados = set()
+            for row in cursor.fetchall():
+                hora_inicio = str(row[0])
+                duracion_minutos = row[1] if row[1] else 60
+                nomb_acto = str(row[2]).lower() if row[2] else ''
+                estado = str(row[3]) if row[3] else ''
+                
+                # Verificar que NO sea misa (doble verificación)
+                es_misa = 'misa' in nomb_acto
+                if es_misa:
+                    continue  # Saltar misas completamente
+                
+                # Convertir hora a minutos desde medianoche
+                try:
+                    # Manejar diferentes formatos de hora
+                    if isinstance(hora_inicio, str):
+                        hora_parts = hora_inicio.split(':')
+                        if len(hora_parts) >= 2:
+                            minutos_inicio = int(hora_parts[0]) * 60 + int(hora_parts[1])
+                        else:
+                            continue
+                    else:
+                        # Si es un objeto time
+                        minutos_inicio = hora_inicio.hour * 60 + hora_inicio.minute
+                    
+                    # Agregar la hora de inicio (siempre se bloquea para actos con requisitos)
+                    hora_str = f"{int(minutos_inicio // 60):02d}:{int(minutos_inicio % 60):02d}"
+                    horarios_bloqueados.add(hora_str[:5])  # Formato HH:MM
+                    
+                    # Para actos con requisitos (bautizos, matrimonios), bloquear horas durante la duración
+                    if duracion_minutos > 60:
+                        minutos_fin = minutos_inicio + duracion_minutos
+                        
+                        # Agregar horas intermedias si la duración es mayor a 1 hora
+                        minutos_actual = minutos_inicio + 60
+                        while minutos_actual < minutos_fin:
+                            hora_str = f"{int(minutos_actual // 60):02d}:{int(minutos_actual % 60):02d}"
+                            horarios_bloqueados.add(hora_str[:5])
+                            minutos_actual += 60
+                            
+                except (ValueError, IndexError, AttributeError) as e:
+                    # Si hay error al parsear, agregar la hora tal cual
+                    print(f"Error parseando hora {hora_inicio}: {e}")
+                    if isinstance(hora_inicio, str):
+                        horarios_bloqueados.add(hora_inicio[:5])
+            
+            return sorted(list(horarios_bloqueados))
+    except Exception as e:
+        print(f'Error obteniendo horarios bloqueados: {e}')
+        return []
+    finally:
+        if conexion:
+            conexion.close()
+
 def _hora_a_str(valor):
     if isinstance(valor, timedelta):
         return str(valor)
@@ -133,8 +359,8 @@ def cambiar_estado_reserva(idReserva, accion='continuar', motivo_cancelacion=Non
                 # Secretaria aprueba documentos
                 nuevo_estado = 'PENDIENTE_PAGO'
             elif estado_actual == 'PENDIENTE_PAGO':
-                # Tesorería confirma pago
-                nuevo_estado = 'CONFIRMADO'
+                # Después de pagar, pasa a PENDIENTE_DOCUMENTO (documentos se entregan físicamente)
+                nuevo_estado = 'PENDIENTE_DOCUMENTO'
             elif estado_actual == 'CONFIRMADO':
                 # Sacerdote finaliza el acto
                 nuevo_estado = 'ATENDIDO'              
@@ -341,7 +567,7 @@ def get_reservas_feligres(idUsuario):
             if not fila: return []
             idFeligres = fila[0]
 
-            # Consulta Principal
+
             cursor.execute("""
                 SELECT 
                     re.idReserva,
@@ -353,18 +579,38 @@ def get_reservas_feligres(idUsuario):
                     pa.nombParroquia,
                     re.estadoReserva,
                     COALESCE(GROUP_CONCAT(CONCAT(pc.rolParticipante, ': ', pc.nombParticipante) SEPARATOR '; '), '') AS participantes,
-                    al.idActo,        -- <--- ¡AGREGADO IMPORTANTE!
-                    re.idParroquia    -- <--- ¡AGREGADO IMPORTANTE!
+                    al.idActo,        -- [OK] Necesario para Reprogramar
+                    re.idParroquia,   -- [OK] Necesario para Reprogramar
+                    
+                    -- Nombre Solicitante (Lógica corregida)
+                    CASE 
+                        WHEN re.idSolicitante = re.idParroquia THEN pa.nombParroquia
+                        ELSE CONCAT(f.nombFel,' ',f.apePatFel,' ',f.apeMatFel)
+                    END AS nombreSolicitante,
+
+                    -- Datos de Pago (Agregué los JOIN abajo para que esto funcione)
+                    CASE WHEN pr.idPagoReserva IS NOT NULL THEN TRUE ELSE FALSE END AS tienePagoReserva,
+                    COALESCE(p.estadoPago, 'PENDIENTE') AS estadoPago
+
                 FROM reserva re
-                INNER JOIN feligres f ON f.idFeligres = re.idSolicitante
                 INNER JOIN parroquia pa ON re.idParroquia = pa.idParroquia
+                INNER JOIN feligres f ON f.idFeligres = re.idSolicitante
                 LEFT JOIN participantes_acto pc ON re.idReserva = pc.idReserva
                 LEFT JOIN acto_liturgico al ON pc.idActo = al.idActo
                 LEFT JOIN acto_parroquia ap ON al.idActo = ap.idActo AND ap.idParroquia = re.idParroquia
-                WHERE re.idSolicitante = %s
-                GROUP BY re.idReserva, al.nombActo, ap.costoBase, re.f_reserva, re.h_reserva, re.mencion, pa.nombParroquia, re.estadoReserva, al.idActo, re.idParroquia;
-            """, (idFeligres,))
+                
+                -- ¡ESTOS FALTABAN PARA QUE NO TE DE ERROR CON LOS PAGOS!
+                LEFT JOIN pago_reserva pr ON re.idReserva = pr.idReserva
+                LEFT JOIN pago p ON pr.idPago = p.idPago
 
+                WHERE re.idSolicitante = %s
+                
+                GROUP BY 
+                    re.idReserva, al.nombActo, ap.costoBase, re.f_reserva, re.h_reserva, 
+                    re.mencion, pa.nombParroquia, re.estadoReserva, al.idActo, re.idParroquia,
+                    nombreSolicitante, tienePagoReserva, estadoPago;
+            """, (idFeligres,))
+            
             filas = cursor.fetchall()
             resultados = []
             for fila in filas:
@@ -372,7 +618,7 @@ def get_reservas_feligres(idUsuario):
                 hora_str = _hora_a_str(fila[4])
                 resultados.append({
                     'idReserva': fila[0],
-                    'nombreActo': fila[1], # Usar nombre consistente
+                    'nombreActo': fila[1],
                     'costoBase': fila[2],
                     'fecha': fecha_str,
                     'hora': hora_str,
@@ -380,8 +626,11 @@ def get_reservas_feligres(idUsuario):
                     'nombreParroquia': fila[6],
                     'estadoReserva': fila[7],
                     'participantes': fila[8],
-                    'idActo': fila[9],       # <--- ¡AHORA SÍ EXISTE!
-                    'idParroquia': fila[10]  # <--- ¡AHORA SÍ EXISTE!
+                    'idActo': fila[9],       
+                    'idParroquia': fila[10], 
+                    'nombreSolicitante': fila[11],
+                    'tienePagoReserva': fila[12],
+                    'estadoPago': fila[13]
                 })
             return resultados
     except Exception as e:
@@ -393,11 +642,14 @@ def get_reservas_feligres(idUsuario):
 # ==========================================
 # RESERVAS DE SECRETARIA (CORREGIDO: Agregado al.idActo)
 # ==========================================
+# =========================================================
+# FUNCIÓN UNIFICADA: get_reservas_parroquia
+# =========================================================
 def get_reservas_parroquia(idUsuario):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            # Obtener Parroquia
+            # 1. Obtener ID de la Parroquia asociada a la Secretaria
             cursor.execute("""
                 SELECT pp.idParroquia
                 FROM usuario us
@@ -411,7 +663,8 @@ def get_reservas_parroquia(idUsuario):
             if not fila: return []
             idParroquia = fila[0]
 
-            # Consulta Principal
+            # 2. Consulta Principal Unificada
+            # Incluye: idActo (para calendario), tienePagoReserva (para pagos) y nombreFeligres
             cursor.execute("""
                 SELECT 
                     re.idReserva,
@@ -424,16 +677,21 @@ def get_reservas_parroquia(idUsuario):
                     pa.nombParroquia,
                     re.estadoReserva,
                     COALESCE(GROUP_CONCAT(CONCAT(pc.rolParticipante, ': ', pc.nombParticipante) SEPARATOR '; '), '') AS participantes,
-                    al.idActo,        -- <--- ¡AGREGADO!
-                    re.idParroquia    -- <--- ¡AGREGADO!
+                    al.idActo,       -- Necesario para reprogramación
+                    re.idParroquia,  -- Necesario para reprogramación
+                    CASE WHEN pr.idPagoReserva IS NOT NULL THEN TRUE ELSE FALSE END AS tienePagoReserva
                 FROM reserva re
                 INNER JOIN feligres f ON f.idFeligres = re.idSolicitante
                 INNER JOIN parroquia pa ON re.idParroquia = pa.idParroquia
                 LEFT JOIN participantes_acto pc ON re.idReserva = pc.idReserva
                 LEFT JOIN acto_liturgico al ON pc.idActo = al.idActo
                 LEFT JOIN acto_parroquia ap ON al.idActo = ap.idActo AND ap.idParroquia = re.idParroquia
+                LEFT JOIN pago_reserva pr ON re.idReserva = pr.idReserva
                 WHERE re.idParroquia = %s
-                GROUP BY re.idReserva, al.nombActo, ap.costoBase, re.f_reserva, re.h_reserva, re.mencion, nombreFeligres, pa.nombParroquia, re.estadoReserva, al.idActo, re.idParroquia;
+                GROUP BY 
+                    re.idReserva, al.nombActo, ap.costoBase, re.f_reserva, re.h_reserva, 
+                    re.mencion, nombreFeligres, pa.nombParroquia, re.estadoReserva, 
+                    al.idActo, re.idParroquia, tienePagoReserva;
             """, (idParroquia,))
 
             filas = cursor.fetchall()
@@ -452,12 +710,13 @@ def get_reservas_parroquia(idUsuario):
                     'nombreParroquia': fila[7],
                     'estadoReserva': fila[8],
                     'participantes': fila[9],
-                    'idActo': fila[10],      # <--- ¡DATO CLAVE!
-                    'idParroquia': fila[11]  # <--- ¡DATO CLAVE!
+                    'idActo': fila[10],        # <--- ¡IMPORTANTE!
+                    'idParroquia': fila[11],   # <--- ¡IMPORTANTE!
+                    'tienePagoReserva': bool(fila[12])
                 })
             return resultados
     except Exception as e:
-        print(f"Error al obtener las reservas: {e}")
+        print(f"Error al obtener las reservas de parroquia: {e}")
         return []
     finally:
         if conexion: conexion.close()

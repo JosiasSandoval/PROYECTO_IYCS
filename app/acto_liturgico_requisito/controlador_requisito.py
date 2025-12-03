@@ -299,14 +299,14 @@ def obtener_documentos_reserva(idReserva):
         documentos = []
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT dr.idDocumento, rq.nombRequisito, dr.rutaArchivo, dr.tipoArchivo, dr.f_subido,dr.observacion
+                SELECT dr.idDocumento, rq.nombRequisito, dr.rutaArchivo, dr.tipoArchivo, dr.f_subido, dr.observacion,
+                       dr.estadoCumplimiento, dr.aprobado, dr.idActoRequisito
                 FROM DOCUMENTO_REQUISITO dr
                 INNER JOIN reserva re ON dr.idReserva=re.idReserva
                 INNER JOIN acto_requisito ar ON dr.idActoRequisito=ar.idActoRequisito
                 INNER JOIN requisito rq ON ar.idRequisito=rq.idRequisito
-                WHERE re.estadoReserva='PENDIENTE_REVISION' 
-                  AND re.idReserva=%s 
-                  AND dr.aprobado=FALSE
+                WHERE re.idReserva=%s 
+                  AND (re.estadoReserva='PENDIENTE_REVISION' OR re.estadoReserva='PENDIENTE_DOCUMENTO')
             """, (idReserva,))
             filas = cursor.fetchall()
             for fila in filas:
@@ -316,7 +316,10 @@ def obtener_documentos_reserva(idReserva):
                     'rutaArchivo': fila[2],
                     'tipoArchivo': fila[3],
                     'f_subido': fila[4],
-                    'observacion': fila[5]
+                    'observacion': fila[5],
+                    'estadoCumplimiento': fila[6] if len(fila) > 6 else None,
+                    'aprobado': fila[7] if len(fila) > 7 else False,
+                    'idActoRequisito': fila[8] if len(fila) > 8 else None
                 })
         return documentos
     except Exception as e:

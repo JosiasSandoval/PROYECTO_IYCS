@@ -127,9 +127,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function cargarReservas() {
     try {
         let endpoint = '';
-        if (rolUsuario === 'secretaria') endpoint = `/api/reserva/secretaria/${idUsuarioSesion}`;
-        else if (rolUsuario === 'feligres') endpoint = `/api/reserva/feligres/${idUsuarioSesion}`;
-        else { console.error("Rol desconocido:", rolUsuario); return; }
+        if (rolUsuario === 'secretaria') {
+            endpoint = `/api/reserva/secretaria/${idUsuarioSesion}`;
+        } else if (rolUsuario === 'feligres') {
+            endpoint = `/api/reserva/feligres/${idUsuarioSesion}`;
+        } else { 
+            console.error("Rol desconocido:", rolUsuario); 
+            return; 
+        }
 
         const response = await fetch(endpoint);
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
@@ -145,6 +150,13 @@ async function cargarReservas() {
                 dato.hora = dato.hora || '';
                 return dato;
             })) : [];
+
+        // Log para depuración
+        console.log('Reservas cargadas para calendario:', reservasGlobal.length);
+        
+        // Exportar reservasGlobal para que el calendario pueda acceder
+        window.reservasParaCalendario = reservasGlobal;
+        console.log('✅ window.reservasParaCalendario listo con', reservasGlobal.length, 'reservas');
 
         // Referencias a tablas
         const tablaConfirmadas = document.querySelector('#tabla-confirmadas tbody');
@@ -186,17 +198,26 @@ async function cargarReservas() {
             } else if (rolUsuario === 'feligres') {
                 // Tab Pendiente -> todas las reservas pendientes
                 if (estado.includes('PENDIENTE')) {
-                    if (estado.includes('PENDIENTE_DOCUMENTO')) {
-                        accionesHTML = accionesHTML + `
-                            <button class="btn-accion subir" onclick="subirDocumentos(${dato.idReserva})">Subir Documentos</button>
-                            <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
-                    } else if (estado.includes('PENDIENTE_REVISION')) {
-                        accionesHTML = accionesHTML + `
-                            <button class="btn-accion modificar" onclick="modificarDocumentos(${dato.idReserva})">Modificar Documentos</button>
-                            <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
-                    } else if (estado.includes('PENDIENTE_PAGO')) {
+                    let mensajeInfo = '';
+                    
+                    if (estado.includes('PENDIENTE_PAGO')) {
                         accionesHTML = accionesHTML + `
                             <button class="btn-accion pagar" onclick="pagarReserva(${dato.idReserva})">Pagar</button>
+                            <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
+                        // Mensaje informativo sobre documentos físicos
+                        mensajeInfo = `<div class="mensaje-info-pago" style="font-size: 0.9rem; color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffc107;">
+                            <strong>ℹ️ Información:</strong> Los documentos de los requisitos se entregan 100% en físico en la parroquia.
+                        </div>`;
+                    } else if (estado.includes('PENDIENTE_DOCUMENTO')) {
+                        // PENDIENTE_DOCUMENTO: solo Ver y Cancelar (documentos se entregan físicamente)
+                        accionesHTML = accionesHTML + `
+                            <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
+                        mensajeInfo = `<div class="mensaje-info-pago" style="font-size: 0.9rem; color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffc107;">
+                            <strong>ℹ️ Información:</strong> Entregue los documentos físicamente en la parroquia para completar su reserva.
+                        </div>`;
+                    } else {
+                        // Para otros estados pendientes, solo mostrar cancelar
+                        accionesHTML = accionesHTML + `
                             <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
                     }
 
@@ -206,17 +227,26 @@ async function cargarReservas() {
                         <td>${dato.hora || 'N/A'}</td>
                         <td>${dato.nombreParroquia}</td>
                         <td>${dato.estadoReserva || 'N/A'}</td>
-                        <td>${accionesHTML}</td>
+                        <td>${mensajeInfo}${accionesHTML}</td>
                     `;
                     tablaPendientes.appendChild(fila);
                 }
             }
 
-            // Confirmadas
-            if (estado.includes('CONFIRMADO')) {
-                accionesHTML += `
-                    <button class="btn-accion reprogramar" onclick="reprogramarReserva(${dato.idReserva})">Reprogramar</button>
-                    <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
+            // Confirmadas (incluye CONFIRMADO, ATENDIDO, COMPLETADO)
+            if (estado.includes('CONFIRMADO') || estado === 'ATENDIDO' || estado === 'COMPLETADO') {
+                // Para secretaria: solo ver y cancelar
+                if (rolUsuario === 'secretaria') {
+                    accionesHTML = `
+                        <button class="btn-accion ver" onclick="verReserva(${dato.idReserva})">Ver</button>
+                        <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
+                } else {
+                    // Para feligres: ver, reprogramar y cancelar
+                    accionesHTML += `
+                        <button class="btn-accion reprogramar" onclick="reprogramarReserva(${dato.idReserva})">Reprogramar</button>
+                        <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
+                }
+                
                 fila.innerHTML = `
                     <td>${dato.nombreActo}</td>
                     <td>${dato.fecha || 'N/A'}</td>
@@ -272,379 +302,6 @@ async function cargarReservas() {
             return false;
         }
     }
-
-// ============================
-// DESCARGAR ARCHIVO
-// ============================
-window.descargarArchivo = async function (idDocumento) {
-    try {
-        const response = await fetch(`/api/requisito/archivo/${idDocumento}`);
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        // Recibe el archivo en binario
-        const blob = await response.blob();
-        const contentDisposition = response.headers.get("Content-Disposition");
-        let nombreArchivo = "documento.pdf";
-
-        // Obtiene un nombre si viene del backend
-        if (contentDisposition) {
-            const match = contentDisposition.match(/filename="?(.+)"?/);
-            if (match) nombreArchivo = match[1];
-        }
-
-        // Crea descarga
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = nombreArchivo;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
-    } catch (error) {
-        console.error("❌ Error al descargar archivo:", error);
-        alert("Error al descargar el archivo.");
-    }
-};
-
-
-    window.subirDocumentos = async (idReserva) => {
-        const reservaActual = reservasGlobal.find(r => r.idReserva == idReserva);
-        if (!reservaActual) {
-            alert("Reserva no encontrada");
-            return;
-        }
-
-        // Mostrar mensaje de fecha límite al presionar el botón
-        const mensajeLimite = await obtenerMensajeLimite(reservaActual, 'cambiarDocumento');
-        if (mensajeLimite) {
-            alert(mensajeLimite);
-        }
-    const modal = document.getElementById("modalReserva");
-    const modalBody = document.getElementById("modal-body");
-    const modalTitle = document.getElementById("modal-title");
-    const modalFooter = document.getElementById("modal-footer");
-
-    modalTitle.textContent = "Subir Documentos Pendientes";
-    modalBody.innerHTML = "<p>Cargando requisitos...</p>";
-    modalFooter.innerHTML = "";
-    modal.style.display = "block";
-
-    if (!reservaActual) {
-        modalBody.innerHTML = "<p>Error: Reserva no encontrada.</p>";
-        modalFooter.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
-        document.getElementById("cerrarModalBtn").onclick = cerrarModal;
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/requisito/obtener_documento_faltante/${idReserva}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-
-        // Filtrar solo documentos con estado NO_CUMPLIDO
-        const documentosFaltantes = (data.datos || []).filter(doc => 
-            doc.estadoCumplimiento === 'NO_CUMPLIDO' || 
-            !doc.estadoCumplimiento || 
-            doc.estadoCumplimiento === 'SIN_ESTADO_DEFINIDO'
-        );
-
-        if (documentosFaltantes.length === 0) {
-            modalBody.innerHTML = "<p>No hay documentos pendientes por subir.</p>";
-            
-            if (reservaActual?.observacion) {
-                modalBody.innerHTML += `<p style="margin-top:12px; font-style:italic; color:#555;"><strong>Observación:</strong> ${reservaActual.observacion}</p>`;
-            }
-
-            modalFooter.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
-            document.getElementById("cerrarModalBtn").onclick = cerrarModal;
-            return;
-        }
-
-        let html = `<div class="lista-requisitos">`;
-        documentosFaltantes.forEach((req, idx) => {
-            const vigencia = req.vigencia || req.vigenciaDocumento || req.vigencia_documento || null;
-            html += `
-                <div class="req-item" data-id-documento="${req.idDocumento}" data-id-acto-requisito="${req.idActoRequisito}">
-                    <p><strong>${req.nombRequisito || 'Requisito'}</strong> ${vigencia ? `<small>(vigencia: ${vigencia})</small>` : ''}</p>
-                    <input type="file" id="file_${idx}" data-id-documento="${req.idDocumento}" data-id-acto-requisito="${req.idActoRequisito}" accept="application/pdf,image/*">
-                    <button class="btn-accion btn-subir-item" data-idx="${idx}" style="margin-left:8px;">Subir</button>
-                    <span class="status-msg" id="status_${idx}" style="margin-left:10px;"></span>
-                </div>
-                <hr>
-            `;
-        });
-        html += `</div>`;
-
-        if (reservaActual?.observacion) {
-            html += `<p style="margin-top:12px; font-style:italic; color:#555;"><strong>Observación:</strong> ${reservaActual.observacion}</p>`;
-        }
-
-        modalBody.innerHTML = html;
-        modalFooter.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
-        document.getElementById("cerrarModalBtn").onclick = cerrarModal;
-
-        document.querySelectorAll('.btn-subir-item').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const idx = btn.dataset.idx;
-                const input = document.getElementById(`file_${idx}`);
-                const statusEl = document.getElementById(`status_${idx}`);
-                statusEl.textContent = '';
-
-                if (!input || !input.files || input.files.length === 0) {
-                    statusEl.textContent = '⚠ Seleccione un archivo primero.';
-                    statusEl.style.color = '#e74c3c';
-                    return;
-                }
-
-                const file = input.files[0];
-                const idDocumento = input.dataset.idDocumento;
-                const idActoRequisito = input.dataset.idActoRequisito;
-
-                statusEl.textContent = 'Subiendo...';
-                statusEl.style.color = '#3498db';
-                btn.disabled = true;
-
-                try {
-                    // Actualizar documento existente: solo rutaArchivo, tipoArchivo y estadoCumplimiento
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('idReserva', idReserva);
-                    formData.append('idActoRequisito', idActoRequisito);
-                    formData.append('estadoCumplimiento', 'CUMPLIDO');
-
-                    const res = await fetch(`/api/requisito/modificar_documento_requisito/${idDocumento}`, {
-                        method: 'PUT',
-                        body: formData
-                    });
-
-                    if (!res.ok) {
-                        const text = await res.text();
-                        throw new Error(`HTTP ${res.status}: ${text}`);
-                    }
-
-                    const result = await res.json();
-                    
-                    if (result.ok) {
-                        statusEl.textContent = '✔ Subido correctamente';
-                        statusEl.style.color = '#27ae60';
-                        input.remove();
-                        btn.remove();
-
-                        // Verificar si quedan más documentos por subir
-                        const remainingFiles = document.querySelectorAll('input[type="file"]');
-                        if (remainingFiles.length === 0) {
-                            // Verificar que todos los documentos estén CUMPLIDO antes de cambiar estado
-                            // El backend ya verifica esto, pero hacemos una verificación adicional aquí
-                            const resVerificar = await fetch(`/api/requisito/obtener_documento_faltante/${idReserva}`);
-                            if (resVerificar.ok) {
-                                const dataVerificar = await resVerificar.json();
-                                const documentosFaltantes = dataVerificar.datos || [];
-                                
-                                // Si no hay documentos faltantes, cambiar estado a PENDIENTE_REVISION
-                                if (documentosFaltantes.length === 0) {
-                                    // Esperar un momento para que el backend actualice el estadoCumplimiento
-                                    await new Promise(resolve => setTimeout(resolve, 500));
-                                    
-                                    const estadoCambiado = await cambiarEstadoReservaAPendienteRevision(idReserva);
-                                    if (estadoCambiado) {
-                                        // Mostrar alert cuando se sube el último documento
-                                        alert('✔ Todos los documentos subidos correctamente. El estado de la reserva ha sido actualizado a PENDIENTE_REVISION.');
-                                        cerrarModal();
-                                        cargarReservas();
-                                    } else {
-                                        alert('⚠ Documentos subidos pero error al actualizar estado');
-                                    }
-                                } else {
-                                    statusEl.textContent = `⚠ Aún hay ${documentosFaltantes.length} documento(s) pendiente(s)`;
-                                    statusEl.style.color = '#f39c12';
-                                }
-                            } else {
-                                // Si no se puede verificar, intentar cambiar estado de todas formas
-                                // El backend verificará que todos estén CUMPLIDO
-                                await new Promise(resolve => setTimeout(resolve, 500));
-                                const estadoCambiado = await cambiarEstadoReservaAPendienteRevision(idReserva);
-                                if (estadoCambiado) {
-                                    // Mostrar alert cuando se sube el último documento
-                                    alert('✔ Todos los documentos subidos correctamente. El estado de la reserva ha sido actualizado a PENDIENTE_REVISION.');
-                                    cerrarModal();
-                                    cargarReservas();
-                                }
-                            }
-                        }
-                    } else {
-                        statusEl.textContent = `❌ Error: ${result.mensaje || 'Desconocido'}`;
-                        statusEl.style.color = '#e74c3c';
-                        btn.disabled = false;
-                    }
-                } catch (err) {
-                    console.error('Error al subir documento:', err);
-                    statusEl.textContent = `❌ Error al subir archivo`;
-                    statusEl.style.color = '#e74c3c';
-                    btn.disabled = false;
-                }
-            });
-        });
-
-    } catch (e) {
-        console.error(e);
-        modalBody.innerHTML = "<p>Error al cargar requisitos.</p>";
-        modalFooter.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
-        document.getElementById("cerrarModalBtn").onclick = cerrarModal;
-    }
-};
-
-
-    // ============================
-    // MODIFICAR DOCUMENTOS
-    // ============================
-window.modificarDocumentos = async (idReserva) => {
-    const reservaModificar = reservasGlobal.find(r => r.idReserva == idReserva);
-    if (!reservaModificar) {
-        alert("Reserva no encontrada");
-        return;
-    }
-
-    // Mostrar mensaje de fecha límite al presionar el botón
-    const mensajeLimiteModificar = await obtenerMensajeLimite(reservaModificar, 'cambiarDocumento');
-    if (mensajeLimiteModificar) {
-        alert(mensajeLimiteModificar);
-    }
-
-    const modalModificar = document.getElementById("modalReserva");
-    const modalBodyModificar = document.getElementById("modal-body");
-    const modalTitleModificar = document.getElementById("modal-title");
-    const modalFooterModificar = document.getElementById("modal-footer");
-
-    modalTitleModificar.textContent = "Modificar Documentos";
-    modalBodyModificar.innerHTML = "<p>Cargando documentos...</p>";
-    modalFooterModificar.innerHTML = "";
-    modalModificar.style.display = "block";
-
-    try {
-        const response = await fetch(`/api/requisito/obtener_documentos_reserva/${idReserva}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-
-        if (!data.success || !Array.isArray(data.datos) || data.datos.length === 0) {
-            modalBodyModificar.innerHTML = "<p>No hay documentos para modificar.</p>";
-            modalFooterModificar.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
-            document.getElementById("cerrarModalBtn").onclick = cerrarModal;
-            return;
-        }
-
-        let html = `<div class="lista-requisitos">`;
-        data.datos.forEach((doc, idx) => {
-            const idActo = doc.idActoRequisito || '';
-            const vigencia = doc.vigencia || doc.vigenciaDocumento || doc.vigencia_documento || null;
-            const rutaArchivo = doc.rutaArchivo || '';
-
-            html += `
-                <div class="req-item" data-id-documento="${doc.idDocumento}" data-id-acto-requisito="${idActo}">
-                    <p><strong>${doc.nombRequisito || 'Requisito'}</strong> 
-                        ${vigencia ? `<small>(vigencia: ${vigencia})</small>` : ''}
-                    </p>
-
-                    ${rutaArchivo ? `
-                        <a href="javascript:void(0);" onclick="descargarArchivo(${doc.idDocumento})" style="display:inline-block; margin-bottom:8px;">
-                            📥 Descargar archivo actual
-                        </a>
-                    ` : '<p style="color:#999; font-size:0.9rem;">No hay archivo actual</p>'}
-
-                    <input type="file" 
-                        id="file_mod_${idx}" 
-                        data-id-documento="${doc.idDocumento}" 
-                        data-id-acto-requisito="${idActo}" 
-                        accept="application/pdf,image/*">
-
-                    <button class="btn-accion btn-actualizar-item" data-idx="${idx}" style="margin-left:8px;">
-                        Actualizar
-                    </button>
-
-                    <span class="status-msg" id="status_mod_${idx}" style="margin-left:10px;"></span>
-                </div>
-                <hr>
-            `;
-        });
-        html += `</div>`;
-        modalBodyModificar.innerHTML = html;
-
-        modalFooterModificar.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
-        document.getElementById("cerrarModalBtn").onclick = cerrarModal;
-
-        document.querySelectorAll('.btn-actualizar-item').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const idx = btn.dataset.idx;
-                const input = document.getElementById(`file_mod_${idx}`);
-                const statusEl = document.getElementById(`status_mod_${idx}`);
-                statusEl.textContent = '';
-
-                if (!input || !input.files || input.files.length === 0) {
-                    statusEl.textContent = '⚠ Seleccione un archivo primero.';
-                    statusEl.style.color = '#e74c3c';
-                    return;
-                }
-
-                const file = input.files[0];
-                const idDocumento = input.dataset.idDocumento;
-                const idActoRequisito = input.dataset.idActoRequisito || null;
-
-                statusEl.textContent = 'Subiendo...';
-                statusEl.style.color = '#3498db';
-                btn.disabled = true;
-
-                try {
-                    // Solo actualizar rutaArchivo y tipoArchivo
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('idReserva', idReserva);
-                    if (idActoRequisito) formData.append('idActoRequisito', idActoRequisito);
-
-                    const res = await fetch(`/api/requisito/modificar_documento_requisito/${idDocumento}`, {
-                        method: 'PUT',
-                        body: formData
-                    });
-
-                    if (!res.ok) {
-                        const text = await res.text();
-                        throw new Error(`HTTP ${res.status}: ${text}`);
-                    }
-
-                    const result = await res.json();
-                    if (result.ok) {
-                        statusEl.textContent = '✔ Archivo actualizado correctamente';
-                        statusEl.style.color = '#27ae60';
-                        input.value = ''; // Limpiar input pero no removerlo
-                        setTimeout(() => {
-                            statusEl.textContent = '';
-                        }, 2000);
-                    } else {
-                        statusEl.textContent = `❌ Error: ${result.mensaje || 'No se pudo actualizar'}`;
-                        statusEl.style.color = '#e74c3c';
-                    }
-
-                } catch (err) {
-                    console.error('Error al actualizar documento:', err);
-                    statusEl.textContent = '❌ Error al subir archivo';
-                    statusEl.style.color = '#e74c3c';
-                } finally {
-                    btn.disabled = false;
-                }
-            });
-        });
-
-    } catch (e) {
-        console.error(e);
-        modalBody.innerHTML = "<p>Error al cargar documentos.</p>";
-        modalFooter.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
-        document.getElementById("cerrarModalBtn").onclick = cerrarModal;
-    }
-};
-
 
     // ============================
     // VER RESERVA
@@ -1193,6 +850,15 @@ window.seleccionarHoraFinal = (fecha, hora) => {
     // ============================
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
+    
+    // Ocultar tab "Pendientes" para Secretaria (solo ver Calendario, Confirmadas y Canceladas)
+    if (rolUsuario === 'secretaria') {
+        const tabPendientes = document.querySelector('.tab-btn[data-tab="pendientes"]');
+        const contentPendientes = document.getElementById('tab-pendientes');
+        if (tabPendientes) tabPendientes.style.display = 'none';
+        if (contentPendientes) contentPendientes.style.display = 'none';
+    }
+    
     tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             tabButtons.forEach(b => b.classList.remove('active'));
@@ -1323,5 +989,6 @@ window.aprobarDocumento = async function (idReserva) {
 };
 
 
+    // Cargar reservas al iniciar
     cargarReservas();
 });
