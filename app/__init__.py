@@ -227,7 +227,7 @@ def crear_app():
     @app.route('/admi/reporte')
     @requires_roles('Administrador')
     def reporte_admi():
-        return render_template('administradores/reporte.html')
+        return render_template('administradores/reporte_PersonalParroquia.html')
 
     @app.route('/admi/requisitos')
     @requires_roles('Administrador')
