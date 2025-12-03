@@ -315,7 +315,8 @@ btnSubmit.addEventListener('click', async e => {
             if (!respDetalle.ok || !dataDetalle.ok) return alert(dataDetalle.mensaje || `Error al asociar reserva ${idRes}.`);
         }
 
-        // Si es tarjeta, plin o yape: cambiar estado de reserva a CONFIRMADO
+        // Si es tarjeta, plin o yape: cambiar estado de reserva a PENDIENTE_DOCUMENTO
+        // (los documentos se entregan físicamente, por eso no se confirma aún)
         if (metodo === 'tarjeta' || metodo === 'plin' || metodo === 'yape') {
             for (const idRes of idReservas) {
                 const respEstado = await fetch(`/api/reserva/cambiar_estado/${idRes}`, {
@@ -326,7 +327,7 @@ btnSubmit.addEventListener('click', async e => {
                 const dataEstado = await respEstado.json();
                 if (!respEstado.ok || !dataEstado.ok) return alert(dataEstado.mensaje || `No se pudo actualizar reserva ${idRes}.`);
             }
-            alert('Pago realizado correctamente. Estado de las reservas actualizado a CONFIRMADO.');
+            alert('Pago realizado correctamente. La reserva está pendiente de entrega de documentos físicos en la parroquia.');
         } else if (metodo === 'efectivo') {
             // Efectivo: el pago queda PENDIENTE, no se cambia el estado de la reserva
             // No aparece en la vista del feligrés (ya está filtrado), pero sí en secretaria

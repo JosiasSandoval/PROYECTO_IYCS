@@ -1,16 +1,44 @@
 from app.bd_sistema import obtener_conexion
 
-def obtener_acto_parroquia(idParroquia):
+def obtener_acto_parroquia(idParroquia, rol_usuario=''):
+    """
+    Obtiene los actos litúrgicos de una parroquia filtrados por rol.
+    - feligres: actos con numParticipantes > 1
+    - secretaria: todos los actos
+    - sacerdote: actos con numParticipantes = 1
+    """
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            cursor.execute("""
-                SELECT al.idActo, al.nombActo, ap.costoBase
-                FROM acto_liturgico al
-                INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
-                INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
-                WHERE pa.idParroquia = %s;
-            """, (idParroquia,))  
+            # Construir query según rol
+            if rol_usuario == 'feligres':
+                # Feligrés: solo actos con más de 1 participante
+                cursor.execute("""
+                    SELECT al.idActo, al.nombActo, ap.costoBase
+                    FROM acto_liturgico al
+                    INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
+                    INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
+                    WHERE pa.idParroquia = %s AND al.numParticipantes > 1;
+                """, (idParroquia,))
+            elif rol_usuario == 'sacerdote':
+                # Sacerdote: solo actos con exactamente 1 participante
+                cursor.execute("""
+                    SELECT al.idActo, al.nombActo, ap.costoBase
+                    FROM acto_liturgico al
+                    INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
+                    INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
+                    WHERE pa.idParroquia = %s AND al.numParticipantes = 1;
+                """, (idParroquia,))
+            else:
+                # Secretaria o cualquier otro rol: todos los actos
+                cursor.execute("""
+                    SELECT al.idActo, al.nombActo, ap.costoBase
+                    FROM acto_liturgico al
+                    INNER JOIN acto_parroquia ap ON al.idActo = ap.idActo
+                    INNER JOIN parroquia pa ON ap.idParroquia = pa.idParroquia
+                    WHERE pa.idParroquia = %s;
+                """, (idParroquia,))
+            
             filas = cursor.fetchall()
             
             resultados = []

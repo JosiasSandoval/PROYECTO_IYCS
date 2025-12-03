@@ -164,7 +164,8 @@ const modalSi = document.getElementById('modal-si');
 const modalNo = document.getElementById('modal-no');
 
 function abrirModalReserva(nombre, id) {
-    if (rolUsuario !== 'feligres' && rolUsuario !== 'secretaria') {
+    const rolesPermitidos = ['feligres', 'secretaria', 'sacerdote'];
+    if (!rolesPermitidos.includes(rolUsuario)) {
         alert("Usted no puede hacer reservas.");
         return;
     }
@@ -188,7 +189,8 @@ modalReserva.addEventListener('click', e => {
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', async () => {
 
-    if (rolUsuario !== 'feligres' && rolUsuario !== 'secretaria') {
+    const rolesPermitidos = ['feligres', 'secretaria', 'sacerdote'];
+    if (!rolesPermitidos.includes(rolUsuario)) {
         console.warn(`Bloqueo de seguridad: Rol '${rolUsuario}' no autorizado.`);
         alert("Usted no puede hacer reservas.");
         const mainContent = document.querySelector('.main-content');
@@ -245,15 +247,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (btnBuscar) btnBuscar.addEventListener('click', () => buscarParroquia(input.value));
     }
 
-    // SECRETARIA - seleccionar automáticamente
-    if (rolUsuario === 'secretaria' && idParroquiaUsuario) {
+    // SECRETARIA Y SACERDOTE - seleccionar automáticamente su parroquia
+    if ((rolUsuario === 'secretaria' || rolUsuario === 'sacerdote') && idParroquiaUsuario) {
         setTimeout(() => {
             const parroquia = Object.values(markersByName).find(p => String(p.id) === String(idParroquiaUsuario));
             if (parroquia) {
                 buscarParroquia(parroquia.nombre);
                 if (input) input.value = parroquia.nombre;
+                // Guardar en sessionStorage automáticamente
+                sessionStorage.setItem('idParroquiaSeleccionada', parroquia.id);
+                sessionStorage.setItem('nombreParroquiaSeleccionada', parroquia.nombre);
+                console.log(`✅ ${rolUsuario} - Parroquia cargada automáticamente: ${parroquia.nombre}`);
             } else {
-                console.log("No se encontró la parroquia asignada a la secretaria en el mapa.");
+                console.log(`No se encontró la parroquia asignada al ${rolUsuario} en el mapa.`);
             }
         }, 1000);
     }

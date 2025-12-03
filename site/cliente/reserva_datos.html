@@ -11,6 +11,9 @@
     data-rol="{{ session.get('rol_sistema', '') }}"
     data-id="{{ session.get('idUsuario', '') }}"
     data-parroquia="{{ session.get('idParroquia', '') }}"
+    data-nombre="{{ session.get('nombre', '') }}"
+    data-apellidopaterno="{{ session.get('apellidoPaterno', '') }}"
+    data-apellidomaterno="{{ session.get('apellidoMaterno', '') }}"
 >
     <div id="header-placeholder"></div>
     <div class="grid">
@@ -32,9 +35,6 @@
                         <div class="icon-circle"><i class="fas fa-user-circle"></i></div><span>Datos</span>
                     </div>
                     <div class="step" data-step="3">
-                        <div class="icon-circle"><i class="fas fa-file-alt"></i></div><span>Requisitos</span>
-                    </div>
-                    <div class="step" data-step="4">
                         <div class="icon-circle"><i class="fas fa-clipboard-list"></i></div><span>Resumen</span>
                     </div>
                 </div>
