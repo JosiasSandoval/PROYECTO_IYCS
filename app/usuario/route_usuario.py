@@ -273,7 +273,8 @@ def buscar_solicitante(nombre):
     # Tomamos solo el primer resultado
     fila = resultados[0]
     usuario = {
-        'idUsuario': fila[0],
+        'idUsuario': fila[0],        # idFeligres del solicitante
+        'idFeligres': fila[0],       # Mismo ID, para claridad
         'numDocFel': fila[1],
         'nombreCompleto': fila[2],
         'telefonoFel': fila[3],

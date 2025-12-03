@@ -177,17 +177,26 @@ async function cargarReservas() {
             } else if (rolUsuario === 'feligres') {
                 // Tab Pendiente -> todas las reservas pendientes
                 if (estado.includes('PENDIENTE')) {
-                    if (estado.includes('PENDIENTE_DOCUMENTO')) {
-                        accionesHTML = accionesHTML + `
-                            <button class="btn-accion subir" onclick="subirDocumentos(${dato.idReserva})">Subir Documentos</button>
-                            <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
-                    } else if (estado.includes('PENDIENTE_REVISION')) {
-                        accionesHTML = accionesHTML + `
-                            <button class="btn-accion modificar" onclick="modificarDocumentos(${dato.idReserva})">Modificar Documentos</button>
-                            <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
-                    } else if (estado.includes('PENDIENTE_PAGO')) {
+                    let mensajeInfo = '';
+                    
+                    if (estado.includes('PENDIENTE_PAGO')) {
                         accionesHTML = accionesHTML + `
                             <button class="btn-accion pagar" onclick="pagarReserva(${dato.idReserva})">Pagar</button>
+                            <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
+                        // Mensaje informativo sobre documentos físicos
+                        mensajeInfo = `<div class="mensaje-info-pago" style="font-size: 0.9rem; color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffc107;">
+                            <strong>ℹ️ Información:</strong> Los documentos de los requisitos se entregan 100% en físico en la parroquia.
+                        </div>`;
+                    } else if (estado.includes('PENDIENTE_DOCUMENTO')) {
+                        // PENDIENTE_DOCUMENTO: solo Ver y Cancelar (documentos se entregan físicamente)
+                        accionesHTML = accionesHTML + `
+                            <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
+                        mensajeInfo = `<div class="mensaje-info-pago" style="font-size: 0.9rem; color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffc107;">
+                            <strong>ℹ️ Información:</strong> Entregue los documentos físicamente en la parroquia para completar su reserva.
+                        </div>`;
+                    } else {
+                        // Para otros estados pendientes, solo mostrar cancelar
+                        accionesHTML = accionesHTML + `
                             <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
                     }
 
@@ -197,7 +206,7 @@ async function cargarReservas() {
                         <td>${dato.hora || 'N/A'}</td>
                         <td>${dato.nombreParroquia}</td>
                         <td>${dato.estadoReserva || 'N/A'}</td>
-                        <td>${accionesHTML}</td>
+                        <td>${mensajeInfo}${accionesHTML}</td>
                     `;
                     tablaPendientes.appendChild(fila);
                 }

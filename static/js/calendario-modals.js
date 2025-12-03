@@ -80,9 +80,10 @@ function mostrarDatosDelDia(fecha) {
             let colorClase = '';
             switch(r.estado) {
                 case 'CONFIRMADO': colorClase = 'bg-success'; break;
-                    case 'ATENDIDO': colorClase = 'bg-info'; break;
+                case 'ATENDIDO': colorClase = 'bg-info'; break;
                 case 'PENDIENTE_PAGO': colorClase = 'bg-warning'; break;
                 case 'CANCELADO': colorClase = 'bg-danger'; break;
+                case 'RESERVA_PARROQUIA': colorClase = 'bg-primary'; break; // 🔹 Estado especial
                 default: colorClase = 'bg-secondary';
             }
 
@@ -95,6 +96,10 @@ function mostrarDatosDelDia(fecha) {
                 }).join('') : '';
 
             const descripcionHtml = r.descripcion ? `<p class="mb-1 text-muted"><strong>Descripción:</strong> ${r.descripcion}</p>` : '';
+            
+            // 🔹 Mostrar mención para reservas de parroquia
+            const mencionHtml = (r.estado === 'RESERVA_PARROQUIA' && r.mencion) ? 
+                `<p class="mb-1"><strong>Mención:</strong> ${r.mencion}</p>` : '';
 
             modalCuerpo.innerHTML += `
                 <div class="reserva-item border rounded p-3 mb-3 shadow-sm">
@@ -102,13 +107,14 @@ function mostrarDatosDelDia(fecha) {
                         <div>
                             <i class="bi bi-clock-fill me-1 text-primary"></i> 
                             <strong class="fs-5 text-primary">${r.hora}</strong>
-                            <span class="badge ${colorClase} ms-2">${r.estado}</span>
+                            <span class="badge ${colorClase} ms-2">${r.estado === 'RESERVA_PARROQUIA' ? 'RESERVA DE PARROQUIA' : r.estado}</span>
                         </div>
                         <button class="btn btn-sm btn-outline-primary btn-ver-detalles" data-index="${index}">▼</button>
                     </div>
                     <div class="info-reserva" style="display:none;">
                         <p class="mb-1"><strong>Acto:</strong> ${r.titulo}</p>
                         <p class="mb-1"><strong>Parroquia:</strong> ${r.parroquia}</p>
+                        ${mencionHtml}
                         ${participantesHtml}
                         ${descripcionHtml}
                     </div>

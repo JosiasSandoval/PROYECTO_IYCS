@@ -9,7 +9,9 @@ acto_bp=Blueprint('acto',__name__)
 
 @acto_bp.route('/<int:id>', methods=['GET'])
 def acto_parroquia(id):
-    datos = obtener_acto_parroquia(id)
+    from flask import session
+    rol_usuario = session.get('rol_sistema', '').lower()
+    datos = obtener_acto_parroquia(id, rol_usuario)
     
     return jsonify({
         "success": True,

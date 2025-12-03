@@ -9,6 +9,82 @@ def _fecha_a_str(valor):
         return valor.isoformat()
     return str(valor) if valor is not None else None
 
+# --------------------------
+# Validar horario disponible
+# --------------------------
+def validar_horario_disponible(fecha, hora, idParroquia):
+    """
+    Valida que el horario seleccionado esté disponible.
+    Retorna (True, "") si está disponible, (False, mensaje) si no.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Verificar si ya existe una reserva en esa fecha y hora para la parroquia
+            cursor.execute("""
+                SELECT COUNT(*) as total
+                FROM reserva
+                WHERE f_reserva = %s 
+                AND h_reserva = %s 
+                AND idParroquia = %s
+                AND estadoReserva NOT IN ('CANCELADA', 'RECHAZADA')
+            """, (fecha, hora, idParroquia))
+            
+            resultado = cursor.fetchone()
+            total = resultado[0] if resultado else 0
+            
+            if total > 0:
+                return False, f"El horario {hora} del día {fecha} ya está ocupado."
+            
+            return True, ""
+    except Exception as e:
+        print(f'Error validando horario disponible: {e}')
+        return False, f"Error al validar disponibilidad: {str(e)}"
+    finally:
+        if conexion:
+            conexion.close()
+
+def obtener_reservas_por_fecha(idParroquia, fecha):
+    """
+    Obtiene todas las reservas de una parroquia en una fecha específica.
+    Retorna lista de reservas con hora y estado.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT r.idReserva, r.h_reserva, r.estadoReserva, r.mencion,
+                       CASE 
+                           WHEN r.estadoReserva = 'RESERVA_PARROQUIA' THEN p.nombParroquia
+                           ELSE CONCAT(f.nombFel, ' ', f.apePatFel)
+                       END as solicitante
+                FROM reserva r
+                LEFT JOIN feligres f ON r.idSolicitante = f.idFeligres
+                INNER JOIN parroquia p ON r.idParroquia = p.idParroquia
+                WHERE r.idParroquia = %s 
+                AND r.f_reserva = %s
+                AND r.estadoReserva NOT IN ('CANCELADA', 'RECHAZADA')
+                ORDER BY r.h_reserva
+            """, (idParroquia, fecha))
+            
+            reservas = []
+            for row in cursor.fetchall():
+                reservas.append({
+                    'idReserva': row[0],
+                    'hora': str(row[1]),
+                    'estado': row[2],
+                    'mencion': row[3],
+                    'solicitante': row[4]
+                })
+            
+            return reservas
+    except Exception as e:
+        print(f'Error obteniendo reservas por fecha: {e}')
+        return []
+    finally:
+        if conexion:
+            conexion.close()
+
 def _hora_a_str(valor):
     if isinstance(valor, timedelta):
         return str(valor)
@@ -106,8 +182,8 @@ def cambiar_estado_reserva(idReserva, accion='continuar', motivo_cancelacion=Non
                 # Secretaria aprueba documentos
                 nuevo_estado = 'PENDIENTE_PAGO'
             elif estado_actual == 'PENDIENTE_PAGO':
-                # Tesorería confirma pago
-                nuevo_estado = 'CONFIRMADO'
+                # Después de pagar, pasa a PENDIENTE_DOCUMENTO (documentos se entregan físicamente)
+                nuevo_estado = 'PENDIENTE_DOCUMENTO'
             elif estado_actual == 'CONFIRMADO':
                 # Sacerdote finaliza el acto
                 nuevo_estado = 'ATENDIDO'              
@@ -322,16 +398,22 @@ def get_reservas_parroquia(idUsuario):
             idParroquia = fila[0]
 
             # 2) Obtener reservas para esa parroquia
-            # IMPORTANTE: ligar acto_parroquia con la parroquia correspondiente para evitar tomar costoBase de otra parroquia
+            # IMPORTANTE: 
+            # - Reservas normales: idSolicitante = idFeligres
+            # - Reservas de sacerdote para la parroquia: idSolicitante = idParroquia
             cursor.execute("""
                 SELECT 
                     re.idReserva,
                     al.nombActo,
+                    al.idActo,
                     ap.costoBase,
                     re.f_reserva,
                     re.h_reserva,
                     re.mencion,
-                    CONCAT(f.nombFel,' ',f.apePatFel,' ',f.apeMatFel) AS nombreFeligres,
+                    CASE 
+                        WHEN re.idSolicitante = re.idParroquia THEN pa.nombParroquia
+                        ELSE CONCAT(f.nombFel,' ',f.apePatFel,' ',f.apeMatFel)
+                    END AS nombreSolicitante,
                     pa.nombParroquia,
                     re.estadoReserva,
                     COALESCE(
@@ -339,8 +421,8 @@ def get_reservas_parroquia(idUsuario):
                         ''
                     ) AS participantes
                 FROM reserva re
-                INNER JOIN feligres f ON f.idFeligres = re.idSolicitante
                 INNER JOIN parroquia pa ON re.idParroquia = pa.idParroquia
+                LEFT JOIN feligres f ON f.idFeligres = re.idSolicitante
                 LEFT JOIN participantes_acto pc ON re.idReserva = pc.idReserva
                 LEFT JOIN acto_liturgico al ON pc.idActo = al.idActo
                 LEFT JOIN acto_parroquia ap 
@@ -350,11 +432,12 @@ def get_reservas_parroquia(idUsuario):
                 GROUP BY 
                     re.idReserva,
                     al.nombActo,
+                    al.idActo,
                     ap.costoBase,
                     re.f_reserva,
                     re.h_reserva,
                     re.mencion,
-                    nombreFeligres,
+                    nombreSolicitante,
                     pa.nombParroquia,
                     re.estadoReserva;
             """, (idParroquia,))
@@ -369,14 +452,15 @@ def get_reservas_parroquia(idUsuario):
                 resultados.append({
                     'idReserva': fila[0],
                     'nombreActo': fila[1],
-                    'costoBase': fila[2],
+                    'idActo': fila[2],  # idActo ahora está en la posición 2
+                    'costoBase': fila[3],  # costoBase ahora está en la posición 3
                     'fecha': fecha_str,
                     'hora': hora_str,
-                    'mencion': fila[5],
-                    'nombreFeligres': fila[6],
-                    'nombreParroquia': fila[7],
-                    'estadoReserva': fila[8],
-                    'participantes': fila[9]
+                    'mencion': fila[6],  # mencion ahora está en la posición 6
+                    'nombreFeligres': fila[7],  # nombreFeligres ahora está en la posición 7
+                    'nombreParroquia': fila[8],  # nombreParroquia ahora está en la posición 8
+                    'estadoReserva': fila[9],  # estadoReserva ahora está en la posición 9
+                    'participantes': fila[10]  # participantes ahora está en la posición 10
                 })
 
         return resultados

@@ -26,6 +26,9 @@ def login():
         session['idUsuario'] = resultado_auth['idUsuario']
         session['email'] = resultado_auth['email']
         session['nombre_usuario'] = resultado_auth['nombre_usuario']
+        session['nombre'] = resultado_auth.get('nombre', '')
+        session['apellidoPaterno'] = resultado_auth.get('apellidoPaterno', '')
+        session['apellidoMaterno'] = resultado_auth.get('apellidoMaterno', '')
         session['cargo_usuario'] = resultado_auth['cargo_usuario']
         session['rol_sistema'] = resultado_auth['rol_sistema']
         session['roles_disponibles'] = resultado_auth.get('roles_disponibles', [])

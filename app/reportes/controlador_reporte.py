@@ -13,7 +13,7 @@ def reporte_reservas_por_acto(id_parroquia=None, id_acto=None, estado=None, fech
         conexion = obtener_conexion()
         with conexion.cursor() as cursor:
             consulta = """
-                SELECT
+                SELECT 
                     r.idReserva,
                     r.f_reserva,
                     r.h_reserva,
@@ -84,7 +84,7 @@ def reporte_reservas_por_acto(id_parroquia=None, id_acto=None, estado=None, fech
                     'fechaReserva': fecha.strftime("%Y-%m-%d") if fecha else None,
                     'horaReserva': hora.strftime("%H:%M:%S") if hora else None,
                     'parroquia': fila[3],
-                    'feligres': fila[4],
+                    'feligres': fila[4],  # Ahora puede ser nombre de feligrés o parroquia
                     'acto': fila[5] or '---',
                     'monto': float(monto_val),
                     'estado': fila[7]
