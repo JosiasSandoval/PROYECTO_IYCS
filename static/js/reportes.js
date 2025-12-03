@@ -15,60 +15,75 @@ document.addEventListener("DOMContentLoaded", function () {
     const filtroInicio = document.getElementById("filtro-inicio");
     const filtroFin = document.getElementById("filtro-fin");
 
+
+
     const cargarParroquias = async () => {
         try {
             const res = await fetch("/api/reportes/parroquias");
             const data = await res.json();
             if (!data.ok) return;
-         
+
             filtroParroquia.innerHTML = '<option value="">Todas</option>';
             data.datos.forEach(p => {
+
                 const opt = document.createElement("option");
                 opt.value = p.idParroquia;
                 opt.textContent = p.nombParroquia;
+
                 filtroParroquia.appendChild(opt);
             });
+
         } catch (err) {
             console.error("Error cargando parroquias:", err);
         }
     };
 
     const cargarActos = async () => {
+
         try {
             const res = await fetch("/api/reportes/actos");
             const data = await res.json();
             if (!data.ok) return;
+
             filtroActo.innerHTML = '<option value="">Todos</option>';
+
             data.datos.forEach(a => {
+
                 const opt = document.createElement("option");
                 opt.value = a.idActo;
                 opt.textContent = a.nombActo;
                 filtroActo.appendChild(opt);
+
             });
+
         } catch (err) {
             console.error("Error cargando actos:", err);
         }
     };
 
+
+
     const construirQuery = (params) => {
         const esc = encodeURIComponent;
         const query = Object.keys(params)
+
             .filter(k => params[k] !== null && params[k] !== '' && params[k] !== undefined)
             .map(k => esc(k) + '=' + esc(params[k]))
             .join('&');
+
         return query ? `?${query}` : '';
     };
+
+
 
     const actualizarGraficoActos = (labels, data) => {
         const canvasActos = document.getElementById("graf-actos");
         if (!canvasActos) return;
-
         const ctx = canvasActos.getContext("2d");
 
         if (chartActos) {
             chartActos.destroy();
         }
-
         chartActos = new Chart(ctx, {
             type: "bar",
             data: {
@@ -94,12 +109,13 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     };
 
+
+
     const actualizarGraficoParroquias = (labels, data) => {
         const canvasParroquias = document.getElementById("graf-parroquia");
         if (!canvasParroquias) return;
 
         const ctx = canvasParroquias.getContext("2d");
-
         if (chartParroquias) {
             chartParroquias.destroy();
         }
@@ -140,6 +156,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     };
 
+
     const aplicarFiltros = async () => {
         const payload = {
             idParroquia: filtroParroquia.value || '',
@@ -151,7 +168,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             const query = construirQuery(payload);
-
+            tablaBody.innerHTML = '<tr><td colspan="6" class= "text-center"> Cargando datos...</td></tr>';
             const resReservas = await fetch(`/api/reportes/reservas${query}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" }
@@ -166,57 +183,108 @@ document.addEventListener("DOMContentLoaded", function () {
             const dataEstadisticas = await resEstadisticas.json();
 
             if (!dataReservas.ok || !dataEstadisticas.ok) {
+
                 console.error("Error en respuesta del servidor");
                 alert("Error al obtener los datos del servidor.");
+                tablaBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error al cargar datos</td></tr>';
+
                 return;
             }
 
+            if (dataReservas.datos.length == 0) {
+                tablaBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        No se encontraron reservas con los filtros aplicados.
+                        <br><small>Intenta cambiar los criterios de búsqueda.</small>
+
+                    </td>
+
+                </tr>
+
+            `;
+                kpiTotal.textContent = '0';
+                kpiIngresos.textContent = 'S/ 0.00';
+                kpiMas.textContent = '---';
+
+                actualizarGraficoActos([], []);
+                actualizarGraficoParroquias([], []);
+
+                return;
+            }
             tablaBody.innerHTML = "";
 
             dataReservas.datos.forEach(r => {
+
                 const fecha = r.fechaReserva || r.f_reserva || '';
                 const hora = r.horaReserva || r.hora || '';
 
                 const tr = document.createElement("tr");
+
                 tr.innerHTML = `
+
                     <td>${fecha} ${hora ? (' ' + hora) : ''}</td>
                     <td>${r.parroquia || ''}</td>
                     <td>${r.feligres || '---'}</td>
                     <td>${r.acto || '---'}</td>
                     <td>S/ ${parseFloat(r.monto || 0).toFixed(2)}</td>
                     <td>${r.estado || r.estadoReserva || '---'}</td>
+
                 `;
+
                 tablaBody.appendChild(tr);
+
             });
+
+
 
             kpiTotal.textContent = dataEstadisticas.total_reservas;
             kpiIngresos.textContent = `S/ ${parseFloat(dataEstadisticas.ingresos_totales).toFixed(2)}`;
             kpiMas.textContent = dataEstadisticas.acto_mas_solicitado;
 
             actualizarGraficoActos(
+
                 dataEstadisticas.grafico_actos.labels,
                 dataEstadisticas.grafico_actos.data
+
             );
 
             actualizarGraficoParroquias(
+
                 dataEstadisticas.grafico_parroquias.labels,
                 dataEstadisticas.grafico_parroquias.data
+
             );
 
+
+
         } catch (error) {
+
             console.error("Error al llamar al endpoint de reportes:", error);
             alert("Error de conexión al servidor.");
+            tablaBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error de conexión</td></tr>';
+
         }
+
     };
 
     btnFiltrar.addEventListener("click", aplicarFiltros);
     filtroParroquia.addEventListener("change", () => {
+
     });
 
+
+
     (async function init() {
+
         await cargarParroquias();
         await cargarActos();
-        console.log(" Reportes inicializados. Haz click en 'Aplicar filtros' para ver datos.");
+        await aplicarFiltros();
+        console.log(" Reportes cargados correctamente");
+
     })();
+
+
 
 });
