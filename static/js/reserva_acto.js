@@ -396,17 +396,45 @@ function abrirModalHoraDisponible(fecha) {
                 otherBtn.classList.remove('active', 'btn-success')
             );
             btn.classList.add('active', 'btn-success');
-            horaSeleccionada = btn.dataset.hora;
+                horaSeleccionada = btn.dataset.hora;
         });
     });
 }
 
 // ==============================
-// 🔹 Mostrar/Ocultar campo "Mención" según acto
+// Guardar mención en sessionStorage
+// ==============================
+function guardarMencion() {
+    const textareaMencion = document.getElementById('observaciones');
+    if (textareaMencion && textareaMencion.value.trim()) {
+        let reservaData = JSON.parse(sessionStorage.getItem('reserva') || '{}');
+        reservaData.observaciones = textareaMencion.value.trim();
+        sessionStorage.setItem('reserva', JSON.stringify(reservaData));
+    }
+}
+
+// Guardar mención al cambiar
+if (document.getElementById('observaciones')) {
+    document.getElementById('observaciones').addEventListener('blur', guardarMencion);
+}// ==============================
+// 🔹 Mostrar/Ocultar campo "Mención" según acto y rol
 // ==============================
 document.addEventListener("DOMContentLoaded", () => {
     const selectActo = document.getElementById("acto-liturgico");
-    const grupoMencion = document.querySelector('.form-group label[for="observaciones"]').closest('.form-group');
+    const grupoMencion = document.getElementById('grupo-mencion');
+    const textareaMencion = document.getElementById('observaciones');
+    const rolUsuario = document.body.dataset.rol?.toLowerCase();
+    
+    // 🔹 Para sacerdote, OCULTAR mención (se ingresa en reserva_datos)
+    if (rolUsuario === 'sacerdote') {
+        if (grupoMencion) {
+            grupoMencion.style.display = 'none';
+            console.log('🔹 Sacerdote: Campo mención oculto en reserva_acto');
+        }
+        return; // No necesita más lógica
+    }
+    
+    // 🔹 Para otros roles, mantener lógica existente
 
     if (selectActo && grupoMencion) {
         selectActo.addEventListener("change", () => {

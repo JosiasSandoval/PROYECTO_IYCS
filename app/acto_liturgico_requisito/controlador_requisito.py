@@ -95,9 +95,8 @@ def modificar_documento_requisito(idDocumento, rutaArchivo, tipoArchivo, f_subid
 def cambiar_cumplimiento_documento(idDocumento, estadoCumplimiento):
     conexion = obtener_conexion()
     try:
-        # Alternar entre 'CUMPLIDO' y 'NO_CUMPLIDO'
-        # Esto asume que estadoCumplimiento viene con el valor actual
-        nuevo_estado = 'CUMPLIDO' if estadoCumplimiento.upper() == 'NO_CUMPLIDO' else 'NO_CUMPLIDO'
+        # Actualizar directamente al estado proporcionado
+        nuevo_estado = estadoCumplimiento.upper() if estadoCumplimiento else 'NO_CUMPLIDO'
         with conexion.cursor() as cursor:
             cursor.execute("""
                 UPDATE DOCUMENTO_REQUISITO
@@ -105,9 +104,10 @@ def cambiar_cumplimiento_documento(idDocumento, estadoCumplimiento):
                 WHERE idDocumento=%s;
             """, (nuevo_estado, idDocumento))
             conexion.commit()
-            return {'ok': True, 'mensaje': f'Estado cambiado a {nuevo_estado}'}
+            return {'ok': True, 'mensaje': f'Estado actualizado a {nuevo_estado}'}
     except Exception as e:
         print(f'Error al cambiar el cumplimiento del documento: {e}')
+        conexion.rollback()
         return {'ok': False, 'mensaje': f'Error: {e}'}
     finally:
         if conexion:
@@ -299,14 +299,14 @@ def obtener_documentos_reserva(idReserva):
         documentos = []
         with conexion.cursor() as cursor:
             cursor.execute("""
-                SELECT dr.idDocumento, rq.nombRequisito, dr.rutaArchivo, dr.tipoArchivo, dr.f_subido,dr.observacion
+                SELECT dr.idDocumento, rq.nombRequisito, dr.rutaArchivo, dr.tipoArchivo, dr.f_subido, dr.observacion,
+                       dr.estadoCumplimiento, dr.aprobado, dr.idActoRequisito
                 FROM DOCUMENTO_REQUISITO dr
                 INNER JOIN reserva re ON dr.idReserva=re.idReserva
                 INNER JOIN acto_requisito ar ON dr.idActoRequisito=ar.idActoRequisito
                 INNER JOIN requisito rq ON ar.idRequisito=rq.idRequisito
-                WHERE re.estadoReserva='PENDIENTE_REVISION' 
-                  AND re.idReserva=%s 
-                  AND dr.aprobado=FALSE
+                WHERE re.idReserva=%s 
+                  AND (re.estadoReserva='PENDIENTE_REVISION' OR re.estadoReserva='PENDIENTE_DOCUMENTO')
             """, (idReserva,))
             filas = cursor.fetchall()
             for fila in filas:
@@ -316,7 +316,10 @@ def obtener_documentos_reserva(idReserva):
                     'rutaArchivo': fila[2],
                     'tipoArchivo': fila[3],
                     'f_subido': fila[4],
-                    'observacion': fila[5]
+                    'observacion': fila[5],
+                    'estadoCumplimiento': fila[6] if len(fila) > 6 else None,
+                    'aprobado': fila[7] if len(fila) > 7 else False,
+                    'idActoRequisito': fila[8] if len(fila) > 8 else None
                 })
         return documentos
     except Exception as e:

@@ -9,7 +9,8 @@ from app.parroquia.controlador_parroquia import (
     cambiar_estado_parroquia,
     eliminar_parroquia,
     verificar_relacion_parroquia,
-    buscar_parroquia
+    buscar_parroquia,
+    obtener_parroquia_secretaria
 )
 
 parroquia_bp = Blueprint('parroquia', __name__)
@@ -152,5 +153,17 @@ def buscar(termino):
     if not resultados:
         return jsonify({'ok': True, 'datos': []})
     return jsonify({'ok': True, 'datos': resultados})
+
+# ======================================================
+#  OBTENER PARROQUIA DE SECRETARIA
+# ======================================================
+@parroquia_bp.route('/secretaria/<int:idUsuario>', methods=['GET'])
+def parroquia_secretaria(idUsuario):
+    try:
+        resultado = obtener_parroquia_secretaria(idUsuario)
+        return jsonify(resultado)
+    except Exception as e:
+        print(f'Error al obtener parroquia de secretaria: {e}')
+        return jsonify({'success': False, 'mensaje': 'Error interno'}), 500
 
 

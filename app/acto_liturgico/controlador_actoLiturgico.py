@@ -8,7 +8,7 @@ def obtener_actos():
         with conexion.cursor() as cursor:
             cursor.execute("""
                 SELECT idActo, nombActo, descripcion, numParticipantes, 
-                       tipoParticipantes, costoBase, estadoActo, imgActo
+                       tipoParticipantes, estadoActo, imgActo
                 FROM ACTO_LITURGICO
                 ORDER BY idActo ASC;
             """)
@@ -21,9 +21,8 @@ def obtener_actos():
                     "descripcion": fila[2],
                     "numParticipantes": fila[3],
                     "tipoParticipantes": fila[4],
-                    "costoBase": float(fila[5]),
-                    "estadoActo": bool(fila[6]),
-                    "imgActo": fila[7]
+                    "estadoActo": bool(fila[5]),
+                    "imgActo": fila[6]
                 })
             return resultados
     except Exception as e:
@@ -40,7 +39,7 @@ def obtener_acto_por_id(idActo):
         with conexion.cursor() as cursor:
             cursor.execute("""
                 SELECT idActo, nombActo, descripcion, numParticipantes, 
-                       tipoParticipantes, costoBase, estadoActo, imgActo
+                       tipoParticipantes, estadoActo, imgActo
                 FROM ACTO_LITURGICO
                 WHERE idActo = %s;
             """, (idActo,))
@@ -52,9 +51,8 @@ def obtener_acto_por_id(idActo):
                     "descripcion": fila[2],
                     "numParticipantes": fila[3],
                     "tipoParticipantes": fila[4],
-                    "costoBase": float(fila[5]),
-                    "estadoActo": bool(fila[6]),
-                    "imgActo": fila[7]
+                    "estadoActo": bool(fila[5]),
+                    "imgActo": fila[6]
                 }
             return None
     except Exception as e:
@@ -72,14 +70,13 @@ def registrar_acto(data):
             cursor.execute("""
                 INSERT INTO ACTO_LITURGICO (
                     nombActo, descripcion, numParticipantes, tipoParticipantes, 
-                    costoBase, estadoActo, imgActo
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s);
+                    estadoActo, imgActo
+                ) VALUES (%s, %s, %s, %s, %s, %s);
             """, (
                 data["nombActo"],
                 data.get("descripcion"),
                 data["numParticipantes"],
                 data["tipoParticipantes"],
-                data["costoBase"],
                 data.get("estadoActo", True),
                 data["imgActo"]
             ))
@@ -103,7 +100,6 @@ def actualizar_acto(idActo, data):
                 descripcion = %s,
                 numParticipantes = %s,
                 tipoParticipantes = %s,
-                costoBase = %s,
                 imgActo = %s
                 WHERE idActo = %s;
             """, (
@@ -111,7 +107,6 @@ def actualizar_acto(idActo, data):
                 data.get("descripcion"),
                 data["numParticipantes"],
                 data["tipoParticipantes"],
-                data["costoBase"],
                 data["imgActo"],
                 idActo
             ))

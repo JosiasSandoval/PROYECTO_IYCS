@@ -6,7 +6,10 @@
     <title>LITBOOK | Actos litúrgicos</title>
     <link rel="stylesheet" href="/static/css/act_lit_cliente.css">
 </head>
-<body>
+<body 
+    data-rol="{{ session.get('rol_sistema', '') }}"
+    data-id="{{ session.get('idUsuario', '') }}"
+    data-parroquia="{{ session.get('idParroquia', '') }}">
     <div id="header-placeholder"></div>
     <main class="grid">
     
@@ -15,75 +18,23 @@
     <div class="acto">
         <h2>DESCUBRA Y PARTICIPE EN NUESTROS ACTOS LITÚRGICOS</h2>
         <div class="contenedor-campos">
-            <div class="campo">
-                <img src="/static/img/misa_comunitaria.jpg" alt="Misa comunitaria">
-                <div class="info">
-                    <h3>Misa comunitaria</h3>
-                    <p>Descripción breve del acto litúrgico.</p>
-                    <div class="botones">
-                        <button type="submit" class="reserva">Realice su reserva</button>
-                        <button type="submit" class="requisitos">Requisitos necesarios</button>
-                    </div>
-                </div>
-            </div>
-            <div class="campo">
-                <img src="/static/img/misa_individual.jpg" alt="Misa individual">
-                <div class="info">
-                    <h3>Misa individual</h3>
-                    <p>Descripción breve del acto litúrgico.</p>
-                    <div class="botones">
-                        <button type="submit" class="reserva">Realice su reserva</button>
-                        <button type="submit" class="requisitos">Requisitos necesarios</button>
-                    </div>
-                </div>
-            </div>
-            <div class="campo">
-                <img src="/static/img/bautizo.jpg" alt="Bautizos">
-                <div class="info">
-                    <h3>Bautizos</h3>
-                    <p>Descripción breve del acto litúrgico.</p>
-                    <div class="botones">
-                        <button type="submit" class="reserva">Realice su reserva</button>
-                        <button type="submit" class="requisitos">Requisitos necesarios</button>
-                    </div>
-                </div>
-            </div>
-            <div class="campo">
-                <img src="/static/img/matrimonio_ordinario.jpg" alt="Matrimonio ordinario">
-                <div class="info">
-                    <h3>Matrimonio ordinario</h3>
-                    <p>Descripción breve del acto litúrgico.</p>
-                    <div class="botones">
-                        <button type="submit" class="reserva">Realice su reserva</button>
-                        <button type="submit" class="requisitos">Requisitos necesarios</button>
-                    </div>
-                </div>
-            </div>
-            <div class="campo">
-                <img src="/static/img/matrimonio_traslado.jpg" alt="Matrimonio de traslado">
-                <div class="info">
-                    <h3>Matrimonio de traslado</h3>
-                    <p>Descripción breve del acto litúrgico.</p>
-                    <div class="botones">
-                        <button type="submit" class="reserva">Realice su reserva</button>
-                        <button type="submit" class="requisitos">Requisitos necesarios</button>
-                    </div>
-                </div>
-            </div>
-            </div>
-    </div>
-    <div class="requisitos-container oculto">
-        <div class="requisitos-header">
-            <h2>Requisitos del Acto Litúrgico</h2>
-            <img src="/static/img/cerrar.png" alt="Cerrar">
+            <!-- Los actos se cargarán dinámicamente desde la base de datos -->
         </div>
-        <ul id="lista-requisitos">
-            </ul>
+    </div>
+    
+    <!-- Modal de requisitos -->
+    <div class="requisitos-container oculto">
+        <div class="requisitos-content">
+            <div class="requisitos-header">
+                <h2>Requisitos del Acto Litúrgico</h2>
+                <img src="/static/img/cerrar.png" alt="Cerrar" style="cursor: pointer; width: 24px; height: 24px;">
+            </div>
+            <ul id="lista-requisitos"></ul>
+        </div>
     </div>
     </main>
 </body>
 <script src="/static/js/header.js"></script>
-<script src="/static/js/animacion.js"></script>
 <script src="/static/js/barra_lateral.js"></script>
-
+<script src="/static/js/actos_liturgicos_cliente.js?v=4"></script>
 </html>

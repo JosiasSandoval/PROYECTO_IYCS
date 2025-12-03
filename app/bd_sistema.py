@@ -17,6 +17,7 @@ def obtener_conexion():
             password=os.getenv('DB_PASSWORD'),
             db=os.getenv('DB_NAME')
         )
+    
     except Exception as e:
         print(f"Error al conectar a la base de datos: {e}")
         sys.exit(1)

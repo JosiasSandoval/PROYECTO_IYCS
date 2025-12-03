@@ -120,8 +120,10 @@ function renderTabla() {
     pagina.forEach((u, idx) => {
         const esActivo = !!u.estado;
         // color y flecha: activo -> naranja + flecha abajo; inactivo -> verde + flecha arriba
-        const botonStyle = `background:${esActivo ? 'orange' : 'green'};border:none;color:#fff;padding:6px 8px;border-radius:4px;`;
+        const botonColor = esActivo ? "btn-orange" : "btn-success";
         const rotacion = esActivo ? "" : "transform: rotate(180deg);";
+        const tituloBoton = esActivo ? 'Dar de baja' : 'Dar de alta';
+
 
         // roles como etiquetas, sin duplicados (ya dedupe en normalizar)
         const rolesMostrar = (u.roles || []).join(", ");
@@ -140,8 +142,8 @@ function renderTabla() {
                     <button class="btn btn-warning btn-sm" onclick="editarPersonal(${u.id})" title="Editar">
                         <img src="/static/img/lapiz.png" alt="editar">
                     </button>
-                    <button class="btn btn-sm" style="${botonStyle}" onclick="darDeBajaPersonal(${u.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
-                        <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion};width:16px;height:16px;">
+                    <button class="btn ${botonColor} btn-sm"  onclick="darDeBajaPersonal(${u.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
+                        <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}; ">
                     </button>
                     <button class="btn btn-danger btn-sm" onclick="eliminarPersonal(${u.id})" title="Eliminar">
                         <img src="/static/img/x.png" alt="eliminar">
@@ -566,7 +568,109 @@ document.querySelectorAll("#tablaDocumentos thead th").forEach((th, index) => {
         renderTabla();
     });
 });
+// ================== BLOQUE DE SUGERENCIAS Y BÚSQUEDA ==================
 
+// 1. Lógica del Botón Buscar (Conexión al Backend)
+if (btnBuscarPersonal) {
+    // Reemplazamos el listener anterior para asegurar que usa la nueva ruta
+    // Nota: Si ya tienes un listener arriba, asegúrate de que este sea el único o reemplaza la lógica.
+    btnBuscarPersonal.onclick = async () => {
+        const termino = inputBuscarPersonal.value.trim();
+        
+        // Si el input está vacío, recargamos la lista completa
+        if (!termino) { 
+            personalesFiltrados = null; 
+            paginaActual = 1; 
+            renderTabla(); 
+            return; 
+        }
+
+        try {
+            // Llamamos a la nueva ruta del backend
+            const res = await fetch(`/api/usuario/busqueda_personal/${encodeURIComponent(termino)}`);
+            
+            if (res.status === 404) { 
+                personalesFiltrados = []; 
+                renderTabla(); 
+                return; 
+            }
+            if (!res.ok) throw new Error("Error en búsqueda");
+            
+            const data = await res.json();
+            const items = Array.isArray(data.datos) ? data.datos : [];
+            
+            // Normalizamos los datos recibidos
+            personalesFiltrados = items.map(normalizarPersonal);
+            
+            paginaActual = 1;
+            renderTabla();
+        } catch (err) { 
+            console.error(err); 
+            alert("Error al buscar personal"); 
+        }
+    };
+}
+
+// 2. Lógica de Sugerencias (Autocompletado Local)
+
+// Crear contenedor si no existe
+const contenedorSugerencias = document.createElement("div");
+contenedorSugerencias.id = "sugerenciasContainer";
+document.body.appendChild(contenedorSugerencias);
+
+function posicionarSugerencias() {
+    if (!contenedorSugerencias || contenedorSugerencias.style.display === 'none' || !inputBuscarPersonal) return;
+    const rect = inputBuscarPersonal.getBoundingClientRect(); 
+    contenedorSugerencias.style.top = `${rect.bottom + window.scrollY}px`;
+    contenedorSugerencias.style.left = `${rect.left + window.scrollX}px`;
+    contenedorSugerencias.style.width = `${rect.width}px`; 
+}
+
+function configurarSugerencias() {
+    if (!inputBuscarPersonal) return; 
+    
+    inputBuscarPersonal.addEventListener("input", () => {
+        const termino = inputBuscarPersonal.value.trim().toLowerCase();
+        contenedorSugerencias.innerHTML = "";
+        
+        if (termino.length === 0) {
+            contenedorSugerencias.style.display = "none";
+            return;
+        }
+
+        // --- CORRECCIÓN AQUÍ ---
+        // Cambiamos .includes() por .startsWith()
+        const sugerencias = personales.filter(p => {
+            const nombreCompleto = p.nombreCompleto.toLowerCase();
+            return nombreCompleto.startsWith(termino); 
+        }).slice(0, 5); 
+
+        if (sugerencias.length === 0) {
+            contenedorSugerencias.style.display = "none";
+            return;
+        }
+
+        sugerencias.forEach(p => {
+            const item = document.createElement("div");
+            item.className = "sugerencia-item";
+            item.textContent = p.nombreCompleto;
+            
+            item.onclick = () => {
+                inputBuscarPersonal.value = p.nombreCompleto;
+                contenedorSugerencias.style.display = "none";
+            };
+            contenedorSugerencias.appendChild(item);
+        });
+
+        contenedorSugerencias.style.display = "block";
+        posicionarSugerencias();
+    });
+
+    // ... (el resto de los listeners de click y scroll se quedan igual)
+}
+
+// Inicializar sugerencias
+configurarSugerencias();
 // botón agregar
 const btnAgregar = document.getElementById("btn_guardar");
 if (btnAgregar) btnAgregar.addEventListener("click", () => abrirModalFormularioPersonal("agregar"));

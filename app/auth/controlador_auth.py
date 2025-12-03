@@ -91,9 +91,11 @@ def autenticar_usuario(email, clave_ingresada):
                     pe.idPersonal,
                     pe.nombPers,
                     pe.apePatPers,
+                    pe.apeMatPers,
                     fe.idFeligres,
                     fe.nombFel,
                     fe.apePatFel,
+                    fe.apeMatFel,
                     pp.idParroquia,
                     c.nombCargo
                 FROM usuario us
@@ -112,15 +114,17 @@ def autenticar_usuario(email, clave_ingresada):
                     idPersonal,
                     nombPers,
                     apePatPers,
+                    apeMatPers,
                     idFeligres,
                     nombFel,
                     apePatFel,
+                    apeMatFel,
                     idParroquia,
                     nombCargo
                 ) = perfil
             else:
                 idPersonal = idFeligres = idParroquia = None
-                nombPers = apePatPers = nombFel = apePatFel = nombCargo = None
+                nombPers = apePatPers = apeMatPers = nombFel = apePatFel = apeMatFel = nombCargo = None
 
             # ================================
             # OBTENER TODOS LOS ROLES
@@ -143,12 +147,21 @@ def autenticar_usuario(email, clave_ingresada):
             if idPersonal:
                 nombre_completo = f"{nombPers} {apePatPers}"
                 cargo_mostrar = nombCargo if nombCargo else "Personal"
+                nombre = nombPers
+                apellidoPaterno = apePatPers
+                apellidoMaterno = apeMatPers or ""
             elif idFeligres:
                 nombre_completo = f"{nombFel} {apePatFel}"
                 cargo_mostrar = "Feligrés"
+                nombre = nombFel
+                apellidoPaterno = apePatFel
+                apellidoMaterno = apeMatFel or ""
             else:
                 nombre_completo = "Usuario Sistema"
                 cargo_mostrar = "Sin Perfil"
+                nombre = ""
+                apellidoPaterno = ""
+                apellidoMaterno = ""
 
             # ================================
             # DEVOLVER OBJETO DE SESIÓN
@@ -158,6 +171,9 @@ def autenticar_usuario(email, clave_ingresada):
                 "idUsuario": idUsuario,
                 "email": email,
                 "nombre_usuario": nombre_completo,
+                "nombre": nombre,
+                "apellidoPaterno": apellidoPaterno,
+                "apellidoMaterno": apellidoMaterno,
                 "cargo_usuario": cargo_mostrar,
                 "rol_sistema": rol_principal,   # primer rol
                 "roles_disponibles": roles,    # todos los roles

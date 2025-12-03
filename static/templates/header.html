@@ -30,9 +30,21 @@
         <div class="texto-rol" id="header_cargo_usuario">Usuario</div>
       </div>
 
-      <button id="btn_notificaciones" class="btn-icon" aria-label="notificaciones">
-        <img src="/static/img/notificaciones.png" alt="notificaciones" /></a>
-      </button>
+      <div class="notificacion-container">
+          <button id="btn_notificaciones" class="btn-icon" aria-label="notificaciones">
+              <img src="/static/img/notificaciones.png" alt="notificaciones" />
+              <span id="badge_notificacion" class="badge-rojo" style="display: none;">0</span>
+          </button>
+
+          <div id="dropdown_notificaciones" class="dropdown-notificaciones">
+              <div class="dropdown-head">
+                  <h6>Notificaciones</h6>
+              </div>
+              <div id="lista_notificaciones" class="dropdown-body">
+                  <p class="txt-vacio">Cargando...</p>
+              </div>
+          </div>
+      </div>
 
       <button id="btn_cerrar_sesion" class="btn-icon" aria-label="Cerrar Sesión">
         <img src="/static/img/salida.png" alt="Cerrar Sesión" /></a>

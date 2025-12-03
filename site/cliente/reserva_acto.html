@@ -49,10 +49,6 @@
                         <span>Datos</span>
                     </div>
                     <div class="step" data-step="3">
-                        <div class="icon-circle"><i class="fas fa-file-alt"></i></div>
-                        <span>Requisitos</span>
-                    </div>
-                    <div class="step" data-step="4">
                         <div class="icon-circle"><i class="fas fa-clipboard-list"></i></div>
                         <span>Resumen</span>
                     </div>
@@ -88,13 +84,13 @@
                                 <input type="text" name="hora" id="hora-acto" readonly>
                             </div>
 
-                            <!-- Observaciones -->
-                            <div class="form-group">
+                            <!-- Observaciones / Mención -->
+                            <div class="form-group" id="grupo-mencion">
                                 <label for="observaciones">Mención</label>
                                 <textarea id="observaciones" rows="4" 
-                                    placeholder="(No disponible por ahora)"
-                                    style="width:100%; padding:5px; border-radius:5px; border:1px solid #ccc;"
-                                    disabled></textarea>
+                                    placeholder="Ingrese la mención para esta reserva (obligatorio para sacerdote)"
+                                    style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc; resize: vertical;"
+                                    ></textarea>
                             </div>
 
                             <!-- Calendario -->

@@ -32,44 +32,71 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 
-    function mensajeLimite(tipo, fechaBase) {
-        if (!configActos) return "No se encontró configuración de límites.";
+    // Función para calcular fecha límite
+    function calcularFechaLimite(fechaBase, tiempoLimite, unidad) {
+        if (!fechaBase || !tiempoLimite) return null;
+        
+        const fecha = new Date(fechaBase);
+        if (isNaN(fecha.getTime())) return null;
+        
+        if (unidad === 'horas') {
+            fecha.setHours(fecha.getHours() - tiempoLimite);
+        } else if (unidad === 'dias') {
+            fecha.setDate(fecha.getDate() - tiempoLimite);
+        }
+        
+        return fecha;
+    }
 
-        const unidad = configActos.unidadTiempoAcciones;
-        let horasLimite = 0;
-
+    // Función para obtener mensaje de fecha límite formateado
+    async function obtenerMensajeLimite(reserva, tipo) {
+        if (!reserva || !reserva.idActo) return null;
+        
+        // Cargar configuración para este acto específico
+        const config = await cargarConfiguracion(reserva.idActo);
+        if (!config) return null;
+        
+        const unidad = config.unidadTiempoAcciones || 'horas';
+        let tiempoLimite = 0;
+        let accionTexto = '';
+        
         switch (tipo) {
-            case "aprobarRequisitos":
-                horasLimite = configActos.tiempoAprobacionRequisitos;
-                break;
             case "cambiarDocumento":
-                horasLimite = configActos.tiempoCambioDocumentos;
+                tiempoLimite = config.tiempoCambioDocumentos;
+                accionTexto = 'subir o modificar documentos';
                 break;
             case "cancelar":
-                horasLimite = configActos.tiempoMaxCancelacion;
+                tiempoLimite = config.tiempoMaxCancelacion;
+                accionTexto = 'cancelar';
                 break;
             case "pagar":
-                horasLimite = configActos.tiempoMaxPago;
+                tiempoLimite = config.tiempoMaxPago;
+                accionTexto = 'pagar';
                 break;
             case "reprogramar":
-                horasLimite = configActos.tiempoMaxReprogramacion;
+                tiempoLimite = config.tiempoMaxReprogramacion;
+                accionTexto = 'reprogramar';
                 break;
             default:
-                return "Acción fuera de tiempo permitido.";
+                return null;
         }
-
-        const fecha = new Date(fechaBase);
-        fecha.setHours(fecha.getHours() + horasLimite);
-
-        const fechaStr = fecha.toLocaleString("es-PE", {
+        
+        if (!tiempoLimite) return null;
+        
+        const fechaHoraBase = `${reserva.fecha}T${reserva.hora || '00:00:00'}`;
+        const fechaLimite = calcularFechaLimite(fechaHoraBase, tiempoLimite, unidad);
+        
+        if (!fechaLimite) return null;
+        
+        const fechaStr = fechaLimite.toLocaleString("es-PE", {
             year: "numeric",
             month: "2-digit",
             day: "2-digit",
             hour: "2-digit",
             minute: "2-digit"
         });
-
-        return `Solo puedes realizar esta acción hasta el ${fechaStr} (límite de ${horasLimite} ${unidad}).`;
+        
+        return `Hasta ${fechaStr} tienes para ${accionTexto}`;
     }
     function cerrarModal() {
         const modal = document.getElementById("modalReserva");
@@ -119,15 +146,21 @@ async function cargarReservas() {
         tablaConfirmadas.innerHTML = '';
         tablaCanceladas.innerHTML = '';
 
-        reservasGlobal.forEach(dato => {
+        // Procesar reservas de forma secuencial para manejar async correctamente
+        for (const dato of reservasGlobal) {
             const estado = (dato.estadoReserva || '').toUpperCase();
             const fila = document.createElement('tr');
             let accionesHTML = `<button class="btn-accion ver" onclick="verReserva(${dato.idReserva})">Ver</button>`;
+            let mensajeLimiteHTML = '';
 
             if (rolUsuario === 'secretaria') {
                 // Tab Pendiente -> solo reservas PENDIENTE_REVISION
                 if (estado === 'PENDIENTE_REVISION') {
-                    accionesHTML += `
+                    const mensajeCancelar = await obtenerMensajeLimite(dato, 'cancelar');
+                    if (mensajeCancelar) {
+                        mensajeLimiteHTML = `<div class="mensaje-limite" style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">${mensajeCancelar}</div>`;
+                    }
+                    accionesHTML = mensajeLimiteHTML + accionesHTML + `
                         <button class="btn-accion reprogramar" onclick="aprobarDocumento(${dato.idReserva})">Revisión</button>
                         <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
                     fila.innerHTML = `
@@ -144,15 +177,28 @@ async function cargarReservas() {
             } else if (rolUsuario === 'feligres') {
                 // Tab Pendiente -> todas las reservas pendientes
                 if (estado.includes('PENDIENTE')) {
-                    if (estado.includes('PENDIENTE_DOCUMENTO')) accionesHTML += `
-                        <button class="btn-accion subir" onclick="subirDocumentos(${dato.idReserva})">Subir Documentos</button>
-                        <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
-                    else if (estado.includes('PENDIENTE_REVISION')) accionesHTML += `
-                        <button class="btn-accion modificar" onclick="modificarDocumentos(${dato.idReserva})">Modificar Documentos</button>
-                        <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
-                    else if (estado.includes('PENDIENTE_PAGO')) accionesHTML += `
-                        <button class="btn-accion pagar" onclick="pagarReserva(${dato.idReserva})">Pagar</button>
-                        <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
+                    let mensajeInfo = '';
+                    
+                    if (estado.includes('PENDIENTE_PAGO')) {
+                        accionesHTML = accionesHTML + `
+                            <button class="btn-accion pagar" onclick="pagarReserva(${dato.idReserva})">Pagar</button>
+                            <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
+                        // Mensaje informativo sobre documentos físicos
+                        mensajeInfo = `<div class="mensaje-info-pago" style="font-size: 0.9rem; color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffc107;">
+                            <strong>ℹ️ Información:</strong> Los documentos de los requisitos se entregan 100% en físico en la parroquia.
+                        </div>`;
+                    } else if (estado.includes('PENDIENTE_DOCUMENTO')) {
+                        // PENDIENTE_DOCUMENTO: solo Ver y Cancelar (documentos se entregan físicamente)
+                        accionesHTML = accionesHTML + `
+                            <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
+                        mensajeInfo = `<div class="mensaje-info-pago" style="font-size: 0.9rem; color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffc107;">
+                            <strong>ℹ️ Información:</strong> Entregue los documentos físicamente en la parroquia para completar su reserva.
+                        </div>`;
+                    } else {
+                        // Para otros estados pendientes, solo mostrar cancelar
+                        accionesHTML = accionesHTML + `
+                            <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
+                    }
 
                     fila.innerHTML = `
                         <td>${dato.nombreActo}</td>
@@ -160,7 +206,7 @@ async function cargarReservas() {
                         <td>${dato.hora || 'N/A'}</td>
                         <td>${dato.nombreParroquia}</td>
                         <td>${dato.estadoReserva || 'N/A'}</td>
-                        <td>${accionesHTML}</td>
+                        <td>${mensajeInfo}${accionesHTML}</td>
                     `;
                     tablaPendientes.appendChild(fila);
                 }
@@ -196,7 +242,7 @@ async function cargarReservas() {
                 `;
                 tablaCanceladas.appendChild(fila);
             }
-        });
+        }
 
         // Placeholder si no hay filas
         const placeholderColspan = rolUsuario === 'secretaria' ? 7 : 6;
@@ -210,95 +256,6 @@ async function cargarReservas() {
 }
 
 
-    async function uploadFileToServer(file, idDocumento, idReserva, idActoRequisito, estadoCumplimiento = 'CUMPLIDO') {
-        try {
-            if (!idDocumento) return { ok: false, mensaje: "Falta idDocumento" };
-            if (!idReserva) return { ok: false, mensaje: "Falta idReserva" };
-su
-            const fechaISO = new Date().toISOString().split('T')[0];
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('estadoCumplimiento', estadoCumplimiento);
-            formData.append('f_subido', fechaISO);
-            formData.append('idReserva', idReserva);
-            formData.append('idActoRequisito', idActoRequisito);
-
-            console.log("📤 Enviando archivo a modificar_documento_requisito:", {
-                idDocumento,
-                idReserva,
-                idActoRequisito,
-                fileName: file.name
-            });
-
-            const resp = await fetch(`/api/requisito/modificar_documento_requisito/${idDocumento}`, {
-                method: 'PUT',
-                body: formData
-            });
-
-            if (!resp.ok) {
-                const text = await resp.text();
-                return { ok: false, mensaje: `HTTP ${resp.status}: ${text}` };
-            }
-            
-            const json = await resp.json();
-            return json;
-
-        } catch (e) {
-            console.error("🔥 Error en uploadFileToServer:", e);
-            return { ok: false, mensaje: e.message || e.toString() };
-        }
-    }
-
-    async function actualizarDocumentoEnBD(idDocumento, ruta, tipoArchivo, fechaISO, estadoCumplimiento) {
-        try {
-            const formData = new FormData();
-            formData.append("ruta", ruta);
-            formData.append("tipoArchivo", tipoArchivo);
-            formData.append("fecha", fechaISO);
-            formData.append("estadoCumplimiento", estadoCumplimiento);
-
-            const resp = await fetch(`/api/requisito/modificar_documento_requisito/${idDocumento}`, {
-                method: 'PUT',
-                body: formData
-            });
-
-            if (!resp.ok) {
-                const text = await resp.text();
-                return { ok: false, mensaje: `HTTP ${resp.status}: ${text}` };
-            }
-
-            return await resp.json();
-
-        } catch (e) {
-            return { ok: false, mensaje: e.message || e.toString() };
-        }
-    }
-
-    async function cambiarEstadoDocumento(idDocumento, estadoActual) {
-        try {
-            const resp = await fetch(`/api/requisito/cambiar_estado_documento`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    idDocumento: idDocumento,
-                    estadoCumplimiento: estadoActual
-                })
-            });
-
-            if (!resp.ok) {
-                const text = await resp.text();
-                console.error(`Error HTTP ${resp.status}: ${text}`);
-                return { ok: false, mensaje: text };
-            }
-
-            const json = await resp.json();
-            return json;
-        } catch (e) {
-            console.error("Error al cambiar estado del documento:", e);
-            return { ok: false, mensaje: e.message || e.toString() };
-        }
-    }
 
     async function cambiarEstadoReservaAPendienteRevision(idReserva) {
         try {
@@ -355,7 +312,18 @@ window.descargarArchivo = async function (idDocumento) {
 };
 
 
-window.subirDocumentos = async (idReserva) => {
+    window.subirDocumentos = async (idReserva) => {
+        const reservaActual = reservasGlobal.find(r => r.idReserva == idReserva);
+        if (!reservaActual) {
+            alert("Reserva no encontrada");
+            return;
+        }
+
+        // Mostrar mensaje de fecha límite al presionar el botón
+        const mensajeLimite = await obtenerMensajeLimite(reservaActual, 'cambiarDocumento');
+        if (mensajeLimite) {
+            alert(mensajeLimite);
+        }
     const modal = document.getElementById("modalReserva");
     const modalBody = document.getElementById("modal-body");
     const modalTitle = document.getElementById("modal-title");
@@ -366,25 +334,30 @@ window.subirDocumentos = async (idReserva) => {
     modalFooter.innerHTML = "";
     modal.style.display = "block";
 
-    const reserva = reservasGlobal.find(r => r.idReserva == idReserva);
-
-    const config = reserva?.configActo || {};
-    const tiempoLimite = config?.tiempoCambioDocumentos;
-    const unidad = config?.unidadTiempoAcciones || 'horas';
-
-    if (reserva) alert(mensajeLimite(reserva, 'documento'));
+    if (!reservaActual) {
+        modalBody.innerHTML = "<p>Error: Reserva no encontrada.</p>";
+        modalFooter.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
+        document.getElementById("cerrarModalBtn").onclick = cerrarModal;
+        return;
+    }
 
     try {
         const response = await fetch(`/api/requisito/obtener_documento_faltante/${idReserva}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
-        if (!data.success || !Array.isArray(data.datos) || data.datos.length === 0) {
+        // Filtrar solo documentos con estado NO_CUMPLIDO
+        const documentosFaltantes = (data.datos || []).filter(doc => 
+            doc.estadoCumplimiento === 'NO_CUMPLIDO' || 
+            !doc.estadoCumplimiento || 
+            doc.estadoCumplimiento === 'SIN_ESTADO_DEFINIDO'
+        );
+
+        if (documentosFaltantes.length === 0) {
             modalBody.innerHTML = "<p>No hay documentos pendientes por subir.</p>";
             
-            // ✅ Mostrar observación si existe
-            if (reserva?.observacion) {
-                modalBody.innerHTML += `<p style="margin-top:12px; font-style:italic; color:#555;"><strong>Observación:</strong> ${reserva.observacion}</p>`;
+            if (reservaActual?.observacion) {
+                modalBody.innerHTML += `<p style="margin-top:12px; font-style:italic; color:#555;"><strong>Observación:</strong> ${reservaActual.observacion}</p>`;
             }
 
             modalFooter.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
@@ -393,7 +366,7 @@ window.subirDocumentos = async (idReserva) => {
         }
 
         let html = `<div class="lista-requisitos">`;
-        data.datos.forEach((req, idx) => {
+        documentosFaltantes.forEach((req, idx) => {
             const vigencia = req.vigencia || req.vigenciaDocumento || req.vigencia_documento || null;
             html += `
                 <div class="req-item" data-id-documento="${req.idDocumento}" data-id-acto-requisito="${req.idActoRequisito}">
@@ -407,13 +380,11 @@ window.subirDocumentos = async (idReserva) => {
         });
         html += `</div>`;
 
-        // ✅ Agregar observación debajo de la lista si existe
-        if (reserva?.observacion) {
-            html += `<p style="margin-top:12px; font-style:italic; color:#555;"><strong>Observación:</strong> ${reserva.observacion}</p>`;
+        if (reservaActual?.observacion) {
+            html += `<p style="margin-top:12px; font-style:italic; color:#555;"><strong>Observación:</strong> ${reservaActual.observacion}</p>`;
         }
 
         modalBody.innerHTML = html;
-
         modalFooter.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
         document.getElementById("cerrarModalBtn").onclick = cerrarModal;
 
@@ -425,7 +396,8 @@ window.subirDocumentos = async (idReserva) => {
                 statusEl.textContent = '';
 
                 if (!input || !input.files || input.files.length === 0) {
-                    alert('Seleccione un archivo primero.');
+                    statusEl.textContent = '⚠ Seleccione un archivo primero.';
+                    statusEl.style.color = '#e74c3c';
                     return;
                 }
 
@@ -433,39 +405,87 @@ window.subirDocumentos = async (idReserva) => {
                 const idDocumento = input.dataset.idDocumento;
                 const idActoRequisito = input.dataset.idActoRequisito;
 
-                if (!reserva || !reserva.fecha || !reserva.hora) {
-                    alert("Error: la reserva no tiene fecha u hora válidas.");
-                    return;
-                }
-
                 statusEl.textContent = 'Subiendo...';
-                const uploadResult = await uploadFileToServer(file, idDocumento, idReserva, idActoRequisito);
+                statusEl.style.color = '#3498db';
+                btn.disabled = true;
 
-                let rutaFinal = uploadResult.ok && uploadResult.ruta ? uploadResult.ruta : `/temporal/${idActoRequisito || idDocumento}_${file.name}`;
-                const tipoArchivo = file.type.split('/')[1]?.toUpperCase() || 'BIN';
-                const fechaISO = new Date().toISOString().split('T')[0];
+                try {
+                    // Actualizar documento existente: solo rutaArchivo, tipoArchivo y estadoCumplimiento
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('idReserva', idReserva);
+                    formData.append('idActoRequisito', idActoRequisito);
+                    formData.append('estadoCumplimiento', 'CUMPLIDO');
 
-                const resUpdate = await actualizarDocumentoEnBD(idDocumento, rutaFinal, tipoArchivo, fechaISO, 'CUMPLIDO');
+                    const res = await fetch(`/api/requisito/modificar_documento_requisito/${idDocumento}`, {
+                        method: 'PUT',
+                        body: formData
+                    });
 
-                if (resUpdate && resUpdate.ok) {
-                    await cambiarEstadoDocumento(idDocumento, 'NO_CUMPLIDO');
-
-                    statusEl.textContent = '✔ Subido';
-                    input.remove();
-                    btn.remove();
-
-                    const remainingFiles = document.querySelectorAll('input[type="file"]');
-                    if (remainingFiles.length === 0) {
-                        const estadoCambiado = await cambiarEstadoReservaAPendienteRevision(idReserva);
-                        if (estadoCambiado) {
-                            alert('Todos los documentos subidos. Estado de reserva actualizado a PENDIENTE_REVISION.');
-                            cerrarModal();
-                            cargarReservas();
-                        }
+                    if (!res.ok) {
+                        const text = await res.text();
+                        throw new Error(`HTTP ${res.status}: ${text}`);
                     }
-                } else {
-                    statusEl.textContent = `Error: ${resUpdate?.mensaje || 'Desconocido'}`;
-                    alert(`Error al subir documento: ${resUpdate?.mensaje || 'Desconocido'}`);
+
+                    const result = await res.json();
+                    
+                    if (result.ok) {
+                        statusEl.textContent = '✔ Subido correctamente';
+                        statusEl.style.color = '#27ae60';
+                        input.remove();
+                        btn.remove();
+
+                        // Verificar si quedan más documentos por subir
+                        const remainingFiles = document.querySelectorAll('input[type="file"]');
+                        if (remainingFiles.length === 0) {
+                            // Verificar que todos los documentos estén CUMPLIDO antes de cambiar estado
+                            // El backend ya verifica esto, pero hacemos una verificación adicional aquí
+                            const resVerificar = await fetch(`/api/requisito/obtener_documento_faltante/${idReserva}`);
+                            if (resVerificar.ok) {
+                                const dataVerificar = await resVerificar.json();
+                                const documentosFaltantes = dataVerificar.datos || [];
+                                
+                                // Si no hay documentos faltantes, cambiar estado a PENDIENTE_REVISION
+                                if (documentosFaltantes.length === 0) {
+                                    // Esperar un momento para que el backend actualice el estadoCumplimiento
+                                    await new Promise(resolve => setTimeout(resolve, 500));
+                                    
+                                    const estadoCambiado = await cambiarEstadoReservaAPendienteRevision(idReserva);
+                                    if (estadoCambiado) {
+                                        // Mostrar alert cuando se sube el último documento
+                                        alert('✔ Todos los documentos subidos correctamente. El estado de la reserva ha sido actualizado a PENDIENTE_REVISION.');
+                                        cerrarModal();
+                                        cargarReservas();
+                                    } else {
+                                        alert('⚠ Documentos subidos pero error al actualizar estado');
+                                    }
+                                } else {
+                                    statusEl.textContent = `⚠ Aún hay ${documentosFaltantes.length} documento(s) pendiente(s)`;
+                                    statusEl.style.color = '#f39c12';
+                                }
+                            } else {
+                                // Si no se puede verificar, intentar cambiar estado de todas formas
+                                // El backend verificará que todos estén CUMPLIDO
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                                const estadoCambiado = await cambiarEstadoReservaAPendienteRevision(idReserva);
+                                if (estadoCambiado) {
+                                    // Mostrar alert cuando se sube el último documento
+                                    alert('✔ Todos los documentos subidos correctamente. El estado de la reserva ha sido actualizado a PENDIENTE_REVISION.');
+                                    cerrarModal();
+                                    cargarReservas();
+                                }
+                            }
+                        }
+                    } else {
+                        statusEl.textContent = `❌ Error: ${result.mensaje || 'Desconocido'}`;
+                        statusEl.style.color = '#e74c3c';
+                        btn.disabled = false;
+                    }
+                } catch (err) {
+                    console.error('Error al subir documento:', err);
+                    statusEl.textContent = `❌ Error al subir archivo`;
+                    statusEl.style.color = '#e74c3c';
+                    btn.disabled = false;
                 }
             });
         });
@@ -483,24 +503,27 @@ window.subirDocumentos = async (idReserva) => {
     // MODIFICAR DOCUMENTOS
     // ============================
 window.modificarDocumentos = async (idReserva) => {
-    const modal = document.getElementById("modalReserva");
-    const modalBody = document.getElementById("modal-body");
-    const modalTitle = document.getElementById("modal-title");
-    const modalFooter = document.getElementById("modal-footer");
+    const reservaModificar = reservasGlobal.find(r => r.idReserva == idReserva);
+    if (!reservaModificar) {
+        alert("Reserva no encontrada");
+        return;
+    }
 
-    modalTitle.textContent = "Modificar Documentos";
-    modalBody.innerHTML = "<p>Cargando documentos...</p>";
-    modalFooter.innerHTML = "";
-    modal.style.display = "block";
+    // Mostrar mensaje de fecha límite al presionar el botón
+    const mensajeLimiteModificar = await obtenerMensajeLimite(reservaModificar, 'cambiarDocumento');
+    if (mensajeLimiteModificar) {
+        alert(mensajeLimiteModificar);
+    }
 
-    const reserva = reservasGlobal.find(r => r.idReserva == idReserva);
+    const modalModificar = document.getElementById("modalReserva");
+    const modalBodyModificar = document.getElementById("modal-body");
+    const modalTitleModificar = document.getElementById("modal-title");
+    const modalFooterModificar = document.getElementById("modal-footer");
 
-    // ❗ CORREGIDO: Eliminado configActo global inexistente
-    const config = reserva?.configActo || {};
-    const tiempoLimite = config?.tiempoCambioDocumentos;
-    const unidad = config?.unidadTiempoAcciones || 'horas';
-
-    if (reserva) alert(mensajeLimite(reserva, 'documento'));
+    modalTitleModificar.textContent = "Modificar Documentos";
+    modalBodyModificar.innerHTML = "<p>Cargando documentos...</p>";
+    modalFooterModificar.innerHTML = "";
+    modalModificar.style.display = "block";
 
     try {
         const response = await fetch(`/api/requisito/obtener_documentos_reserva/${idReserva}`);
@@ -508,9 +531,9 @@ window.modificarDocumentos = async (idReserva) => {
         const data = await response.json();
 
         if (!data.success || !Array.isArray(data.datos) || data.datos.length === 0) {
-            modalBody.innerHTML = "<p>No hay documentos para modificar.</p>";
-            modalFooter.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
-            document.getElementById("cerrarModalBtn").onclick = () => modal.style.display = "none";
+            modalBodyModificar.innerHTML = "<p>No hay documentos para modificar.</p>";
+            modalFooterModificar.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
+            document.getElementById("cerrarModalBtn").onclick = cerrarModal;
             return;
         }
 
@@ -518,6 +541,7 @@ window.modificarDocumentos = async (idReserva) => {
         data.datos.forEach((doc, idx) => {
             const idActo = doc.idActoRequisito || '';
             const vigencia = doc.vigencia || doc.vigenciaDocumento || doc.vigencia_documento || null;
+            const rutaArchivo = doc.rutaArchivo || '';
 
             html += `
                 <div class="req-item" data-id-documento="${doc.idDocumento}" data-id-acto-requisito="${idActo}">
@@ -525,9 +549,11 @@ window.modificarDocumentos = async (idReserva) => {
                         ${vigencia ? `<small>(vigencia: ${vigencia})</small>` : ''}
                     </p>
 
-                    <a href="javascript:void(0);" onclick="descargarArchivo(${doc.idDocumento})">
-                        Descargar archivo
-                    </a>
+                    ${rutaArchivo ? `
+                        <a href="javascript:void(0);" onclick="descargarArchivo(${doc.idDocumento})" style="display:inline-block; margin-bottom:8px;">
+                            📥 Descargar archivo actual
+                        </a>
+                    ` : '<p style="color:#999; font-size:0.9rem;">No hay archivo actual</p>'}
 
                     <input type="file" 
                         id="file_mod_${idx}" 
@@ -545,10 +571,10 @@ window.modificarDocumentos = async (idReserva) => {
             `;
         });
         html += `</div>`;
-        modalBody.innerHTML = html;
+        modalBodyModificar.innerHTML = html;
 
-        modalFooter.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
-        document.getElementById("cerrarModalBtn").onclick = () => modal.style.display = "none";
+        modalFooterModificar.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
+        document.getElementById("cerrarModalBtn").onclick = cerrarModal;
 
         document.querySelectorAll('.btn-actualizar-item').forEach(btn => {
             btn.addEventListener('click', async () => {
@@ -558,7 +584,8 @@ window.modificarDocumentos = async (idReserva) => {
                 statusEl.textContent = '';
 
                 if (!input || !input.files || input.files.length === 0) {
-                    alert('Seleccione un archivo primero.');
+                    statusEl.textContent = '⚠ Seleccione un archivo primero.';
+                    statusEl.style.color = '#e74c3c';
                     return;
                 }
 
@@ -567,9 +594,11 @@ window.modificarDocumentos = async (idReserva) => {
                 const idActoRequisito = input.dataset.idActoRequisito || null;
 
                 statusEl.textContent = 'Subiendo...';
+                statusEl.style.color = '#3498db';
                 btn.disabled = true;
 
                 try {
+                    // Solo actualizar rutaArchivo y tipoArchivo
                     const formData = new FormData();
                     formData.append('file', file);
                     formData.append('idReserva', idReserva);
@@ -587,16 +616,21 @@ window.modificarDocumentos = async (idReserva) => {
 
                     const result = await res.json();
                     if (result.ok) {
-                        statusEl.textContent = '✔ Archivo actualizado';
-                        input.remove();
-                        btn.remove();
+                        statusEl.textContent = '✔ Archivo actualizado correctamente';
+                        statusEl.style.color = '#27ae60';
+                        input.value = ''; // Limpiar input pero no removerlo
+                        setTimeout(() => {
+                            statusEl.textContent = '';
+                        }, 2000);
                     } else {
                         statusEl.textContent = `❌ Error: ${result.mensaje || 'No se pudo actualizar'}`;
+                        statusEl.style.color = '#e74c3c';
                     }
 
                 } catch (err) {
                     console.error('Error al actualizar documento:', err);
                     statusEl.textContent = '❌ Error al subir archivo';
+                    statusEl.style.color = '#e74c3c';
                 } finally {
                     btn.disabled = false;
                 }
@@ -607,7 +641,7 @@ window.modificarDocumentos = async (idReserva) => {
         console.error(e);
         modalBody.innerHTML = "<p>Error al cargar documentos.</p>";
         modalFooter.innerHTML = `<button class="btn-accion cancelar" id="cerrarModalBtn">Cerrar</button>`;
-        document.getElementById("cerrarModalBtn").onclick = () => modal.style.display = "none";
+        document.getElementById("cerrarModalBtn").onclick = cerrarModal;
     }
 };
 
@@ -673,27 +707,37 @@ window.modificarDocumentos = async (idReserva) => {
             alert("Reserva no encontrada");
             return;
         }
-        alert(mensajeLimite(reserva, 'cancelacion'));
 
-        if (!window.confirm("¿Estás seguro de cancelar esta reserva?")) return;
+        // Verificar fecha límite
+        const mensajeLimite = await obtenerMensajeLimite(reserva, 'cancelar');
+        if (mensajeLimite) {
+            const confirmar = window.confirm(`${mensajeLimite}\n\n¿Estás seguro de cancelar esta reserva?`);
+            if (!confirmar) return;
+        } else {
+            if (!window.confirm("¿Estás seguro de cancelar esta reserva?")) return;
+        }
 
-        // 3. Llamada al backend
         try {
             const response = await fetch(`/api/reserva/cambiar_estado/${idReserva}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ accion: 'cancelar' })
             });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
             const data = await response.json();
             if (data.ok) {
-                alert(`Reserva cancelada correctamente. Nuevo estado: ${data.nuevo_estado}`);
+                alert(`Reserva cancelada correctamente. Nuevo estado: ${data.nuevo_estado || 'CANCELADO'}`);
                 cargarReservas();
             } else {
-                alert(`No se pudo cancelar: ${data.mensaje || 'Error'}`);
+                alert(`No se pudo cancelar: ${data.mensaje || 'Error desconocido'}`);
             }
         } catch (error) {
-            alert("Error al intentar comunicarse con el servidor para cancelar la reserva.");
             console.error("Error de cancelación:", error);
+            alert("Error al intentar comunicarse con el servidor para cancelar la reserva.");
         }
     };
 
@@ -702,7 +746,7 @@ window.modificarDocumentos = async (idReserva) => {
     // PAGAR RESERVA
     // ============================
     // ------------------------------------------------------------
-    window.pagarReserva = (idReserva) => {
+    window.pagarReserva = async (idReserva) => {
         const reserva = reservasGlobal.find(r => r.idReserva == idReserva);
 
         if (!reserva) {
@@ -710,8 +754,12 @@ window.modificarDocumentos = async (idReserva) => {
             return;
         }
 
-        // Muestra el mensaje con la fecha límite para el pago.
-        alert(mensajeLimite(reserva, 'pago'));
+        // Obtener mensaje de fecha límite (ya se muestra en la tabla, pero por si acaso)
+        const mensajeLimite = await obtenerMensajeLimite(reserva, 'pagar');
+        if (mensajeLimite) {
+            const confirmar = window.confirm(`${mensajeLimite}\n\n¿Desea continuar con el pago?`);
+            if (!confirmar) return;
+        }
 
         sessionStorage.setItem('reservaPago', JSON.stringify({
             idReserva: reserva.idReserva,

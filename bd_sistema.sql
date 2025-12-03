@@ -183,7 +183,6 @@ CREATE TABLE ACTO_LITURGICO (
     descripcion VARCHAR(255) NULL,
     numParticipantes int not null,
     tipoParticipantes VARCHAR(255)not null,
-    costoBase DECIMAL(8,2) NOT NULL DEFAULT 0.00,
     estadoActo BOOLEAN NOT NULL,
     imgActo VARCHAR(255) NOT NULL
 );
@@ -193,6 +192,7 @@ CREATE TABLE ACTO_PARROQUIA(
     idParroquia INT NOT NULL,
     diaSemana char(3) NOT NULL,
     horaInicioActo time not null,
+    costoBase DECIMAL(8,2) NOT NULL DEFAULT 0.00,
     CONSTRAINT fk_actoparroquia_acto FOREIGN KEY (idActo) REFERENCES ACTO_LITURGICO(idActo),
     CONSTRAINT fk_parroquia_acto FOREIGN KEY (idParroquia) REFERENCES PARROQUIA(idParroquia)
 );
@@ -234,9 +234,7 @@ CREATE TABLE RESERVA (
 );
 
 CREATE TABLE DOCUMENTO_REQUISITO (
-    idDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    rutaArchivo VARCHAR(255) NULL, -- Nombre original del archivo
-    tipoArchivo VARCHAR(100) NULL,      -- MIME type, ej. 'image/png' o 'application/pdf'
+    idDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,     -- MIME type, ej. 'image/png' o 'application/pdf'
     f_subido DATE NULL,
     estadoCumplimiento VARCHAR(50) NOT NULL,
     aprobado BOOLEAN NOT NULL,
@@ -338,4 +336,16 @@ CREATE TABLE EXCEPCION_PERSONAL (
     estadoExcepcion BOOLEAN NOT NULL,
     idPersonal INT NOT NULL,
     CONSTRAINT fk_excepcion_personal FOREIGN KEY (idPersonal) REFERENCES PERSONAL(idPersonal)
+);
+
+CREATE TABLE NOTIFICACION (
+    idNotificacion INT AUTO_INCREMENT PRIMARY KEY,
+    idUsuario INT NOT NULL,
+    titulo VARCHAR(100),
+    mensaje TEXT,
+    leido TINYINT(1) DEFAULT 0, -- 0: No leído, 1: Leído
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    enlace VARCHAR(255), -- Ejemplo: '/cliente/mis_reservas'
+    icono VARCHAR(50) DEFAULT 'info', -- 'info', 'check', 'warning'
+    CONSTRAINT fk_notif_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario)
 );
