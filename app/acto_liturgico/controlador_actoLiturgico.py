@@ -1,4 +1,3 @@
-# Asegúrate de que esta ruta de importación sea correcta para tu proyecto
 from app.bd_sistema import obtener_conexion 
 
 # ================== OBTENER TODOS ==================
@@ -6,6 +5,7 @@ def obtener_actos():
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
+            # Eliminado costoBase del SELECT
             cursor.execute("""
                 SELECT idActo, nombActo, descripcion, numParticipantes, 
                        tipoParticipantes, estadoActo, imgActo
@@ -37,6 +37,7 @@ def obtener_acto_por_id(idActo):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
+            # Eliminado costoBase del SELECT
             cursor.execute("""
                 SELECT idActo, nombActo, descripcion, numParticipantes, 
                        tipoParticipantes, estadoActo, imgActo
@@ -67,6 +68,7 @@ def registrar_acto(data):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
+            # Eliminado costoBase del INSERT
             cursor.execute("""
                 INSERT INTO ACTO_LITURGICO (
                     nombActo, descripcion, numParticipantes, tipoParticipantes, 
@@ -89,11 +91,12 @@ def registrar_acto(data):
         if conexion:
             conexion.close()
 
-# ================== ACTUALIZAR (MODIFICADO) ==================
+# ================== ACTUALIZAR ==================
 def actualizar_acto(idActo, data):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
+            # Eliminado costoBase del UPDATE
             cursor.execute("""
                 UPDATE ACTO_LITURGICO SET
                 nombActo = %s,
@@ -142,10 +145,8 @@ def eliminar_acto(idActo):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            # Primero, eliminar dependencias en ACTO_REQUISITO y ACTO_PARROQUIA
             cursor.execute("DELETE FROM ACTO_REQUISITO WHERE idActo = %s;", (idActo,))
             cursor.execute("DELETE FROM ACTO_PARROQUIA WHERE idActo = %s;", (idActo,))
-            # Ahora eliminar el acto principal
             cursor.execute("DELETE FROM ACTO_LITURGICO WHERE idActo = %s;", (idActo,))
             conexion.commit()
             return True, "Acto eliminado"

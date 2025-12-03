@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,35 +12,31 @@
         <div id="barra_lateral_administrador-placeholder"></div>
         <div class="contenido-principal">
             <div class="contenido">   
-                <h3 class="titulo-seccion">Disponibilidad Horaria</h3>
-
-                <!--Busqueda-->
-                <form id="formDocumento">
-                    <!-- Label -->
-                    <label for="inputDocumento">ID de la disponibilidad:</label>
-
-                    <!-- Input -->
-                    <input type="text" id="inputDocumento" placeholder="Ingrese id de la disponibilidad"/>
-
-                    <!-- Botones -->
+                <h3 class="titulo-seccion">DISPONIBILIDAD HORARIA</h3>
+                
+                <form id="formBusqueda">
+                    <label for="inputBusqueda">Buscar personal:</label>
+                    <div class="search-container">
+                        <input type="text" id="inputBusqueda" placeholder="Ingrese nombre del personal..."/>
+                    </div>
                     <button type="button" id="btn_buscar" class="btn-icon" title="Buscar">
                         <img src="/static/img/lupa.png" alt="Buscar" />
                     </button>
-
-                    <button type="submit" id="btn_guardar" class="btn-icon" title="Agregar">
+                    <button type="button" id="btn_nuevo" class="btn-icon" title="Agregar">
                         <img src="/static/img/mas.png" alt="Agregar" />
                     </button>
                 </form>
 
-                <!--Tabla-->
                 <div class="tabla-documentos">
-                    <table id="tablaDocumentos">
+                    <table id="tablaDisponibilidad">
                         <thead>
                             <tr>
                                 <th class="col-id">#</th>
-                                <th class="col-diaSemana">Día de la Semana</th>
-                                <th class="col-horaInicioDis">Hora Inicio</th>
-                                <th class="col-horaFinDis">Hora Fin</th>
+                                <th class="col-nombre">Personal</th>
+                                <th class="col-cargo">Cargo</th>
+                                <th class="col-parroquia">Parroquia</th>
+                                <th class="col-dia">Día</th>
+                                <th class="col-horas">Horario</th>
                                 <th class="col-acciones">Acciones</th>
                             </tr>
                         </thead>

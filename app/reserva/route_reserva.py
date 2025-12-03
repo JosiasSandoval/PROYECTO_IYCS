@@ -129,3 +129,31 @@ def listar_reservas():
     except Exception as e:
         print(f'Error al listar reservas: {e}')
         return jsonify({'ok': False, 'datos': [], 'mensaje': 'Error interno'}), 500
+    
+# ==========================================
+# EN: app/reserva/routes.py
+# Agrega esta ruta nueva:
+# ==========================================
+
+@reserva_bp.route('/reprogramar', methods=['POST'])
+def reprogramar_reserva_route():
+    try:
+        data = request.get_json()
+        idReserva = data.get('idReserva')
+        fecha = data.get('fecha')
+        hora = data.get('hora')
+        observaciones = data.get('observaciones')
+
+        if not idReserva or not fecha or not hora:
+            return jsonify({"ok": False, "mensaje": "Faltan datos obligatorios."}), 400
+
+        # Llamamos al controlador modificado
+        exito, mensaje = reprogramar_reserva(idReserva, fecha, hora, observaciones)
+
+        if exito:
+            return jsonify({"ok": True, "mensaje": mensaje}), 200
+        else:
+            return jsonify({"ok": False, "mensaje": mensaje}), 400
+
+    except Exception as e:
+        return jsonify({"ok": False, "mensaje": f"Error interno: {str(e)}"}), 500

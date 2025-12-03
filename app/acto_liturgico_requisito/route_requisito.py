@@ -250,32 +250,29 @@ def modificar_documento_requisito_route(idDocumento):
 #     REQUISITOS CRUD
 # =============================
 @requisito_bp.route('/requisito', methods=['GET'])
-def listar_requisitos():
-    """Lista todos los requisitos registrados en el sistema."""
+def listar_requisitos_route():
     datos = get_requisitos()
-    return jsonify({'datos': datos})
+    return jsonify({'datos': datos}), 200
 
 @requisito_bp.route('/registrar_requisito', methods=['POST'])
 def registrar_requisito_route():
-    """Registra un nuevo requisito en la tabla `requisito`."""
     data = request.get_json()
-    nombRequisito = data.get('nombRequisito')
-    descripcion = data.get('descripcion')
-    
-    if not nombRequisito:
-        return jsonify({"ok": False, "mensaje": "El nombre del requisito es obligatorio"}), 400
-
-    resultado = registrar_requisito(nombRequisito, descripcion)
+    # Recibimos f_requisito del frontend
+    resultado = registrar_requisito(
+        data.get('nombRequisito'), 
+        data.get('descripcion'),
+        data.get('f_requisito') 
+    )
     return jsonify(resultado), 200
 
 @requisito_bp.route('/modificar_requisito/<int:idRequisito>', methods=['PUT'])
-def modificar_requisito_route(idRequisito):
-    """Modifica el nombre y la descripción de un requisito existente."""
+def modificar_requisito_route_id(idRequisito):
     data = request.get_json()
     resultado = modificar_requisito(
         idRequisito,
         data.get('nombRequisito'),
-        data.get('descripcion')
+        data.get('descripcion'),
+        data.get('f_requisito')
     )
     return jsonify(resultado), 200
 

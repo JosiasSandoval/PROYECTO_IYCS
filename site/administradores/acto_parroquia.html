@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/css/admin_requisito.css">
-    <title>LITBOOK | Requisitos</title>
+    <link rel="stylesheet" href="/static/css/admin_actoParroquia.css">
+    <title>LITBOOK | Actos Parroquia</title>
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -12,32 +12,31 @@
         <div id="barra_lateral_administrador-placeholder"></div>
         <div class="contenido-principal">
             <div class="contenido">   
-                <h3 class="titulo-seccion">GESTIÓN DE REQUISITOS</h3>
+                <h3 class="titulo-seccion">ACTOS DE PARROQUIA</h3>
                 
                 <form id="formBusqueda">
-                    <label for="inputBusqueda">Nombre del Requisito:</label>
-                    
+                    <label for="inputBusqueda">Buscar programación:</label>
                     <div class="search-container">
-                        <input type="text" id="inputBusqueda" placeholder="Ingrese nombre del requisito..."/>
+                        <input type="text" id="inputBusqueda" placeholder="Ingresa nombre del acto"/>
                     </div>
-
                     <button type="button" id="btn_buscar" class="btn-icon" title="Buscar">
                         <img src="/static/img/lupa.png" alt="Buscar" />
                     </button>
-                    
                     <button type="button" id="btn_nuevo" class="btn-icon" title="Agregar">
                         <img src="/static/img/mas.png" alt="Agregar" />
                     </button>
                 </form>
 
                 <div class="tabla-documentos">
-                    <table id="tablaRequisitos">
+                    <table id="tablaActosParroquia">
                         <thead>
                             <tr>
                                 <th class="col-id">#</th>
-                                <th class="col-nombre">Nombre</th>
-                                <th class="col-fecha">Fecha Registro</th>
-                                <th class="col-desc">Descripción</th>
+                                <th class="col-acto">Acto Litúrgico</th>
+                                <th class="col-parroquia">Parroquia</th>
+                                <th class="col-dia">Día</th>
+                                <th class="col-hora">Hora</th>
+                                <th class="col-costo">Costo (S/)</th>
                                 <th class="col-acciones">Acciones</th>
                             </tr>
                         </thead>
@@ -51,6 +50,6 @@
 
     <script src="/static/js/barra_lateral_administrador.js"></script>
     <script src="/static/js/header.js"></script>
-    <script src="/static/js/admin_requisito.js"></script>
+    <script src="/static/js/admin_actoParroquia.js"></script>
 </body>
 </html>
