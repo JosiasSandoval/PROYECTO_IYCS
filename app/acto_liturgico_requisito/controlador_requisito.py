@@ -336,49 +336,68 @@ def get_requisitos():
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
+            # AGREGADO: f_requisito al SELECT para mostrarlo en la tabla
             cursor.execute("""
-                SELECT idRequisito, nombRequisito, descripcion, estadoRequisito
+                SELECT idRequisito, nombRequisito, descripcion, estadoRequisito, DATE_FORMAT(f_requisito, '%Y-%m-%d')
                 FROM requisito
+                ORDER BY nombRequisito ASC
             """)
-
             filas = cursor.fetchall()
             resultados = []
             for fila in filas:
                 resultados.append({
                     'idRequisito': fila[0],
                     'nombRequisito': fila[1],
-                    'descripcion': fila[2],
-                    'estadoRequisito': fila[3]
+                    'descripcion': fila[2] if fila[2] else "",
+                    'estadoRequisito': bool(fila[3]),
+                    'f_requisito': fila[4] # Campo agregado
                 })
             return resultados
     except Exception as e:
         print(f'Error al cargar los requisitos: {e}')
         return []
     finally:
-        if conexion:
-            conexion.close()
+        if conexion: conexion.close()
 
+# AGREGADO: Parámetro f_requisito opcional
+def registrar_requisito(nombRequisito, descripcion, f_requisito=None):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Si viene fecha la usamos, si no, CURRENT_DATE
+            sql = "INSERT INTO requisito (nombRequisito, f_requisito, descripcion, estadoRequisito) VALUES (%s, %s, %s, TRUE)"
+            val = (nombRequisito, f_requisito if f_requisito else 'CURDATE()', descripcion)
+            
+            if not f_requisito: # Si no hay fecha, insertamos directo con la función SQL
+                 cursor.execute("INSERT INTO requisito (nombRequisito, f_requisito, descripcion, estadoRequisito) VALUES (%s, CURDATE(), %s, TRUE)", (nombRequisito, descripcion))
+            else:
+                 cursor.execute(sql, val)
+            
+            conexion.commit()
+            return {'ok': True, 'mensaje': 'Requisito registrado'}
+    except Exception as e:
+        print(f'Error al registrar: {e}')
+        return {'ok': False, 'mensaje': f'Error: {e}'}
+    finally:
+        if conexion: conexion.close()
 
-# =========================================================
-# REGISTRAR REQUISITO
-# =========================================================
-def registrar_requisito(nombRequisito, descripcion):
+# AGREGADO: Parámetro f_requisito
+def modificar_requisito(idRequisito, nombRequisito, descripcion, f_requisito):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO requisito (nombRequisito, f_requisito, descripcion, estadoRequisito) 
-                VALUES (%s, CURRENT_DATE, %s, TRUE)
-            """, (nombRequisito, descripcion))
+                UPDATE requisito 
+                SET nombRequisito=%s, descripcion=%s, f_requisito=%s
+                WHERE idRequisito=%s
+            """, (nombRequisito, descripcion, f_requisito, idRequisito))
             conexion.commit()
-            return {'ok': True}
+            return {'ok': True, 'mensaje': 'Requisito actualizado'}
     except Exception as e:
-        print(f'Error al registrar el requisito: {e}')
+        print(f'Error al modificar: {e}')
         return {'ok': False, 'mensaje': f'Error: {e}'}
     finally:
-        if conexion:
-            conexion.close()
-
+        if conexion: conexion.close()
 
 # =========================================================
 # MODIFICAR REQUISITO

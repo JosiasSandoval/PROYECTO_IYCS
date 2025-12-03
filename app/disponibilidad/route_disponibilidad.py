@@ -1,86 +1,45 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request, jsonify, session
 from app.disponibilidad.controlador_disponibilidad import (
-    obtener_disponibilidades,
-    obtener_disponibilidad_por_id,
-    registrar_disponibilidad,
-    actualizar_disponibilidad,
-    actualizar_estado_disponibilidad,
-    eliminar_disponibilidad,
-    obtener_lista_personal_asignado # Importar la función auxiliar
+    listar_disponibilidad, agregar_disponibilidad, actualizar_disponibilidad,
+    eliminar_disponibilidad, cambiar_estado_disponibilidad, obtener_combos_disp
 )
-
-# --- IMPORTANTE ---
-# Debes registrar este blueprint en tu app/__init__.py:
-# 1. from app.disponibilidad.route_disponibilidad import disponibilidad_bp
-# 2. app.register_blueprint(disponibilidad_bp, url_prefix='/api/disponibilidad')
 
 disponibilidad_bp = Blueprint('disponibilidad', __name__)
 
-# ================== LISTAR TODOS ==================
-@disponibilidad_bp.route('/disponibilidades', methods=['GET'])
-def listar_disponibilidades():
-    datos = obtener_disponibilidades()
-    return jsonify({"success": True, "datos": datos}), 200
+@disponibilidad_bp.route('/', methods=['GET'])
+def listar():
+    id_usuario = session.get('idUsuario')
+    rol = session.get('rol_sistema')
+    if not id_usuario: return jsonify({'error': 'No autorizado'}), 401
+    datos = listar_disponibilidad(id_usuario, rol)
+    return jsonify(datos), 200
 
-# ================== OBTENER UNO ==================
-@disponibilidad_bp.route('/disponibilidades/<int:id>', methods=['GET'])
-def obtener_disponibilidad(id):
-    dato = obtener_disponibilidad_por_id(id)
-    if dato:
-        return jsonify({"success": True, "datos": dato}), 200
-    else:
-        return jsonify({"success": False, "mensaje": "Registro no encontrado"}), 404
+@disponibilidad_bp.route('/guardar', methods=['POST'])
+def guardar():
+    d = request.get_json()
+    ok, msg = agregar_disponibilidad(d['dia'], d['inicio'], d['fin'], d['idPP'])
+    return jsonify({'mensaje': msg}) if ok else (jsonify({'error': msg}), 500)
 
-# ================== REGISTRAR ==================
-@disponibilidad_bp.route('/disponibilidades', methods=['POST'])
-def crear_disponibilidad():
-    data = request.get_json()
-    if not data or "diaSemana" not in data or "idParroquiaPersonal" not in data:
-        return jsonify({"success": False, "mensaje": "Datos incompletos"}), 400
-    
-    exito, mensaje = registrar_disponibilidad(data)
-    if exito:
-        return jsonify({"success": True, "mensaje": mensaje}), 201
-    else:
-        return jsonify({"success": False, "mensaje": mensaje}), 500
+@disponibilidad_bp.route('/actualizar/<int:id>', methods=['PUT'])
+def actualizar(id):
+    d = request.get_json()
+    ok, msg = actualizar_disponibilidad(id, d['dia'], d['inicio'], d['fin'], d['idPP'])
+    return jsonify({'mensaje': msg}) if ok else (jsonify({'error': msg}), 500)
 
-# ================== ACTUALIZAR ==================
-@disponibilidad_bp.route('/disponibilidades/<int:id>', methods=['PUT'])
-def editar_disponibilidad(id):
-    data = request.get_json()
-    if not data or "diaSemana" not in data or "idParroquiaPersonal" not in data:
-        return jsonify({"success": False, "mensaje": "Datos incompletos"}), 400
+@disponibilidad_bp.route('/estado/<int:id>', methods=['PATCH'])
+def estado(id):
+    d = request.get_json()
+    ok, msg = cambiar_estado_disponibilidad(id, d['estado'])
+    return jsonify({'mensaje': msg}) if ok else (jsonify({'error': msg}), 500)
 
-    exito, mensaje = actualizar_disponibilidad(id, data)
-    if exito:
-        return jsonify({"success": True, "mensaje": mensaje}), 200
-    else:
-        return jsonify({"success": False, "mensaje": mensaje}), 500
+@disponibilidad_bp.route('/eliminar/<int:id>', methods=['DELETE'])
+def eliminar(id):
+    ok, msg = eliminar_disponibilidad(id)
+    return jsonify({'mensaje': msg}) if ok else (jsonify({'error': msg}), 500)
 
-# ================== ACTUALIZAR ESTADO (PARCIAL) ==================
-@disponibilidad_bp.route('/disponibilidades/<int:id>/estado', methods=['PATCH'])
-def cambiar_estado_disponibilidad(id):
-    data = request.get_json()
-    if "estado" not in data:
-        return jsonify({"success": False, "mensaje": "Estado no proporcionado"}), 400
-
-    exito = actualizar_estado_disponibilidad(id, data["estado"])
-    if exito:
-        return jsonify({"success": True, "mensaje": "Estado actualizado"}), 200
-    else:
-        return jsonify({"success": False, "mensaje": "Error al actualizar estado"}), 500
-
-# ================== ELIMINAR ==================
-@disponibilidad_bp.route('/disponibilidades/<int:id>', methods=['DELETE'])
-def borrar_disponibilidad(id):
-    exito, mensaje = eliminar_disponibilidad(id)
-    if exito:
-        return jsonify({"success": True, "mensaje": mensaje}), 200
-    else:
-        return jsonify({"success": False, "mensaje": mensaje}), 500
-
-# ================== RUTA AUXILIAR PARA EL MODAL ==================
-@disponibilidad_bp.route('/personal-asignado', methods=['GET'])
-def listar_personal_asignado():
-    datos = obtener_lista_personal_asignado()
-    return jsonify({"success": True, "datos": datos}), 200
+@disponibilidad_bp.route('/combos', methods=['GET'])
+def combos():
+    id_usuario = session.get('idUsuario')
+    rol = session.get('rol_sistema')
+    datos = obtener_combos_disp(id_usuario, rol)
+    return jsonify(datos), 200

@@ -119,7 +119,8 @@ function normalizar(doc) {
   const id = doc.id ?? doc.idCargo ?? doc.id_cargo ?? null;
   const nombre = doc.nombre ?? doc.nombCargo ?? doc.nomb_cargo ?? "";
   let estado = false;
-  if (doc.estado === 1 || doc.estado === true || doc.estado === "activo" || doc.estadoCargo === true) {
+  const valorEstado = doc.estadoCargo ?? doc.estado;
+  if (valorEstado === 1 || valorEstado === true || valorEstado === "1" || valorEstado === "true") {
     estado = true;
   }
   return { id, nombre, estado };

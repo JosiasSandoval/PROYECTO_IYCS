@@ -273,15 +273,41 @@ def reprogramar_reserva(idReserva, fecha, hora, observaciones):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            cursor.execute("SELECT numReprogramaciones FROM reserva WHERE idReserva=%s", (idReserva,))
+            # 1. Obtener datos actuales de la reserva (Parroquia y Estado)
+            cursor.execute("SELECT idParroquia, estadoReserva, numReprogramaciones FROM reserva WHERE idReserva=%s", (idReserva,))
             fila = cursor.fetchone()
+            
             if not fila:
-                return False, "Reserva no encontrada"
+                return False, "Reserva no encontrada."
 
-            numReprogramacion = (fila[0] or 0) + 1
+            idParroquia = fila[0]
+            estadoActual = fila[1]
+            numReprogramacion = (fila[2] or 0) + 1
 
-            # Nota: si 'mencion' NO es el campo adecuado para observaciones,
-            # deberías crear un campo separado (ej. observacionReprogramacion).
+            # 2. Validar que esté CONFIRMADA
+            if estadoActual != 'CONFIRMADO':
+                return False, "Solo se pueden reprogramar reservas que estén en estado CONFIRMADO."
+
+            # 3. Validar Disponibilidad (Cruce de horarios)
+            # Buscamos si hay otra reserva en la misma parroquia, fecha y hora, que NO sea esta misma y NO esté cancelada.
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM reserva 
+                WHERE idParroquia = %s 
+                  AND f_reserva = %s 
+                  AND h_reserva = %s 
+                  AND estadoReserva != 'CANCELADO'
+                  AND idReserva != %s
+            """, (idParroquia, fecha, hora, idReserva))
+            
+            cruce = cursor.fetchone()[0]
+
+            if cruce > 0:
+                return False, "La fecha y hora seleccionadas ya están ocupadas por otra reserva."
+
+            # 4. Proceder con la actualización
+            # Nota: concatenamos la nueva observación a la mención existente o la reemplazamos según tu preferencia.
+            # Aquí la estamos actualizando en el campo 'mencion'.
             cursor.execute("""
                 UPDATE reserva 
                 SET f_reserva=%s, h_reserva=%s, numReprogramaciones=%s, estadoReprogramado=TRUE, mencion=%s 
@@ -289,7 +315,8 @@ def reprogramar_reserva(idReserva, fecha, hora, observaciones):
             """, (fecha, hora, numReprogramacion, observaciones, idReserva))
 
         conexion.commit()
-        return True, "Reserva reprogramada exitosamente"
+        return True, "Reserva reprogramada exitosamente."
+
     except Exception as e:
         print(f"Error al reprogramar: {e}")
         return False, str(e)
@@ -520,124 +547,14 @@ def get_reservas_sacerdote(idUsuario):
             conexion.close()
 
 
-# --------------------------
-# Reservas por parroquia (SECRETARIA)
-# --------------------------
-def get_reservas_parroquia(idUsuario):
-    conexion = obtener_conexion()
-    try:
-        with conexion.cursor() as cursor:
-            # 1) Obtener idParroquia del usuario secretaria
-            cursor.execute("""
-                SELECT pp.idParroquia
-                FROM usuario us
-                INNER JOIN rol_usuario rs ON us.idUsuario = rs.idUsuario
-                INNER JOIN rol r ON rs.idRol = r.idRol
-                INNER JOIN personal pe ON us.idUsuario = pe.idUsuario
-                INNER JOIN parroquia_personal pp ON pe.idPersonal = pp.idPersonal
-                WHERE us.idUsuario = %s AND r.nombRol = 'SECRETARIA'
-                AND pp.vigenciaParrPers = TRUE;
-            """, (idUsuario,))
-            
-            fila = cursor.fetchone()
-            if not fila:
-                # no hay parroquia válida
-                # --> devolvemos lista vacía para el front
-                return []
-            
-            idParroquia = fila[0]
-
-            # 2) Obtener reservas para esa parroquia
-            # IMPORTANTE: 
-            # - Reservas normales: idSolicitante = idFeligres
-            # - Reservas de sacerdote para la parroquia: idSolicitante = idParroquia
-            cursor.execute("""
-                SELECT 
-                    re.idReserva,
-                    al.nombActo,
-                    al.idActo,
-                    ap.costoBase,
-                    re.f_reserva,
-                    re.h_reserva,
-                    re.mencion,
-                    CASE 
-                        WHEN re.idSolicitante = re.idParroquia THEN pa.nombParroquia
-                        ELSE CONCAT(f.nombFel,' ',f.apePatFel,' ',f.apeMatFel)
-                    END AS nombreSolicitante,
-                    pa.nombParroquia,
-                    re.estadoReserva,
-                    COALESCE(
-                        GROUP_CONCAT(CONCAT(pc.rolParticipante, ': ', pc.nombParticipante) SEPARATOR '; '),
-                        ''
-                    ) AS participantes,
-                    CASE WHEN pr.idPagoReserva IS NOT NULL THEN TRUE ELSE FALSE END AS tienePagoReserva,
-                    COALESCE(p.estadoPago, NULL) AS estadoPago
-                FROM reserva re
-                INNER JOIN parroquia pa ON re.idParroquia = pa.idParroquia
-                LEFT JOIN feligres f ON f.idFeligres = re.idSolicitante
-                LEFT JOIN participantes_acto pc ON re.idReserva = pc.idReserva
-                LEFT JOIN acto_liturgico al ON pc.idActo = al.idActo
-                LEFT JOIN acto_parroquia ap 
-                    ON al.idActo = ap.idActo
-                   AND ap.idParroquia = re.idParroquia
-                LEFT JOIN pago_reserva pr ON re.idReserva = pr.idReserva
-                LEFT JOIN pago p ON pr.idPago = p.idPago
-                WHERE re.idParroquia = %s
-                GROUP BY 
-                    re.idReserva,
-                    al.nombActo,
-                    al.idActo,
-                    ap.costoBase,
-                    re.f_reserva,
-                    re.h_reserva,
-                    re.mencion,
-                    nombreSolicitante,
-                    pa.nombParroquia,
-                    re.estadoReserva,
-                    tienePagoReserva,
-                    estadoPago;
-            """, (idParroquia,))
-
-            filas = cursor.fetchall()
-            resultados = []
-
-            for fila in filas:
-                fecha_str = _fecha_a_str(fila[4])  # f_reserva está en posición 4
-                hora_str = _hora_a_str(fila[5])    # h_reserva está en posición 5
-
-                resultados.append({
-                    'idReserva': fila[0],
-                    'nombreActo': fila[1],
-                    'idActo': fila[2],
-                    'costoBase': fila[3],
-                    'fecha': fecha_str,
-                    'hora': hora_str,
-                    'mencion': fila[6],
-                    'nombreFeligres': fila[7],
-                    'nombreSolicitante': fila[7],  # Agregar también como nombreSolicitante para compatibilidad
-                    'nombreParroquia': fila[8],
-                    'estadoReserva': fila[9],
-                    'participantes': fila[10],
-                    'tienePagoReserva': bool(fila[11]) if len(fila) > 11 else False,
-                    'estadoPago': fila[12] if len(fila) > 12 else None
-                })
-
-        return resultados
-
-    except Exception as e:
-        print(f"Error al obtener las reservas: {e}")
-        return []
-    finally:
-        if conexion:
-            conexion.close()
-
-# --------------------------
-# Reservas por feligres (usuario)
-# --------------------------
+# ==========================================
+# RESERVAS DEL FELIGRÉS (CORREGIDO: Agregado al.idActo)
+# ==========================================
 def get_reservas_feligres(idUsuario):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
+            # Obtener ID del feligrés
             cursor.execute("""
                 SELECT fe.idFeligres
                 FROM usuario us
@@ -646,12 +563,10 @@ def get_reservas_feligres(idUsuario):
                 INNER JOIN feligres fe ON us.idUsuario = fe.idUsuario
                 WHERE us.idUsuario = %s AND r.nombRol = 'FELIGRES';
             """, (idUsuario,))
-
             fila = cursor.fetchone()
-            if not fila:
-                return []
-
+            if not fila: return []
             idFeligres = fila[0]
+
 
             cursor.execute("""
                 SELECT 
@@ -663,42 +578,47 @@ def get_reservas_feligres(idUsuario):
                     re.mencion,
                     pa.nombParroquia,
                     re.estadoReserva,
-                    COALESCE(
-                        GROUP_CONCAT(CONCAT(pc.rolParticipante, ': ', pc.nombParticipante) SEPARATOR '; '),
-                        ''
-                    ) AS participantes,
-                    CASE WHEN pr.idPagoReserva IS NOT NULL THEN TRUE ELSE FALSE END AS tienePagoReserva
+                    COALESCE(GROUP_CONCAT(CONCAT(pc.rolParticipante, ': ', pc.nombParticipante) SEPARATOR '; '), '') AS participantes,
+                    al.idActo,        -- [OK] Necesario para Reprogramar
+                    re.idParroquia,   -- [OK] Necesario para Reprogramar
+                    
+                    -- Nombre Solicitante (Lógica corregida)
+                    CASE 
+                        WHEN re.idSolicitante = re.idParroquia THEN pa.nombParroquia
+                        ELSE CONCAT(f.nombFel,' ',f.apePatFel,' ',f.apeMatFel)
+                    END AS nombreSolicitante,
+
+                    -- Datos de Pago (Agregué los JOIN abajo para que esto funcione)
+                    CASE WHEN pr.idPagoReserva IS NOT NULL THEN TRUE ELSE FALSE END AS tienePagoReserva,
+                    COALESCE(p.estadoPago, 'PENDIENTE') AS estadoPago
+
                 FROM reserva re
-                INNER JOIN feligres f ON f.idFeligres = re.idSolicitante
                 INNER JOIN parroquia pa ON re.idParroquia = pa.idParroquia
+                INNER JOIN feligres f ON f.idFeligres = re.idSolicitante
                 LEFT JOIN participantes_acto pc ON re.idReserva = pc.idReserva
                 LEFT JOIN acto_liturgico al ON pc.idActo = al.idActo
-                LEFT JOIN acto_parroquia ap 
-                    ON al.idActo = ap.idActo
-                   AND ap.idParroquia = re.idParroquia
+                LEFT JOIN acto_parroquia ap ON al.idActo = ap.idActo AND ap.idParroquia = re.idParroquia
+                
+                -- ¡ESTOS FALTABAN PARA QUE NO TE DE ERROR CON LOS PAGOS!
                 LEFT JOIN pago_reserva pr ON re.idReserva = pr.idReserva
-                WHERE re.idSolicitante = %s
-                GROUP BY 
-                    re.idReserva,
-                    al.nombActo,
-                    ap.costoBase,
-                    re.f_reserva,
-                    re.h_reserva,
-                    re.mencion,
-                    pa.nombParroquia,
-                    re.estadoReserva,
-                    tienePagoReserva;
-            """, (idFeligres,))
+                LEFT JOIN pago p ON pr.idPago = p.idPago
 
+                WHERE re.idSolicitante = %s
+                
+                GROUP BY 
+                    re.idReserva, al.nombActo, ap.costoBase, re.f_reserva, re.h_reserva, 
+                    re.mencion, pa.nombParroquia, re.estadoReserva, al.idActo, re.idParroquia,
+                    nombreSolicitante, tienePagoReserva, estadoPago;
+            """, (idFeligres,))
+            
             filas = cursor.fetchall()
             resultados = []
             for fila in filas:
                 fecha_str = _fecha_a_str(fila[3])
                 hora_str = _hora_a_str(fila[4])
-                
                 resultados.append({
                     'idReserva': fila[0],
-                    'acto': fila[1],
+                    'nombreActo': fila[1],
                     'costoBase': fila[2],
                     'fecha': fecha_str,
                     'hora': hora_str,
@@ -706,18 +626,100 @@ def get_reservas_feligres(idUsuario):
                     'nombreParroquia': fila[6],
                     'estadoReserva': fila[7],
                     'participantes': fila[8],
-                    'tienePagoReserva': bool(fila[9]) if len(fila) > 9 else False
+                    'idActo': fila[9],       
+                    'idParroquia': fila[10], 
+                    'nombreSolicitante': fila[11],
+                    'tienePagoReserva': fila[12],
+                    'estadoPago': fila[13]
                 })
-
-        return resultados
+            return resultados
     except Exception as e:
         print(f"Error al obtener las reservas: {e}")
         return []
     finally:
-        if conexion:
-            conexion.close()
+        if conexion: conexion.close()
 
-# --------------------------
+# ==========================================
+# RESERVAS DE SECRETARIA (CORREGIDO: Agregado al.idActo)
+# ==========================================
+# =========================================================
+# FUNCIÓN UNIFICADA: get_reservas_parroquia
+# =========================================================
+def get_reservas_parroquia(idUsuario):
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # 1. Obtener ID de la Parroquia asociada a la Secretaria
+            cursor.execute("""
+                SELECT pp.idParroquia
+                FROM usuario us
+                INNER JOIN rol_usuario rs ON us.idUsuario = rs.idUsuario
+                INNER JOIN rol r ON rs.idRol = r.idRol
+                INNER JOIN personal pe ON us.idUsuario = pe.idUsuario
+                INNER JOIN parroquia_personal pp ON pe.idPersonal = pp.idPersonal
+                WHERE us.idUsuario = %s AND r.nombRol = 'SECRETARIA' AND pp.vigenciaParrPers = TRUE;
+            """, (idUsuario,))
+            fila = cursor.fetchone()
+            if not fila: return []
+            idParroquia = fila[0]
+
+            # 2. Consulta Principal Unificada
+            # Incluye: idActo (para calendario), tienePagoReserva (para pagos) y nombreFeligres
+            cursor.execute("""
+                SELECT 
+                    re.idReserva,
+                    al.nombActo,
+                    ap.costoBase,
+                    re.f_reserva,
+                    re.h_reserva,
+                    re.mencion,
+                    CONCAT(f.nombFel,' ',f.apePatFel,' ',f.apeMatFel) AS nombreFeligres,
+                    pa.nombParroquia,
+                    re.estadoReserva,
+                    COALESCE(GROUP_CONCAT(CONCAT(pc.rolParticipante, ': ', pc.nombParticipante) SEPARATOR '; '), '') AS participantes,
+                    al.idActo,       -- Necesario para reprogramación
+                    re.idParroquia,  -- Necesario para reprogramación
+                    CASE WHEN pr.idPagoReserva IS NOT NULL THEN TRUE ELSE FALSE END AS tienePagoReserva
+                FROM reserva re
+                INNER JOIN feligres f ON f.idFeligres = re.idSolicitante
+                INNER JOIN parroquia pa ON re.idParroquia = pa.idParroquia
+                LEFT JOIN participantes_acto pc ON re.idReserva = pc.idReserva
+                LEFT JOIN acto_liturgico al ON pc.idActo = al.idActo
+                LEFT JOIN acto_parroquia ap ON al.idActo = ap.idActo AND ap.idParroquia = re.idParroquia
+                LEFT JOIN pago_reserva pr ON re.idReserva = pr.idReserva
+                WHERE re.idParroquia = %s
+                GROUP BY 
+                    re.idReserva, al.nombActo, ap.costoBase, re.f_reserva, re.h_reserva, 
+                    re.mencion, nombreFeligres, pa.nombParroquia, re.estadoReserva, 
+                    al.idActo, re.idParroquia, tienePagoReserva;
+            """, (idParroquia,))
+
+            filas = cursor.fetchall()
+            resultados = []
+            for fila in filas:
+                fecha_str = _fecha_a_str(fila[3])
+                hora_str = _hora_a_str(fila[4])
+                resultados.append({
+                    'idReserva': fila[0],
+                    'nombreActo': fila[1],
+                    'costoBase': fila[2],
+                    'fecha': fecha_str,
+                    'hora': hora_str,
+                    'mencion': fila[5],
+                    'nombreFeligres': fila[6],
+                    'nombreParroquia': fila[7],
+                    'estadoReserva': fila[8],
+                    'participantes': fila[9],
+                    'idActo': fila[10],        # <--- ¡IMPORTANTE!
+                    'idParroquia': fila[11],   # <--- ¡IMPORTANTE!
+                    'tienePagoReserva': bool(fila[12])
+                })
+            return resultados
+    except Exception as e:
+        print(f"Error al obtener las reservas de parroquia: {e}")
+        return []
+    finally:
+        if conexion: conexion.close()
 # Obtener todas las reservas (admin)
 # --------------------------
 def obtener_todas_reservas_admin():

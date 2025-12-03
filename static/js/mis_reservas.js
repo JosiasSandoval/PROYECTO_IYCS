@@ -1,3 +1,12 @@
+let calendarioRepro = null;
+let horariosRepro = [];
+let configRepro = { tiempoMinimoReserva: 0, tiempoMaximoReserva: null };
+let fechaReservaOriginal = null;
+
+// Matrices de días para coincidir con BD y UI
+const DIA_ABREV_REPRO = ["Dom", "Lun", "Mar", "Mi", "Jue", "Vie", "Sáb"];
+const DIAS_LARGOS_REPRO = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+
 document.addEventListener('DOMContentLoaded', async () => {
     const bodyElement = document.body;
     const rolUsuario = bodyElement.dataset.rol?.toLowerCase();
@@ -417,123 +426,424 @@ async function cargarReservas() {
         window.location.href = '/cliente/pago';
     };
 
-    window.reprogramarReserva = async (idReserva) => {
-        const reserva = reservasGlobal.find(r => r.idReserva == idReserva);
-        if (!reserva) { alert("Reserva no encontrada"); return; }
+    // ==========================================
+// REPROGRAMAR RESERVA (CON DETALLE VISUAL)
+// ==========================================
+window.reprogramarReserva = async (idReserva) => {
+    const reserva = reservasGlobal.find(r => r.idReserva == idReserva);
+    if (!reserva) { alert("Reserva no encontrada localmente."); return; }
 
-        // 1. Obtener Configuración y Validar Tiempo Límite
-        const config = reserva.configActo || {};
-        const tiempoLimite = config.tiempoMaxReprogramacion; 
-        const unidad = config.unidadTiempoAcciones || 'horas';
+    // VALIDACIÓN: Se necesita el ID del Acto para cargar el calendario
+    // (Asegúrate de haber actualizado el backend como indicamos antes)
+    if (!reserva.idActo) {
+        alert("Error: Faltan datos del acto (idActo). Por favor recargue la página.");
+        return;
+    }
+
+    // Guardamos la fecha original para bloquearla en el calendario
+    fechaReservaOriginal = reserva.fecha;
+
+    // A. Configurar Modal (Hacerlo Grande)
+    const modalElement = document.getElementById("modalReserva");
+    const modalContent = modalElement.querySelector('.modal-content');
+    modalContent.className = 'modal-content modal-repro-xl'; // Clase CSS ancha
+    
+    const modalBody = document.getElementById("modal-body");
+    const modalTitle = document.getElementById("modal-title");
+    const modalFooter = document.getElementById("modal-footer");
+
+    modalTitle.innerHTML = "Reprogramar Reserva";
+
+    // B. Renderizar HTML (Estructura idéntica a reserva_acto.html)
+    // Usamos las clases: reserva-acto-container, left-column, right-column
+    modalBody.innerHTML = `
+        <div class="reserva-acto-container">
+            
+            <div class="left-column">
+                <h5 class="section-title">Datos de la Reserva</h5>
+                
+                <div class="info-actual-card mb-3">
+                    <strong>Reserva Actual:</strong>
+                    <div style="margin-top:5px; color:#333;">
+                        ${reserva.nombreActo}<br>
+                        ${reserva.fecha} - ${reserva.hora}<br>
+                        <small style="color:#666">${reserva.nombreParroquia}</small>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Nueva Fecha:</label>
+                    <input type="text" id="nuevaFechaDisplay" class="form-control input-readonly" readonly placeholder="Seleccione en el calendario 👉">
+                    <input type="hidden" id="nuevaFechaVal">
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Nueva Hora:</label>
+                    <input type="text" id="nuevaHoraDisplay" class="form-control input-readonly" readonly placeholder="Seleccione hora tras fecha">
+                    <input type="hidden" id="nuevaHoraVal">
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Motivo del cambio:</label>
+                    <textarea id="motivoReprogramacion" class="form-control" rows="3" placeholder="Indique la razón..."></textarea>
+                </div>
+                
+                <div id="mensaje-error-repro" class="mensaje-error"></div>
+            </div>
+
+            <div class="right-column">
+                <h5 class="section-title">Selección de Fecha</h5>
+                <div id="calendar-repro"></div>
+            </div>
+        </div>
+    `;
+
+    // C. Botones Footer
+    modalFooter.innerHTML = `
+        <button class="btn btn-secondary" onclick="cerrarModalRepro()">Cancelar</button>
+        <button class="btn btn-primary" id="btnGuardarRep">Guardar Cambios</button>
+    `;
+
+    // Evento Guardar
+    document.getElementById("btnGuardarRep").onclick = async () => {
+        const fecha = document.getElementById("nuevaFechaVal").value;
+        const hora = document.getElementById("nuevaHoraVal").value;
+        const motivo = document.getElementById("motivoReprogramacion").value.trim();
+        const errorDiv = document.getElementById("mensaje-error-repro");
         
-        // Si existe un límite configurado, validamos vigencia
-        if (tiempoLimite !== null && tiempoLimite !== undefined) {
-            const fechaHoraBase = `${reserva.fecha}T${reserva.hora}`;
-            const fechaLimite = calcularFechaLimite(fechaHoraBase, tiempoLimite, unidad);
+        errorDiv.textContent = "";
 
-            if (new Date() > fechaLimite) {
-                alert(`Ya no es posible reprogramar. La fecha límite fue: ${fechaLimite.toLocaleString()}`);
-                return;
-            }
+        if(!fecha || !hora) {
+            errorDiv.textContent = "Seleccione una nueva fecha y hora.";
+            return;
+        }
+        if(!motivo) {
+            errorDiv.textContent = "Ingrese el motivo del cambio.";
+            return;
         }
 
-        // 2. Preparar el Modal
-        const modal = document.getElementById("modalReserva");
-        const modalBody = document.getElementById("modal-body");
-        const modalTitle = document.getElementById("modal-title");
-        const modalFooter = document.getElementById("modal-footer");
+        try {
+            const btn = document.getElementById("btnGuardarRep");
+            btn.disabled = true; btn.textContent = "Procesando...";
 
-        modalTitle.textContent = "Reprogramar Reserva";
-
-        // 3. Renderizar Formulario
-        modalBody.innerHTML = `
-            <div class="form-reprogramar">
-                <p class="info-text">Reserva actual: <strong>${reserva.fecha}</strong> a las <strong>${reserva.hora}</strong></p>
-                <p class="info-text">Acto: ${reserva.nombreActo}</p>
-                <hr>
-                
-                <div class="form-group">
-                    <label for="nuevaFecha">Nueva Fecha:</label>
-                    <input type="date" id="nuevaFecha" class="input-form" min="${new Date().toISOString().split('T')[0]}">
-                </div>
-
-                <div class="form-group">
-                    <label for="nuevaHora">Nueva Hora:</label>
-                    <input type="time" id="nuevaHora" class="input-form">
-                </div>
-
-                <div class="form-group">
-                    <label for="motivoReprogramacion">Motivo del cambio:</label>
-                    <textarea id="motivoReprogramacion" class="input-form" rows="3" placeholder="Indique la razón del cambio..."></textarea>
-                </div>
-                
-                <div id="mensaje-error" class="mensaje-error"></div>
-            </div>
-        `;
-
-        // 4. Configurar Botones
-        modalFooter.innerHTML = `
-            <button class="btn-accion cancelar" id="btnCancelarRep">Cancelar</button>
-            <button class="btn-accion guardar" id="btnGuardarRep">Guardar Cambios</button>
-        `;
-
-        // Eventos
-        document.getElementById("btnCancelarRep").onclick = cerrarModal;
-        
-        document.getElementById("btnGuardarRep").onclick = async () => {
-            const nuevaFecha = document.getElementById("nuevaFecha").value;
-            const nuevaHora = document.getElementById("nuevaHora").value;
-            const motivo = document.getElementById("motivoReprogramacion").value.trim();
-            const errorDiv = document.getElementById("mensaje-error");
-
-            // Validaciones básicas
-            if (!nuevaFecha || !nuevaHora) {
-                errorDiv.textContent = "Por favor, seleccione fecha y hora.";
-                return;
+            const res = await fetch('/api/reserva/reprogramar', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ idReserva, fecha, hora, observaciones: motivo })
+            });
+            const data = await res.json();
+            
+            if(data.ok) {
+                alert("Reserva reprogramada con éxito.");
+                cerrarModalRepro();
+                cargarReservas();
+            } else {
+                errorDiv.textContent = data.mensaje;
+                btn.disabled = false; btn.textContent = "Guardar Cambios";
             }
-            if (!motivo) {
-                errorDiv.textContent = "Debe indicar un motivo para la reprogramación.";
-                return;
-            }
-
-            // Llamada a la API
-            try {
-                const btn = document.getElementById("btnGuardarRep");
-                btn.disabled = true;
-                btn.textContent = "Procesando...";
-
-                const response = await fetch('/api/reserva/reprogramar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        idReserva: idReserva,
-                        fecha: nuevaFecha,
-                        hora: nuevaHora,
-                        observaciones: motivo
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.ok) {
-                    alert("✅ Reserva reprogramada exitosamente.");
-                    cerrarModal();
-                    cargarReservas(); // Recargar tabla
-                } else {
-                    errorDiv.textContent = `Error: ${data.mensaje}`;
-                }
-            } catch (error) {
-                console.error("Error al reprogramar:", error);
-                errorDiv.textContent = "Error de conexión con el servidor.";
-            } finally {
-                document.getElementById("btnGuardarRep").disabled = false;
-                document.getElementById("btnGuardarRep").textContent = "Guardar Cambios";
-            }
-        };
-
-        modal.style.display = "block";
+        } catch(e) { console.error(e); }
     };
 
+    // D. Mostrar Modal e Iniciar Calendario
+    document.getElementById("modalReserva").style.display = "block";
+    
+    // Retardo necesario para que FullCalendar detecte el tamaño del contenedor visible
+    setTimeout(() => {
+        initCalendarRepro(reserva.idActo, reserva.idParroquia);
+    }, 100);
+};
+
+window.cerrarModalRepro = () => {
+    document.getElementById("modalReserva").style.display = "none";
+};
+
+// ---------------------------------------------------------
+// 2. INICIALIZAR CALENDARIO (FullCalendar)
+// ---------------------------------------------------------
+function initCalendarRepro(idActo, idParroquia) {
+    const el = document.getElementById('calendar-repro');
+    if(!el) return;
+
+    calendarioRepro = new FullCalendar.Calendar(el, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        headerToolbar: { left: 'prev,next', center: 'title', right: 'dayGridMonth' },
+        height: '100%',
+        showNonCurrentDates: false,
+        selectable: true,
+        dateClick: (info) => clickFechaRepro(info.dateStr)
+    });
+    calendarioRepro.render();
+    
+    // Cargar disponibilidad usando el ID del acto
+    cargarDispoRepro(idActo, idParroquia);
+}
+
+// ---------------------------------------------------------
+// 3. CARGAR DATOS DE DISPONIBILIDAD
+// ---------------------------------------------------------
+async function cargarDispoRepro(idActo, idParroquia) {
+    try {
+        // Horarios (Días verdes)
+        const res = await fetch(`/api/acto/disponibilidad/${idParroquia}/${idActo}`);
+        const data = await res.json();
+        
+        // Normalizar texto para evitar problemas de tildes (mié -> mie)
+        // La BD suele devolver "Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"
+        horariosRepro = (data.datos || []).map(d => ({
+            dia: d.diaSemana.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0,3),
+            hora: d.horaInicioActo.substring(0,5)
+        }));
+
+        // Configuración (Tiempos mínimos)
+        const resCfg = await fetch(`/api/acto/configuracion/${idActo}`);
+        const dataCfg = await resCfg.json();
+        if(dataCfg.success && dataCfg.datos) {
+            configRepro.tiempoMinimoReserva = dataCfg.datos.tiempoMinimoReserva || 0;
+            configRepro.tiempoMaximoReserva = dataCfg.datos.tiempoMaximoReserva || null;
+        }
+        
+        pintarDiasRepro();
+
+    } catch(e) { console.error("Error cargando disponibilidad:", e); }
+}
+
+// ---------------------------------------------------------
+// 4. PINTAR DÍAS (Validando fecha actual)
+// ---------------------------------------------------------
+function pintarDiasRepro() {
+    if(!calendarioRepro) return;
+    calendarioRepro.removeAllEvents();
+    const eventos = [];
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+    
+    const fechaInicio = new Date(hoy);
+    fechaInicio.setDate(fechaInicio.getDate() + configRepro.tiempoMinimoReserva);
+    
+    const fechaFin = new Date(hoy);
+    if(configRepro.tiempoMaximoReserva) {
+        fechaFin.setDate(fechaFin.getDate() + configRepro.tiempoMaximoReserva);
+    } else {
+        fechaFin.setFullYear(fechaFin.getFullYear() + 1);
+    }
+
+    for(let d = new Date(fechaInicio); d <= fechaFin; d.setDate(d.getDate() + 1)) {
+        const fechaStr = d.toISOString().split('T')[0];
+        
+        // BLOQUEAR FECHA ORIGINAL (No se pinta de verde)
+        if (fechaStr === fechaReservaOriginal) continue;
+
+        const diaIndex = d.getDay();
+        const diaAbrev = DIA_ABREV_REPRO[diaIndex].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        
+        if (horariosRepro.some(h => h.dia === diaAbrev)) {
+            eventos.push({
+                start: fechaStr,
+                display: 'background',
+                backgroundColor: '#b8f7b0' // Verde disponible (Bootstrap success light)
+            });
+        }
+    }
+    calendarioRepro.addEventSource(eventos);
+}
+
+// ---------------------------------------------------------
+// 5. CLIC EN FECHA Y MODAL AZUL DE HORAS
+// ---------------------------------------------------------
+function clickFechaRepro(dateStr) {
+    // Validación 1: Fecha actual
+    if (dateStr === fechaReservaOriginal) return alert("Fecha actual de la reserva. Elija otra.");
+
+    // Validación 2: Tiempo mínimo
+    const d = new Date(dateStr + 'T12:00:00');
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const minDate = new Date(hoy);
+    minDate.setDate(minDate.getDate() + configRepro.tiempoMinimoReserva);
+
+    if(d < minDate) return alert("Fecha no disponible por antelación mínima.");
+
+    // Validación 3: Existencia de horarios
+    const diaIndex = d.getDay();
+    const diaAbrev = DIA_ABREV_REPRO[diaIndex].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    const horas = horariosRepro
+        .filter(h => h.dia === diaAbrev)
+        .map(h => h.hora).sort();
+
+    if(horas.length === 0) return alert("Día sin horarios disponibles.");
+
+    // ABRIR MODAL AZUL DE HORAS (infoModal)
+    // Usamos las clases CSS .modal-header.bg-primary definidas en el CSS nuevo
+    const modalInfo = new bootstrap.Modal(document.getElementById('infoModal'));
+    
+    // Forzar estilo azul en el header
+    const header = document.querySelector('#infoModal .modal-header');
+    header.className = 'modal-header bg-primary text-white'; 
+    document.getElementById('modalTitulo').textContent = "Confirmar Reserva";
+    
+    const nombreDia = DIAS_LARGOS_REPRO[diaIndex];
+
+    document.getElementById('modalCuerpo').innerHTML = `
+        <div style="padding: 10px;">
+            <p style="margin-bottom: 5px;"><strong>Fecha seleccionada:</strong> ${dateStr}</p>
+            <p style="margin-bottom: 15px;"><strong>Día de la semana:</strong> ${nombreDia}</p>
+            
+            <p style="margin-bottom: 8px;"><strong>Selecciona un horario:</strong></p>
+            
+            <div class="d-grid gap-2" style="grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); display:grid;">
+                ${horas.map(h => `
+                    <button class="btn btn-outline-primary fw-bold" onclick="selHoraRepro('${dateStr}','${h}')" style="padding:10px;">
+                        ${h}
+                    </button>
+                `).join('')}
+            </div>
+
+            <p style="margin-top: 15px; color: #666; font-size: 0.85rem;">
+                Haz clic en la hora deseada y luego en el botón Confirmar Hora.
+            </p>
+        </div>
+    `;
+    
+    // Ocultamos footer porque la selección es directa al clic
+    const footer = document.querySelector('#infoModal .modal-footer');
+    if(footer) footer.style.display = 'none';
+    
+    window.infoModalInstance = modalInfo;
+    modalInfo.show();
+}
+
+window.selHoraRepro = (fecha, hora) => {
+    // Llenar inputs en el modal grande
+    document.getElementById('nuevaFechaVal').value = fecha;
+    document.getElementById('nuevaFechaDisplay').value = fecha;
+    document.getElementById('nuevaHoraVal').value = hora;
+    document.getElementById('nuevaHoraDisplay').value = hora;
+    
+    // Efecto visual de éxito
+    const inputDisplay = document.getElementById('nuevaHoraDisplay');
+    inputDisplay.classList.add('bg-success', 'text-white');
+    setTimeout(() => {
+        inputDisplay.classList.remove('bg-success', 'text-white');
+    }, 600);
+
+    if(window.infoModalInstance) window.infoModalInstance.hide();
+};
+
+// ---------------------------------------------------------
+// 5. MANEJAR CLIC EN FECHA
+// ---------------------------------------------------------
+function manejarClickFechaRepro(dateStr) {
+    // A. Validar que no sea la fecha original
+    if (dateStr === fechaReservaOriginal) {
+        alert("Esta es la fecha de tu reserva actual. Por favor selecciona un dia distinto.");
+        return;
+    }
+
+    const fechaObj = new Date(dateStr + 'T12:00:00');
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    
+    // B. Validar tiempo minimo
+    const fechaMin = new Date(hoy);
+    fechaMin.setDate(fechaMin.getDate() + configRepro.tiempoMinimoReserva);
+    
+    if (fechaObj < fechaMin) {
+        alert(`Solo puedes reservar a partir del ${fechaMin.toLocaleDateString()}`);
+        return;
+    }
+
+    // C. Validar si el dia tiene horarios
+    const diaIndex = fechaObj.getDay();
+    const diaAbrev = DIA_ABREV_REPRO[diaIndex].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    const horasPosibles = horariosRepro
+        .filter(h => h.dia === diaAbrev)
+        .map(h => h.hora)
+        .sort();
+
+    if (horasPosibles.length === 0) {
+        alert("No hay horarios disponibles para este dia.");
+        return;
+    }
+
+    // D. Abrir Modal de Confirmacion (Estilo Azul)
+    abrirModalConfirmarHoraEstilo(dateStr, horasPosibles, diaIndex);
+}
+
+// ---------------------------------------------------------
+// 6. SUB-MODAL DE CONFIRMACION DE HORA (ESTILO AZUL)
+// ---------------------------------------------------------
+function abrirModalConfirmarHoraEstilo(fechaStr, horas, diaIndex) {
+    const modalElement = document.getElementById('infoModal');
+    const modalTitulo = document.getElementById("modalTitulo");
+    const modalCuerpo = document.getElementById("modalCuerpo");
+    const modalFooter = modalElement.querySelector('.modal-footer');
+
+    // Estilo Encabezado Azul
+    const header = modalElement.querySelector('.modal-header');
+    header.className = "modal-header bg-primary text-white"; 
+    
+    // Obtener nombre del dia largo
+    const nombreDia = DIAS_LARGOS_REPRO[diaIndex];
+
+    modalTitulo.textContent = "Confirmar Reserva"; 
+
+    // Generar botones de hora con estilo limpio
+    const botonesHoras = horas.map(h => `
+        <button class="btn-hora-simple" onclick="seleccionarHoraFinal('${fechaStr}', '${h}')">
+            ${h}
+        </button>
+    `).join('');
+
+    // Cuerpo del modal identico a la captura azul
+    modalCuerpo.innerHTML = `
+        <div style="font-family: Arial, sans-serif; padding: 10px;">
+            <p style="margin-bottom: 5px; font-size:1rem;"><strong>Fecha seleccionada:</strong> ${fechaStr}</p>
+            <p style="margin-bottom: 15px; font-size:1rem;"><strong>Dia de la semana:</strong> ${nombreDia}</p>
+            
+            <p style="margin-bottom: 8px; font-weight:bold;">Selecciona un horario:</p>
+            
+            <div class="grid-horas">
+                ${botonesHoras}
+            </div>
+            
+            <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+                Haz clic en la hora deseada para confirmar.
+            </p>
+        </div>
+    `;
+
+    // Ocultar Footer (no es necesario botones extra)
+    if(modalFooter) modalFooter.style.display = 'none';
+
+    // Mostrar Modal
+    const modalInstance = new bootstrap.Modal(modalElement);
+    modalInstance.show();
+
+    // Guardar referencia global para cerrarlo luego
+    window.infoModalInstance = modalInstance;
+}
+
+// Funcion llamada al hacer clic en una hora
+window.seleccionarHoraFinal = (fecha, hora) => {
+    // Llenar inputs del modal GRANDE
+    document.getElementById('nuevaFechaVal').value = fecha;
+    document.getElementById('nuevaFechaDisplay').value = fecha;
+    document.getElementById('nuevaHoraVal').value = hora;
+    document.getElementById('nuevaHoraDisplay').value = hora;
+
+    // Feedback visual (parpadeo verde en el input)
+    const inputDisplay = document.getElementById("nuevaHoraDisplay");
+    inputDisplay.style.backgroundColor = "#d1e7dd"; 
+    inputDisplay.style.borderColor = "#198754";
+    setTimeout(() => {
+        inputDisplay.style.backgroundColor = "#fff";
+        inputDisplay.style.borderColor = "#ced4da";
+    }, 800);
+
+    // Cerrar modal pequeno
+    if(window.infoModalInstance) window.infoModalInstance.hide();
+};
 
     // ============================
     // PESTAÑAS

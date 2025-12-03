@@ -593,3 +593,168 @@ html, body {
         margin: 20% auto;
     }
 }
+/* =========================================================
+   5. ESTILOS DE REPROGRAMACIÓN (GRID TIPO RESERVA_ACTO)
+   ========================================================= */
+
+/* Hacemos el modal MUY ancho para que el calendario se vea bien */
+.modal-repro-xl {
+    max-width: 1350px !important;
+    width: 95% !important;
+}
+
+/* Contenedor Grid Principal */
+.reserva-acto-container {
+    display: grid;
+    grid-template-columns: 350px 1fr; /* Izquierda Fija | Derecha Flexible */
+    gap: 25px;
+    height: 580px; /* Altura fija para contener el calendario */
+}
+
+/* COLUMNA IZQUIERDA (Formulario) */
+.left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+    padding-right: 10px;
+    border-right: 1px solid #f0f0f0;
+}
+
+/* COLUMNA DERECHA (Calendario) */
+.right-column {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+/* Contenedor específico del FullCalendar */
+#calendar-repro {
+    flex-grow: 1;
+    height: 100% !important;
+}
+
+/* Títulos de sección */
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+    display: inline-block;
+}
+
+/* Tarjeta de Información Actual */
+.info-actual-card {
+    background-color: #e3f2fd; /* Azul muy claro */
+    border-left: 4px solid #007bff;
+    padding: 15px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #0d47a1;
+    margin-bottom: 10px;
+}
+
+.info-actual-card strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 1rem;
+}
+
+/* Inputs Readonly (Estilo Botón) */
+.input-readonly {
+    background-color: #fff !important;
+    border: 1px solid #ced4da;
+    color: #495057;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.input-readonly:hover {
+    background-color: #f1f3f5 !important;
+    border-color: #007bff;
+}
+
+/* Labels del formulario */
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    display: block;
+    font-size: 0.9rem;
+}
+
+.form-group textarea {
+    resize: none;
+}
+
+/* Mensaje de error */
+.mensaje-error {
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* =========================================================
+   6. MODAL DE CONFIRMACIÓN DE HORA (AZUL)
+   ========================================================= */
+
+/* Header Azul Sólido */
+.modal-header.bg-primary {
+    background-color: #0d6efd !important;
+    color: white !important;
+    border-bottom: none;
+    padding: 15px 20px;
+    border-radius: 10px 10px 0 0;
+}
+
+.modal-header .btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.modal-body {
+    padding: 20px;
+    font-size: 1rem;
+    color: #333;
+}
+
+/* Grid de Botones de Hora */
+.d-grid.gap-2 {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px !important;
+    margin-top: 15px;
+}
+
+/* Botones de hora */
+.btn-outline-primary {
+    border: 1px solid #dee2e6;
+    color: #333;
+    background-color: #fff;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: #fff;
+    border-color: #0d6efd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
+}
+
+/* FullCalendar Overrides (Para que se vea limpio) */
+.fc-toolbar-title { font-size: 1.2rem !important; }
+.fc-button { font-size: 0.8rem !important; }
+.fc-daygrid-day.fc-day-today { background-color: #fff3cd !important; } /* Hoy amarillo suave */

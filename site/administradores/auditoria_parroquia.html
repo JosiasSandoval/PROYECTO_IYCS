@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/admin_actoParroquia.css">
+    <title>LITBOOK | Programación Actos</title>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="grid">
+        <div id="barra_lateral_administrador-placeholder"></div>
+        <div class="contenido-principal">
+            <div class="contenido">   
+                <h3 class="titulo-seccion">PROGRAMACIÓN DE ACTOS</h3>
+                
+                <form id="formBusqueda">
+                    <label for="inputBusqueda">Buscar programación:</label>
+                    <div class="search-container">
+                        <input type="text" id="inputBusqueda" placeholder="Buscar por acto o parroquia..."/>
+                    </div>
+                    <button type="button" id="btn_buscar" class="btn-icon" title="Buscar">
+                        <img src="/static/img/lupa.png" alt="Buscar" />
+                    </button>
+                    <button type="button" id="btn_nuevo" class="btn-icon" title="Agregar">
+                        <img src="/static/img/mas.png" alt="Agregar" />
+                    </button>
+                </form>
+
+                <div class="tabla-documentos">
+                    <table id="tablaActosParroquia">
+                        <thead>
+                            <tr>
+                                <th class="col-id">#</th>
+                                <th class="col-acto">Acto Litúrgico</th>
+                                <th class="col-parroquia">Parroquia</th>
+                                <th class="col-dia">Día</th>
+                                <th class="col-hora">Hora</th>
+                                <th class="col-costo">Costo (S/)</th>
+                                <th class="col-acciones">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="paginacionContainer"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/barra_lateral_administrador.js"></script>
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/admin_actoParroquia.js"></script>
+</body>
+</html>
