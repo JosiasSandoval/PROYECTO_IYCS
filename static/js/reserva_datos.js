@@ -109,20 +109,37 @@ function guardarParticipantesYContinuar() {
     
     // 🔹 CASO NORMAL: Feligrés y Secretaria
     const participantesContainer = document.getElementById('participantes-inputs');
+    if (!participantesContainer) {
+        alert("⚠️ Error: No se encontró el contenedor de participantes.");
+        return;
+    }
+    
     const inputs = participantesContainer.querySelectorAll('input[name^="participante_"]');
 
     let formValido = true;
     const datosParticipantes = {};
+    let solicitanteValido = false;
 
     inputs.forEach(input => {
-        // 💡 CORRECCIÓN APLICADA: No guardar el 'participante_solicitante' en el objeto participantes
+        // 💡 CORRECCIÓN APLICADA: Validar y guardar el 'participante_solicitante' para secretaria
         if (input.name === 'participante_solicitante') {
             // Se valida que el campo no esté vacío si es requerido
             if (input.required && input.value.trim() === '') {
                 formValido = false;
                 input.classList.add('is-invalid');
-            } else {
+                solicitanteValido = false;
+            } else if (input.value.trim() !== '') {
                 input.classList.remove('is-invalid');
+                solicitanteValido = true;
+                // Guardar datos del solicitante en reservaData.solicitante
+                let reservaData = JSON.parse(sessionStorage.getItem('reserva') || '{}');
+                if (!reservaData.solicitante) reservaData.solicitante = {};
+                // El nombre completo ya está guardado en reservaData.solicitante.nombreCompleto
+                // Solo validamos que exista
+                if (!reservaData.solicitante.nombreCompleto && input.value.trim()) {
+                    reservaData.solicitante.nombreCompleto = input.value.trim();
+                    sessionStorage.setItem('reserva', JSON.stringify(reservaData));
+                }
             }
             // Retornamos para NO guardar este input en datosParticipantes
             return; 
@@ -140,12 +157,26 @@ function guardarParticipantesYContinuar() {
         }
     });
 
+    // Validar que el solicitante esté completo para secretaria
+    const esSecretaria = rolUsuario === 'secretaria';
+    if (esSecretaria && !solicitanteValido) {
+        alert("⚠️ Debe ingresar y validar el nombre del solicitante antes de continuar.");
+        formValido = false;
+    }
+
     if (!formValido) {
-        alert("⚠️ Completa todos los campos antes de continuar.");
+        alert("⚠️ Completa todos los campos obligatorios antes de continuar.");
         return;
     }
 
+    // Validar que haya al menos un participante o solicitante
     let reservaData = JSON.parse(sessionStorage.getItem('reserva') || '{}');
+    
+    if (esSecretaria && !reservaData.solicitante) {
+        alert("⚠️ Error: No se encontraron datos del solicitante. Por favor, complete el formulario.");
+        return;
+    }
+    
     reservaData.participantes = datosParticipantes;
     // Establecer estado como PENDIENTE_PAGO ya que no se suben documentos en el proceso
     reservaData.estadoReserva = 'PENDIENTE_PAGO';

@@ -35,9 +35,10 @@ def nueva_reserva():
                 "mensaje": "Faltan datos obligatorios (fecha, hora, idUsuario, idSolicitante)."
             }), 400
 
-        # 🔹 Validar que el horario esté disponible
+        # 🔹 Validar que el horario esté disponible (considerando duración del acto)
         from app.reserva.controlador_reserva import validar_horario_disponible
-        horario_disponible, mensaje_validacion = validar_horario_disponible(fecha, hora, idParroquia)
+        idActo = data.get('idActo')
+        horario_disponible, mensaje_validacion = validar_horario_disponible(fecha, hora, idParroquia, idActo)
         if not horario_disponible:
             return jsonify({
                 "ok": False,
@@ -158,4 +159,24 @@ def reservas_por_fecha(idParroquia, fecha):
         }), 200
     except Exception as e:
         print(f"Error al obtener reservas por fecha: {e}")
+        return jsonify({"ok": False, "mensaje": str(e)}), 500
+
+# ==========================
+# OBTENER HORARIOS BLOQUEADOS POR FECHA Y PARROQUIA (considerando duración)
+# ==========================
+@reserva_bp.route('/horarios_bloqueados/<int:idParroquia>/<fecha>', methods=['GET'])
+def horarios_bloqueados(idParroquia, fecha):
+    """
+    Obtiene los horarios bloqueados para una fecha y parroquia específica.
+    Considera la duración de los actos para bloquear horarios solapados.
+    """
+    try:
+        from app.reserva.controlador_reserva import obtener_horarios_bloqueados
+        horarios = obtener_horarios_bloqueados(idParroquia, fecha)
+        return jsonify({
+            "ok": True,
+            "horarios_bloqueados": horarios
+        }), 200
+    except Exception as e:
+        print(f"Error al obtener horarios bloqueados: {e}")
         return jsonify({"ok": False, "mensaje": str(e)}), 500

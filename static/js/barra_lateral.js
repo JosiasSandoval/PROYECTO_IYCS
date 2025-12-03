@@ -9,10 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Obtener rol desde el BODY
-    const rolUsuario = document.body.dataset.rol;
-    console.log("ROL DETECTADO:", rolUsuario);
-
     // 🔹 Cargar la barra lateral desde el template
     fetch('/static/templates/barra_lateral.html')
         .then(response => response.text())
@@ -20,9 +16,16 @@ document.addEventListener('DOMContentLoaded', () => {
             barraPlaceholder.innerHTML = data;
 
             // =====================================================
-            // 1️⃣ OCULTAR ELEMENTOS SEGÚN EL ROL
+            // 1️⃣ OBTENER ROL DESDE LA SESIÓN Y FILTRAR
             // =====================================================
-            filtrarMenuPorRol(rolUsuario, barraPlaceholder);
+            fetch('/api/auth/get_session_data', { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(sessionData => {
+                    const rolUsuario = sessionData.rol_actual;
+                    console.log("ROL DETECTADO:", rolUsuario);
+                    filtrarMenuPorRol(rolUsuario, barraPlaceholder);
+                })
+                .catch(err => console.error("Error al obtener rol:", err));
 
 
             // =====================================================
@@ -74,12 +77,13 @@ function filtrarMenuPorRol(rol, contenedor) {
 
         case "Secretaria":
             mostrarItems(contenedor, ".secretaria-only");
-            // Secretaria también puede reservar y pagar → comparte permisos del feligrés
+            // Secretaria también puede reservar y ver sus reservas
             mostrarItems(contenedor, ".feligres-only");
             break;
 
         case "Sacerdote":
             mostrarItems(contenedor, ".sacerdote-only");
+            // Sacerdote NO ve feligres-only ni secretaria-only
             break;
 
         case "Administrador":

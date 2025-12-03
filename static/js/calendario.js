@@ -93,6 +93,52 @@ document.addEventListener('DOMContentLoaded', async function () {
         try {
             console.log("📡 cargarDatosDesdeAPI() ejecutándose...");
             
+            // 🔥 Si estamos en mis_reservas, esperar a que window.reservasParaCalendario exista
+            const esPaginaMisReservas = window.location.pathname.includes('mis_reservas');
+            if (esPaginaMisReservas) {
+                console.log("⏳ Detectada página mis_reservas, esperando reservas...");
+                
+                // Esperar máximo 3 segundos a que las reservas se carguen
+                let intentos = 0;
+                while (!window.reservasParaCalendario && intentos < 30) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    intentos++;
+                }
+                
+                if (window.reservasParaCalendario) {
+                    console.log("✅ Reservas encontradas después de", intentos * 100, "ms");
+                } else {
+                    console.log("⚠️ Timeout: No se cargaron reservas en 3 segundos");
+                }
+            }
+            
+            console.log("🔍 window.reservasParaCalendario existe?", !!window.reservasParaCalendario);
+            console.log("🔍 Cantidad de reservas:", window.reservasParaCalendario?.length);
+            
+            // Si estamos en la página de mis_reservas y hay reservas disponibles
+            if (window.reservasParaCalendario && window.reservasParaCalendario.length > 0) {
+                console.log("📊 ✅ Usando reservas desde mis_reservas.js:", window.reservasParaCalendario.length);
+                
+                // Mapear las reservas al formato esperado por el calendario
+                const reservasMapeadas = window.reservasParaCalendario.map(r => ({
+                    titulo: r.nombreActo || r.nombActo || r.acto || "Sin nombre",
+                    fecha: (r.fecha || r.f_reserva) ? (r.fecha || r.f_reserva).slice(0, 10) : null,
+                    hora: (r.hora || r.h_reserva) ? (r.hora || r.h_reserva).slice(0, 5) : "00:00",
+                    estado: r.estadoReserva || "SIN_ESTADO",
+                    participantes: r.participantes || "desconocido",
+                    descripcion: r.mencion || r.descripcion || "",
+                    idReserva: r.idReserva || null,
+                    costoBase: r.costoBase || null,
+                    parroquia: r.nombreParroquia || r.nombParroquia || "",
+                    tipo: 'reserva'
+                }));
+                
+                console.log("✅ Reservas mapeadas para calendario:", reservasMapeadas.length);
+                return reservasMapeadas;
+            }
+            
+            console.log("⚠️ NO hay reservasParaCalendario, continuando con lógica normal...");
+            
             // Secretaria: cargar horarios disponibles de actos litúrgicos
             if (rol === "secretaria" && idParroquia) {
                 console.log("👩‍💼 Secretaria detectada, cargando horarios...");
@@ -266,6 +312,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     
     datosEjemplo = await cargarDatosDesdeAPI();
     console.log("📊 Datos cargados desde API:", datosEjemplo.length);
+    console.log("📋 Primeras 2 reservas:", datosEjemplo.slice(0, 2));
     
     // Filtrar por estado CONFIRMADO y ATENDIDO para feligres y sacerdote (no para secretaria)
     if (rol === 'feligres' || rol === 'sacerdote') {
@@ -277,6 +324,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     
     datosFiltrados = [...datosEjemplo];
+    console.log("✅ datosFiltrados final:", datosFiltrados.length);
+    console.log("📋 Datos que irán al calendario:", datosFiltrados);
 
     // Cargar horarios para sacerdote (tab gestión) y feligres (solo ver)
     if ((rol === 'sacerdote' || rol === 'feligres') && idParroquia) {
@@ -298,7 +347,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     // =====================================================
     const actosLiturgicos = [...new Set(datosEjemplo.map(r => r.titulo))];
 
-    if (rol === 'secretaria' || rol === 'sacerdote') {
+    // Solo agregar filtros si existe el contenedor
+    if ((rol === 'secretaria' || rol === 'sacerdote') && filtrosSuperiores) {
         const filtroActoDiv = document.createElement('div');
         filtroActoDiv.style.display = 'flex';
         filtroActoDiv.style.alignItems = 'center';
@@ -314,7 +364,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Filtro para horarios (sacerdote)
-    if (rol === 'sacerdote' && horariosEjemplo.length > 0) {
+    if (rol === 'sacerdote' && horariosEjemplo.length > 0 && filtrosHorarios) {
         const actosHorarios = [...new Set(horariosEjemplo.map(h => h.titulo))];
         const filtroHorariosDiv = document.createElement('div');
         filtroHorariosDiv.style.display = 'flex';
@@ -341,23 +391,33 @@ document.addEventListener('DOMContentLoaded', async function () {
     // =====================================================
     const calendarEl = document.createElement('div');
     calendarEl.id = 'calendar';
+    
+    if (!contenedorFechas) {
+        console.error("❌ No se encontró el contenedor .fechas");
+        return;
+    }
+    
     contenedorFechas.appendChild(calendarEl);
 
-    // Determinar si es calendario de horarios (secretaria siempre, sacerdote solo en tab reservas)
-    const esCalendarioHorarios = rol === 'secretaria';
+    // Determinar la vista inicial según la página y el rol
+    // En mis_reservas.html siempre es dayGridMonth
+    // En calendario.html, secretaria usa timeGridWeek solo si está gestionando horarios
+    const esPaginaMisReservas = window.location.pathname.includes('mis_reservas');
+    const vistaInicial = esPaginaMisReservas ? 'dayGridMonth' : (rol === 'secretaria' ? 'timeGridWeek' : 'dayGridMonth');
+    const opcionesVista = esPaginaMisReservas ? 'dayGridMonth,timeGridWeek' : (rol === 'secretaria' ? 'timeGridWeek' : 'dayGridMonth,timeGridWeek');
     
     calendar = new FullCalendar.Calendar(calendarEl, {
         locale: 'es',
         height: 'auto',
-        initialView: esCalendarioHorarios ? 'timeGridWeek' : 'dayGridMonth',
-        selectable: rol === 'secretaria',
+        initialView: vistaInicial,
+        selectable: rol === 'secretaria' && !esPaginaMisReservas,
         slotDuration: '01:00:00',
         slotLabelInterval: '01:00',
-        allDaySlot: true,
+        allDaySlot: false,
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: esCalendarioHorarios ? 'timeGridWeek' : 'dayGridMonth,timeGridWeek'
+            right: opcionesVista
         },
         events: datosFiltrados.map(r => {
             const esHorario = r.tipo === 'horario';
@@ -371,7 +431,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     : r.estado === 'DISPONIBLE' ? '#10b981'
                     : r.estado === 'PENDIENTE_PAGO' ? '#fbc02d' 
                     : '#f44336',
-                allDay: !esHorario,
+                allDay: false,
                 extendedProps: {
                     tipo: r.tipo || 'reserva',
                     idReserva: r.idReserva,
@@ -393,7 +453,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
             
-            if (rol === 'secretaria') {
+            // En mis_reservas.html: mostrar datos del día para todos
+            // En calendario.html: secretaria agrega horarios, otros ven datos
+            if (esPaginaMisReservas) {
+                window.mostrarDatosDelDia(info.dateStr.slice(0, 10));
+            } else if (rol === 'secretaria') {
                 window.mostrarModalAgregarHorario(info.dateStr.slice(0, 10));
             } else {
                 window.mostrarDatosDelDia(info.dateStr.slice(0, 10));
@@ -671,7 +735,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         cargarHorariosDisponibles
     };
 
-    // Actualizar estado inicial
+    // 🔥 Función de inicialización exportada para mis_reservas.js
+    window.inicializarCalendario = actualizarEstadoGlobal;
+
+    // Inicializar calendario SIEMPRE (mis_reservas.js también puede llamarlo si necesita)
     actualizarEstadoGlobal();
 
 });

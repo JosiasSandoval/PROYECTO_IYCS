@@ -132,15 +132,32 @@ def actualizar_estado(idPago):
         if not nuevo_estado:
             return jsonify({'ok': False, 'mensaje': 'El estado es requerido'}), 400
 
-        estados_validos = ['Completado', 'Pendiente', 'Rechazado', 'Cancelado']
-        if nuevo_estado not in estados_validos:
+        # Estados válidos según la BD: PENDIENTE, APROBADO, CANCELADO
+        estados_validos = ['PENDIENTE', 'APROBADO', 'CANCELADO']
+        nuevo_estado_upper = nuevo_estado.upper()
+        if nuevo_estado_upper not in estados_validos:
             return jsonify({'ok': False, 'mensaje': f'Estado inválido. Debe ser uno de: {", ".join(estados_validos)}'}), 400
 
-        resultado = actualizar_estado_pago(idPago, nuevo_estado)
+        resultado = actualizar_estado_pago(idPago, nuevo_estado_upper)
         return jsonify({'ok': resultado, 'mensaje': 'Estado actualizado correctamente' if resultado else 'Error al actualizar el estado'})
 
     except Exception as e:
         print(f'Error al actualizar estado: {e}')
+        return jsonify({'ok': False, 'mensaje': 'Error interno'}), 500
+
+# ======================================================
+# 🔹 OBTENER PAGO POR RESERVA
+# ======================================================
+@pago_bp.route('/pago_por_reserva/<int:idReserva>', methods=['GET'])
+def obtener_pago_por_reserva(idReserva):
+    try:
+        resultado = obtener_pago(idReserva)
+        if resultado:
+            return jsonify({'ok': True, 'datos': resultado})
+        else:
+            return jsonify({'ok': False, 'mensaje': 'No se encontró pago para esta reserva'}), 404
+    except Exception as e:
+        print(f'Error al obtener pago por reserva: {e}')
         return jsonify({'ok': False, 'mensaje': 'Error interno'}), 500
 
 # ======================================================

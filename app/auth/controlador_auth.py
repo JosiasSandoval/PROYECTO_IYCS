@@ -191,3 +191,45 @@ def autenticar_usuario(email, clave_ingresada):
             conexion.close()
 
     return usuario_data
+
+def verificar_email_existe(email):
+    """
+    Verifica si existe un usuario con el email proporcionado.
+    Retorna el idUsuario si existe, None si no.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            sql = "SELECT idUsuario, estadoCuenta FROM usuario WHERE email = %s"
+            cursor.execute(sql, (email,))
+            resultado = cursor.fetchone()
+            
+            if resultado and resultado[1]:  # Verificar que la cuenta esté activa
+                return resultado[0]
+            return None
+    except Exception as e:
+        print(f"Error en verificar_email_existe: {e}")
+        return None
+    finally:
+        if conexion:
+            conexion.close()
+
+def cambiar_contrasena(email, nueva_clave):
+    """
+    Cambia la contraseña de un usuario.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            sql = "UPDATE usuario SET clave = %s WHERE email = %s"
+            cursor.execute(sql, (nueva_clave, email))
+        conexion.commit()
+        return True, None
+    except Exception as e:
+        if conexion:
+            conexion.rollback()
+        print(f"Error en cambiar_contrasena: {e}")
+        return False, str(e)
+    finally:
+        if conexion:
+            conexion.close()

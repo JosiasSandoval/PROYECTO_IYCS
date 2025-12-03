@@ -37,11 +37,16 @@
           <label for="direccion">Dirección:</label>
           <input type="text" id="direccion" value="Av. Siempre Viva 123" disabled />
 
-          <label for="ciudad">Ciudad:</label>
-          <input type="text" id="ciudad" value="Lima" disabled />
+          <!-- Campo solo para feligrés -->
+          <label for="fecha_nacimiento" class="feligres-only">Fecha de Nacimiento:</label>
+          <input type="date" id="fecha_nacimiento" value="1990-01-01" disabled class="feligres-only" />
 
-          <label for="fecha_nacimiento">Fecha de Nacimiento:</label>
-          <input type="date" id="fecha_nacimiento" value="1990-01-01" disabled />
+          <!-- Campos solo para personal -->
+          <label for="cargo" class="personal-only" style="display:none;">Cargo:</label>
+          <input type="text" id="cargo" value="" disabled class="personal-only" style="display:none;" />
+
+          <label for="parroquia" class="personal-only" style="display:none;">Parroquia:</label>
+          <input type="text" id="parroquia" value="" disabled class="personal-only" style="display:none;" />
 
           
           <label for="password">Contraseña:</label>

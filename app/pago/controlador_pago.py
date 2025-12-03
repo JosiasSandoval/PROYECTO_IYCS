@@ -61,30 +61,33 @@ def registrar_pago_reserva(idPago, idReserva, monto):
 # ===========================
 def obtener_pago(idReserva):
     """
-    Obtiene los detalles de un pago específico
+    Obtiene los detalles de un pago específico por idReserva
     """
     conexion = obtener_conexion()
     try:
-        resultados=[]
         with conexion.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT idPago, montoTotal, f_transaccion, numTarjeta,tipoPago,estadoPago
-                FROM pago where idReserva = %s
-                """
+                SELECT p.idPago, p.montoTotal, p.f_pago, p.metodoPago, p.numeroTransaccion, p.estadoPago
+                FROM pago p
+                INNER JOIN pago_reserva pr ON p.idPago = pr.idPago
+                WHERE pr.idReserva = %s
+                ORDER BY p.f_pago DESC
+                LIMIT 1
+                """,
                 (idReserva,)
             )
-            resultados = cursor.fetchone()
-            for fila in resultados:
-                resultados.append({
+            fila = cursor.fetchone()
+            if fila:
+                return {
                     'idPago': fila[0],
-                    'montoTotal': float(fila[1]),
-                    'f_transaccion': fila[2].strftime('%Y-%m-%d %H:%M:%S') if fila[2] else None,
-                    'numTarjeta': fila[3],
-                    'tipoPago': fila[4],
+                    'montoTotal': float(fila[1]) if fila[1] else 0,
+                    'f_pago': fila[2].strftime('%Y-%m-%d %H:%M:%S') if fila[2] else None,
+                    'metodoPago': fila[3],
+                    'numeroTransaccion': fila[4],
                     'estadoPago': fila[5]
-                })
-            return resultados   
+                }
+            return None   
     except Exception as e:
         print(f'Error al obtener pago: {e}')
         return None
@@ -179,26 +182,52 @@ def listar_todos_pagos():
 def actualizar_estado_pago(idPago, nuevoEstado):
     """
     Actualiza el estado de un pago
-    Estados válidos: 'Completado', 'Pendiente', 'Rechazado', 'Cancelado'
+    Estados válidos: 'PENDIENTE', 'APROBADO', 'CANCELADO'
+    Si se aprueba un pago PENDIENTE, también cambia el estado de las reservas asociadas
     """
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
             # Verificar que el pago existe
-            cursor.execute("SELECT idPago FROM pago WHERE idPago = %s", (idPago,))
-            if not cursor.fetchone():
+            cursor.execute("SELECT idPago, estadoPago FROM pago WHERE idPago = %s", (idPago,))
+            pago_existente = cursor.fetchone()
+            if not pago_existente:
                 return False
             
+            estado_actual = pago_existente[1]
+            
+            # Actualizar estado del pago
             cursor.execute(
                 "UPDATE pago SET estadoPago = %s WHERE idPago = %s",
                 (nuevoEstado, idPago)
             )
+            
+            # Si se aprueba un pago PENDIENTE, cambiar estado de las reservas asociadas
+            if estado_actual == 'PENDIENTE' and nuevoEstado == 'APROBADO':
+                # Obtener todas las reservas asociadas a este pago
+                cursor.execute("""
+                    SELECT idReserva 
+                    FROM pago_reserva 
+                    WHERE idPago = %s
+                """, (idPago,))
+                reservas = cursor.fetchall()
+                
+                # Cambiar estado de cada reserva a PENDIENTE_DOCUMENTO
+                for reserva in reservas:
+                    idReserva = reserva[0]
+                    cursor.execute("""
+                        UPDATE reserva 
+                        SET estadoReserva = 'PENDIENTE_DOCUMENTO' 
+                        WHERE idReserva = %s
+                    """, (idReserva,))
+            
             conexion.commit()
             print(f'Estado del pago {idPago} actualizado a: {nuevoEstado}')
             return True
             
     except Exception as e:
         print(f'Error al actualizar estado del pago: {e}')
+        conexion.rollback()
         return False
     finally:
         conexion.close()
