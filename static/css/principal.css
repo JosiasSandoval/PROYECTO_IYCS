@@ -1,3 +1,22 @@
+/* Grid layout para barra lateral y contenido */
+.grid {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    min-height: 100vh;
+}
+
+.grid main {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* Responsive: en pantallas pequeñas, la barra lateral se oculta */
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .bienvenida {
     display: flex;
     flex-wrap: wrap; /* Permite que los elementos bajen en pantallas pequeñas */

@@ -53,9 +53,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (data.success) {
+                // Limpiar cualquier estado previo de sesión cerrada
+                sessionStorage.clear();
+                
+                // Inicializar sincronización de sesión entre pestañas
+                if (window.SessionSync) {
+                    window.SessionSync.inicializar();
+                }
+                
                 mostrarMensaje("¡Inicio de sesión exitoso!", 'success');
                 setTimeout(() => {
-                    window.location.href = '/principal'; // Pantalla principal
+                    // Redirigir a la página principal
+                    window.location.href = '/principal';
                 }, 1000);
             } else {
                 // Vaciar los campos cuando hay error

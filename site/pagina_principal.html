@@ -8,7 +8,9 @@
 </head>
 <body>
     <div id="header-placeholder"></div>
-    <main>
+    <div class="grid">
+        <div id="barra_lateral-placeholder"></div>
+        <main>
         <div class="bienvenida">
             <div class="info">
             <h1>LITBOOK</h1>
@@ -19,54 +21,52 @@
         <div class="funciones">
             <h2>MENÚ DE OPCIONES</h2>
             <div class="botones">
-            <a href="{{ url_for('parroquia_cliente') }}">
+            <!-- Visible para todos -->
+            <a href="{{ url_for('parroquia_cliente') }}" data-roles="todos">
                 <button>
                     <img src="{{ url_for('static', filename='img/parroquia.png') }}" alt="">
                     Parroquia
                 </button>
             </a>
-            <a href="{{ url_for('reserva_cliente') }}">
+            <a href="{{ url_for('reserva_cliente') }}" data-roles="todos">
                 <button>
                     <img src="{{ url_for('static', filename='img/reserva.png') }}" alt="">
                     Reservas
                 </button>
             </a>
-
-            <a href="{{ url_for('acto_liturgico_cliente') }}">
+            <a href="{{ url_for('acto_liturgico_cliente') }}" data-roles="todos">
                 <button>
                     <img src="{{ url_for('static', filename='img/acto.png') }}" alt="">
                     Acto litúrgicos
                 </button>
             </a>
-
-            
-            <a href="{{ url_for('perfil_cliente') }}">
-                <button>
-                    <img src="{{ url_for('static', filename='img/usuario.png') }}" alt="">
-                    Usuarios
-                </button>
-            </a>
-
-        
-            <a href="{{ url_for('pago_cliente') }}">
+            <a href="{{ url_for('pago_cliente') }}" data-roles="todos">
                 <button>
                     <img src="{{ url_for('static', filename='img/pago.png') }}" alt="">
                     Pago
                 </button>
             </a>
-            <a href="{{ url_for('calendario_cliente') }}">
+            
+            <!-- Solo Administrador, Secretaria, Sacerdote -->
+            <a href="{{ url_for('perfil_cliente') }}" data-roles="administrador,secretaria,sacerdote">
+                <button>
+                    <img src="{{ url_for('static', filename='img/usuario.png') }}" alt="">
+                    Usuarios
+                </button>
+            </a>
+            <a href="{{ url_for('calendario_cliente') }}" data-roles="administrador,secretaria,sacerdote">
                 <button>
                     <img src="{{ url_for('static', filename='img/calendario.png') }}" alt="">
                     Calendario
                 </button>
             </a>
-            <a href="{{ url_for('requisitos_admi') }}">
+            <a href="{{ url_for('requisitos_admi') }}" data-roles="administrador,secretaria">
                 <button>
                     <img src="{{ url_for('static', filename='img/requisito.png') }}" alt="">
                     Requisitos
                 </button>
             </a>
-            <a href="{{ url_for('reporte_admi') }}">
+            <a href="{{ url_for('reporte_admi') }}" data-roles="administrador,secretaria">
                 <button>
                     <img src="{{ url_for('static', filename='img/reporte.png') }}" alt="">
                     Reportes
@@ -74,7 +74,45 @@
             </a>
             </div>
         </div>
-    </main>
+        </main>
+    </div>
 </body>
+<script src="/static/js/session_sync.js"></script>
 <script src="/static/js/header.js"></script>
+<script src="/static/js/barra_lateral.js"></script>
+<script>
+// Filtrar menú por roles en la página principal
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await fetch('/api/auth/get_session_data');
+        const data = await res.json();
+        
+        // Obtener rol actual y roles disponibles
+        const rolActual = (data.rol_actual || '').toLowerCase();
+        const rolesDisponibles = (data.roles || []).map(r => r.toLowerCase());
+        
+        console.log('Rol actual del usuario:', rolActual);
+        console.log('Roles disponibles:', rolesDisponibles);
+        
+        // Filtrar botones del menú
+        document.querySelectorAll('.botones a[data-roles]').forEach(link => {
+            const rolesPermitidos = link.getAttribute('data-roles');
+            
+            if (rolesPermitidos === 'todos') {
+                link.style.display = ''; // Mostrar siempre
+                return;
+            }
+            
+            const permitidos = rolesPermitidos.split(',').map(r => r.trim().toLowerCase());
+            // Verificar si el rol actual o alguno de los roles disponibles está permitido
+            const tienePermiso = permitidos.includes(rolActual) || 
+                                 rolesDisponibles.some(rol => permitidos.includes(rol));
+            
+            link.style.display = tienePermiso ? '' : 'none';
+        });
+    } catch (err) {
+        console.error('Error filtrando menú:', err);
+    }
+});
+</script>
 </html>

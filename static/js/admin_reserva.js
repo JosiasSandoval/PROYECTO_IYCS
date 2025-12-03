@@ -1,4 +1,7 @@
 // ================== VARIABLES GLOBALES ==================
+let esAdminGlobal = true;
+let idParroquiaUsuario = null;
+
 let reservas = [];
 let reservasFiltradas = null;
 let reservaEditandoId = null;
@@ -11,9 +14,44 @@ const sugerenciasContainer = document.createElement("div");
 let paginaActual = 1;
 const elementosPorPagina = 10;
 
+// ============ DETECCIÓN TIPO DE ADMIN ============
+async function detectarTipoAdmin() {
+    try {
+        const res = await fetch('/api/auth/get_session_data');
+        const data = await res.json();
+        esAdminGlobal = data.es_admin_global || false;
+        idParroquiaUsuario = data.idParroquia || null;
+        console.log('Tipo Admin:', esAdminGlobal ? 'Global' : 'Local', 'Parroquia:', idParroquiaUsuario);
+        mostrarBadgeAdmin();
+    } catch (err) {
+        console.error('Error detectando tipo admin:', err);
+    }
+}
+
+function mostrarBadgeAdmin() {
+    const contenedor = document.querySelector('.card-header h4') || document.querySelector('h4');
+    if (!contenedor) return;
+    
+    const badge = document.createElement('span');
+    badge.className = `badge ${esAdminGlobal ? 'bg-success' : 'bg-warning text-dark'} ms-2`;
+    badge.textContent = esAdminGlobal ? '🌐 Admin Global' : '📍 Admin Local';
+    badge.style.fontSize = '0.75rem';
+    contenedor.appendChild(badge);
+    
+    if (!esAdminGlobal) {
+        const nota = document.createElement('small');
+        nota.className = 'text-muted d-block mt-1';
+        nota.textContent = 'Solo puedes ver reservas de tu parroquia';
+        contenedor.appendChild(nota);
+    }
+}
+
 // ================== INICIALIZACIÓN ==================
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     console.log("Iniciando Admin Reserva...");
+    
+    // 0. Detectar tipo de admin
+    await detectarTipoAdmin();
     
     // 1. Crear modal en el DOM
     crearModalHTML(); 
@@ -34,6 +72,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnAgregar = document.getElementById("btn_agregar_reserva");
     if(btnAgregar) {
         console.log("Botón agregar encontrado");
+        // Ocultar para admin local
+        if (!esAdminGlobal) {
+            btnAgregar.style.display = 'none';
+        }
         // Aseguramos que no envíe formulario
         btnAgregar.type = "button"; 
         btnAgregar.addEventListener("click", (e) => {
@@ -142,18 +184,16 @@ function renderTabla() {
     const pageData = lista.slice(inicio, fin);
 
     pageData.forEach((r, i) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td class="col-id">${inicio + i + 1}</td>
-            <td class="col-solicitante">${r.solicitante || 'Anónimo'}</td>
-            <td class="col-acto">${r.nombreActo || '---'}</td>
-            <td class="col-fecha">${r.f_reserva} <br> <small>${r.h_reserva}</small></td>
-            <td class="col-parroquia">${r.nombreParroquia || ''}</td>
-            <td class="col-estado"><span class="estado-texto">${r.estadoReserva}</span></td>
-            <td class="col-acciones">
-                <button class="btn-sm btn-info" onclick="verReserva(${r.idReserva})" title="Ver Detalles">
-                    <img src="/static/img/ojo.png" alt="ver">
-                </button>
+        // Botones según tipo de admin
+        let botonesAccion = `
+            <button class="btn-sm btn-info" onclick="verReserva(${r.idReserva})" title="Ver Detalles">
+                <img src="/static/img/ojo.png" alt="ver">
+            </button>
+        `;
+        
+        // Solo admin global puede editar y cancelar
+        if (esAdminGlobal) {
+            botonesAccion += `
                 <button class="btn-sm btn-warning" onclick="editarReserva(${r.idReserva})" title="Editar Fecha/Hora">
                     <img src="/static/img/lapiz.png" alt="editar">
                 </button>
@@ -165,6 +205,19 @@ function renderTabla() {
                         <img src="/static/img/x.png" alt="cancelado" style="filter: grayscale(100%);">
                     </button>`
                 }
+            `;
+        }
+        
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td class="col-id">${inicio + i + 1}</td>
+            <td class="col-solicitante">${r.solicitante || 'Anónimo'}</td>
+            <td class="col-acto">${r.nombreActo || '---'}</td>
+            <td class="col-fecha">${r.f_reserva} <br> <small>${r.h_reserva}</small></td>
+            <td class="col-parroquia">${r.nombreParroquia || ''}</td>
+            <td class="col-estado"><span class="estado-texto">${r.estadoReserva}</span></td>
+            <td class="col-acciones">
+                ${botonesAccion}
             </td>
         `;
         tabla.appendChild(row);

@@ -29,6 +29,17 @@ def nueva_reserva():
         idParroquia = data.get('idParroquia')
         absorcionPago = data.get('absorcionPago', False)
 
+        # 🔹 CORRECCIÓN: Si idSolicitante == idParroquia, es una reserva de parroquia (sacerdote)
+        # En este caso, el idSolicitante debe ser el idParroquia
+        if idSolicitante and idParroquia and str(idSolicitante) == str(idParroquia):
+            # Validar que el idSolicitante sea igual al idParroquia (reserva de parroquia)
+            print(f"🔹 RESERVA DE PARROQUIA: idSolicitante={idSolicitante}, idParroquia={idParroquia}")
+        elif not idSolicitante:
+            # Si no hay idSolicitante, intentar usar idParroquia si está disponible
+            if idParroquia:
+                idSolicitante = idParroquia
+                print(f"🔹 Usando idParroquia como idSolicitante: {idSolicitante}")
+
         if not fecha or not hora or not idUsuario or not idSolicitante:
             return jsonify({
                 "ok": False,

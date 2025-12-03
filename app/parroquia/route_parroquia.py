@@ -50,8 +50,20 @@ def informacion_parroquia(idParroquia):
 # ======================================================
 @parroquia_bp.route('/', methods=['GET'])
 def listar():
+    from flask import session
     try:
-        datos = listar_parroquia()
+        # Detectar si es admin global o local
+        rol = session.get('rol_sistema', '').lower()
+        es_admin_global = session.get('es_admin_global', False)
+        idParroquia = session.get('idParroquia')
+        
+        # Si es administrador, aplicar filtro
+        if rol == 'administrador':
+            datos = listar_parroquia(es_admin_global, idParroquia)
+        else:
+            # Otros roles ven todas (para mapa, etc.)
+            datos = listar_parroquia(True, None)
+        
         return jsonify({'ok': True, 'datos': datos})
     except Exception as e:
         print(f'Error al listar parroquias: {e}')
@@ -59,10 +71,16 @@ def listar():
 
 
 # ======================================================
-# AGREGAR PARROQUIA
+# AGREGAR PARROQUIA (SOLO ADMIN GLOBAL)
 # ======================================================
 @parroquia_bp.route('/agregar', methods=['POST'])
 def agregar():
+    from flask import session
+    # Solo admin global puede agregar parroquias
+    es_admin_global = session.get('es_admin_global', False)
+    if not es_admin_global:
+        return jsonify({'ok': False, 'mensaje': 'Solo administradores globales pueden agregar parroquias'}), 403
+    
     try:
         datos = request.get_json()
         resultado = agregar_parroquia(
@@ -85,10 +103,16 @@ def agregar():
 
 
 # ======================================================
-# CAMBIAR ESTADO DE PARROQUIA
+# CAMBIAR ESTADO DE PARROQUIA (SOLO ADMIN GLOBAL)
 # ======================================================
 @parroquia_bp.route('/cambiar_estado/<int:idParroquia>', methods=['PUT'])
 def cambiar_estado(idParroquia):
+    from flask import session
+    # Solo admin global puede cambiar estados
+    es_admin_global = session.get('es_admin_global', False)
+    if not es_admin_global:
+        return jsonify({'error': 'Solo administradores globales pueden cambiar estados de parroquias'}), 403
+    
     resultado = cambiar_estado_parroquia(idParroquia)
 
     if not resultado['ok']:
@@ -101,10 +125,16 @@ def cambiar_estado(idParroquia):
 
 
 # ======================================================
-#  ACTUALIZAR PARROQUIA
+#  ACTUALIZAR PARROQUIA (SOLO ADMIN GLOBAL)
 # ======================================================
 @parroquia_bp.route('/actualizar/<int:idParroquia>', methods=['PUT'])
 def actualizar(idParroquia):
+    from flask import session
+    # Solo admin global puede actualizar parroquias
+    es_admin_global = session.get('es_admin_global', False)
+    if not es_admin_global:
+        return jsonify({'ok': False, 'mensaje': 'Solo administradores globales pueden actualizar parroquias'}), 403
+    
     try:
         datos = request.get_json()
         resultado = actualizar_parroquia(
@@ -129,10 +159,16 @@ def actualizar(idParroquia):
 
 
 # ======================================================
-#  ELIMINAR PARROQUIA
+#  ELIMINAR PARROQUIA (SOLO ADMIN GLOBAL)
 # ======================================================
 @parroquia_bp.route('/eliminar/<int:idParroquia>', methods=['DELETE'])
 def eliminar(idParroquia):
+    from flask import session
+    # Solo admin global puede eliminar parroquias
+    es_admin_global = session.get('es_admin_global', False)
+    if not es_admin_global:
+        return jsonify({'ok': False, 'mensaje': 'Solo administradores globales pueden eliminar parroquias'}), 403
+    
     try:
         if verificar_relacion_parroquia(idParroquia):
             return jsonify({'ok': False, 'mensaje': 'No se puede eliminar la parroquia porque tiene registros asociados'})

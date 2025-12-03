@@ -164,6 +164,15 @@ def autenticar_usuario(email, clave_ingresada):
                 apellidoMaterno = ""
 
             # ================================
+            # DETECTAR TIPO DE ADMINISTRADOR
+            # ================================
+            # Admin Global: NO tiene parroquia (idParroquia es NULL)
+            # Admin Local: SÍ tiene parroquia asignada
+            es_admin_global = False
+            if 'Administrador' in roles:
+                es_admin_global = (idParroquia is None)
+
+            # ================================
             # DEVOLVER OBJETO DE SESIÓN
             # ================================
             usuario_data = {
@@ -179,7 +188,8 @@ def autenticar_usuario(email, clave_ingresada):
                 "roles_disponibles": roles,    # todos los roles
                 "idFeligres": idFeligres,
                 "idPersonal": idPersonal,
-                "idParroquia": idParroquia
+                "idParroquia": idParroquia,
+                "es_admin_global": es_admin_global
             }
 
     except Exception as e:

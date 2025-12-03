@@ -122,9 +122,14 @@ async function cargarReservas() {
 
     const rol = ROL_USUARIO.toUpperCase();
     let url = '';
-    if (rol === 'SECRETARIA') url = `/api/reserva/secretaria/${ID_USUARIO}`;
-    else if (rol === 'FELIGRES') url = `/api/reserva/feligres/${ID_USUARIO}`;
-    else return console.error("Rol no reconocido:", ROL_USUARIO);
+    if (rol === 'SECRETARIA' || rol === 'ADMINISTRADOR') {
+        // Secretaria y Administrador usan el mismo endpoint (reservas de parroquia)
+        url = `/api/reserva/secretaria/${ID_USUARIO}`;
+    } else if (rol === 'FELIGRES') {
+        url = `/api/reserva/feligres/${ID_USUARIO}`;
+    } else {
+        return console.error("Rol no reconocido:", ROL_USUARIO);
+    }
 
     try {
         const response = await fetch(url);
@@ -140,8 +145,8 @@ async function cargarReservas() {
                     r.estadoReserva === 'PENDIENTE_PAGO' && 
                     !r.tienePagoReserva
                 );
-            } else if (rol === 'SECRETARIA') {
-                // Secretaria: reservas sin pago Y reservas con pago PENDIENTE (efectivo)
+            } else if (rol === 'SECRETARIA' || rol === 'ADMINISTRADOR') {
+                // Secretaria y Administrador: reservas sin pago Y reservas con pago PENDIENTE (efectivo)
                 reservasFiltradas = data.datos.filter(r => 
                     r.estadoReserva === 'PENDIENTE_PAGO' && 
                     (!r.tienePagoReserva || r.estadoPago === 'PENDIENTE')
@@ -553,7 +558,7 @@ btnSubmit.addEventListener('click', async e => {
         }
 
         // Redirigir según el rol
-        if (ROL_USUARIO.toUpperCase() === 'SECRETARIA') {
+        if (ROL_USUARIO.toUpperCase() === 'SECRETARIA' || ROL_USUARIO.toUpperCase() === 'ADMINISTRADOR') {
             window.location.reload(); // Recargar para actualizar la lista
         } else {
             window.location.href = '/cliente/mis_reservas';

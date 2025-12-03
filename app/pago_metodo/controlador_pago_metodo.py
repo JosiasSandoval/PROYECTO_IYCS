@@ -37,8 +37,10 @@ def agregar_metodo_pago(nombMetodo):
             )
             conexion.commit()
             print(f'Método de pago "{nombMetodo}" agregado correctamente.')
+            return True
     except Exception as e:
         print(f'Error al agregar método de pago: {e}')
+        return False
     finally:
         conexion.close()
 
@@ -57,7 +59,7 @@ def cambiar_estado_metodo_pago(idMetodo):
             fila = cursor.fetchone()
             if fila is None:
                 print(f'No existe método de pago con id {idMetodo}')
-                return
+                return {'ok': False, 'mensaje': 'Método de pago no encontrado'}
             nuevo_estado = not fila[0]
             cursor.execute(
                 "UPDATE metodo_pago SET estadoMetodo = %s WHERE idMetodo = %s",
@@ -65,8 +67,10 @@ def cambiar_estado_metodo_pago(idMetodo):
             )
             conexion.commit()
             print(f'Estado del método de pago id {idMetodo} cambiado a {nuevo_estado}.')
+            return {'ok': True, 'nuevo_estado': nuevo_estado}
     except Exception as e:
         print(f'Error al cambiar estado del método de pago: {e}')
+        return {'ok': False, 'mensaje': str(e)}
     finally:
         conexion.close()
 
@@ -104,8 +108,10 @@ def eliminar_metodo_pago(idMetodo):
             )
             conexion.commit()
             print(f'Método de pago id {idMetodo} eliminado correctamente.')
+            return True
     except Exception as e:
         print(f'Error al eliminar método de pago: {e}')
+        return False
     finally:
         conexion.close()
 
@@ -119,7 +125,9 @@ def actualizar_metodo_pago(idMetodo, nombMetodo):
             )
             conexion.commit()
             print(f'Método de pago id {idMetodo} actualizado correctamente.')
+            return True
     except Exception as e:
         print(f'Error al actualizar método de pago: {e}')
+        return False
     finally:
         conexion.close()

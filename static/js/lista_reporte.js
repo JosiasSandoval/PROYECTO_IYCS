@@ -1,14 +1,14 @@
-// === FUNCIONES SIMULADAS PARA GENERAR REPORTES ===
+// === FUNCIONES PARA GENERAR REPORTES ===
 function generarReporteReservas() {
-    mostrarReporte("Reporte de Reservas generado");
+    window.location.href = '/admi/reporte';
 }
 
 function generarReporteActosLiturgicos() {
-    mostrarReporte("Reporte de Actos Litúrgicos generado");
+    window.location.href = '/admi/reporte';
 }
 
 function generarReporteUsuariosFrecuentes() {
-    mostrarReporte("Reporte de Usuarios Frecuentes generado");
+    window.location.href = '/admi/reporte_usuario';
 }
 
 function generarReporteRequisitos() {
@@ -16,7 +16,7 @@ function generarReporteRequisitos() {
 }
 
 function generarReportePagos() {
-    mostrarReporte("Reporte de Pagos generado");
+    window.location.href = '/admi/reporte_pago';
 }
 
 // Función para descargar PDF (simulada)

@@ -18,6 +18,7 @@ from app.usuario.controlador_personal import(
     verificar_relacion_personal,
     eliminar_usuario_personal,
     personal_reserva_datos,
+    obtener_sacerdote_disponible,
     buscar_personal_admin,
     actualizar_perfil_personal,
 )
@@ -142,7 +143,19 @@ def cambiar_estado_cuenta_usuario(id):
 
 @usuario_bp.route('/personal',methods=['GET'])
 def listar_personal():
-    datos=get_datos_personal()
+    from flask import session
+    # Detectar tipo de administrador
+    rol = session.get('rol_sistema', '').lower()
+    es_admin_global = session.get('es_admin_global', False)
+    idParroquia = session.get('idParroquia')
+    
+    # Si es administrador, aplicar filtro
+    if rol == 'administrador':
+        datos = get_datos_personal(es_admin_global, idParroquia)
+    else:
+        # Sacerdote/Secretaria ven su parroquia
+        datos = get_datos_personal(False, idParroquia)
+    
     return jsonify({'datos':datos})
 
 @usuario_bp.route('/agregar_personal',methods=['POST'])
@@ -240,6 +253,24 @@ def vista_perfil_usuario():
 def personal_reserva(idParroquia):
     datos=personal_reserva_datos(idParroquia)
     return jsonify({'datos':datos})
+
+@usuario_bp.route('/sacerdote_disponible/<int:idParroquia>/<fecha>/<hora>', methods=['GET'])
+def sacerdote_disponible(idParroquia, fecha, hora):
+    """
+    Obtiene el sacerdote disponible para una fecha y hora específica.
+    """
+    sacerdote = obtener_sacerdote_disponible(idParroquia, fecha, hora)
+    if sacerdote:
+        return jsonify({
+            'success': True,
+            'sacerdote': sacerdote
+        }), 200
+    else:
+        return jsonify({
+            'success': False,
+            'sacerdote': None,
+            'mensaje': 'No hay sacerdotes disponibles para esa fecha y hora'
+        }), 200
         
 @usuario_bp.route('/perfil/datos', methods=['GET'])
 def obtener_datos_perfil():

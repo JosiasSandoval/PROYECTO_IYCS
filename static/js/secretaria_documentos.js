@@ -191,9 +191,12 @@ async function cargarRequisitosYDocumentos(idReserva, idActo) {
 // ============================================================
 function renderizarListaRequisitos() {
     const container = document.getElementById('lista-requisitos');
-    container.innerHTML = '<p>Cargando requisitos...</p>';
+    if (!container) return;
     
-    // Mostrar alerta de fecha límite
+    // Limpiar contenedor completamente
+    container.innerHTML = '';
+    
+    // Mostrar alerta de fecha límite si aplica
     if (reservaSeleccionada && reservaSeleccionada.fecha) {
         const fechaActo = new Date(reservaSeleccionada.fecha);
         const fechaLimite = new Date(fechaActo);
@@ -353,6 +356,7 @@ function renderizarListaRequisitos() {
         `;
     });
     
+    // Agregar el HTML de los requisitos
     container.innerHTML += html;
     
     // Agregar controles de paginación si hay más de una página
@@ -375,6 +379,9 @@ function renderizarListaRequisitos() {
         paginacionHTML += '</div>';
         container.innerHTML += paginacionHTML;
     }
+    
+    // Asegurar que los event listeners estén configurados después de renderizar
+    configurarEventosDocumentos();
 }
 
 // ============================================================
@@ -450,8 +457,30 @@ async function aprobarDocumentoDirecto(idDocumentoRequisito) {
         const data = await response.json();
         
         if (data.success) {
-            alert('✅ Documento aprobado exitosamente');
+            // Mostrar mensaje según si se confirmó la reserva
+            if (data.estadoReserva === 'CONFIRMADO') {
+                alert('✅ ' + (data.mensaje || 'Documento aprobado. ¡Todos los documentos han sido aprobados! La reserva ha sido CONFIRMADA.'));
+            } else {
+                alert('✅ Documento aprobado exitosamente');
+            }
+            
+            // Recargar requisitos y documentos para actualizar la vista
             await cargarRequisitosYDocumentos(reservaSeleccionada.idReserva, reservaSeleccionada.idActo);
+            
+            // Recargar información completa de la reserva para obtener el estado actualizado
+            if (reservaSeleccionada && reservaSeleccionada.idReserva) {
+                await recargarInformacionReserva(reservaSeleccionada.idReserva);
+            }
+            
+            // Actualizar el estado de la reserva en la información mostrada
+            // Si el backend retornó el estado, usarlo; si no, usar el de la reserva recargada
+            const estadoFinal = data.estadoReserva || (reservaSeleccionada ? reservaSeleccionada.estadoReserva : null);
+            if (estadoFinal) {
+                if (reservaSeleccionada) {
+                    reservaSeleccionada.estadoReserva = estadoFinal;
+                }
+                actualizarEstadoReservaEnUI(estadoFinal);
+            }
         } else {
             alert('❌ Error: ' + (data.mensaje || 'Error desconocido'));
         }
@@ -459,6 +488,63 @@ async function aprobarDocumentoDirecto(idDocumentoRequisito) {
     } catch (error) {
         console.error('Error al aprobar documento:', error);
         alert('Error al aprobar el documento');
+    }
+}
+
+// ============================================================
+// RECARGAR INFORMACIÓN COMPLETA DE LA RESERVA
+// ============================================================
+async function recargarInformacionReserva(idReserva) {
+    try {
+        // Buscar la reserva por su ID para obtener la información actualizada
+        const response = await fetch(`/api/documento_requisito/buscar?termino=${idReserva}`);
+        const data = await response.json();
+        
+        if (data.success && data.datos && data.datos.length > 0) {
+            // Encontrar la reserva correcta (puede haber múltiples resultados, buscar por ID exacto)
+            const reservaActualizada = data.datos.find(r => r.idReserva == idReserva);
+            
+            if (reservaActualizada) {
+                // Actualizar el objeto reservaSeleccionada con la información nueva
+                reservaSeleccionada = {
+                    ...reservaSeleccionada,
+                    ...reservaActualizada
+                };
+                
+                // Actualizar la UI con el nuevo estado
+                actualizarEstadoReservaEnUI(reservaActualizada.estadoReserva);
+                
+                // Actualizar también la información mostrada en el detalle
+                const nombreCompleto = `${reservaActualizada.nombreSolicitante || ''} ${reservaActualizada.apellidoSolicitante || ''} ${reservaActualizada.apellidoMaternoSolicitante || ''}`.trim();
+                if (document.getElementById('info-solicitante')) {
+                    document.getElementById('info-solicitante').textContent = nombreCompleto || 'N/A';
+                }
+                if (document.getElementById('info-acto')) {
+                    document.getElementById('info-acto').textContent = reservaActualizada.nombreActo || 'N/A';
+                }
+                
+                console.log('✅ Información de reserva recargada:', reservaActualizada.estadoReserva);
+            } else {
+                console.warn('⚠️ No se encontró la reserva actualizada en los resultados');
+            }
+        } else {
+            console.warn('⚠️ No se pudo recargar la información de la reserva');
+        }
+    } catch (error) {
+        console.error('Error al recargar información de reserva:', error);
+    }
+}
+
+// ============================================================
+// ACTUALIZAR ESTADO DE RESERVA EN LA UI
+// ============================================================
+function actualizarEstadoReservaEnUI(estadoReserva) {
+    const elementoReserva = document.getElementById('info-estado-reserva');
+    if (elementoReserva) {
+        elementoReserva.textContent = estadoReserva || 'N/A';
+        const badgeClass = getBadgeClass(estadoReserva);
+        elementoReserva.className = `value badge ${badgeClass}`;
+        console.log('✅ Estado de reserva actualizado en UI:', estadoReserva);
     }
 }
 
@@ -578,8 +664,30 @@ async function aprobarDocumentoIndividual(idDocumentoRequisito) {
         const data = await response.json();
         
         if (data.success) {
-            alert('✅ Documento aprobado exitosamente');
+            // Mostrar mensaje según si se confirmó la reserva
+            if (data.estadoReserva === 'CONFIRMADO') {
+                alert('✅ ' + (data.mensaje || 'Documento aprobado. ¡Todos los documentos han sido aprobados! La reserva ha sido CONFIRMADA.'));
+            } else {
+                alert('✅ Documento aprobado exitosamente');
+            }
+            
+            // Recargar requisitos y documentos para actualizar la vista
             await cargarRequisitosYDocumentos(reservaSeleccionada.idReserva, reservaSeleccionada.idActo);
+            
+            // Recargar información completa de la reserva para obtener el estado actualizado
+            if (reservaSeleccionada && reservaSeleccionada.idReserva) {
+                await recargarInformacionReserva(reservaSeleccionada.idReserva);
+            }
+            
+            // Actualizar el estado de la reserva en la información mostrada
+            // Si el backend retornó el estado, usarlo; si no, usar el de la reserva recargada
+            const estadoFinal = data.estadoReserva || (reservaSeleccionada ? reservaSeleccionada.estadoReserva : null);
+            if (estadoFinal) {
+                if (reservaSeleccionada) {
+                    reservaSeleccionada.estadoReserva = estadoFinal;
+                }
+                actualizarEstadoReservaEnUI(estadoFinal);
+            }
         } else {
             alert('❌ Error: ' + (data.mensaje || 'Error desconocido'));
         }
@@ -630,47 +738,20 @@ async function rechazarDocumento(idDocumentoRequisito) {
     }
 }
 
-// ============================================================
-// APROBAR TODOS LOS DOCUMENTOS
-// ============================================================
-async function aprobarTodosDocumentos() {
-    if (!reservaSeleccionada) return;
-    
-    if (!confirm('¿Está seguro de aprobar todos los documentos pendientes? La reserva cambiará de estado.')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/documento_requisito/aprobar_todos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                idReserva: reservaSeleccionada.idReserva,
-                observacion: 'Todos los documentos aprobados'
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            alert(`✅ Todos los documentos aprobados correctamente`);
-            volverABusqueda();
-        } else {
-            alert('❌ Error: ' + (data.mensaje || 'Error desconocido'));
-        }
-        
-    } catch (error) {
-        console.error('Error al aprobar todos los documentos:', error);
-        alert('Error al aprobar los documentos');
-    }
-}
 
 // ============================================================
 // CONFIGURAR EVENTOS
 // ============================================================
 function configurarEventos() {
     document.getElementById('btn-volver-busqueda')?.addEventListener('click', volverABusqueda);
-    document.getElementById('btn-aprobar-todos-final')?.addEventListener('click', aprobarTodosDocumentos);
+}
+
+// ============================================================
+// CONFIGURAR EVENTOS DE DOCUMENTOS (después de renderizar)
+// ============================================================
+function configurarEventosDocumentos() {
+    // Esta función se llama después de renderizar para asegurar que los elementos existan
+    // Los event listeners se configuran mediante onclick en el HTML generado
 }
 
 function volverABusqueda() {
