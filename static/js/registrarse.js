@@ -90,28 +90,29 @@ document.addEventListener('DOMContentLoaded', () => {
             return; // Detiene el proceso si no es numérico
         }
 
+        // Validación de formato de correo electrónico
+        const emailInput = document.getElementById('email');
+        const emailValor = datos['email'] ? datos['email'].trim() : '';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        if (!emailRegex.test(emailValor)) {
+            marcarError(emailInput);
+            mostrarMensaje('Por favor, ingresa un correo electrónico válido.', 'advertencia');
+            return;
+        }
+
         const clave = claveInput.value;
         const confirmacion = confirmacionInput.value;
 
-        // Limpiar errores visuales de la contraseña antes de validar (solo si no hubo campos vacíos antes)
+        // Limpiar errores visuales de la contraseña antes de validar
         limpiarErroresContraseñas();
 
         if (clave !== confirmacion) {
             marcarError(claveInput);
             marcarError(confirmacionInput);
             confirmacionInput.value = "";
-            mostrarMensaje('Las contraseñas no coinciden', 'error');
-            return;
-        }
-
-        const caracteresEspeciales = /[@$!%*#?&]/;
-        const contieneMayuscula = /[A-Z]/;
-        const contieneMinuscula = /[a-z]/;
-        const contieneNumero = /[0-9]/;
-
-        if (clave.length < 12 || !contieneMayuscula.test(clave) || !contieneMinuscula.test(clave) || !contieneNumero.test(clave) || !caracteresEspeciales.test(clave)) {
-            marcarError(claveInput);
-            mostrarMensaje("La contraseña debe tener al menos 12 caracteres, incluyendo mayúsculas, minúsculas, números y un carácter especial.", 'advertencia');
+            claveInput.value = "";
+            mostrarMensaje('Las contraseñas no coinciden. Por favor, inténtalo nuevamente.', 'error');
             return;
         }
 

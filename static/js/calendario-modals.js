@@ -11,11 +11,19 @@
 // ya que depende de variables globales definidas allí mediante window.calendarioState
 
 // ================= FUNCIONES AUXILIARES ===================
-function mostrarMensajeValidacion(mensaje) {
+function mostrarMensajeValidacion(mensaje, tipo = 'danger') {
     const div = document.getElementById('mensajeValidacion');
     if (div) {
         div.textContent = mensaje;
+        div.className = `alert alert-${tipo}`;
         div.style.display = 'block';
+        
+        // Auto-ocultar después de 5 segundos si no es de tipo danger
+        if (tipo !== 'danger') {
+            setTimeout(() => {
+                div.style.display = 'none';
+            }, 5000);
+        }
     }
 }
 
@@ -267,9 +275,11 @@ async function mostrarModalAgregarHorario(fecha) {
             }
             
             // Obtener día de la semana de la fecha
-            const fechaObj = new Date(fecha);
-            const diasSemana = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
-            const diaSemana = diasSemana[fechaObj.getDay()];
+            const fechaObj = new Date(fecha + 'T00:00:00');
+            const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const diasSemanaAbrev = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+            const diaSemana = diasSemanaAbrev[fechaObj.getDay()];
+            const nombreDia = diasSemana[fechaObj.getDay()];
             
             try {
                 if (tipoHorario === 'individual') {
@@ -277,6 +287,24 @@ async function mostrarModalAgregarHorario(fecha) {
                     
                     if (!hora) {
                         mostrarMensajeValidacion('Por favor seleccione una hora');
+                        return;
+                    }
+                    
+                    // 🔥 VALIDAR ANTES DE AGREGAR
+                    const validacionRes = await fetch('/api/acto_liturgico/validar_horario', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            fecha: fecha,
+                            hora: hora,
+                            idActo: parseInt(idActo),
+                            idParroquia: parseInt(idParroquia)
+                        })
+                    });
+                    
+                    const validacion = await validacionRes.json();
+                    if (!validacion.disponible) {
+                        mostrarMensajeValidacion(validacion.mensaje, validacion.tipo === 'reserva' ? 'danger' : 'warning');
                         return;
                     }
                     
@@ -294,9 +322,9 @@ async function mostrarModalAgregarHorario(fecha) {
                     
                     const data = await res.json();
                     if (data.ok || data.success) {
-                        alert('Horario agregado correctamente (todos los ' + obtenerNombreDiaSemana(fecha) + ' a las ' + hora + ')');
+                        alert(`✅ Horario agregado correctamente (todos los ${nombreDia} a las ${hora})`);
                         bootstrap.Modal.getInstance(document.getElementById('infoModal')).hide();
-                        if (rol === 'sacerdote') {
+                        if (rol === 'sacerdote' || rol === 'secretaria') {
                             await window.calendarioFunctions.recargarHorarios();
                         } else {
                             location.reload();
@@ -316,8 +344,28 @@ async function mostrarModalAgregarHorario(fecha) {
                     
                     let agregados = 0;
                     let errores = [];
+                    let omitidos = [];
                     
                     for (const hora of horasSeleccionadas) {
+                        // 🔥 VALIDAR CADA HORA ANTES DE AGREGAR
+                        const validacionRes = await fetch('/api/acto_liturgico/validar_horario', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                fecha: fecha,
+                                hora: hora,
+                                idActo: parseInt(idActo),
+                                idParroquia: parseInt(idParroquia)
+                            })
+                        });
+                        
+                        const validacion = await validacionRes.json();
+                        if (!validacion.disponible) {
+                            // Omitir esta hora, no es un error
+                            omitidos.push(`${hora}: ${validacion.mensaje}`);
+                            continue;
+                        }
+                        
                         const res = await fetch('/api/acto/horario/agregar', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -339,15 +387,29 @@ async function mostrarModalAgregarHorario(fecha) {
                     }
                     
                     if (agregados > 0) {
-                        alert(`Se agregaron ${agregados} horario(s) para todos los ${obtenerNombreDiaSemana(fecha)}. ${errores.length > 0 ? 'Algunos no se pudieron agregar: ' + errores.join(', ') : ''}`);
+                        let mensaje = `✅ Se agregaron ${agregados} horario(s) para todos los ${nombreDia}`;
+                        if (omitidos.length > 0) {
+                            mensaje += `\n\n⚠️ Se omitieron ${omitidos.length} horario(s) por conflictos:\n${omitidos.join('\n')}`;
+                        }
+                        if (errores.length > 0) {
+                            mensaje += `\n\n❌ Errores: ${errores.join(', ')}`;
+                        }
+                        alert(mensaje);
                         bootstrap.Modal.getInstance(document.getElementById('infoModal')).hide();
-                        if (rol === 'sacerdote') {
+                        if (rol === 'sacerdote' || rol === 'secretaria') {
                             await window.calendarioFunctions.recargarHorarios();
                         } else {
                             location.reload();
                         }
                     } else {
-                        mostrarMensajeValidacion('No se pudo agregar ningún horario. Errores: ' + errores.join(', '));
+                        let mensaje = 'No se pudo agregar ningún horario.';
+                        if (omitidos.length > 0) {
+                            mensaje += `\n\n⚠️ Todos los horarios seleccionados tienen conflictos:\n${omitidos.join('\n')}`;
+                        }
+                        if (errores.length > 0) {
+                            mensaje += `\n\n❌ Errores: ${errores.join(', ')}`;
+                        }
+                        mostrarMensajeValidacion(mensaje);
                     }
                 }
             } catch (error) {
@@ -468,9 +530,34 @@ async function mostrarModalAgregarHorarioEspecifico(fecha, hora, diaSemana) {
             }
             
             agregarBtn.disabled = true;
-            agregarBtn.textContent = 'Agregando...';
+            agregarBtn.textContent = 'Validando...';
             
             try {
+                // 🔥 VALIDAR ANTES DE AGREGAR
+                const validacionRes = await fetch('/api/acto_liturgico/validar_horario', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fecha: fecha,
+                        hora: hora,
+                        idActo: parseInt(idActo),
+                        idParroquia: parseInt(idParroquia)
+                    })
+                });
+                
+                const validacion = await validacionRes.json();
+                if (!validacion.disponible) {
+                    const mensajeDiv = document.getElementById('mensajeValidacionEsp');
+                    mensajeDiv.textContent = validacion.mensaje;
+                    mensajeDiv.className = `alert alert-${validacion.tipo === 'reserva' ? 'danger' : 'warning'}`;
+                    mensajeDiv.style.display = 'block';
+                    agregarBtn.disabled = false;
+                    agregarBtn.textContent = 'Agregar Horario';
+                    return;
+                }
+                
+                agregarBtn.textContent = 'Agregando...';
+                
                 const res = await fetch('/api/acto/horario/agregar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

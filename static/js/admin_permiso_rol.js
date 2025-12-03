@@ -404,11 +404,55 @@ async function abrirModalPermisos(idRol) {
         
         document.getElementById("modalPermisos").classList.add('activo');
         
-        // Lógica guardar permisos... (Simplificada aquí para brevedad, pero debes mantener la tuya completa si es compleja)
+        // Lógica guardar permisos
         document.getElementById("btnGuardarPermisos").onclick = async () => {
-             // Tu lógica original de guardar permisos aquí...
-             alert("Funcionalidad de guardar permisos pendiente de revisión en esta versión unificada.");
-             cerrarModal("modalPermisos");
+            try {
+                const checks = contenido.querySelectorAll('input[type="checkbox"]');
+                const permisosSeleccionados = Array.from(checks)
+                    .filter(cb => cb.checked)
+                    .map(cb => parseInt(cb.value));
+                
+                // Obtener permisos actuales del rol
+                const permisosActuales = idsRol.map(id => parseInt(id));
+                
+                // Encontrar permisos a agregar (nuevos)
+                const permisosAAgregar = permisosSeleccionados.filter(id => !permisosActuales.includes(id));
+                
+                // Encontrar permisos a eliminar (quitados)
+                const permisosAEliminar = permisosActuales.filter(id => !permisosSeleccionados.includes(id));
+                
+                // Agregar nuevos permisos
+                for (const idPermiso of permisosAAgregar) {
+                    const res = await fetch('/api/permiso/agregar_rol_permiso', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idRol: idRol, idPermiso: idPermiso })
+                    });
+                    const data = await res.json();
+                    if (!data.ok) {
+                        console.error(`Error al agregar permiso ${idPermiso}:`, data.mensaje);
+                    }
+                }
+                
+                // Eliminar permisos quitados
+                for (const idPermiso of permisosAEliminar) {
+                    const res = await fetch('/api/permiso/eliminar_rol_permiso', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idRol: idRol, idPermiso: idPermiso })
+                    });
+                    const data = await res.json();
+                    if (!data.ok) {
+                        console.error(`Error al eliminar permiso ${idPermiso}:`, data.mensaje);
+                    }
+                }
+                
+                alert('Permisos actualizados correctamente');
+                cerrarModal("modalPermisos");
+            } catch (error) {
+                console.error('Error al guardar permisos:', error);
+                alert('Error al guardar los permisos');
+            }
         };
 
     } catch(e) { console.error(e); contenido.innerHTML = "Error"; }

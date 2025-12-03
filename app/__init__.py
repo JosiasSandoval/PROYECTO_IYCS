@@ -86,6 +86,10 @@ def crear_app():
     def registrar():
         return render_template('registrarse.html')
 
+    @app.route('/recuperar_contrasena')
+    def recuperar_contrasena():
+        return render_template('recuperacion_clave.html')
+
     @app.route('/principal')
     @requires_roles('Feligres', 'Secretaria', 'Sacerdote')
     def principal():
@@ -117,7 +121,7 @@ def crear_app():
         return render_template('cliente/actos_liturgicos_cliente.html')
 
     @app.route('/cliente/perfil')
-    @requires_roles('Feligres', 'Secretaria')
+    @requires_roles('Feligres', 'Secretaria', 'Sacerdote', 'Administrador')
     def perfil_cliente():
         return render_template('cliente/perfil.html', id_usuario_logueado=session.get('idUsuario'))
 

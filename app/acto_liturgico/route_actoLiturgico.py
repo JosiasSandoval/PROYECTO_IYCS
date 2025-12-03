@@ -86,3 +86,127 @@ def borrar_acto(idActo):
         return jsonify({"success": True, "mensaje": mensaje}), 200
     else:
         return jsonify({"success": False, "mensaje": mensaje}), 500
+
+# ================== VALIDAR HORARIO ==================
+@acto_liturgico_bp.route('/validar_horario', methods=['POST'])
+def validar_horario_disponibilidad():
+    """
+    Valida si un horario está disponible considerando:
+    1. Duración del acto (desde configuracion_acto)
+    2. Reservas existentes de la parroquia
+    3. Horarios ya registrados
+    """
+    from app.bd_sistema import obtener_conexion
+    from datetime import datetime, timedelta
+    
+    data = request.get_json()
+    fecha = data.get('fecha')
+    hora = data.get('hora')  # formato HH:MM
+    idActo = data.get('idActo')
+    idParroquia = data.get('idParroquia')
+    
+    if not all([fecha, hora, idActo, idParroquia]):
+        return jsonify({"success": False, "mensaje": "Faltan datos obligatorios"}), 400
+    
+    # Validar rango de hora permitido (7am - 11pm)
+    try:
+        hora_obj = datetime.strptime(hora, '%H:%M')
+        if hora_obj.hour < 7 or hora_obj.hour >= 23:
+            return jsonify({
+                "success": False,
+                "disponible": False,
+                "mensaje": "⏰ Los horarios deben estar entre las 7:00 AM y las 11:00 PM"
+            }), 200
+    except ValueError:
+        return jsonify({"success": False, "mensaje": "Formato de hora inválido"}), 400
+    
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # 1. Obtener duración del acto desde configuracion_acto
+            cursor.execute("""
+                SELECT tiempoDuracion
+                FROM configuracion_acto
+                WHERE idActo = %s
+            """, (idActo,))
+            
+            config = cursor.fetchone()
+            if not config:
+                # Si no hay configuración, asumimos 1 hora
+                duracion_minutos = 60
+            else:
+                # tiempoDuracion siempre está en minutos según los inserts
+                duracion_minutos = config[0]
+            
+            # Calcular hora de fin
+            hora_inicio = datetime.strptime(hora, '%H:%M')
+            hora_fin = hora_inicio + timedelta(minutes=duracion_minutos)
+            hora_fin_str = hora_fin.strftime('%H:%M:00')
+            hora_inicio_str = hora + ':00'
+            
+            # 2. Verificar reservas existentes que se solapan
+            cursor.execute("""
+                SELECT COUNT(*) as total, GROUP_CONCAT(DISTINCT al.nombActo SEPARATOR ', ') as actos
+                FROM reserva r
+                INNER JOIN participantes_acto pa ON r.idReserva = pa.idReserva
+                INNER JOIN acto_liturgico al ON pa.idActo = al.idActo
+                INNER JOIN configuracion_acto ca ON al.idActo = ca.idActo
+                WHERE r.idParroquia = %s
+                AND r.f_reserva = %s
+                AND r.estadoReserva NOT IN ('CANCELADO', 'RECHAZADO')
+                AND (
+                    (r.h_reserva >= %s AND r.h_reserva < %s) OR
+                    (ADDTIME(r.h_reserva, SEC_TO_TIME(ca.tiempoDuracion * 60)) > %s AND r.h_reserva <= %s)
+                )
+            """, (idParroquia, fecha, hora_inicio_str, hora_fin_str, hora_inicio_str, hora_inicio_str))
+            
+            resultado = cursor.fetchone()
+            reservas_conflicto = resultado[0] if resultado else 0
+            actos_conflicto = resultado[1] if resultado else ""
+            
+            if reservas_conflicto > 0:
+                return jsonify({
+                    "success": False,
+                    "disponible": False,
+                    "mensaje": f"❌ Este horario ya está ocupado por una reserva de: {actos_conflicto}",
+                    "tipo": "reserva"
+                }), 200
+            
+            # 3. Verificar horarios ya registrados que se solapan
+            cursor.execute("""
+                SELECT COUNT(*) as total
+                FROM acto_parroquia ap
+                INNER JOIN configuracion_acto ca ON ap.idActo = ca.idActo
+                WHERE ap.idParroquia = %s
+                AND ap.diaSemana = UPPER(LEFT(DAYNAME(STR_TO_DATE(%s, '%%Y-%%m-%%d')), 3))
+                AND (
+                    (ap.horaInicioActo >= %s AND ap.horaInicioActo < %s) OR
+                    (ADDTIME(ap.horaInicioActo, SEC_TO_TIME(ca.tiempoDuracion * 60)) > %s AND ap.horaInicioActo <= %s)
+                )
+            """, (idParroquia, fecha, hora_inicio_str, hora_fin_str, hora_inicio_str, hora_inicio_str))
+            
+            resultado = cursor.fetchone()
+            horarios_conflicto = resultado[0] if resultado else 0
+            
+            if horarios_conflicto > 0:
+                return jsonify({
+                    "success": False,
+                    "disponible": False,
+                    "mensaje": f"⚠️ Ya existe un horario que se solapa con este (duración: {duracion_minutos} min)",
+                    "tipo": "horario"
+                }), 200
+            
+            # Horario disponible
+            return jsonify({
+                "success": True,
+                "disponible": True,
+                "mensaje": "✅ Horario disponible",
+                "duracion_minutos": duracion_minutos
+            }), 200
+            
+    except Exception as e:
+        print(f"Error validando horario: {e}")
+        return jsonify({"success": False, "mensaje": f"Error: {str(e)}"}), 500
+    finally:
+        if conexion:
+            conexion.close()

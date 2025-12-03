@@ -1,7 +1,12 @@
 from flask import Blueprint, request, jsonify, session, redirect, url_for, flash
-from app.auth.controlador_auth import registrar_feligres, autenticar_usuario
+from app.auth.controlador_auth import registrar_feligres, autenticar_usuario, verificar_email_existe, cambiar_contrasena
+import random
+import string
 
 auth_bp = Blueprint('auth', __name__)
+
+# Almacenamiento temporal de códigos de recuperación (en producción usar Redis o base de datos)
+codigos_recuperacion = {}
 
 # ============================================================
 # 1. LOGIN (VERIFICAR USUARIO)
@@ -16,7 +21,7 @@ def login():
     clave = data.get('clave')
 
     if not email or not clave:
-        return jsonify({"success": False, "error": "Debe ingresar email y contraseña."}), 400
+        return jsonify({"success": False, "error": "Debe ingresar correo electrónico y contraseña."}), 400
 
     resultado_auth = autenticar_usuario(email, clave)
 
@@ -42,7 +47,7 @@ def login():
             "redirect": url_for('auth.dashboard')
         })
     else:
-        return jsonify({"success": False, "error": "Email o contraseña incorrectos."}), 401
+        return jsonify({"success": False, "error": "Correo electrónico o contraseña incorrectos. Por favor, intente nuevamente."}), 401
 
 
 # ============================================================
@@ -149,3 +154,104 @@ def dashboard():
     if not session.get('logged_in'):
         return redirect(url_for('auth.login'))
     return f"Bienvenido al Dashboard, {session.get('nombre_usuario')}"
+
+
+# ============================================================
+# 7. RECUPERACIÓN DE CONTRASEÑA - GENERAR CÓDIGO
+# ============================================================
+@auth_bp.route('/recuperar_contrasena/verificar_email', methods=['POST'])
+def verificar_email_recuperacion():
+    data = request.get_json()
+    email = data.get('email')
+
+    if not email:
+        return jsonify({"success": False, "error": "Debe ingresar un correo electrónico."}), 400
+
+    # Verificar si el email existe
+    id_usuario = verificar_email_existe(email)
+
+    if id_usuario:
+        # Generar código aleatorio de 6 caracteres
+        codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        
+        # Guardar el código asociado al email (en producción, usar base de datos o Redis con expiración)
+        codigos_recuperacion[email] = codigo
+
+        return jsonify({
+            "success": True,
+            "mensaje": "Código generado correctamente",
+            "codigo": codigo  # En producción, esto se enviaría por email, no se devolvería
+        })
+    else:
+        # Por seguridad, no revelamos si el email existe o no
+        return jsonify({
+            "success": True,
+            "mensaje": "Si el correo existe, recibirás un código de recuperación"
+        })
+
+
+# ============================================================
+# 8. RECUPERACIÓN DE CONTRASEÑA - VALIDAR CÓDIGO
+# ============================================================
+@auth_bp.route('/recuperar_contrasena/validar_codigo', methods=['POST'])
+def validar_codigo_recuperacion():
+    data = request.get_json()
+    email = data.get('email')
+    codigo_ingresado = data.get('codigo')
+
+    if not email or not codigo_ingresado:
+        return jsonify({"success": False, "error": "Faltan datos requeridos."}), 400
+
+    # Verificar el código
+    codigo_correcto = codigos_recuperacion.get(email)
+
+    if codigo_correcto and codigo_correcto == codigo_ingresado.upper():
+        return jsonify({
+            "success": True,
+            "mensaje": "Código válido. Puede cambiar su contraseña."
+        })
+    else:
+        return jsonify({
+            "success": False,
+            "error": "Código incorrecto. Por favor, verifique e intente nuevamente."
+        }), 401
+
+
+# ============================================================
+# 9. RECUPERACIÓN DE CONTRASEÑA - CAMBIAR CONTRASEÑA
+# ============================================================
+@auth_bp.route('/recuperar_contrasena/cambiar_contrasena', methods=['POST'])
+def cambiar_contrasena_recuperacion():
+    data = request.get_json()
+    email = data.get('email')
+    codigo = data.get('codigo')
+    nueva_contrasena = data.get('nueva_contrasena')
+
+    if not email or not codigo or not nueva_contrasena:
+        return jsonify({"success": False, "error": "Faltan datos requeridos."}), 400
+
+    # Verificar el código nuevamente
+    codigo_correcto = codigos_recuperacion.get(email)
+
+    if not codigo_correcto or codigo_correcto != codigo.upper():
+        return jsonify({
+            "success": False,
+            "error": "Código inválido o expirado."
+        }), 401
+
+    # Cambiar la contraseña
+    exito, error = cambiar_contrasena(email, nueva_contrasena)
+
+    if exito:
+        # Eliminar el código usado
+        del codigos_recuperacion[email]
+        
+        return jsonify({
+            "success": True,
+            "mensaje": "Contraseña cambiada exitosamente."
+        })
+    else:
+        return jsonify({
+            "success": False,
+            "error": f"Error al cambiar la contraseña: {error}"
+        }), 500

@@ -6,7 +6,7 @@ let fechaSeleccionada = null;
 let horaSeleccionada = null;
 let calendario;
 let horariosConfiguracion = [];
-let configuracionActo = { tiempoMinimoReserva: 0, tiempoMaximoReserva: null };
+let configuracionActo = { tiempoMinimoReserva: 0, tiempoMaximoReserva: null, tiempoDuracion: 60 };
 const DIA_ABREV = ["Dom", "Lun", "Mar", "Mi", "Jue", "Vie", "Sáb"];
 const idParroquia = sessionStorage.getItem('idParroquiaSeleccionada');
 const nombreParroquia = sessionStorage.getItem('nombreParroquiaSeleccionada');
@@ -277,12 +277,25 @@ async function cargarDisponibilidadActo(idParroquia, idActo) {
         const resp = await fetch(`/api/acto/disponibilidad/${idParroquia}/${idActo}`);
         if (!resp.ok) throw new Error("Error al obtener disponibilidad del acto");
         const data = await resp.json();
+        
+        // Cargar TODOS los horarios configurados (puede haber múltiples horarios por día)
         horariosConfiguracion = Array.isArray(data.datos)
-            ? data.datos.map(d => ({
-                diaSemana: d.diaSemana.trim().toLowerCase(),
-                horaInicioActo: d.horaInicioActo.substring(0, 5)
-            }))
+            ? data.datos.map(d => {
+                // Normalizar diaSemana (ya viene normalizado del backend, pero por seguridad)
+                let diaSemana = d.diaSemana.trim().toLowerCase();
+                // Asegurar que "mié" o "mie" se conviertan a "mi"
+                if (diaSemana === 'mié' || diaSemana === 'mie') {
+                    diaSemana = 'mi';
+                }
+                
+                return {
+                    diaSemana: diaSemana,
+                    horaInicioActo: d.horaInicioActo.substring(0, 5)
+                };
+            })
             : [];
+        
+        console.log(`📅 Cargados ${horariosConfiguracion.length} horarios para el acto ${idActo}:`, horariosConfiguracion);
 
         const respConfig = await fetch(`/api/acto/configuracion/${idActo}`);
         if (respConfig.ok) {
@@ -290,12 +303,14 @@ async function cargarDisponibilidadActo(idParroquia, idActo) {
             if (dataConfig.success && dataConfig.datos) {
                 configuracionActo = {
                     tiempoMinimoReserva: dataConfig.datos.tiempoMinimoReserva || 0,
-                    tiempoMaximoReserva: dataConfig.datos.tiempoMaximoReserva || null
+                    tiempoMaximoReserva: dataConfig.datos.tiempoMaximoReserva || null,
+                    tiempoDuracion: dataConfig.datos.tiempoDuracion || 60  // Duración en minutos
                 };
             }
         }
 
         console.log("⚙️ Configuración aplicada:", configuracionActo);
+        console.log("📅 Horarios disponibles:", horariosConfiguracion);
         pintarDiasDisponibles();
 
         const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
@@ -306,13 +321,25 @@ async function cargarDisponibilidadActo(idParroquia, idActo) {
     } catch (error) {
         console.error("❌ Error cargando disponibilidad/configuración:", error);
         horariosConfiguracion = [];
-        configuracionActo = { tiempoMinimoReserva: 0, tiempoMaximoReserva: null };
+        configuracionActo = { tiempoMinimoReserva: 0, tiempoMaximoReserva: null, tiempoDuracion: 60 };
         pintarDiasDisponibles();
     }
 }
 
 function fechaDisponible(diaAbrev) {
-    return horariosConfiguracion.some(h => h.diaSemana === diaAbrev.trim().toLowerCase());
+    // Normalizar el día para comparación
+    let diaNormalizado = diaAbrev.trim().toLowerCase();
+    if (diaNormalizado === 'mié' || diaNormalizado === 'mie') {
+        diaNormalizado = 'mi';
+    }
+    
+    return horariosConfiguracion.some(h => {
+        let diaHorario = h.diaSemana.trim().toLowerCase();
+        if (diaHorario === 'mié' || diaHorario === 'mie') {
+            diaHorario = 'mi';
+        }
+        return diaHorario === diaNormalizado;
+    });
 }
 
 function pintarDiasDisponibles() {
@@ -344,9 +371,9 @@ function pintarDiasDisponibles() {
 }
 
 // ==============================
-// Modal para seleccionar hora
+// Modal para seleccionar hora (MEJORADO: filtra horarios bloqueados)
 // ==============================
-function abrirModalHoraDisponible(fecha) {
+async function abrirModalHoraDisponible(fecha) {
     const fechaObj = new Date(fecha + 'T12:00:00');
     const diaCheck = DIA_ABREV[fechaObj.getDay()].toLowerCase();
 
@@ -366,14 +393,106 @@ function abrirModalHoraDisponible(fecha) {
     }
     if (modalFooter) modalFooter.style.display = 'flex';
 
-    const horasDisponibles = horariosConfiguracion
-        .filter(h => h.diaSemana === diaCheck)
+    // Obtener TODOS los horarios configurados para este día
+    // Normalizar diaCheck para asegurar coincidencia
+    let diaCheckNormalizado = diaCheck;
+    if (diaCheckNormalizado === 'mié' || diaCheckNormalizado === 'mie') {
+        diaCheckNormalizado = 'mi';
+    }
+    
+    const horariosConfigurados = horariosConfiguracion
+        .filter(h => {
+            let diaHorario = h.diaSemana.trim().toLowerCase();
+            if (diaHorario === 'mié' || diaHorario === 'mie') {
+                diaHorario = 'mi';
+            }
+            return diaHorario === diaCheckNormalizado;
+        })
         .map(h => h.horaInicioActo);
+    
+    console.log(`🔍 Día seleccionado: ${diaCheckNormalizado}, Horarios configurados encontrados:`, horariosConfigurados);
+
+    // Obtener nombre del acto para verificar si es misa
+    const actoSelect = document.getElementById('acto-liturgico');
+    const nombreActo = actoSelect?.options[actoSelect.selectedIndex]?.textContent?.toLowerCase() || '';
+    const esMisa = nombreActo.includes('misa');
+    
+    console.log(`📿 Es misa: ${esMisa}, Nombre acto: ${nombreActo}`);
+
+    // Inicializar horariosBloqueados fuera del bloque para que esté disponible siempre
+    let horariosBloqueados = [];
+    let horasDisponibles = [];
+
+    // REGLA CRÍTICA: Las misas NUNCA tienen restricciones
+    if (esMisa) {
+        // Para misas: mostrar TODOS los horarios configurados, sin filtrar bloqueados
+        horasDisponibles = horariosConfigurados;
+        console.log("✅ MISA: Mostrando todos los horarios sin restricciones:", horasDisponibles);
+    } else {
+        // Para actos con requisitos: obtener horarios bloqueados y filtrar
+        try {
+            const respBloqueados = await fetch(`/api/reserva/horarios_bloqueados/${idParroquia}/${fecha}`);
+            if (respBloqueados.ok) {
+                const dataBloqueados = await respBloqueados.json();
+                if (dataBloqueados.ok && Array.isArray(dataBloqueados.horarios_bloqueados)) {
+                    horariosBloqueados = dataBloqueados.horarios_bloqueados.map(h => {
+                        // Asegurar formato HH:MM
+                        if (typeof h === 'string') {
+                            return h.substring(0, 5);
+                        }
+                        return String(h).substring(0, 5);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Error obteniendo horarios bloqueados:", error);
+        }
+        
+        console.log("🔒 Horarios bloqueados para", fecha, ":", horariosBloqueados);
+        
+        // Filtrar horarios disponibles (configurados pero no bloqueados)
+        horasDisponibles = horariosConfigurados.filter(h => !horariosBloqueados.includes(h));
+        
+        // REGLA: Solo para actos con requisitos (bautizos, matrimonios) se bloquea por duración
+        if (configuracionActo.tiempoDuracion && configuracionActo.tiempoDuracion > 60) {
+            const horasFinales = [];
+            horariosBloqueados.forEach(horaBloqueada => {
+                // Agregar la hora bloqueada
+                horasFinales.push(horaBloqueada);
+                
+                // Calcular horas adicionales bloqueadas por duración
+                const [h, m] = horaBloqueada.split(':').map(Number);
+                const minutosBloqueados = h * 60 + m;
+                const duracionMinutos = configuracionActo.tiempoDuracion;
+                
+                // Bloquear horas durante la duración (cada hora)
+                let minutosActual = minutosBloqueados + 60;
+                while (minutosActual < minutosBloqueados + duracionMinutos) {
+                    const horaBloqueadaExtra = `${String(Math.floor(minutosActual / 60)).padStart(2, '0')}:${String(minutosActual % 60).padStart(2, '0')}`;
+                    if (!horasFinales.includes(horaBloqueadaExtra)) {
+                        horasFinales.push(horaBloqueadaExtra);
+                    }
+                    minutosActual += 60;
+                }
+            });
+            horariosBloqueados = horasFinales;
+            
+            // Re-filtrar con los horarios adicionales bloqueados
+            const horasDisponiblesFinal = horariosConfigurados.filter(h => !horariosBloqueados.includes(h));
+            horasDisponibles.length = 0;
+            horasDisponibles.push(...horasDisponiblesFinal);
+        }
+    }
 
     const contenidoHorasHTML = horasDisponibles.length > 0
-        ? horasDisponibles.map(h =>
-            `<button class="list-group-item list-group-item-action hora-opcion" data-hora="${h}">${h}</button>`
-        ).join('') :
+        ? horasDisponibles.map(h => {
+            // Para misas, nunca mostrar como bloqueada
+            const estaBloqueada = esMisa ? false : horariosBloqueados.includes(h);
+            return `<button class="list-group-item list-group-item-action hora-opcion ${estaBloqueada ? 'disabled' : ''}" 
+                    data-hora="${h}" ${estaBloqueada ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                    ${h} ${estaBloqueada ? '(Ocupado)' : ''}
+                    </button>`;
+        }).join('') :
         '<p class="text-danger">Aviso: No hay horarios disponibles para el día seleccionado.</p>';
 
     modalBody.innerHTML = `
@@ -390,13 +509,13 @@ function abrirModalHoraDisponible(fecha) {
     if (!modal) modal = new bootstrap.Modal(modalElement);
     modal.show();
 
-    document.querySelectorAll('#listaHorasDisponibles .hora-opcion').forEach(btn => {
+    document.querySelectorAll('#listaHorasDisponibles .hora-opcion:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('#listaHorasDisponibles .hora-opcion').forEach(otherBtn =>
                 otherBtn.classList.remove('active', 'btn-success')
             );
             btn.classList.add('active', 'btn-success');
-                horaSeleccionada = btn.dataset.hora;
+            horaSeleccionada = btn.dataset.hora;
         });
     });
 }

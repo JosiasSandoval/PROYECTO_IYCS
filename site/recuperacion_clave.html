@@ -1,60 +1,86 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recuperar Contraseña - Sistema Litúrgico</title>
-  <link rel="stylesheet" href="/static/css/recuperar_clave.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LITBOOK | Recuperar Contraseña</title>
+    <link rel="stylesheet" href="/static/css/recuperar_clave.css">
 </head>
 <body>
 <main>
-  <div class="formulario">
-    <!-- izquierda: formulario -->
-    <div class="left">
-      <h1>Recuperar Contraseña</h1>
+    <div class="formulario">
+        <div class="left">
+            <h1>RECUPERAR CONTRASEÑA</h1>
 
-      <!-- Paso 1: correo -->
-      <form class="form-correo">
-        <label for="email">Correo electrónico</label>
-        <input type="email" id="email" placeholder="Ingresa tu correo" required>
-        <button type="submit" class="inicio">Enviar enlace de recuperación</button>
-      </form>
+            <!-- PASO 1: Verificar Email -->
+            <div id="paso-email" class="paso activo">
+                <p class="descripcion">Ingresa tu correo electrónico para recibir un código de recuperación.</p>
+                <form id="form-email">
+                    <label for="email">Correo electrónico:</label>
+                    <input type="email" id="email" name="email" required>
+                    <button type="submit" class="btn-primary">Enviar código</button>
+                </form>
+            </div>
 
-      <p class="mensaje">Si tu correo existe, recibirás un enlace con un código para recuperar tu contraseña.</p>
+            <!-- PASO 2: Ingresar Código -->
+            <div id="paso-codigo" class="paso">
+                <p class="descripcion">Se ha generado un código de 6 caracteres. Ingrésalo a continuación:</p>
+                <div class="codigo-generado">
+                    <label>Tu código es:</label>
+                    <div class="codigo-mostrar" id="codigo-mostrado">------</div>
+                </div>
+                <form id="form-codigo">
+                    <label>Ingresa el código:</label>
+                    <div class="codigo-inputs">
+                        <input type="text" maxlength="1" class="codigo-input" data-index="0">
+                        <input type="text" maxlength="1" class="codigo-input" data-index="1">
+                        <input type="text" maxlength="1" class="codigo-input" data-index="2">
+                        <input type="text" maxlength="1" class="codigo-input" data-index="3">
+                        <input type="text" maxlength="1" class="codigo-input" data-index="4">
+                        <input type="text" maxlength="1" class="codigo-input" data-index="5">
+                    </div>
+                    <button type="submit" class="btn-primary">Verificar código</button>
+                </form>
+            </div>
 
-      <!-- Paso 2: código -->
-      <div class="codigo-container">
-        <label>Ingresa el código recibido:</label>
-        <div class="codigo-boxes">
-          <input type="text" maxlength="1">
-          <input type="text" maxlength="1">
-          <input type="text" maxlength="1">
-          <input type="text" maxlength="1">
-          <input type="text" maxlength="1">
-          <input type="text" maxlength="1">
+            <!-- PASO 3: Cambiar Contraseña -->
+            <div id="paso-contrasena" class="paso">
+                <p class="descripcion">Ingresa tu nueva contraseña:</p>
+                <form id="form-contrasena">
+                    <label for="nueva-contrasena">Nueva contraseña:</label>
+                    <input type="password" id="nueva-contrasena" name="nueva-contrasena" required>
+
+                    <label for="confirmar-contrasena">Confirmar contraseña:</label>
+                    <input type="password" id="confirmar-contrasena" name="confirmar-contrasena" required>
+
+                    <button type="submit" class="btn-primary">Cambiar contraseña</button>
+                </form>
+            </div>
+
+            <div class="volver-login">
+                <a href="/">← Volver al inicio de sesión</a>
+            </div>
         </div>
-        <button class="inicio">Verificar código</button>
-      </div>
 
-      <!-- Paso 3: cambiar contraseña -->
-      <div class="cambiar-pass">
-        <label>Nueva contraseña</label>
-        <input type="password" placeholder="Nueva contraseña">
-        <label>Confirmar contraseña</label>
-        <input type="password" placeholder="Confirmar contraseña">
-        <button class="inicio">Cambiar contraseña</button>
-      </div>
+        <div class="right">
+            <img src="/static/img/logotipo_litbook.png" alt="Litbook">
+        </div>
 
-      <div class="info">
-        <a href="login.html">Volver al inicio de sesión</a>
-      </div>
+        <!-- Modal de mensajes -->
+        <div id="modal_recuperacion" class="modal">
+            <div class="modal-contenido">
+                <div class="modal-header">
+                    <div class="modal-icono-contenedor">
+                        <img id="modal-icono" src="">
+                    </div>
+                    <h2 id="modal-titulo"></h2>
+                </div>
+                <p id="modal_mensaje"></p>
+            </div>
+        </div>
     </div>
-
-    <!-- derecha: imagen (opcional) -->
-    <div class="right">
-      <img src="/static/img/logotipo_litbook.png" alt="Imagen Litúrgica">
-    </div>
-  </div>
 </main>
+
+<script src="/static/js/recuperar_clave.js"></script>
 </body>
 </html>

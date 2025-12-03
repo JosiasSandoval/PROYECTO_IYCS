@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     let ID_USUARIO_LOGUEADO = window.GLOBAL_USER_ID || 1;
+    let TIPO_PERFIL = 'feligres'; // 'feligres' o 'personal'
 
     let datosOriginales = {};
 
@@ -14,12 +15,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const poblarFormulario = (datos) => {
         datosOriginales = datos;
+        TIPO_PERFIL = datos.tipo_perfil || 'feligres';
 
+        // Campos comunes para ambos tipos de perfil
         document.getElementById('nombre').value = datos.nombreCompleto || '';
         document.getElementById('email').value = datos.email || '';
-        document.getElementById('telefono').value = datos.telefonoFel || '';
-        document.getElementById('direccion').value = datos.direccionFel || '';
-        document.getElementById('fecha_nacimiento').value = datos.f_nacimiento || '';
+        
+        // Para feligrés
+        if (TIPO_PERFIL === 'feligres') {
+            document.getElementById('telefono').value = datos.telefonoFel || '';
+            document.getElementById('direccion').value = datos.direccionFel || '';
+            document.getElementById('fecha_nacimiento').value = datos.f_nacimiento || '';
+            
+            // Mostrar campos de feligrés y ocultar de personal
+            document.querySelectorAll('.feligres-only').forEach(el => el.style.display = '');
+            document.querySelectorAll('.personal-only').forEach(el => el.style.display = 'none');
+        }
+        // Para personal (Sacerdote, Secretaria, etc.)
+        else if (TIPO_PERFIL === 'personal') {
+            document.getElementById('telefono').value = datos.telefonoPers || '';
+            document.getElementById('direccion').value = datos.direccionPers || '';
+            
+            // Mostrar información de cargo y parroquia
+            const cargoInput = document.getElementById('cargo');
+            const parroquiaInput = document.getElementById('parroquia');
+            
+            if (cargoInput) {
+                cargoInput.value = datos.nombCargo || 'Sin cargo';
+            }
+            if (parroquiaInput) {
+                parroquiaInput.value = datos.nombParroquia || 'Sin asignación';
+            }
+            
+            // Ocultar campos de feligrés y mostrar de personal
+            document.querySelectorAll('.feligres-only').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.personal-only').forEach(el => {
+                el.style.display = '';
+                // Para los labels
+                if (el.tagName === 'LABEL') {
+                    el.style.display = 'block';
+                }
+            });
+        }
 
         if (passwordInput) {
             passwordInput.value = PASSWORD_PLACEHOLDER;
@@ -99,27 +136,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const obtenerDatosParaActualizacion = () => {
         const nombreCompleto = document.getElementById('nombre').value.split(/\s+/);
 
-        const datos = {
-            email: document.getElementById('email').value,
-            telefonoFel: document.getElementById('telefono').value,
-            direccionFel: document.getElementById('direccion').value,
-            f_nacimiento: document.getElementById('fecha_nacimiento').value,
+        if (TIPO_PERFIL === 'feligres') {
+            const datos = {
+                email: document.getElementById('email').value,
+                telefonoFel: document.getElementById('telefono').value,
+                direccionFel: document.getElementById('direccion').value,
+                f_nacimiento: document.getElementById('fecha_nacimiento').value,
 
-            numDocFel: datosOriginales.numDocFel || '12345678',
-            idRol: datosOriginales.idRol || 2,
-            idTipoDocumento: datosOriginales.nombDocumento || 'DNI',
-            sexoFel: datosOriginales.sexoFel || 'M',
+                numDocFel: datosOriginales.numDocFel || '12345678',
+                idRol: datosOriginales.idRol || 2,
+                idTipoDocumento: datosOriginales.nombDocumento || 'DNI',
+                sexoFel: datosOriginales.sexoFel || 'M',
 
-            nombFel: nombreCompleto[0] || '',
-            apePatFel: nombreCompleto[1] || datosOriginales.apePatFel || '',
-            apeMatFel: nombreCompleto[2] || datosOriginales.apeMatFel || '',
-        };
+                nombFel: nombreCompleto[0] || '',
+                apePatFel: nombreCompleto[1] || datosOriginales.apePatFel || '',
+                apeMatFel: nombreCompleto[2] || datosOriginales.apeMatFel || '',
+            };
 
-        if (passwordInput.value !== '') {
-            datos.clave = passwordInput.value;
+            if (passwordInput.value !== '' && passwordInput.value !== PASSWORD_PLACEHOLDER) {
+                datos.clave = passwordInput.value;
+            }
+
+            return datos;
+        } else {
+            // Para personal
+            const datos = {
+                email: document.getElementById('email').value,
+                telefonoPers: document.getElementById('telefono').value,
+                direccionPers: document.getElementById('direccion').value,
+
+                numDocPers: datosOriginales.numDocPers || '12345678',
+                idTipoDocumento: datosOriginales.nombDocumento || 'DNI',
+                sexoPers: datosOriginales.sexoPers || 'M',
+
+                nombPers: nombreCompleto[0] || '',
+                apePatPers: nombreCompleto[1] || datosOriginales.apePatPers || '',
+                apeMatPers: nombreCompleto[2] || datosOriginales.apeMatPers || '',
+            };
+
+            if (passwordInput.value !== '' && passwordInput.value !== PASSWORD_PLACEHOLDER) {
+                datos.clave = passwordInput.value;
+            }
+
+            return datos;
         }
-
-        return datos;
     };
 
     if (btnModificar) {
@@ -162,7 +222,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const datosActualizados = obtenerDatosParaActualizacion();
 
         try {
-            const response = await fetch(`/api/usuario/actualizar_feligres/${ID_USUARIO_LOGUEADO}`, {
+            // Usar la ruta unificada de actualización de perfil
+            const response = await fetch('/api/usuario/perfil/actualizar', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -174,9 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.ok) {
                 alert('✅ Cambios guardados exitosamente.');
-                // No recargamos aquí, solo volvemos al modo visualización
                 toggleEdicion(false);
-                // Recargamos los datos para asegurar que los campos reflejen lo guardado
                 cargarDatosPerfil();
             } else {
                 alert(`Error al guardar: ${data.mensaje}`);

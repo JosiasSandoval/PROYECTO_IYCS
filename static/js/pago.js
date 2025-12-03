@@ -41,11 +41,11 @@ const formSections = document.querySelectorAll('.form-section');
 let todasLasReservas = []; // Almacena todas las reservas cargadas
 
 // ---------- RENDERIZADO DE RESERVAS ----------
-function renderizarReservas(reservas, mostrarTodas = false) {
+function renderizarReservas(reservas, mostrarTodas = false, checkboxesPreservar = null) {
     listaReservas.innerHTML = '';
     if (!reservas || reservas.length === 0) {
         const mensaje = ROL_USUARIO.toUpperCase() === 'SECRETARIA' 
-            ? 'No hay reservas pendientes de pago.' 
+            ? 'No se encontraron reservas con ese criterio de búsqueda.' 
             : 'No tienes reservas pendientes de pago.';
         listaReservas.innerHTML = `<div class="mensaje-info">${mensaje}</div>`;
         return;
@@ -74,19 +74,36 @@ function renderizarReservas(reservas, mostrarTodas = false) {
 
         // Para secretaria, mostrar nombre del feligrés si está disponible
         let textoMostrar = `${nombreServicio} (${fechaFormateada})`;
-        if (ROL_USUARIO.toUpperCase() === 'SECRETARIA' && reserva.nombreFeligres) {
-            textoMostrar = `${reserva.nombreFeligres} - ${textoMostrar}`;
+        // Obtener nombre del feligrés (no de parroquia)
+        let nombreFeligres = reserva.nombreFeligres || reserva.nombreSolicitante || '';
+        // Si el nombre es igual al nombre de la parroquia, es una reserva de parroquia (no tiene feligrés)
+        if (reserva.nombreParroquia && nombreFeligres === reserva.nombreParroquia) {
+            nombreFeligres = ''; // No mostrar nombre de parroquia como si fuera feligrés
+        }
+        if (ROL_USUARIO.toUpperCase() === 'SECRETARIA' && nombreFeligres) {
+            textoMostrar = `${nombreFeligres} - ${textoMostrar}`;
         }
 
         // Indicador de pago pendiente para secretaria
         let indicadorPago = '';
+        let esPendiente = false;
         if (ROL_USUARIO.toUpperCase() === 'SECRETARIA' && reserva.tienePagoReserva && reserva.estadoPago === 'PENDIENTE') {
             indicadorPago = '<span class="badge-pendiente" style="color: orange; font-size: 0.85em; margin-left: 8px;">[Pago Pendiente]</span>';
+            esPendiente = true;
         }
 
+        // Si es secretaria y tiene pago pendiente, marcar el checkbox automáticamente
+        // También preservar si estaba seleccionado antes del filtro
+        let checkedAttr = '';
+        if (ROL_USUARIO.toUpperCase() === 'SECRETARIA' && esPendiente) {
+            checkedAttr = 'checked';
+        } else if (checkboxesPreservar && checkboxesPreservar.has(id.toString())) {
+            checkedAttr = 'checked';
+        }
+        
         const reservaHTML = `
-            <div class="reserva-row" data-id="${id}" data-monto="${montoNumerico}" data-feligres="${(reserva.nombreFeligres || '').toLowerCase()}">
-              <input type="checkbox" class="reserva-checkbox" id="check-${id}">
+            <div class="reserva-row" data-id="${id}" data-monto="${montoNumerico}" data-feligres="${nombreFeligres.toLowerCase()}" data-estado-pago="${reserva.estadoPago || 'SIN_PAGO'}" data-tiene-pago="${reserva.tienePagoReserva || false}">
+              <input type="checkbox" class="reserva-checkbox" id="check-${id}" ${esPendiente ? 'data-pendiente="true"' : ''} ${checkedAttr}>
               <label for="check-${id}">${textoMostrar}${indicadorPago}</label>
               <span class="reserva-monto">S/ ${montoNumerico.toFixed(2)}</span>
             </div>
@@ -118,15 +135,16 @@ async function cargarReservas() {
             let reservasFiltradas = [];
             
             if (rol === 'FELIGRES') {
-                // Feligrés: solo reservas sin pago ni pago_reserva (tienePagoReserva = false)
+                // Feligrés: solo reservas sin pago_reserva (que no tienen pago registrado)
                 reservasFiltradas = data.datos.filter(r => 
                     r.estadoReserva === 'PENDIENTE_PAGO' && 
                     !r.tienePagoReserva
                 );
             } else if (rol === 'SECRETARIA') {
-                // Secretaria: todas las reservas con estado PENDIENTE_PAGO, incluyendo las que tienen pago pendiente
+                // Secretaria: reservas sin pago Y reservas con pago PENDIENTE (efectivo)
                 reservasFiltradas = data.datos.filter(r => 
-                    r.estadoReserva === 'PENDIENTE_PAGO'
+                    r.estadoReserva === 'PENDIENTE_PAGO' && 
+                    (!r.tienePagoReserva || r.estadoPago === 'PENDIENTE')
                 );
             }
             
@@ -134,7 +152,10 @@ async function cargarReservas() {
             todasLasReservas = reservasFiltradas;
             
             renderizarReservas(reservasFiltradas);
-            actualizarResumenPago();
+            // Pequeño delay para asegurar que los checkboxes estén en el DOM antes de actualizar
+            setTimeout(() => {
+                actualizarResumenPago();
+            }, 100);
         } else {
             listaReservas.innerHTML = `<div class="mensaje-info">No se pudo cargar la lista de reservas.</div>`;
         }
@@ -149,6 +170,7 @@ function actualizarResumenPago() {
     let totalMonto = 0;
     let contadorReservas = 0;
     let idsSeleccionados = [];
+    let estadosPago = new Set(); // Para validar que no se mezclen diferentes estados
 
     const checkboxes = listaReservas.querySelectorAll('.reserva-checkbox');
     checkboxes.forEach(cb => {
@@ -156,11 +178,33 @@ function actualizarResumenPago() {
             const row = cb.closest('.reserva-row');
             const monto = parseFloat(row.dataset.monto) || 0;
             const idReserva = row.dataset.id;
+            const estadoPago = row.dataset.estadoPago || 'SIN_PAGO';
+            const tienePago = row.dataset.tienePago === 'true';
+            
+            // Agregar estado de pago al conjunto
+            if (tienePago) {
+                estadosPago.add(estadoPago);
+            } else {
+                estadosPago.add('SIN_PAGO');
+            }
+            
             totalMonto += monto;
             contadorReservas++;
             idsSeleccionados.push(idReserva);
         }
     });
+
+    // VALIDACIÓN: No se pueden juntar reservas con diferentes estados de pago
+    if (estadosPago.size > 1) {
+        alert('⚠️ No puedes seleccionar reservas con diferentes estados de pago. Solo puedes seleccionar:\n- Reservas sin pago, O\n- Reservas con pago PENDIENTE (para aprobar)');
+        // Desmarcar todas las seleccionadas
+        checkboxes.forEach(cb => {
+            if (cb.checked) cb.checked = false;
+        });
+        totalMonto = 0;
+        contadorReservas = 0;
+        idsSeleccionados = [];
+    }
 
     const totalFormateado = `S/ ${totalMonto.toFixed(2)}`;
     totalReservasSpan.textContent = totalFormateado;
@@ -169,9 +213,43 @@ function actualizarResumenPago() {
     totalPagarSpan.textContent = totalFormateado;
     idReservasInput.value = idsSeleccionados.join(',');
 
+    // Verificar si hay pago pendiente seleccionado (solo secretaria)
+    let hayPagoPendienteSeleccionado = false;
+    if (ROL_USUARIO.toUpperCase() === 'SECRETARIA' && contadorReservas > 0) {
+        hayPagoPendienteSeleccionado = Array.from(checkboxes).some(cb => {
+            if (!cb.checked) return false;
+            const row = cb.closest('.reserva-row');
+            return row && row.dataset.estadoPago === 'PENDIENTE' && row.dataset.tienePago === 'true';
+        });
+    }
+    
+    // Si hay pago pendiente, ocultar método efectivo y seleccionar tarjeta
+    if (hayPagoPendienteSeleccionado) {
+        const metodoEfectivo = document.querySelector('.metodo-card[data-metodo="efectivo"]');
+        if (metodoEfectivo) {
+            metodoEfectivo.style.display = 'none';
+        }
+        // Si el método activo es efectivo, cambiar a tarjeta
+        const metodoActivo = document.querySelector('.metodo-card.active')?.dataset.metodo;
+        if (metodoActivo === 'efectivo') {
+            cambiarMetodoPago('tarjeta');
+        }
+    } else {
+        // Mostrar método efectivo si no hay pago pendiente
+        const metodoEfectivo = document.querySelector('.metodo-card[data-metodo="efectivo"]');
+        if (metodoEfectivo) {
+            metodoEfectivo.style.display = '';
+        }
+    }
+
     if (contadorReservas === 0) {
         btnSubmit.disabled = true;
         btnSubmit.textContent = 'Selecciona una Reserva';
+        // Mostrar método efectivo cuando no hay selección
+        const metodoEfectivo = document.querySelector('.metodo-card[data-metodo="efectivo"]');
+        if (metodoEfectivo) {
+            metodoEfectivo.style.display = '';
+        }
     } else {
         btnSubmit.disabled = false;
         const metodoActivo = document.querySelector('.metodo-card.active')?.dataset.metodo || 'tarjeta';
@@ -182,12 +260,30 @@ function actualizarResumenPago() {
 function actualizarBotonSubmit(metodo, total) {
     btnSubmit.classList.remove('btn-tarjeta', 'btn-yape', 'btn-plin', 'btn-efectivo');
     const montoLimpio = total.replace('S/ ', '');
-    switch (metodo) {
-        case 'tarjeta': btnSubmit.textContent = `Pagar S/ ${montoLimpio} con Tarjeta`; btnSubmit.classList.add('btn-tarjeta'); break;
-        case 'yape': btnSubmit.textContent = `Yapear S/ ${montoLimpio}`; btnSubmit.classList.add('btn-yape'); break;
-        case 'plin': btnSubmit.textContent = `Pagar S/ ${montoLimpio} con Plin`; btnSubmit.classList.add('btn-plin'); break;
-        case 'efectivo': btnSubmit.textContent = 'Confirmar Pago en Oficina'; btnSubmit.classList.add('btn-efectivo'); break;
-        default: btnSubmit.textContent = 'Procesar Pago';
+    
+    // Verificar si hay reservas con pago PENDIENTE seleccionadas (solo secretaria)
+    let hayPagoPendiente = false;
+    if (ROL_USUARIO.toUpperCase() === 'SECRETARIA') {
+        const checkboxes = listaReservas.querySelectorAll('.reserva-checkbox:checked');
+        hayPagoPendiente = Array.from(checkboxes).some(cb => {
+            const row = cb.closest('.reserva-row');
+            return row && row.dataset.estadoPago === 'PENDIENTE' && row.dataset.tienePago === 'true';
+        });
+    }
+    
+    if (hayPagoPendiente) {
+        // Si hay pago pendiente, mostrar botón de aprobar
+        btnSubmit.textContent = '✅ Aprobar Pago Pendiente';
+        btnSubmit.classList.add('btn-success');
+    } else {
+        // Botones normales según método
+        switch (metodo) {
+            case 'tarjeta': btnSubmit.textContent = `Pagar S/ ${montoLimpio} con Tarjeta`; btnSubmit.classList.add('btn-tarjeta'); break;
+            case 'yape': btnSubmit.textContent = `Yapear S/ ${montoLimpio}`; btnSubmit.classList.add('btn-yape'); break;
+            case 'plin': btnSubmit.textContent = `Pagar S/ ${montoLimpio} con Plin`; btnSubmit.classList.add('btn-plin'); break;
+            case 'efectivo': btnSubmit.textContent = 'Confirmar Pago en Oficina'; btnSubmit.classList.add('btn-efectivo'); break;
+            default: btnSubmit.textContent = 'Procesar Pago';
+        }
     }
 }
 
@@ -216,23 +312,91 @@ function aplicarFiltroBusqueda() {
     
     if (!filtroInput) return;
 
+    // Validar que solo se ingresen letras y espacios (no números)
+    filtroInput.addEventListener('keypress', e => {
+        const char = String.fromCharCode(e.which);
+        // Permitir letras (incluyendo acentos), espacios y teclas especiales (backspace, delete, etc.)
+        if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]$/.test(char) && !e.ctrlKey && !e.metaKey && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+            e.preventDefault();
+        }
+    });
+
+    // También validar al pegar texto
+    filtroInput.addEventListener('paste', e => {
+        e.preventDefault();
+        const texto = (e.clipboardData || window.clipboardData).getData('text');
+        // Filtrar solo letras, espacios y caracteres especiales del español
+        const textoLimpio = texto.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+        filtroInput.value = textoLimpio;
+        // Disparar evento input para que se ejecute el filtro
+        filtroInput.dispatchEvent(new Event('input'));
+    });
+
     filtroInput.addEventListener('input', e => {
+        // Limpiar cualquier número que se haya ingresado
+        e.target.value = e.target.value.replace(/[0-9]/g, '');
         const textoBusqueda = e.target.value.toLowerCase().trim();
         
         if (ROL_USUARIO.toUpperCase() === 'SECRETARIA') {
+            // Guardar los checkboxes seleccionados antes de filtrar
+            const checkboxesSeleccionados = new Set();
+            listaReservas.querySelectorAll('.reserva-checkbox:checked').forEach(cb => {
+                const row = cb.closest('.reserva-row');
+                if (row) {
+                    checkboxesSeleccionados.add(row.dataset.id);
+                }
+            });
+            
             let reservasFiltradas = todasLasReservas;
             
             if (textoBusqueda) {
-                // Filtrar por nombre de feligrés
+                // Filtrar SOLO por nombre de feligrés (quien hace la reserva)
+                // Normalizar: eliminar espacios múltiples y convertir a minúsculas
+                const textoBusquedaNormalizado = textoBusqueda.replace(/\s+/g, ' ').trim().toLowerCase();
+                
                 reservasFiltradas = todasLasReservas.filter(r => {
-                    const nombreFeligres = (r.nombreFeligres || '').toLowerCase();
-                    const nombreServicio = (r.acto || r.nombreActo || r.mencion || '').toLowerCase();
-                    return nombreFeligres.includes(textoBusqueda) || nombreServicio.includes(textoBusqueda);
+                    // Obtener nombre del feligrés (puede venir como nombreFeligres o nombreSolicitante)
+                    let nombreFeligres = (r.nombreFeligres || r.nombreSolicitante || '').trim();
+                    
+                    // Si no hay nombre, saltar
+                    if (!nombreFeligres) {
+                        return false;
+                    }
+                    
+                    // Si el nombre es el nombre de la parroquia, no buscar (reservas de parroquia no tienen feligrés)
+                    if (r.nombreParroquia && nombreFeligres.toLowerCase() === r.nombreParroquia.toLowerCase()) {
+                        return false; // Saltar reservas de parroquia en la búsqueda por feligrés
+                    }
+                    
+                    // Normalizar el nombre: eliminar espacios múltiples y convertir a minúsculas
+                    nombreFeligres = nombreFeligres.replace(/\s+/g, ' ').toLowerCase().trim();
+                    
+                    // Buscar si el texto de búsqueda está incluido en el nombre
+                    // También buscar por palabras individuales para mayor flexibilidad
+                    const palabrasBusqueda = textoBusquedaNormalizado.split(' ').filter(p => p.length > 0);
+                    if (palabrasBusqueda.length === 0) return false;
+                    
+                    // Buscar coincidencia: todas las palabras deben estar en el nombre
+                    const todasLasPalabrasCoinciden = palabrasBusqueda.every(palabra => 
+                        nombreFeligres.includes(palabra)
+                    );
+                    
+                    return todasLasPalabrasCoinciden;
                 });
             }
             
-            renderizarReservas(reservasFiltradas);
-            actualizarResumenPago();
+            // Si no hay texto de búsqueda, mostrar todas las reservas
+            if (!textoBusqueda) {
+                reservasFiltradas = todasLasReservas;
+            }
+            
+            // Renderizar con los checkboxes a preservar
+            renderizarReservas(reservasFiltradas, false, checkboxesSeleccionados);
+            
+            // Actualizar resumen después de renderizar
+            setTimeout(() => {
+                actualizarResumenPago();
+            }, 50);
         }
     });
 }
@@ -265,6 +429,52 @@ btnSubmit.addEventListener('click', async e => {
     const idReservas = ids.split(',').map(id => id.trim());
     const total = parseFloat(totalPagarSpan.textContent.replace(/[^\d.]/g, '')) || 0;
 
+    // Verificar si alguna reserva tiene pago PENDIENTE (solo para secretaria)
+    let tienePagoPendiente = false;
+    let idPagoPendiente = null;
+    
+    if (ROL_USUARIO.toUpperCase() === 'SECRETARIA') {
+        for (const idRes of idReservas) {
+            const row = document.querySelector(`.reserva-row[data-id="${idRes}"]`);
+            if (row && row.dataset.estadoPago === 'PENDIENTE' && row.dataset.tienePago === 'true') {
+                tienePagoPendiente = true;
+                // Obtener idPago de la reserva
+                try {
+                    const respPago = await fetch(`/api/pago/pago_por_reserva/${idRes}`);
+                    const dataPago = await respPago.json();
+                    if (dataPago.ok && dataPago.datos) {
+                        idPagoPendiente = dataPago.datos.idPago;
+                        break; // Solo necesitamos uno, todas deben tener el mismo estado
+                    }
+                } catch (error) {
+                    console.error('Error obteniendo pago:', error);
+                }
+            }
+        }
+    }
+
+    // Si hay pago pendiente, solo aprobar (no crear nuevo pago)
+    if (tienePagoPendiente && idPagoPendiente) {
+        try {
+            const respAprobar = await fetch(`/api/pago/actualizar_estado_pago/${idPagoPendiente}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estadoPago: 'APROBADO' })
+            });
+            const dataAprobar = await respAprobar.json();
+            if (!respAprobar.ok || !dataAprobar.ok) {
+                return alert(dataAprobar.mensaje || 'Error al aprobar el pago.');
+            }
+            alert('✅ Pago aprobado correctamente. Las reservas pasan a PENDIENTE_DOCUMENTO.');
+            window.location.reload();
+            return;
+        } catch (error) {
+            console.error('Error aprobando pago:', error);
+            return alert('Error al aprobar el pago.');
+        }
+    }
+
+    // Si no hay pago pendiente, crear nuevo pago
     let estadoPago = '';
     let archivoComprobante = null;
 
@@ -330,13 +540,21 @@ btnSubmit.addEventListener('click', async e => {
             alert('Pago realizado correctamente. La reserva está pendiente de entrega de documentos físicos en la parroquia.');
         } else if (metodo === 'efectivo') {
             // Efectivo: el pago queda PENDIENTE, no se cambia el estado de la reserva
-            // No aparece en la vista del feligrés (ya está filtrado), pero sí en secretaria
-            alert('Pago registrado como EFECTIVO (PENDIENTE). Completa el pago en oficina.');
+            // Para feligrés: desaparece de la lista (ya está filtrado)
+            // Para secretaria: aparece con badge [Pago Pendiente]
+            if (ROL_USUARIO.toUpperCase() === 'FELIGRES') {
+                alert('Pago registrado como EFECTIVO (PENDIENTE). Completa el pago en oficina.');
+                window.location.href = '/cliente/mis_reservas';
+            } else {
+                alert('Pago registrado como EFECTIVO (PENDIENTE). Aparecerá en la lista para aprobación.');
+                window.location.reload(); // Recargar para mostrar el badge
+            }
+            return;
         }
 
         // Redirigir según el rol
         if (ROL_USUARIO.toUpperCase() === 'SECRETARIA') {
-            window.location.href = '/cliente/pago';
+            window.location.reload(); // Recargar para actualizar la lista
         } else {
             window.location.href = '/cliente/mis_reservas';
         }
