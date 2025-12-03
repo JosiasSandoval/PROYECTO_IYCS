@@ -32,7 +32,6 @@
 
           <!-- Administrador -->
           <a href="/admi/parroquia" class="submenu-item admin-only">Gestionar parroquia</a>
-          <a href="/admi/parroquia_personal" class="submenu-item admin-only">Personal parroquia</a>
         </div>
       </div>
 
@@ -55,6 +54,9 @@
           </a>
 
           <!-- Administrador -->
+          <a href="/cliente/reserva" class="submenu-item admin-only">
+            Registrar Reserva
+          </a>
           <a href="/admi/reserva" class="submenu-item admin-only">
             Gestionar Reserva
           </a>
@@ -91,14 +93,30 @@
         </button>
 
         <div class="submenu">
-          <!-- Feligres / Secretaria -->
-          <a href="/cliente/pago" class="submenu-item feligres-only secretaria-only">
+          <!-- Feligres / Secretaria / Administrador -->
+          <a href="/cliente/pago" class="submenu-item feligres-only secretaria-only admin-only">
             Pagos
           </a>
 
           <!-- Administrador -->
           <a href="/admi/metodo_pago" class="submenu-item admin-only">Gestionar Método Pago</a>
           <a href="/admi/pago" class="submenu-item admin-only">Lista de Pagos</a>
+        </div>
+      </div>
+
+
+      <!-- USUARIOS (solo administrador, secretaria, sacerdote) -->
+      <div class="menu-grupo admin-only secretaria-only sacerdote-only">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/usuario.png" alt="usuario" /> Usuarios
+          <span class="flecha">▸</span>
+        </button>
+
+        <div class="submenu">
+          <!-- Administrador -->
+          <a href="/admi/feligres" class="submenu-item admin-only secretaria-only sacerdote-only">Gestionar Feligreses</a>
+          <a href="/admi/personal" class="submenu-item admin-only">Gestionar Personal</a>
+          <a href="/cliente/perfil" class="submenu-item admin-only secretaria-only sacerdote-only">Mi Perfil</a>
         </div>
       </div>
 
@@ -124,16 +142,34 @@
       </div>
 
 
-      <!-- REQUISITOS (solo administrador) -->
-      <div class="menu-grupo admin-only">
+      <!-- REQUISITOS (administrador y secretaria) -->
+      <div class="menu-grupo admin-only secretaria-only">
         <button class="menu-item boton-desplegable">
           <img src="/static/img/requisito.png" alt="requisito" /> Requisitos
           <span class="flecha">▸</span>
         </button>
 
         <div class="submenu">
-          <a href="/admi/requisitos" class="submenu-item">Gestionar Requisitos</a>
-          <a href="/admi/documento_requisito" class="submenu-item">Documentos de Requisitos</a>
+          <a href="/admi/requisitos" class="submenu-item admin-only">Gestionar Requisitos</a>
+          <a href="/admi/documento_requisito" class="submenu-item admin-only">Documentos de Requisitos</a>
+          <a href="/admi/secretaria_documentos" class="submenu-item secretaria-only">Gestión de Documentos</a>
+        </div>
+      </div>
+
+
+      <!-- CONFIGURACIÓN (solo administrador) -->
+      <div class="menu-grupo admin-only">
+        <button class="menu-item boton-desplegable">
+          <img src="/static/img/usuario.png" alt="configuracion" /> Configuración
+          <span class="flecha">▸</span>
+        </button>
+
+        <div class="submenu">
+          <a href="/admi/configuracion" class="submenu-item">Configuración del Sistema</a>
+          <a href="/admi/acto_parroquia" class="submenu-item">Actos por Parroquia</a>
+          <a href="/admi/tipo_documento" class="submenu-item">Tipos de Documento</a>
+          <a href="/admi/cargo" class="submenu-item">Cargos</a>
+          <a href="/admi/rol" class="submenu-item">Roles y Permisos</a>
         </div>
       </div>
 
@@ -152,7 +188,5 @@
 
     </nav>
   </div>
-
-  <script src="/static/js/barra_lateral.js"></script>
 </body>
 </html>

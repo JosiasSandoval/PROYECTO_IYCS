@@ -431,22 +431,22 @@ INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo, cost
 
 
 INSERT INTO REQUISITO (nombRequisito, f_requisito, descripcion, estadoRequisito) VALUES
-
 -- Requisitos para Bautismos
-('Partida de Nacimiento del Bautizando', '2025-01-01', 'Copia certificada de la Partida de Nacimiento civil.', TRUE), -- ID 4
-('Documentos de Identidad de Padres', '2025-01-01', 'Copia de DNI o pasaporte de ambos padres.', TRUE), -- ID 5
-('Certificado de Padrinos (DNI)', '2025-01-01', 'Copia de DNI del Padrino y la Madrina.', TRUE), -- ID 6
-('Certificado de Charla Pre-Bautismal', '2025-01-01', 'Constancia de asistencia de padres y padrinos a la catequesis pre-bautismal.', TRUE), -- ID 7
-('Licencia de la Parroquia', '2025-01-01', 'Permiso (Licencia) de la parroquia de residencia de los padres.', TRUE), -- ID 8
+('Partida de Nacimiento del Bautizando', '2025-01-01', 'Copia certificada de la Partida de Nacimiento civil.', TRUE),
+('Documentos de Identidad de Padres', '2025-01-01', 'Copia de DNI o pasaporte de ambos padres.', TRUE),
+('Certificado de Padrinos (DNI)', '2025-01-01', 'Copia de DNI del Padrino y la Madrina.', TRUE),
+('Certificado de Charla Pre-Bautismal', '2025-01-01', 'Constancia de asistencia de padres y padrinos a la catequesis pre-bautismal.', TRUE),
+('Licencia de la Parroquia', '2025-01-01', 'Permiso (Licencia) de la parroquia de residencia de los padres.', TRUE),
 
 -- Requisitos para Matrimonios
-('Partida de Bautismo Actualizada', '2025-01-01', 'Partida de Bautismo de ambos contrayentes, expedida con no más de 6 meses de antigüedad.', TRUE), -- ID 9
-('Partida de Confirmación', '2025-01-01', 'Partida o constancia de Confirmación de ambos contrayentes.', TRUE), -- ID 10
-('Certificado de Charla Pre-Matrimonial', '2025-01-01', 'Constancia de asistencia al curso de preparación matrimonial.', TRUE), -- ID 11
-('Documentos de Identidad Contrayentes', '2025-01-01', 'Copia de DNI o pasaporte de ambos.', TRUE), -- ID 12
-('Certificado de Soltería Canónica', '2025-01-01', 'Documento que acredita que no están casados por la Iglesia.', TRUE), -- ID 13
-('Licencia del Párroco', '2025-01-01', 'Permiso del párroco de domicilio del contrayente/novia.', TRUE), -- ID 14
-('Documentos de Identidad de Testigos', '2025-01-01', 'Copia de DNI de los testigos (mínimo 2 o 4, según requerimiento).', TRUE); -- ID 15
+('Partida de Bautismo Actualizada', '2025-01-01', 'Partida de Bautismo de ambos contrayentes, expedida con no más de 6 meses de antigüedad.', TRUE),
+('Partida de Confirmación', '2025-01-01', 'Partida o constancia de Confirmación de ambos contrayentes.', TRUE),
+('Certificado de Charla Pre-Matrimonial', '2025-01-01', 'Constancia de asistencia al curso de preparación matrimonial.', TRUE),
+('Documentos de Identidad Contrayentes', '2025-01-01', 'Copia de DNI o pasaporte de ambos.', TRUE),
+('Certificado de Soltería Canónica', '2025-01-01', 'Documento que acredita que no están casados por la Iglesia.', TRUE),
+('Licencia del Párroco', '2025-01-01', 'Permiso del párroco de domicilio del contrayente/novia.', TRUE),
+('Documentos de Identidad de Testigos', '2025-01-01', 'Copia de DNI de los testigos (mínimo 2 o 4, según requerimiento).', TRUE);
+
 INSERT INTO ACTO_REQUISITO (idActo, idRequisito) VALUES
 -- ------------------------------
 -- Bautismo Comunitario (idActo: 3)
@@ -637,3 +637,510 @@ INSERT INTO ACTO_PARROQUIA (idActo, idParroquia, diaSemana, horaInicioActo, cost
 (7, 21, 'Dom', '12:00:00', 0.00), -- Parroquia Nuestra Señora del Rosario (Pimentel)
 (7, 22, 'Dom', '12:00:00', 0.00), -- Parroquia San Juan Bautista de Eten
 (7, 23, 'Dom', '12:00:00', 0.00); -- Parroquia Santa Rosa de Lima
+
+-- ============================================================
+-- INSERTS DE PRUEBA PARA PROBAR EL SISTEMA
+-- ============================================================
+
+-- ============================================================
+-- USUARIOS ADICIONALES PARA PRUEBAS
+-- ============================================================
+INSERT INTO USUARIO (email, clave, estadoCuenta) VALUES
+-- Administrador General (no relacionado a parroquia)
+('admin.general@litbook.pe', 'admin123', TRUE),
+
+-- Administradores por Parroquia (para probar múltiples roles)
+('admin.parroquia1@litbook.pe', 'admin123', TRUE),
+('admin.parroquia2@litbook.pe', 'admin123', TRUE),
+('admin.parroquia3@litbook.pe', 'admin123', TRUE),
+
+-- Sacerdotes adicionales por parroquia
+('sacerdote.parroquia1@litbook.pe', 'sacerdote123', TRUE),
+('sacerdote.parroquia2@litbook.pe', 'sacerdote123', TRUE),
+('sacerdote.parroquia3@litbook.pe', 'sacerdote123', TRUE),
+('sacerdote.parroquia4@litbook.pe', 'sacerdote123', TRUE),
+('sacerdote.parroquia5@litbook.pe', 'sacerdote123', TRUE),
+
+-- Secretarias adicionales por parroquia
+('secretaria.parroquia1@litbook.pe', 'secretaria123', TRUE),
+('secretaria.parroquia2@litbook.pe', 'secretaria123', TRUE),
+('secretaria.parroquia3@litbook.pe', 'secretaria123', TRUE),
+('secretaria.parroquia4@litbook.pe', 'secretaria123', TRUE),
+('secretaria.parroquia5@litbook.pe', 'secretaria123', TRUE),
+
+-- Feligreses adicionales para pruebas
+('feligres.test1@mail.com', 'feligres123', TRUE),
+('feligres.test2@mail.com', 'feligres123', TRUE),
+('feligres.test3@mail.com', 'feligres123', TRUE),
+('feligres.test4@mail.com', 'feligres123', TRUE),
+('feligres.test5@mail.com', 'feligres123', TRUE);
+
+-- ============================================================
+-- PERSONAL ADICIONAL (Administradores, Sacerdotes, Secretarias)
+-- Los IDs de PERSONAL empiezan desde 16 (continuación después de los 15 existentes)
+-- ============================================================
+INSERT INTO PERSONAL (numDocPers, nombPers, apePatPers, apeMatPers, sexoPers, direccionPers, telefonoPers, idTipoDocumento, idUsuario) VALUES
+-- Administrador General (ID Usuario 31, idPersonal = 16)
+('99999999', 'Administrador', 'General', 'Sistema', 'M', 'Oficina Central Chiclayo', '999999999', 1, 31),
+
+-- Administradores por Parroquia (Usuarios 32-34, idPersonal = 17-19)
+('88888888', 'Admin', 'Parroquia', 'Uno', 'M', 'Parroquia Santa María Catedral', '888888888', 1, 32),
+('77777777', 'Admin', 'Parroquia', 'Dos', 'F', 'Parroquia San Antonio de Padua', '777777777', 1, 33),
+('66666666', 'Admin', 'Parroquia', 'Tres', 'M', 'Parroquia San Pedro', '666666666', 1, 34),
+
+-- Sacerdotes adicionales (Usuarios 35-39, idPersonal = 20-24)
+('55555555', 'Padre', 'García', 'López', 'M', 'Parroquia Santa María Catedral', '555555555', 1, 35),
+('44444444', 'Padre', 'Martínez', 'Sánchez', 'M', 'Parroquia San Antonio de Padua', '444444444', 1, 36),
+('33333333', 'Padre', 'Rodríguez', 'González', 'M', 'Parroquia San Pedro', '333333333', 1, 37),
+('22222222', 'Padre', 'Fernández', 'Pérez', 'M', 'Parroquia San Vicente de Paúl', '222222222', 1, 38),
+('11111111', 'Padre', 'López', 'Ramírez', 'M', 'Parroquia San José Obrero', '111111111', 1, 39),
+
+-- Secretarias adicionales (Usuarios 40-44, idPersonal = 25-29)
+('10101010', 'María', 'González', 'Vega', 'F', 'Parroquia Santa María Catedral', '101010101', 1, 40),
+('20202020', 'Carmen', 'Torres', 'Mendoza', 'F', 'Parroquia San Antonio de Padua', '202020202', 1, 41),
+('30303030', 'Rosa', 'Morales', 'Castro', 'F', 'Parroquia San Pedro', '303030303', 1, 42),
+('40404040', 'Ana', 'Vargas', 'Ríos', 'F', 'Parroquia San Vicente de Paúl', '404040404', 1, 43),
+('50505050', 'Lucía', 'Jiménez', 'Herrera', 'F', 'Parroquia San José Obrero', '505050505', 1, 44);
+
+-- ============================================================
+-- FELIGRESES ADICIONALES PARA PRUEBAS
+-- ============================================================
+INSERT INTO FELIGRES (numDocFel, nombFel, apePatFel, apeMatFel, f_nacimiento, sexoFel, direccionFel, telefonoFel, idTipoDocumento, idUsuario) VALUES
+('20123456', 'Pedro', 'Test', 'Uno', '1985-03-15', 'M', 'Av. Test 123', '901234567', 1, 45),
+('20234567', 'Ana', 'Test', 'Dos', '1990-07-22', 'F', 'Calle Test 456', '902345678', 1, 46),
+('20345678', 'Luis', 'Test', 'Tres', '1988-11-10', 'M', 'Jr. Test 789', '903456789', 1, 47),
+('20456789', 'Sofía', 'Test', 'Cuatro', '1992-05-18', 'F', 'Av. Test 321', '904567890', 1, 48),
+('20567890', 'Carlos', 'Test', 'Cinco', '1987-09-25', 'M', 'Calle Test 654', '905678901', 1, 49);
+
+-- ============================================================
+-- ASIGNACIÓN DE ROLES (Incluyendo múltiples roles para pruebas)
+-- ============================================================
+INSERT INTO ROL_USUARIO (idRol, idUsuario) VALUES
+-- Administrador General (solo Administrador, no tiene parroquia)
+(1, 31), -- Administrador General
+
+-- Administradores con múltiples roles (Administrador + otro rol)
+(1, 32), (2, 32), -- Admin Parroquia 1: Administrador + Sacerdote
+(1, 33), (3, 33), -- Admin Parroquia 2: Administrador + Secretaria
+(1, 34), (2, 34), (3, 34), -- Admin Parroquia 3: Administrador + Sacerdote + Secretaria
+
+-- Sacerdotes (algunos con múltiples roles)
+(2, 35), -- Sacerdote Parroquia 1
+(2, 36), -- Sacerdote Parroquia 2
+(2, 37), (3, 37), -- Sacerdote Parroquia 3: Sacerdote + Secretaria
+(2, 38), -- Sacerdote Parroquia 4
+(2, 39), -- Sacerdote Parroquia 5
+
+-- Secretarias (algunas con múltiples roles)
+(3, 40), -- Secretaria Parroquia 1
+(3, 41), -- Secretaria Parroquia 2
+(3, 42), -- Secretaria Parroquia 3
+(3, 43), (2, 43), -- Secretaria Parroquia 4: Secretaria + Sacerdote
+(3, 44), -- Secretaria Parroquia 5
+
+-- Feligreses de prueba
+(4, 45), -- Feligrés Test 1
+(4, 46), -- Feligrés Test 2
+(4, 47), -- Feligrés Test 3
+(4, 48), -- Feligrés Test 4
+(4, 49); -- Feligrés Test 5
+
+-- ============================================================
+-- ASIGNACIÓN DE PERSONAL A PARROQUIAS
+-- CLAVE: Administrador General (idPersonal 16) NO tiene asignación = ADMIN GLOBAL
+--        Otros admins SÍ tienen asignación = ADMIN LOCAL
+-- ============================================================
+INSERT INTO PARROQUIA_PERSONAL (f_inicio, f_fin, vigenciaParrPers, idParroquia, idCargo, idPersonal) VALUES
+-- IMPORTANTE: Administrador General (idPersonal 16) NO aparece aquí
+-- Esto lo hace ADMINISTRADOR GLOBAL (idParroquia = NULL)
+
+-- Administradores LOCALES por Parroquia (Personal IDs 17-19)
+-- Estos SÍ están asignados a parroquias específicas = ADMIN LOCAL
+('2024-01-01', NULL, TRUE, 1, 8, 17), -- Admin Parroquia 1 como Administrador (Santa María Catedral)
+('2024-01-01', NULL, TRUE, 2, 8, 18), -- Admin Parroquia 2 como Administrador (San Antonio de Padua)
+('2024-01-01', NULL, TRUE, 3, 8, 19), -- Admin Parroquia 3 como Administrador (San Pedro)
+
+-- Sacerdotes por Parroquia (Personal IDs 1, 2, 20-24)
+('2020-01-15', NULL, TRUE, 1, 1, 1),  -- Párroco Parroquia 1 (Raul Ortega - ya existía)
+('2024-01-01', NULL, TRUE, 1, 2, 20), -- Vicario Parroquia 1 (Padre García)
+('2021-03-10', NULL, TRUE, 2, 1, 2),  -- Párroco Parroquia 2 (Camila Loyola - ya existía)
+('2024-01-01', NULL, TRUE, 2, 2, 21), -- Vicario Parroquia 2 (Padre Martínez)
+('2024-01-01', NULL, TRUE, 3, 1, 22), -- Párroco Parroquia 3 (Padre Rodríguez)
+('2024-01-01', NULL, TRUE, 4, 1, 23), -- Párroco Parroquia 4 (Padre Fernández)
+('2024-01-01', NULL, TRUE, 5, 1, 24), -- Párroco Parroquia 5 (Padre López)
+
+-- Secretarias por Parroquia (Personal IDs 3-7, 25-29)
+('2019-07-20', NULL, TRUE, 1, 3, 3),  -- Secretaria Parroquia 1 (Jorge Flores - ya existía)
+('2024-01-01', NULL, TRUE, 1, 3, 25), -- Secretaria adicional Parroquia 1 (María González)
+('2022-02-01', NULL, TRUE, 2, 3, 4),  -- Secretaria Parroquia 2 (Gabriela Ramos - ya existía)
+('2024-01-01', NULL, TRUE, 2, 3, 26), -- Secretaria adicional Parroquia 2 (Carmen Torres)
+('2020-09-05', NULL, TRUE, 3, 3, 5),  -- Secretaria Parroquia 3 (Alexander Fernandez - ya existía)
+('2024-01-01', NULL, TRUE, 3, 3, 27), -- Secretaria adicional Parroquia 3 (Rosa Morales)
+('2021-11-18', NULL, TRUE, 4, 3, 6),  -- Secretaria Parroquia 4 (Lina Delgado - ya existía)
+('2024-01-01', NULL, TRUE, 4, 3, 28), -- Secretaria adicional Parroquia 4 (Ana Vargas)
+('2019-12-25', NULL, TRUE, 5, 3, 7),  -- Secretaria Parroquia 5 (Ricardo Silva - ya existía)
+('2024-01-01', NULL, TRUE, 5, 3, 29); -- Secretaria adicional Parroquia 5 (Lucía Jiménez)
+
+-- ============================================================
+-- RESERVAS DE PRUEBA (Diferentes estados y tipos)
+-- ============================================================
+INSERT INTO RESERVA (f_reserva, h_reserva, mencion, estadoReserva, numReprogramaciones, estadoReprogramado, vigenciaReserva, idUsuario, idSolicitante, idParroquia) VALUES
+-- Reservas PENDIENTE_PAGO (sin pago)
+('2025-12-15', '08:00:00', 'Misa por el alma de mi madre', 'PENDIENTE_PAGO', 0, FALSE, '2025-12-15', 1, 1, 1),
+('2025-12-16', '08:00:00', 'Misa de acción de gracias', 'PENDIENTE_PAGO', 0, FALSE, '2025-12-16', 2, 2, 1),
+('2025-12-17', '11:00:00', 'Bautismo de mi hijo', 'PENDIENTE_PAGO', 0, FALSE, '2025-12-17', 45, 16, 1),
+
+-- Reservas PENDIENTE_PAGO (con pago PENDIENTE - efectivo)
+('2025-12-18', '08:00:00', 'Misa por mi familia', 'PENDIENTE_PAGO', 0, FALSE, '2025-12-18', 3, 3, 1),
+('2025-12-19', '11:00:00', 'Bautismo de mi hija', 'PENDIENTE_PAGO', 0, FALSE, '2025-12-19', 46, 17, 2),
+
+-- Reservas PENDIENTE_PAGO (con pago APROBADO)
+('2025-12-20', '08:00:00', 'Misa por mi trabajo', 'PENDIENTE_PAGO', 0, FALSE, '2025-12-20', 4, 4, 1),
+('2025-12-21', '10:00:00', 'Misa comunitaria', 'PENDIENTE_PAGO', 0, FALSE, '2025-12-21', 5, 5, 1),
+
+-- Reservas CONFIRMADO (ya pagadas, esperando documentos)
+('2025-12-22', '08:00:00', 'Misa por salud', 'CONFIRMADO', 0, FALSE, '2025-12-22', 6, 6, 1),
+('2025-12-23', '11:00:00', 'Bautismo individual', 'CONFIRMADO', 0, FALSE, '2025-12-23', 47, 18, 2),
+
+-- Reservas ATENDIDO (ya realizadas)
+('2025-11-15', '08:00:00', 'Misa realizada', 'ATENDIDO', 0, FALSE, '2025-11-15', 7, 7, 1),
+('2025-11-20', '11:00:00', 'Bautismo realizado', 'ATENDIDO', 0, FALSE, '2025-11-20', 48, 19, 2),
+
+-- Reserva de Parroquia (Misa Dominical)
+('2025-12-14', '12:00:00', 'Misa dominical parroquial', 'RESERVA_PARROQUIA', 0, FALSE, '2025-12-14', 16, 1, 1),
+('2025-12-21', '12:00:00', 'Misa dominical parroquial', 'RESERVA_PARROQUIA', 0, FALSE, '2025-12-21', 16, 2, 2);
+
+-- ============================================================
+-- PARTICIPANTES DE ACTOS (Para las reservas creadas)
+-- ============================================================
+INSERT INTO PARTICIPANTES_ACTO (nombParticipante, rolParticipante, idActo, idReserva) VALUES
+-- Participantes para Misas Individuales (idActo = 1)
+('Juan Perez Lopez', 'Beneficiario', 1, 1),
+('Ana Lopez Diaz', 'Beneficiario', 1, 2),
+('Maria Garcia Santos', 'Beneficiario', 1, 4),
+('Carlos Sanchez Mora', 'Beneficiario', 1, 6),
+('Laura Martinez Rojas', 'Beneficiario', 1, 7),
+('Jose Ramirez Vega', 'Beneficiario', 1, 9),
+('Sofia Gomez Alvarez', 'Beneficiario', 1, 11),
+
+-- Participantes para Misa Comunitaria (idActo = 2)
+('Miguel Torres Cruz', 'Beneficiario', 2, 8),
+
+-- Participantes para Bautismo Individual (idActo = 4)
+('Pedro Test Uno', 'Padre', 4, 3),
+('Ana Test Dos', 'Madre', 4, 3),
+('Luis Test Tres', 'Padrino', 4, 3),
+('Sofia Test Cuatro', 'Madrina', 4, 3),
+('Padre García López', 'Sacerdote', 4, 3),
+
+('Ana Test Dos', 'Padre', 4, 5),
+('Luis Test Tres', 'Madre', 4, 5),
+('Carlos Test Cinco', 'Padrino', 4, 5),
+('Sofia Test Cuatro', 'Madrina', 4, 5),
+('Padre Martínez Sánchez', 'Sacerdote', 4, 5),
+
+('Luis Test Tres', 'Padre', 4, 10),
+('Sofia Test Cuatro', 'Madre', 4, 10),
+('Pedro Test Uno', 'Padrino', 4, 10),
+('Ana Test Dos', 'Madrina', 4, 10),
+('Padre Rodríguez González', 'Sacerdote', 4, 10),
+
+('Sofia Test Cuatro', 'Padre', 4, 12),
+('Carlos Test Cinco', 'Madre', 4, 12),
+('Pedro Test Uno', 'Padrino', 4, 12),
+('Ana Test Dos', 'Madrina', 4, 12),
+('Padre Fernández Pérez', 'Sacerdote', 4, 12),
+
+-- Participantes para Misa Dominical (idActo = 7)
+('Raul Ortega Lopez', 'Sacerdote', 7, 13),
+('Padre García López', 'Sacerdote', 7, 14);
+
+-- ============================================================
+-- PAGOS DE PRUEBA
+-- ============================================================
+INSERT INTO PAGO (f_pago, montoTotal, metodoPago, numeroTransaccion, estadoPago) VALUES
+-- Pagos PENDIENTE (efectivo - para secretaria aprobar)
+('2025-12-10 10:00:00', 100.00, 'EFECTIVO', 'EFECT-001', 'PENDIENTE'),
+('2025-12-11 11:00:00', 250.00, 'EFECTIVO', 'EFECT-002', 'PENDIENTE'),
+
+-- Pagos APROBADO (Yape, Plin, Tarjeta)
+('2025-12-12 09:00:00', 100.00, 'YAPE', 'YAPE-12345678', 'APROBADO'),
+('2025-12-13 10:00:00', 50.00, 'PLIN', 'PLIN-87654321', 'APROBADO'),
+('2025-12-14 11:00:00', 100.00, 'TARJETA', 'TXN-ABC12345', 'APROBADO'),
+('2025-12-15 12:00:00', 50.00, 'YAPE', 'YAPE-11223344', 'APROBADO'),
+('2025-12-16 13:00:00', 100.00, 'TARJETA', 'TXN-DEF67890', 'APROBADO'),
+('2025-12-17 14:00:00', 250.00, 'PLIN', 'PLIN-44332211', 'APROBADO');
+
+-- ============================================================
+-- PAGO_RESERVA (Relación entre pagos y reservas)
+-- ============================================================
+INSERT INTO PAGO_RESERVA (idPago, idReserva, montoReserva) VALUES
+-- Pago PENDIENTE para reserva 4 (efectivo)
+(1, 4, 100.00),
+
+-- Pago PENDIENTE para reserva 5 (efectivo)
+(2, 5, 250.00),
+
+-- Pagos APROBADO para reservas 6, 7, 8, 9, 10
+(3, 6, 100.00),
+(4, 7, 50.00),
+(5, 8, 100.00),
+(6, 9, 50.00),
+(7, 10, 100.00),
+(8, 12, 250.00);
+
+-- ============================================================
+-- DOCUMENTOS DE REQUISITOS DE PRUEBA
+-- ============================================================
+-- NOTA: Los idActoRequisito se calculan según el orden de inserción:
+-- Bautismo Comunitario (idActo 3): (3,1)=1, (3,2)=2, (3,3)=3, (3,4)=4, (3,5)=5
+-- Bautismo Individual (idActo 4): (4,1)=6, (4,2)=7, (4,3)=8, (4,4)=9, (4,5)=10
+-- Matrimonio Normal (idActo 5): (5,6)=11, (5,7)=12, (5,8)=13, (5,9)=14, (5,10)=15, (5,11)=16, (5,12)=17
+-- Matrimonio Traslado (idActo 6): (6,6)=18, (6,7)=19, (6,8)=20, (6,9)=21, (6,10)=22, (6,11)=23, (6,12)=24
+
+INSERT INTO DOCUMENTO_REQUISITO (f_subido, estadoCumplimiento, aprobado, vigenciaDocumento, idReserva, idActoRequisito) VALUES
+-- Documentos PENDIENTE_REVISION para Bautismo Individual (reserva 3)
+-- idActoRequisito 6-10 corresponden a Bautismo Individual (idActo 4)
+('2025-12-01', 'PENDIENTE_REVISION', FALSE, '2025-12-17', 3, 6),  -- Partida de Nacimiento (4,1)
+('2025-12-01', 'PENDIENTE_REVISION', FALSE, '2025-12-17', 3, 7),  -- DNI Padres (4,2)
+('2025-12-01', 'PENDIENTE_REVISION', FALSE, '2025-12-17', 3, 8),  -- DNI Padrinos (4,3)
+('2025-12-01', 'PENDIENTE_REVISION', FALSE, '2025-12-17', 3, 9),  -- Charla Pre-Bautismal (4,4)
+('2025-12-01', 'PENDIENTE_REVISION', FALSE, '2025-12-17', 3, 10), -- Licencia Parroquia (4,5)
+
+-- Documentos APROBADO para Bautismo Individual (reserva 5)
+('2025-12-02', 'APROBADO', TRUE, '2025-12-19', 5, 6),  -- Partida de Nacimiento
+('2025-12-02', 'APROBADO', TRUE, '2025-12-19', 5, 7),  -- DNI Padres
+('2025-12-02', 'APROBADO', TRUE, '2025-12-19', 5, 8),  -- DNI Padrinos
+('2025-12-02', 'APROBADO', TRUE, '2025-12-19', 5, 9),  -- Charla Pre-Bautismal
+('2025-12-02', 'APROBADO', TRUE, '2025-12-19', 5, 10), -- Licencia Parroquia
+
+-- Documentos APROBADO para Bautismo Individual (reserva 10)
+('2025-11-15', 'APROBADO', TRUE, '2025-12-23', 10, 6),  -- Partida de Nacimiento
+('2025-11-15', 'APROBADO', TRUE, '2025-12-23', 10, 7),  -- DNI Padres
+('2025-11-15', 'APROBADO', TRUE, '2025-12-23', 10, 8),  -- DNI Padrinos
+('2025-11-15', 'APROBADO', TRUE, '2025-12-23', 10, 9),  -- Charla Pre-Bautismal
+('2025-11-15', 'APROBADO', TRUE, '2025-12-23', 10, 10); -- Licencia Parroquia
+
+-- ============================================================
+-- DISPONIBILIDAD DE HORARIO DEL PERSONAL
+-- ============================================================
+-- Horarios de disponibilidad para Sacerdotes y Secretarias
+-- Formato: (diaSemana, horaInicioDis, horaFinDis, estadoDisponibilidad, idParroquiaPersonal)
+
+-- NOTA: Los idParroquiaPersonal se calculan según el orden de inserción en PARROQUIA_PERSONAL
+-- Primer bloque (líneas 331-346): idParroquiaPersonal 1-15
+-- Segundo bloque (líneas 753-782): idParroquiaPersonal 16-35
+-- Los Administradores LOCALES están en el segundo bloque: idParroquiaPersonal 16-18
+-- Los Sacerdotes están en ambos bloques: idParroquiaPersonal 1, 2, 19-23
+-- Las Secretarias están en ambos bloques: idParroquiaPersonal 3-7, 24-28
+
+-- Administradores LOCALES (idParroquiaPersonal 16-18 del segundo bloque)
+INSERT INTO DISPONIBILIDAD_HORARIO (diaSemana, horaInicioDis, horaFinDis, estadoDisponibilidad, idParroquiaPersonal) VALUES
+-- Admin Parroquia 1 (idParroquiaPersonal = 16)
+('Lun', '08:00:00', '18:00:00', TRUE, 16),
+('Mar', '08:00:00', '18:00:00', TRUE, 16),
+('Mié', '08:00:00', '18:00:00', TRUE, 16),
+('Jue', '08:00:00', '18:00:00', TRUE, 16),
+('Vie', '08:00:00', '18:00:00', TRUE, 16),
+('Sáb', '09:00:00', '14:00:00', TRUE, 16),
+
+-- Admin Parroquia 2 (idParroquiaPersonal = 17)
+('Lun', '08:00:00', '18:00:00', TRUE, 17),
+('Mar', '08:00:00', '18:00:00', TRUE, 17),
+('Mié', '08:00:00', '18:00:00', TRUE, 17),
+('Jue', '08:00:00', '18:00:00', TRUE, 17),
+('Vie', '08:00:00', '18:00:00', TRUE, 17),
+('Sáb', '09:00:00', '14:00:00', TRUE, 17),
+
+-- Admin Parroquia 3 (idParroquiaPersonal = 18)
+('Lun', '08:00:00', '18:00:00', TRUE, 18),
+('Mar', '08:00:00', '18:00:00', TRUE, 18),
+('Mié', '08:00:00', '18:00:00', TRUE, 18),
+('Jue', '08:00:00', '18:00:00', TRUE, 18),
+('Vie', '08:00:00', '18:00:00', TRUE, 18),
+('Sáb', '09:00:00', '14:00:00', TRUE, 18);
+
+-- Sacerdotes (idParroquiaPersonal 1, 2, 19-23)
+INSERT INTO DISPONIBILIDAD_HORARIO (diaSemana, horaInicioDis, horaFinDis, estadoDisponibilidad, idParroquiaPersonal) VALUES
+-- Párroco Parroquia 1 - idParroquiaPersonal 1 (primer bloque)
+('Lun', '07:00:00', '20:00:00', TRUE, 1),
+('Mar', '07:00:00', '20:00:00', TRUE, 1),
+('Mié', '07:00:00', '20:00:00', TRUE, 1),
+('Jue', '07:00:00', '20:00:00', TRUE, 1),
+('Vie', '07:00:00', '20:00:00', TRUE, 1),
+('Sáb', '07:00:00', '21:00:00', TRUE, 1),
+('Dom', '06:00:00', '14:00:00', TRUE, 1),
+
+-- Vicario Parroquia 1 - idParroquiaPersonal 19 (segundo bloque)
+('Lun', '08:00:00', '18:00:00', TRUE, 19),
+('Mar', '08:00:00', '18:00:00', TRUE, 19),
+('Mié', '08:00:00', '18:00:00', TRUE, 19),
+('Jue', '08:00:00', '18:00:00', TRUE, 19),
+('Vie', '08:00:00', '18:00:00', TRUE, 19),
+('Sáb', '08:00:00', '20:00:00', TRUE, 19),
+('Dom', '07:00:00', '13:00:00', TRUE, 19),
+
+-- Párroco Parroquia 2 - idParroquiaPersonal 2 (primer bloque)
+('Lun', '07:00:00', '20:00:00', TRUE, 2),
+('Mar', '07:00:00', '20:00:00', TRUE, 2),
+('Mié', '07:00:00', '20:00:00', TRUE, 2),
+('Jue', '07:00:00', '20:00:00', TRUE, 2),
+('Vie', '07:00:00', '20:00:00', TRUE, 2),
+('Sáb', '07:00:00', '21:00:00', TRUE, 2),
+('Dom', '06:00:00', '14:00:00', TRUE, 2),
+
+-- Vicario Parroquia 2 - idParroquiaPersonal 20 (segundo bloque)
+('Lun', '08:00:00', '18:00:00', TRUE, 20),
+('Mar', '08:00:00', '18:00:00', TRUE, 20),
+('Mié', '08:00:00', '18:00:00', TRUE, 20),
+('Jue', '08:00:00', '18:00:00', TRUE, 20),
+('Vie', '08:00:00', '18:00:00', TRUE, 20),
+('Sáb', '08:00:00', '20:00:00', TRUE, 20),
+('Dom', '07:00:00', '13:00:00', TRUE, 20),
+
+-- Párroco Parroquia 3 - idParroquiaPersonal 21 (segundo bloque)
+('Lun', '07:00:00', '20:00:00', TRUE, 21),
+('Mar', '07:00:00', '20:00:00', TRUE, 21),
+('Mié', '07:00:00', '20:00:00', TRUE, 21),
+('Jue', '07:00:00', '20:00:00', TRUE, 21),
+('Vie', '07:00:00', '20:00:00', TRUE, 21),
+('Sáb', '07:00:00', '21:00:00', TRUE, 21),
+('Dom', '06:00:00', '14:00:00', TRUE, 21),
+
+-- Párroco Parroquia 4 - idParroquiaPersonal 22 (segundo bloque)
+('Lun', '07:00:00', '19:00:00', TRUE, 22),
+('Mar', '07:00:00', '19:00:00', TRUE, 22),
+('Mié', '07:00:00', '19:00:00', TRUE, 22),
+('Jue', '07:00:00', '19:00:00', TRUE, 22),
+('Vie', '07:00:00', '19:00:00', TRUE, 22),
+('Sáb', '07:00:00', '21:00:00', TRUE, 22),
+('Dom', '06:00:00', '14:00:00', TRUE, 22),
+
+-- Párroco Parroquia 5 - idParroquiaPersonal 23 (segundo bloque)
+('Lun', '07:00:00', '19:00:00', TRUE, 23),
+('Mar', '07:00:00', '19:00:00', TRUE, 23),
+('Mié', '07:00:00', '19:00:00', TRUE, 23),
+('Jue', '07:00:00', '19:00:00', TRUE, 23),
+('Vie', '07:00:00', '19:00:00', TRUE, 23),
+('Sáb', '07:00:00', '21:00:00', TRUE, 23),
+('Dom', '06:00:00', '14:00:00', TRUE, 23);
+
+-- Secretarias (idParroquiaPersonal 3-7 del primer bloque, 24-28 del segundo bloque)
+INSERT INTO DISPONIBILIDAD_HORARIO (diaSemana, horaInicioDis, horaFinDis, estadoDisponibilidad, idParroquiaPersonal) VALUES
+-- Secretaria Parroquia 1 - idParroquiaPersonal 3 (primer bloque)
+('Lun', '08:00:00', '17:00:00', TRUE, 3),
+('Mar', '08:00:00', '17:00:00', TRUE, 3),
+('Mié', '08:00:00', '17:00:00', TRUE, 3),
+('Jue', '08:00:00', '17:00:00', TRUE, 3),
+('Vie', '08:00:00', '17:00:00', TRUE, 3),
+('Sáb', '08:00:00', '13:00:00', TRUE, 3),
+
+-- Secretaria adicional Parroquia 1 - idParroquiaPersonal 24 (segundo bloque)
+('Lun', '08:00:00', '17:00:00', TRUE, 24),
+('Mar', '08:00:00', '17:00:00', TRUE, 24),
+('Mié', '08:00:00', '17:00:00', TRUE, 24),
+('Jue', '08:00:00', '17:00:00', TRUE, 24),
+('Vie', '08:00:00', '17:00:00', TRUE, 24),
+
+-- Secretaria Parroquia 2 - idParroquiaPersonal 4 (primer bloque)
+('Lun', '08:00:00', '17:00:00', TRUE, 4),
+('Mar', '08:00:00', '17:00:00', TRUE, 4),
+('Mié', '08:00:00', '17:00:00', TRUE, 4),
+('Jue', '08:00:00', '17:00:00', TRUE, 4),
+('Vie', '08:00:00', '17:00:00', TRUE, 4),
+('Sáb', '08:00:00', '13:00:00', TRUE, 4),
+
+-- Secretaria adicional Parroquia 2 - idParroquiaPersonal 25 (segundo bloque)
+('Lun', '08:00:00', '17:00:00', TRUE, 25),
+('Mar', '08:00:00', '17:00:00', TRUE, 25),
+('Mié', '08:00:00', '17:00:00', TRUE, 25),
+('Jue', '08:00:00', '17:00:00', TRUE, 25),
+('Vie', '08:00:00', '17:00:00', TRUE, 25),
+
+-- Secretaria Parroquia 3 - idParroquiaPersonal 5 (primer bloque)
+('Lun', '08:00:00', '17:00:00', TRUE, 5),
+('Mar', '08:00:00', '17:00:00', TRUE, 5),
+('Mié', '08:00:00', '17:00:00', TRUE, 5),
+('Jue', '08:00:00', '17:00:00', TRUE, 5),
+('Vie', '08:00:00', '17:00:00', TRUE, 5),
+('Sáb', '08:00:00', '13:00:00', TRUE, 5),
+
+-- Secretaria adicional Parroquia 3 - idParroquiaPersonal 26 (segundo bloque)
+('Lun', '08:00:00', '17:00:00', TRUE, 26),
+('Mar', '08:00:00', '17:00:00', TRUE, 26),
+('Mié', '08:00:00', '17:00:00', TRUE, 26),
+('Jue', '08:00:00', '17:00:00', TRUE, 26),
+('Vie', '08:00:00', '17:00:00', TRUE, 26),
+
+-- Secretaria Parroquia 4 - idParroquiaPersonal 6 (primer bloque)
+('Lun', '08:00:00', '17:00:00', TRUE, 6),
+('Mar', '08:00:00', '17:00:00', TRUE, 6),
+('Mié', '08:00:00', '17:00:00', TRUE, 6),
+('Jue', '08:00:00', '17:00:00', TRUE, 6),
+('Vie', '08:00:00', '17:00:00', TRUE, 6),
+('Sáb', '08:00:00', '13:00:00', TRUE, 6),
+
+-- Secretaria adicional Parroquia 4 - idParroquiaPersonal 27 (segundo bloque)
+('Lun', '08:00:00', '17:00:00', TRUE, 27),
+('Mar', '08:00:00', '17:00:00', TRUE, 27),
+('Mié', '08:00:00', '17:00:00', TRUE, 27),
+('Jue', '08:00:00', '17:00:00', TRUE, 27),
+('Vie', '08:00:00', '17:00:00', TRUE, 27),
+
+-- Secretaria Parroquia 5 - idParroquiaPersonal 7 (primer bloque)
+('Lun', '08:00:00', '17:00:00', TRUE, 7),
+('Mar', '08:00:00', '17:00:00', TRUE, 7),
+('Mié', '08:00:00', '17:00:00', TRUE, 7),
+('Jue', '08:00:00', '17:00:00', TRUE, 7),
+('Vie', '08:00:00', '17:00:00', TRUE, 7),
+('Sáb', '08:00:00', '13:00:00', TRUE, 7),
+
+-- Secretaria adicional Parroquia 5 - idParroquiaPersonal 28 (segundo bloque)
+('Lun', '08:00:00', '17:00:00', TRUE, 28),
+('Mar', '08:00:00', '17:00:00', TRUE, 28),
+('Mié', '08:00:00', '17:00:00', TRUE, 28),
+('Jue', '08:00:00', '17:00:00', TRUE, 28),
+('Vie', '08:00:00', '17:00:00', TRUE, 28);
+
+-- ============================================================
+-- GALERÍA DE PARROQUIAS (Imágenes de muestra)
+-- ============================================================
+INSERT INTO GALERIA_PARROQUIA (imagen, idParroquia) VALUES
+-- Parroquia Santa María Catedral (ID 1)
+('/static/img/parroquias/santa_maria_1.jpg', 1),
+('/static/img/parroquias/santa_maria_2.jpg', 1),
+('/static/img/parroquias/santa_maria_3.jpg', 1),
+
+-- Parroquia San Antonio de Padua (ID 2)
+('/static/img/parroquias/san_antonio_1.jpg', 2),
+('/static/img/parroquias/san_antonio_2.jpg', 2),
+
+-- Parroquia San Pedro (ID 3)
+('/static/img/parroquias/san_pedro_1.jpg', 3),
+('/static/img/parroquias/san_pedro_2.jpg', 3),
+
+-- Parroquia San Vicente de Paúl (ID 4)
+('/static/img/parroquias/san_vicente_1.jpg', 4),
+
+-- Parroquia San José Obrero (ID 5)
+('/static/img/parroquias/san_jose_1.jpg', 5);
+
+-- ============================================================
+-- NOTIFICACIONES DE PRUEBA
+-- ============================================================
+INSERT INTO NOTIFICACION (idUsuario, titulo, mensaje, leido, enlace, icono) VALUES
+-- Notificaciones para Admin General (Usuario 31)
+(31, 'Bienvenido al Sistema', 'Has sido registrado como Administrador General', 1, '/principal', 'check'),
+(31, 'Nueva Reserva Pendiente', 'Hay 3 reservas pendientes de revisión', 0, '/admi/reserva', 'warning'),
+
+-- Notificaciones para Admin Local 1 (Usuario 32)
+(32, 'Bienvenido', 'Has sido asignado como Administrador de Parroquia Santa María', 1, '/principal', 'check'),
+(32, 'Reserva Confirmada', 'La reserva #1 ha sido confirmada', 0, '/admi/reserva', 'info'),
+
+-- Notificaciones para Feligrés Test 1 (Usuario 45)
+(45, 'Reserva Creada', 'Tu reserva ha sido creada exitosamente', 1, '/cliente/mis_reservas', 'check'),
+(45, 'Pago Pendiente', 'Recuerda completar el pago de tu reserva', 0, '/cliente/pago', 'warning'),
+
+-- Notificaciones para Secretaria 1 (Usuario 40)
+(40, 'Documento por Revisar', 'Hay 5 documentos pendientes de revisión', 0, '/admi/documento_requisito', 'warning'),
+(40, 'Nuevo Pago Registrado', 'Se ha registrado un pago en efectivo', 0, '/admi/pago', 'info');

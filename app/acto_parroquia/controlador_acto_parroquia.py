@@ -1,7 +1,7 @@
 from app.bd_sistema import obtener_conexion
 
 # ================== LISTAR (CON FILTRO DE ROL) ==================
-def listar_acto_parroquia(idUsuario, rol):
+def listar_acto_parroquia(idUsuario, rol, es_admin_global=False, idParroquia=None):
     conexion = obtener_conexion()
     resultados = []
     try:
@@ -25,7 +25,16 @@ def listar_acto_parroquia(idUsuario, rol):
             rol_seguro = str(rol).strip().lower()
 
             if rol_seguro == 'administrador':
-                cursor.execute(sql + " ORDER BY p.nombParroquia, al.nombActo")
+                # Si es administrador global, mostrar todos
+                if es_admin_global:
+                    cursor.execute(sql + " ORDER BY p.nombParroquia, al.nombActo")
+                else:
+                    # Si no es global, filtrar por su parroquia
+                    if idParroquia:
+                        sql += " WHERE ap.idParroquia = %s ORDER BY al.nombActo"
+                        cursor.execute(sql, (idParroquia,))
+                    else:
+                        return []  # Si no tiene parroquia asignada, no mostrar nada
             
             elif rol_seguro in ['sacerdote', 'secretaria']:
                 sql += """
@@ -106,7 +115,7 @@ def eliminar_acto_parroquia(idAP):
 
 # ================== COMBOS (Helpers para el Modal) ==================
 # Necesitamos cargar Actos y Parroquias en los <select>
-def obtener_combos_ap(idUsuario, rol):
+def obtener_combos_ap(idUsuario, rol, es_admin_global=False, idParroquia=None):
     conexion = obtener_conexion()
     # Agregamos 'rol_usuario' a la respuesta
     data = {'actos': [], 'parroquias': [], 'rol_usuario': rol} 
@@ -118,7 +127,15 @@ def obtener_combos_ap(idUsuario, rol):
 
             # 2. Cargar Parroquias
             if rol == 'Administrador':
-                cursor.execute("SELECT idParroquia, nombParroquia FROM PARROQUIA WHERE estadoParroquia=1")
+                if es_admin_global:
+                    # Admin global: todas las parroquias
+                    cursor.execute("SELECT idParroquia, nombParroquia FROM PARROQUIA WHERE estadoParroquia=1")
+                else:
+                    # Admin local: solo su parroquia
+                    if idParroquia:
+                        cursor.execute("SELECT idParroquia, nombParroquia FROM PARROQUIA WHERE idParroquia = %s AND estadoParroquia=1", (idParroquia,))
+                    else:
+                        data['parroquias'] = []
             else:
                 # Si es Sacerdote/Secretaria, SOLO trae su parroquia asignada
                 cursor.execute("""
@@ -129,7 +146,8 @@ def obtener_combos_ap(idUsuario, rol):
                     WHERE per.idUsuario = %s AND pp.vigenciaParrPers = 1
                 """, (idUsuario,))
             
-            data['parroquias'] = [{'id': f[0], 'nombre': f[1]} for f in cursor.fetchall()]
+            if 'parroquias' not in data or data['parroquias'] == []:
+                data['parroquias'] = [{'id': f[0], 'nombre': f[1]} for f in cursor.fetchall()]
             
         return data
     except Exception as e:

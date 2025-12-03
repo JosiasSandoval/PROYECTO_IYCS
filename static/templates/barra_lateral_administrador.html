@@ -12,90 +12,90 @@
   <div class="barra-lateral">
     <nav class="menu-lateral">
 
-      <a href="/principal" class="menu-item">
+      <a href="/principal" class="menu-item" data-roles="todos">
         <img src="/static/img/inicio.png" alt="inicio" /> Inicio
       </a>
 
-      <!-- PARROQUIA -->
-      <div class="menu-grupo">
+      <!-- PARROQUIA - Todos -->
+      <div class="menu-grupo" data-roles="todos">
         <button class="menu-item boton-desplegable">
           <img src="/static/img/parroquia.png" alt="parroquia" /> Parroquia
           <span class="flecha">▸</span>
         </button>
         <div class="submenu">
-          <a href="/cliente/parroquia" class="submenu-item">Mostrar Mapa</a>
-          <a href="/admi/parroquia" class="submenu-item">Consultar Información</a>
-          <a href="/admi/parroquia" class="submenu-item">Gestionar Parroquia</a>
+          <a href="/cliente/parroquia" class="submenu-item" data-roles="todos">Mostrar Mapa</a>
+          <a href="/admi/parroquia" class="submenu-item" data-roles="administrador,secretaria,sacerdote">Consultar Información</a>
+          <a href="/admi/parroquia" class="submenu-item" data-roles="administrador,secretaria">Gestionar Parroquia</a>
         </div>
       </div>
 
-      <!-- RESERVAS -->
-      <div class="menu-grupo">
+      <!-- RESERVAS - Todos -->
+      <div class="menu-grupo" data-roles="todos">
         <button class="menu-item boton-desplegable">
           <img src="/static/img/reserva.png" alt="reserva" /> Reservas
           <span class="flecha">▸</span>
         </button>
         <div class="submenu">
-          <a href="/cliente/reserva" class="submenu-item">Registrar Reserva</a>
-          <a href="/admi/reserva" class="submenu-item">Gestionar Reserva</a>
+          <a href="/cliente/reserva" class="submenu-item" data-roles="todos">Registrar Reserva</a>
+          <a href="/admi/reserva" class="submenu-item" data-roles="administrador,secretaria,sacerdote">Gestionar Reserva</a>
         </div>
       </div>
 
-      <!-- ACTOS LITÚRGICOS -->
-      <div class="menu-grupo">
+      <!-- ACTOS LITÚRGICOS - Todos -->
+      <div class="menu-grupo" data-roles="todos">
         <button class="menu-item boton-desplegable">
           <img src="/static/img/acto.png" alt="acto" /> Actos litúrgicos
           <span class="flecha">▸</span>
         </button>
         <div class="submenu">
-          <a href="/cliente/acto_liturgico" class="submenu-item">Mostrar Información</a>
-          <a href="/admi/acto_liturgico" class="submenu-item">Gestionar</a>
+          <a href="/cliente/acto_liturgico" class="submenu-item" data-roles="todos">Mostrar Información</a>
+          <a href="/admi/acto_liturgico" class="submenu-item" data-roles="administrador,secretaria,sacerdote">Gestionar</a>
         </div>
       </div>
 
-      <!-- PAGO -->
-      <div class="menu-grupo">
+      <!-- PAGO - Todos -->
+      <div class="menu-grupo" data-roles="todos">
         <button class="menu-item boton-desplegable">
           <img src="/static/img/pago.png" alt="pago" /> Pago
           <span class="flecha">▸</span>
         </button>
         <div class="submenu">
-          <a href="/cliente/pago" class="submenu-item">Pagos</a>
-          <a href="/admi/metodo_pago" class="submenu-item">Gestionar Método Pago</a>
+          <a href="/cliente/pago" class="submenu-item" data-roles="todos">Pagos</a>
+          <a href="/admi/metodo_pago" class="submenu-item" data-roles="administrador,secretaria">Gestionar Método Pago</a>
         </div>
       </div>
 
-      <!-- CALENDARIO -->
-      <div class="menu-grupo">
+      <!-- CALENDARIO - Solo Admin, Secretaria, Sacerdote -->
+      <div class="menu-grupo" data-roles="administrador,secretaria,sacerdote">
         <button class="menu-item boton-desplegable">
           <img src="/static/img/calendario.png" alt="calendario" /> Calendario
           <span class="flecha">▸</span>
         </button>
         <div class="submenu">
-          <a href="/cliente/calendario" class="submenu-item">Consultar disponibilidad</a>
-          <a href="/admi/disponibilidad" class="submenu-item">Gestionar</a>
+          <a href="/cliente/calendario" class="submenu-item" data-roles="administrador,secretaria,sacerdote">Consultar disponibilidad</a>
+          <a href="/admi/disponibilidad" class="submenu-item" data-roles="administrador,secretaria">Gestionar</a>
         </div>
       </div>
 
-      <!-- REQUISITOS -->
-      <div class="menu-grupo">
+      <!-- REQUISITOS - Solo Admin, Secretaria -->
+      <div class="menu-grupo" data-roles="administrador,secretaria">
         <button class="menu-item boton-desplegable">
           <img src="/static/img/requisito.png" alt="requisito" /> Requisitos
           <span class="flecha">▸</span>
         </button>
         <div class="submenu">
-          <a href="/admi/requisitos" class="submenu-item">Gestionar</a>
+          <a href="/admi/requisitos" class="submenu-item" data-roles="administrador,secretaria">Gestionar</a>
         </div>
       </div>
 
-      <!-- REPORTES -->
-      <div class="menu-grupo">
+      <!-- REPORTES - Solo Admin, Secretaria -->
+      <div class="menu-grupo" data-roles="administrador,secretaria">
         <button class="menu-item boton-desplegable">
           <img src="/static/img/reporte.png" alt="reporte" /> Reportes
           <span class="flecha">▸</span>
         </button>
         <div class="submenu">
-          <a href="/admi/lista_reporte" class="submenu-item">Generar Reportes</a>
+          <a href="/admi/lista_reporte" class="submenu-item" data-roles="administrador,secretaria">Generar Reportes</a>
         </div>
       </div>
 
@@ -103,5 +103,49 @@
   </div>
 
   <script src="/static/js/barra_lateral_administrador.js"></script>
+  <script>
+  // Filtrar barra lateral por roles
+  document.addEventListener('DOMContentLoaded', async () => {
+      try {
+          const res = await fetch('/api/auth/get_session_data');
+          const data = await res.json();
+          const roles = (data.roles || []).map(r => r.toLowerCase());
+          
+          console.log('Roles del usuario (barra lateral):', roles);
+          
+          // Filtrar grupos de menú
+          document.querySelectorAll('.menu-grupo[data-roles]').forEach(grupo => {
+              const rolesPermitidos = grupo.getAttribute('data-roles');
+              
+              if (rolesPermitidos === 'todos') {
+                  grupo.style.display = '';
+                  return;
+              }
+              
+              const permitidos = rolesPermitidos.split(',').map(r => r.trim().toLowerCase());
+              const tienePermiso = roles.some(rol => permitidos.includes(rol));
+              
+              grupo.style.display = tienePermiso ? '' : 'none';
+          });
+          
+          // Filtrar items de submenú
+          document.querySelectorAll('.submenu-item[data-roles]').forEach(item => {
+              const rolesPermitidos = item.getAttribute('data-roles');
+              
+              if (rolesPermitidos === 'todos') {
+                  item.style.display = '';
+                  return;
+              }
+              
+              const permitidos = rolesPermitidos.split(',').map(r => r.trim().toLowerCase());
+              const tienePermiso = roles.some(rol => permitidos.includes(rol));
+              
+              item.style.display = tienePermiso ? '' : 'none';
+          });
+      } catch (err) {
+          console.error('Error filtrando barra lateral:', err);
+      }
+  });
+  </script>
 </body>
 </html>

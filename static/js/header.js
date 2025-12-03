@@ -1,3 +1,11 @@
+// Cargar sistema de sincronización de sesión entre pestañas
+(function() {
+    const script = document.createElement('script');
+    script.src = '/static/js/session_sync.js';
+    script.async = false; // Cargar síncronamente para que esté disponible antes
+    document.head.appendChild(script);
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     const headerPlaceholder = document.getElementById('header-placeholder');
     if (!headerPlaceholder) return;
@@ -194,23 +202,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-            // ---------- Logout (TU CÓDIGO ORIGINAL) ----------
+            // ---------- Logout (CON SINCRONIZACIÓN ENTRE PESTAÑAS) ----------
             if (btnCerrarSesion) {
                 btnCerrarSesion.addEventListener('click', async e => {
                     e.preventDefault();
                     try {
+                        // Primero limpiar localStorage para notificar a otras pestañas
+                        if (window.SessionSync) {
+                            window.SessionSync.finalizar();
+                        }
+                        
+                        // Luego cerrar sesión en el servidor
                         const res = await fetch('/api/auth/cerrar_sesion', {
                             method: 'GET',
                             credentials: 'same-origin'
                         });
                         const data = await res.json();
-                        if (data.success) {
-                            window.location.href = '/'; 
-                        } else {
-                            console.error('Error al cerrar sesión:', data.mensaje || 'Desconocido');
-                        }
+                        
+                        // Limpiar sessionStorage también
+                        sessionStorage.clear();
+                        
+                        // Redirigir a la página de inicio de sesión
+                        window.location.href = '/'; 
                     } catch (err) {
                         console.error('Error al cerrar sesión:', err);
+                        // Aun así, limpiar y redirigir
+                        if (window.SessionSync) {
+                            window.SessionSync.finalizar();
+                        }
+                        sessionStorage.clear();
+                        window.location.href = '/';
                     }
                 });
             }

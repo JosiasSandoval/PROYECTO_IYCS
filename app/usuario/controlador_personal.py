@@ -59,42 +59,86 @@ def obtener_personal_por_id(idUsuario):
         if conexion:
             conexion.close()
 
-def get_datos_personal():
+def get_datos_personal(es_admin_global=True, idParroquia=None):
+    """
+    Obtiene listado de personal filtrado según tipo de administrador.
+    - Admin Global: Ve TODO el personal
+    - Admin Local: Solo personal de su parroquia
+    """
     conexion = obtener_conexion()
     try:
         resultados_dict = {}
 
         with conexion.cursor() as cursor:
-            cursor.execute("""
-                SELECT 
-                    us.idUsuario,          
-                    us.email,              
-                    us.clave,              
-                    us.estadoCuenta,       
-                    pe.numDocPers,         
-                    ti.nombDocumento,      
-                    pe.nombPers,           
-                    pe.apePatPers,         
-                    pe.apeMatPers,         
-                    pe.sexoPers,           
-                    pe.direccionPers,      
-                    pe.telefonoPers,       
-                    pp.f_inicio,           
-                    pp.f_fin,              
-                    pp.vigenciaParrPers,   
-                    ca.nombCargo,          
-                    r.nombRol,             
-                    pa.nombParroquia       
-                FROM usuario us
-                INNER JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
-                INNER JOIN rol r ON r.idRol = ru.idRol
-                INNER JOIN personal pe ON us.idUsuario = pe.idUsuario
-                INNER JOIN tipo_documento ti ON ti.idTipoDocumento = pe.idTipoDocumento
-                INNER JOIN parroquia_personal pp ON pp.idPersonal = pe.idPersonal
-                INNER JOIN cargo ca ON ca.idCargo = pp.idCargo
-                INNER JOIN parroquia pa ON pa.idParroquia = pp.idParroquia
-                ORDER BY us.idUsuario;
-            """)
+            if es_admin_global:
+                # Admin Global: todo el personal
+                sql = """
+                    SELECT 
+                        us.idUsuario,          
+                        us.email,              
+                        us.clave,              
+                        us.estadoCuenta,       
+                        pe.numDocPers,         
+                        ti.nombDocumento,      
+                        pe.nombPers,           
+                        pe.apePatPers,         
+                        pe.apeMatPers,         
+                        pe.sexoPers,           
+                        pe.direccionPers,      
+                        pe.telefonoPers,       
+                        pp.f_inicio,           
+                        pp.f_fin,              
+                        pp.vigenciaParrPers,   
+                        ca.nombCargo,          
+                        r.nombRol,             
+                        pa.nombParroquia       
+                    FROM usuario us
+                    INNER JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
+                    INNER JOIN rol r ON r.idRol = ru.idRol
+                    INNER JOIN personal pe ON us.idUsuario = pe.idUsuario
+                    INNER JOIN tipo_documento ti ON ti.idTipoDocumento = pe.idTipoDocumento
+                    INNER JOIN parroquia_personal pp ON pp.idPersonal = pe.idPersonal
+                    INNER JOIN cargo ca ON ca.idCargo = pp.idCargo
+                    INNER JOIN parroquia pa ON pa.idParroquia = pp.idParroquia
+                    ORDER BY us.idUsuario;
+                """
+                cursor.execute(sql)
+            else:
+                # Admin Local: solo personal de su parroquia
+                if not idParroquia:
+                    return []
+                sql = """
+                    SELECT 
+                        us.idUsuario,          
+                        us.email,              
+                        us.clave,              
+                        us.estadoCuenta,       
+                        pe.numDocPers,         
+                        ti.nombDocumento,      
+                        pe.nombPers,           
+                        pe.apePatPers,         
+                        pe.apeMatPers,         
+                        pe.sexoPers,           
+                        pe.direccionPers,      
+                        pe.telefonoPers,       
+                        pp.f_inicio,           
+                        pp.f_fin,              
+                        pp.vigenciaParrPers,   
+                        ca.nombCargo,          
+                        r.nombRol,             
+                        pa.nombParroquia       
+                    FROM usuario us
+                    INNER JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
+                    INNER JOIN rol r ON r.idRol = ru.idRol
+                    INNER JOIN personal pe ON us.idUsuario = pe.idUsuario
+                    INNER JOIN tipo_documento ti ON ti.idTipoDocumento = pe.idTipoDocumento
+                    INNER JOIN parroquia_personal pp ON pp.idPersonal = pe.idPersonal
+                    INNER JOIN cargo ca ON ca.idCargo = pp.idCargo
+                    INNER JOIN parroquia pa ON pa.idParroquia = pp.idParroquia
+                    WHERE pp.idParroquia = %s
+                    ORDER BY us.idUsuario;
+                """
+                cursor.execute(sql, (idParroquia,))
 
             resultados = cursor.fetchall()
 
@@ -418,6 +462,81 @@ def personal_reserva_datos(idParroquia):
     except Exception as e:
         print(f"Error al obtener datos del personal: {e}")
         return {"ok": False, "bloqueado": True, "relaciones": []}
+    finally:
+        if conexion:
+            conexion.close()
+
+def obtener_sacerdote_disponible(idParroquia, fecha, hora):
+    """
+    Obtiene el sacerdote disponible para una fecha y hora específica.
+    Verifica disponibilidad según DISPONIBILIDAD_HORARIO y reservas existentes.
+    Retorna el nombre completo del sacerdote disponible o None.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Obtener el día de la semana de la fecha (MySQL DAYNAME retorna en inglés)
+            cursor.execute("""
+                SELECT CASE DAYNAME(%s)
+                    WHEN 'Monday' THEN 'Lun'
+                    WHEN 'Tuesday' THEN 'Mar'
+                    WHEN 'Wednesday' THEN 'Mié'
+                    WHEN 'Thursday' THEN 'Jue'
+                    WHEN 'Friday' THEN 'Vie'
+                    WHEN 'Saturday' THEN 'Sáb'
+                    WHEN 'Sunday' THEN 'Dom'
+                    ELSE ''
+                END as diaSemana
+            """, (fecha,))
+            dia_semana_row = cursor.fetchone()
+            if not dia_semana_row or not dia_semana_row[0]:
+                return None
+            
+            dia_semana = dia_semana_row[0]
+            
+            # Obtener sacerdotes de la parroquia con disponibilidad para ese día y hora
+            # Excluir aquellos que ya tienen una reserva a esa hora (verificando en participantes_acto)
+            cursor.execute("""
+                SELECT DISTINCT
+                    CONCAT(pe.nombPers, ' ', pe.apePatPers, ' ', pe.apeMatPers) AS nombreCompleto,
+                    pe.idPersonal,
+                    pp.idParroquiaPersonal,
+                    COUNT(DISTINCT res.idReserva) as numReservas
+                FROM personal pe
+                INNER JOIN parroquia_personal pp ON pe.idPersonal = pp.idPersonal
+                INNER JOIN usuario us ON us.idUsuario = pe.idUsuario
+                INNER JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
+                INNER JOIN rol rol_sacerdote ON ru.idRol = rol_sacerdote.idRol
+                INNER JOIN disponibilidad_horario dh ON pp.idParroquiaPersonal = dh.idParroquiaPersonal
+                LEFT JOIN (
+                    SELECT DISTINCT r2.idReserva, r2.h_reserva, r2.f_reserva, pa2.nombParticipante
+                    FROM reserva r2
+                    INNER JOIN participantes_acto pa2 ON r2.idReserva = pa2.idReserva
+                    WHERE r2.idParroquia = %s 
+                    AND r2.f_reserva = %s
+                    AND r2.h_reserva = %s
+                    AND r2.estadoReserva IN ('PENDIENTE_PAGO', 'CONFIRMADO', 'ATENDIDO', 'RESERVA_PARROQUIA')
+                    AND pa2.rolParticipante LIKE '%%Sacerdote%%'
+                ) res ON res.nombParticipante = CONCAT(pe.nombPers, ' ', pe.apePatPers, ' ', pe.apeMatPers)
+                WHERE rol_sacerdote.nombRol = 'Sacerdote'
+                AND pp.idParroquia = %s
+                AND pp.vigenciaParrPers = TRUE
+                AND dh.diaSemana = %s
+                AND dh.estadoDisponibilidad = TRUE
+                AND TIME(%s) BETWEEN dh.horaInicioDis AND dh.horaFinDis
+                AND res.idReserva IS NULL
+                GROUP BY pe.idPersonal, pp.idParroquiaPersonal, nombreCompleto
+                ORDER BY numReservas ASC, nombreCompleto ASC
+                LIMIT 1
+            """, (idParroquia, fecha, hora, idParroquia, dia_semana, hora))
+            
+            resultado = cursor.fetchone()
+            if resultado:
+                return resultado[0]  # Retorna el nombre completo
+            return None
+    except Exception as e:
+        print(f"Error al obtener sacerdote disponible: {e}")
+        return None
     finally:
         if conexion:
             conexion.close()

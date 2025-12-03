@@ -40,6 +40,7 @@ def login():
         session['idFeligres'] = resultado_auth.get('idFeligres')
         session['idPersonal'] = resultado_auth.get('idPersonal')
         session['idParroquia'] = resultado_auth.get('idParroquia')
+        session['es_admin_global'] = resultado_auth.get('es_admin_global', False)
 
         return jsonify({
             "success": True,
@@ -127,7 +128,9 @@ def get_session_data():
             "nombre": session.get('nombre_usuario', 'Usuario'),
             "cargo": session.get('cargo_usuario', 'Feligrés'),
             "rol_actual": session.get('rol_sistema'),
-            "roles_disponibles": roles
+            "roles_disponibles": roles,
+            "idParroquia": session.get('idParroquia'),
+            "es_admin_global": session.get('es_admin_global', False)
         })
     else:
         return jsonify({

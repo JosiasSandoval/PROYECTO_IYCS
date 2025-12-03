@@ -649,7 +649,7 @@ def get_reservas_parroquia(idUsuario):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
-            # 1. Obtener ID de la Parroquia asociada a la Secretaria
+            # 1. Obtener ID de la Parroquia asociada a la Secretaria o Administrador
             cursor.execute("""
                 SELECT pp.idParroquia
                 FROM usuario us
@@ -657,14 +657,17 @@ def get_reservas_parroquia(idUsuario):
                 INNER JOIN rol r ON rs.idRol = r.idRol
                 INNER JOIN personal pe ON us.idUsuario = pe.idUsuario
                 INNER JOIN parroquia_personal pp ON pe.idPersonal = pp.idPersonal
-                WHERE us.idUsuario = %s AND r.nombRol = 'SECRETARIA' AND pp.vigenciaParrPers = TRUE;
+                WHERE us.idUsuario = %s 
+                AND r.nombRol IN ('SECRETARIA', 'ADMINISTRADOR') 
+                AND pp.vigenciaParrPers = TRUE
+                LIMIT 1;
             """, (idUsuario,))
             fila = cursor.fetchone()
             if not fila: return []
             idParroquia = fila[0]
 
             # 2. Consulta Principal Unificada
-            # Incluye: idActo (para calendario), tienePagoReserva (para pagos) y nombreFeligres
+            # Incluye: idActo (para calendario), tienePagoReserva (para pagos), estadoPago y nombreFeligres
             cursor.execute("""
                 SELECT 
                     re.idReserva,
@@ -679,7 +682,8 @@ def get_reservas_parroquia(idUsuario):
                     COALESCE(GROUP_CONCAT(CONCAT(pc.rolParticipante, ': ', pc.nombParticipante) SEPARATOR '; '), '') AS participantes,
                     al.idActo,       -- Necesario para reprogramación
                     re.idParroquia,  -- Necesario para reprogramación
-                    CASE WHEN pr.idPagoReserva IS NOT NULL THEN TRUE ELSE FALSE END AS tienePagoReserva
+                    CASE WHEN pr.idPagoReserva IS NOT NULL THEN TRUE ELSE FALSE END AS tienePagoReserva,
+                    COALESCE(p.estadoPago, 'SIN_PAGO') AS estadoPago
                 FROM reserva re
                 INNER JOIN feligres f ON f.idFeligres = re.idSolicitante
                 INNER JOIN parroquia pa ON re.idParroquia = pa.idParroquia
@@ -687,11 +691,12 @@ def get_reservas_parroquia(idUsuario):
                 LEFT JOIN acto_liturgico al ON pc.idActo = al.idActo
                 LEFT JOIN acto_parroquia ap ON al.idActo = ap.idActo AND ap.idParroquia = re.idParroquia
                 LEFT JOIN pago_reserva pr ON re.idReserva = pr.idReserva
+                LEFT JOIN pago p ON pr.idPago = p.idPago
                 WHERE re.idParroquia = %s
                 GROUP BY 
                     re.idReserva, al.nombActo, ap.costoBase, re.f_reserva, re.h_reserva, 
                     re.mencion, nombreFeligres, pa.nombParroquia, re.estadoReserva, 
-                    al.idActo, re.idParroquia, tienePagoReserva;
+                    al.idActo, re.idParroquia, tienePagoReserva, estadoPago;
             """, (idParroquia,))
 
             filas = cursor.fetchall()
@@ -712,7 +717,8 @@ def get_reservas_parroquia(idUsuario):
                     'participantes': fila[9],
                     'idActo': fila[10],        # <--- ¡IMPORTANTE!
                     'idParroquia': fila[11],   # <--- ¡IMPORTANTE!
-                    'tienePagoReserva': bool(fila[12])
+                    'tienePagoReserva': bool(fila[12]),
+                    'estadoPago': fila[13] if len(fila) > 13 else 'SIN_PAGO'
                 })
             return resultados
     except Exception as e:

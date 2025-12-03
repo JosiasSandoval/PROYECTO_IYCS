@@ -10,19 +10,30 @@ let parroquiasFiltradas = null;
 let paginaActual = 1;
 const elementosPorPagina = 7;
 let ordenActual = { campo: null, ascendente: true };
+let esAdminGlobal = false;  // Flag para tipo de admin
+let idParroquiaUsuario = null;
 
 // ================== INICIALIZACIÓN ==================
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    // Detectar tipo de administrador
+    await detectarTipoAdmin();
+    
     configurarBuscadorPrincipal();
     cargarParroquias();
 
     document.getElementById("btn_buscar").addEventListener("click", filtrarDatos);
     inputDocumento.addEventListener("keyup", (e) => { if(e.key === "Enter") filtrarDatos(); });
 
-    document.getElementById("btn_guardar").addEventListener("click", (e) => {
-        e.preventDefault(); 
-        abrirModalFormulario("agregar");
-    });
+    // Solo admin global puede agregar
+    if (esAdminGlobal) {
+        document.getElementById("btn_guardar").addEventListener("click", (e) => {
+            e.preventDefault(); 
+            abrirModalFormulario("agregar");
+        });
+    } else {
+        // Ocultar botón para admin local
+        document.getElementById("btn_guardar").style.display = 'none';
+    }
 
     document.addEventListener("click", (e) => {
         const lista = document.getElementById("listaBusquedaPrincipal");
@@ -32,6 +43,57 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
+/* -------------------------------------------------------
+   DETECTAR TIPO DE ADMINISTRADOR
+   ------------------------------------------------------- */
+async function detectarTipoAdmin() {
+    try {
+        const res = await fetch('/api/auth/get_session_data');
+        const data = await res.json();
+        
+        esAdminGlobal = data.es_admin_global || false;
+        idParroquiaUsuario = data.idParroquia;
+        
+        console.log('🔑 Tipo Admin:', esAdminGlobal ? 'GLOBAL' : 'LOCAL', '| Parroquia:', idParroquiaUsuario);
+        
+        // Mostrar badge visual
+        mostrarBadgeAdmin();
+    } catch (error) {
+        console.error('Error detectando tipo admin:', error);
+        esAdminGlobal = false;
+    }
+}
+
+/* -------------------------------------------------------
+   MOSTRAR BADGE VISUAL
+   ------------------------------------------------------- */
+function mostrarBadgeAdmin() {
+    const titulo = document.querySelector('.titulo-seccion');
+    if (!titulo) return;
+    
+    const badge = document.createElement('span');
+    badge.style.cssText = 'margin-left:15px; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:bold;';
+    
+    if (esAdminGlobal) {
+        badge.textContent = '🌐 Administrador Global';
+        badge.style.background = '#28a745';
+        badge.style.color = '#fff';
+    } else {
+        badge.textContent = '📍 Administrador Local';
+        badge.style.background = '#ffc107';
+        badge.style.color = '#000';
+        
+        // Mostrar nota informativa
+        const nota = document.createElement('div');
+        nota.className = 'alert-info';
+        nota.style.cssText = 'background:#d1ecf1; border:1px solid #bee5eb; color:#0c5460; padding:12px; border-radius:4px; margin:10px 0;';
+        nota.innerHTML = '<strong>ℹ️ Nota:</strong> Como administrador local, solo puedes ver la información de tu parroquia. No puedes crear, editar o eliminar parroquias.';
+        titulo.parentElement.insertBefore(nota, titulo.nextSibling);
+    }
+    
+    titulo.appendChild(badge);
+}
 
 /* -------------------------------------------------------
    LÓGICA BUSCADOR PREDICTIVO
@@ -183,8 +245,36 @@ function renderTabla() {
     const botonColor = esActivo ? "btn-orange" : "btn-success";
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
     const titleEstado = esActivo ? "Dar de baja" : "Dar de alta";
+    
+    // Resaltar si es su parroquia (admin local)
+    const estuParroquia = !esAdminGlobal && p.id === idParroquiaUsuario;
+    const estiloFila = estuParroquia ? 'background-color: #fff3cd;' : '';
 
     const fila = document.createElement("tr");
+    fila.style.cssText = estiloFila;
+    
+    // Botones según tipo de admin
+    let botonesAccion = `
+      <button class="btn btn-info btn-sm" onclick="verDetalle(${p.id})" title="Ver Detalle">
+        <img src="/static/img/ojo.png" alt="ver">
+      </button>
+    `;
+    
+    // Solo admin global puede editar, cambiar estado y eliminar
+    if (esAdminGlobal) {
+      botonesAccion += `
+        <button class="btn btn-warning btn-sm" onclick="editarParroquia(${p.id})" title="Editar">
+          <img src="/static/img/lapiz.png" alt="editar">
+        </button>
+        <button class="btn ${botonColor} btn-sm" onclick="cambiarEstado(${p.id})" title="${titleEstado}">
+          <img src="/static/img/flecha-hacia-abajo.png" style="${rotacion}">
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarParroquia(${p.id})" title="Eliminar">
+          <img src="/static/img/x.png" alt="eliminar">
+        </button>
+      `;
+    }
+    
     // La tabla muestra solo lo esencial
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
@@ -193,18 +283,7 @@ function renderTabla() {
       <td class="col-ruc">${p.ruc}</td>
       <td class="col-acciones">
         <div class="d-flex justify-content-center flex-wrap gap-1">
-          <button class="btn btn-info btn-sm" onclick="verDetalle(${p.id})" title="Ver Detalle">
-            <img src="/static/img/ojo.png" alt="ver">
-          </button>
-          <button class="btn btn-warning btn-sm" onclick="editarParroquia(${p.id})" title="Editar">
-            <img src="/static/img/lapiz.png" alt="editar">
-          </button>
-          <button class="btn ${botonColor} btn-sm" onclick="cambiarEstado(${p.id})" title="${titleEstado}">
-            <img src="/static/img/flecha-hacia-abajo.png" style="${rotacion}">
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarParroquia(${p.id})" title="Eliminar">
-            <img src="/static/img/x.png" alt="eliminar">
-          </button>
+          ${botonesAccion}
         </div>
       </td>
     `;

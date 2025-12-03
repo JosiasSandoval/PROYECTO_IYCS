@@ -57,18 +57,18 @@ async function requestAPI(url, method = "GET", body = null) {
 }
 
 async function cargarCombos() {
-    const res = await requestAPI("/api/documento/combos");
-    if (res) {
-        listaReservas = res.reservas;
-        listaRequisitos = res.requisitos;
+    const res = await requestAPI("/api/documento_requisito/combos");
+    if (res && res.success) {
+        listaReservas = res.reservas || [];
+        listaRequisitos = res.requisitos || [];
         llenarSelectsModal();
     }
 }
 
 async function cargarDatos() {
-    const res = await requestAPI("/api/documento/");
-    if (res) {
-        datos = res;
+    const res = await requestAPI("/api/documento_requisito/listar_todos");
+    if (res && res.success) {
+        datos = res.datos || [];
         datosFiltrados = null;
         paginaActual = 1;
         renderTabla();
@@ -299,14 +299,17 @@ window.ver = function(id) { const obj = datos.find(x => x.id === id); if (obj) a
 window.cambiarAprobacion = async function(id, estadoActual) {
     const nuevo = !estadoActual;
     if(!confirm(`¿Desea cambiar la aprobación a ${nuevo ? 'APROBADO' : 'NO APROBADO'}?`)) return;
-    const res = await requestAPI(`/api/documento/aprobacion/${id}`, "PATCH", { aprobado: nuevo });
-    if(res) cargarDatos();
+    const res = await requestAPI(`/api/documento_requisito/aprobar`, "POST", { 
+        idDocumentoRequisito: id,
+        observacion: nuevo ? 'Aprobado' : 'No aprobado'
+    });
+    if(res && res.success) cargarDatos();
 };
 
 window.eliminar = async function(id) {
     if (!confirm("¿Eliminar este registro?")) return;
-    const res = await requestAPI(`/api/documento/eliminar/${id}`, "DELETE");
-    if (res) cargarDatos();
+    const res = await requestAPI(`/api/documento_requisito/eliminar/${id}`, "DELETE");
+    if (res && res.success) cargarDatos();
 };
 
 window.guardar = async function() {
@@ -322,14 +325,23 @@ window.guardar = async function() {
         alert("Complete los campos obligatorios"); return;
     }
 
-    let url = "/api/documento/guardar";
+    let url = "/api/documento_requisito/registrar";
     let method = "POST";
 
     if (idEdicion) {
-        url = `/api/documento/actualizar/${idEdicion}`;
+        url = `/api/documento_requisito/actualizar/${idEdicion}`;
         method = "PUT";
     }
 
-    const res = await requestAPI(url, method, body);
-    if (res) { cerrarModal(); cargarDatos(); }
+    // Ajustar el body para que coincida con el formato esperado
+    const bodyFormatted = {
+        idReserva: parseInt(body.idReserva),
+        idActoRequisito: parseInt(body.idActoReq),
+        estado: body.estado,  // Mantener estado para el endpoint de actualizar
+        observacion: body.observacion || '',
+        vigencia: body.vigencia || null
+    };
+
+    const res = await requestAPI(url, method, bodyFormatted);
+    if (res && res.success) { cerrarModal(); cargarDatos(); }
 };

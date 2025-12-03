@@ -53,7 +53,7 @@ async function cargarParroquias() {
         datos.forEach(p => {
             if (!p.latParroquia || !p.logParroquia) return;
 
-            const mostrarBotonReserva = (rolUsuario === 'feligres') ? `
+            const mostrarBotonReserva = (rolUsuario === 'feligres' || rolUsuario === 'administrador') ? `
                 <button onclick="mostrarInformacionParroquia('${p.idParroquia}')"
                     style="background:#00a135;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
                     Más información
@@ -164,7 +164,7 @@ const modalSi = document.getElementById('modal-si');
 const modalNo = document.getElementById('modal-no');
 
 function abrirModalReserva(nombre, id) {
-    const rolesPermitidos = ['feligres', 'secretaria', 'sacerdote'];
+    const rolesPermitidos = ['feligres', 'secretaria', 'sacerdote', 'administrador'];
     if (!rolesPermitidos.includes(rolUsuario)) {
         alert("Usted no puede hacer reservas.");
         return;
@@ -189,10 +189,11 @@ modalReserva.addEventListener('click', e => {
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', async () => {
 
-    const rolesPermitidos = ['feligres', 'secretaria', 'sacerdote'];
-    if (!rolesPermitidos.includes(rolUsuario)) {
+    // Permitir ver el mapa a todos los roles (feligres, secretaria, sacerdote, administrador)
+    // Solo restringir la funcionalidad de hacer reservas
+    const rolesPermitidosReserva = ['feligres', 'secretaria', 'sacerdote', 'administrador'];
+    if (!rolesPermitidosReserva.includes(rolUsuario)) {
         console.warn(`Bloqueo de seguridad: Rol '${rolUsuario}' no autorizado.`);
-        alert("Usted no puede hacer reservas.");
         const mainContent = document.querySelector('.main-content');
         if (mainContent) {
             mainContent.innerHTML = `<p style="color:red;font-size:18px;text-align:center;margin-top:50px;">

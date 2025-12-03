@@ -111,7 +111,7 @@ def crear_app():
         return render_template('cliente/detalle_parroquia.html')
 
     @app.route('/cliente/calendario')
-    @requires_roles('Feligres', 'Secretaria', 'Sacerdote')
+    @requires_roles('Feligres', 'Secretaria', 'Sacerdote', 'Administrador')
     def calendario_cliente():
         # Obtener idParroquia de los parámetros de la URL si viene desde detalle_parroquia
         idParroquia = request.args.get('idParroquia')
@@ -131,28 +131,28 @@ def crear_app():
 
     # --- RESERVAS CLIENTE ---
     @app.route('/cliente/reserva')
-    @requires_roles('Feligres', 'Secretaria', 'Sacerdote')
+    @requires_roles('Feligres', 'Secretaria', 'Sacerdote', 'Administrador')
     def reserva_cliente():
         return render_template('cliente/reserva_ubicacion.html')
 
     @app.route('/cliente/reserva_acto')
-    @requires_roles('Feligres', 'Secretaria','Sacerdote')
+    @requires_roles('Feligres', 'Secretaria','Sacerdote', 'Administrador')
     def reserva_acto():
         return render_template('cliente/reserva_acto.html')
 
     @app.route('/cliente/reserva_datos')
-    @requires_roles('Feligres', 'Secretaria','Sacerdote')
+    @requires_roles('Feligres', 'Secretaria','Sacerdote', 'Administrador')
     def reserva_datos():
         return render_template('cliente/reserva_datos.html')
 
 
     @app.route('/admi/secretaria_documentos')
-    @requires_roles('Secretaria')
+    @requires_roles('Secretaria','Administrador')
     def secretaria_documentos():
         return render_template('administradores/secretaria_documentos.html')
 
     @app.route('/cliente/reserva_resumen')
-    @requires_roles('Feligres', 'Secretaria','Sacerdote')
+    @requires_roles('Feligres', 'Secretaria','Sacerdote', 'Administrador')
     def reserva_resumen():
         return render_template('cliente/reserva_resumen.html')
 
@@ -162,7 +162,7 @@ def crear_app():
         return render_template('cliente/mis_reservas.html')
 
     @app.route('/cliente/pago')
-    @requires_roles('Feligres', 'Secretaria')
+    @requires_roles('Feligres', 'Secretaria', 'Administrador')
     def pago_cliente():
         return render_template('cliente/pago.html')
 
@@ -193,7 +193,7 @@ def crear_app():
         return render_template('administradores/rol_permiso.html')
 
     @app.route('/admi/feligres')
-    @requires_roles('Administrador','Sacerdote','Secretaria')
+    @requires_roles('Administrador', 'Sacerdote', 'Secretaria')
     def feligres_admi():
         return render_template('administradores/usuario_feligres.html')
 
@@ -213,14 +213,19 @@ def crear_app():
         return render_template('administradores/configuracion.html')
 
     @app.route('/admi/disponibilidad')
-    @requires_roles('Administrador','Sacerdote','Secretaria')
+    @requires_roles('Administrador', 'Sacerdote', 'Secretaria')
     def disponibilidad_admi():
         return render_template('administradores/disponibilidad.html')
 
     @app.route('/admi/documento_requisito')
-    @requires_roles('Administrador','Sacerdote','Secretaria')
+    @requires_roles('Administrador', 'Sacerdote', 'Secretaria')
     def documento_requisito_admi():
         return render_template('administradores/documento_requisito.html')
+    
+    @app.route('/admi/pago')
+    @requires_roles('Administrador')
+    def pago_admi():
+        return render_template('administradores/pago.html')
 
     @app.route('/admi/lista_reporte')
     @requires_roles('Administrador')
@@ -228,17 +233,32 @@ def crear_app():
         return render_template('administradores/lista_reporte.html')
 
     @app.route('/admi/parroquia_personal')
-    @requires_roles('Administrador','Sacerdote')
+    @requires_roles('Administrador', 'Sacerdote')
     def parroquia_personal_admi():
         return render_template('administradores/parroquia_personal.html')
 
     @app.route('/admi/reporte')
     @requires_roles('Administrador')
     def reporte_admi():
+        return render_template('administradores/reporte.html')
+    
+    @app.route('/admi/reporte_usuario')
+    @requires_roles('Administrador')
+    def reporte_usuario_admi():
+        return render_template('administradores/reporte_usuario.html')
+    
+    @app.route('/admi/reporte_pago')
+    @requires_roles('Administrador')
+    def reporte_pago_admi():
+        return render_template('administradores/reportePago.html')
+    
+    @app.route('/admi/reporte_personal_parroquia')
+    @requires_roles('Administrador')
+    def reporte_personal_parroquia_admi():
         return render_template('administradores/reporte_PersonalParroquia.html')
 
     @app.route('/admi/requisitos')
-    @requires_roles('Administrador','Sacerdote')
+    @requires_roles('Administrador', 'Sacerdote')
     def requisitos_admi():
         return render_template('administradores/requisitos.html')
 
@@ -248,7 +268,7 @@ def crear_app():
         return render_template('administradores/reserva.html')
     
     @app.route('/admi/acto_parroquia')
-    @requires_roles('Administrador','Sacerdote','Secretaria')
+    @requires_roles('Administrador', 'Sacerdote', 'Secretaria')
     def acto_parroquia_admi():
         return render_template('administradores/acto_parroquia.html')
     

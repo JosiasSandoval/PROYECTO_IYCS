@@ -3,6 +3,41 @@
    Mantiene el resto de la funcionalidad.
 */
 
+// ============ DETECCIÓN TIPO DE ADMIN ============
+let esAdminGlobal = true;
+let idParroquiaUsuario = null;
+
+async function detectarTipoAdmin() {
+    try {
+        const res = await fetch('/api/auth/get_session_data');
+        const data = await res.json();
+        esAdminGlobal = data.es_admin_global || false;
+        idParroquiaUsuario = data.idParroquia || null;
+        console.log('Tipo Admin:', esAdminGlobal ? 'Global' : 'Local', 'Parroquia:', idParroquiaUsuario);
+        mostrarBadgeAdmin();
+    } catch (err) {
+        console.error('Error detectando tipo admin:', err);
+    }
+}
+
+function mostrarBadgeAdmin() {
+    const contenedor = document.querySelector('.card-header h4') || document.querySelector('h4');
+    if (!contenedor) return;
+    
+    const badge = document.createElement('span');
+    badge.className = `badge ${esAdminGlobal ? 'bg-success' : 'bg-warning text-dark'} ms-2`;
+    badge.textContent = esAdminGlobal ? '🌐 Admin Global' : '📍 Admin Local';
+    badge.style.fontSize = '0.75rem';
+    contenedor.appendChild(badge);
+    
+    if (!esAdminGlobal) {
+        const nota = document.createElement('small');
+        nota.className = 'text-muted d-block mt-1';
+        nota.textContent = 'Solo puedes consultar personal de tu parroquia';
+        contenedor.appendChild(nota);
+    }
+}
+
 const tabla = document.querySelector("#tablaDocumentos tbody");
 const paginacion = document.getElementById("paginacionContainer");
 
@@ -87,12 +122,21 @@ function normalizarPersonal(p) {
 // ---------------- carga principal ----------------
 async function cargarPersonales() {
     try {
+        // Detectar tipo de admin primero
+        await detectarTipoAdmin();
+        
         const data = await manejarSolicitud("/api/usuario/personal", {}, "Error al obtener personal");
         const items = Array.isArray(data.datos) ? data.datos : (Array.isArray(data) ? data : (data.datos ? data.datos : []));
         personales = items.map(normalizarPersonal);
         personalesFiltrados = null;
         paginaActual = 1;
         renderTabla();
+        
+        // Ocultar botón agregar si es admin local
+        const btnAgregar = document.getElementById('btn_agregar_personal') || document.querySelector('[onclick="abrirModalNuevo()"]');
+        if (btnAgregar && !esAdminGlobal) {
+            btnAgregar.style.display = 'none';
+        }
     } catch (err) {
         console.error("Error cargando personal:", err);
     }
@@ -128,6 +172,28 @@ function renderTabla() {
         // roles como etiquetas, sin duplicados (ya dedupe en normalizar)
         const rolesMostrar = (u.roles || []).join(", ");
 
+        // Botones según tipo de admin
+        let botonesAccion = `
+            <button class="btn btn-info btn-sm" onclick="verDetallePersonal(${u.id})" title="Ver">
+                <img src="/static/img/ojo.png" alt="ver">
+            </button>
+        `;
+        
+        // Solo admin global puede editar, cambiar estado y eliminar
+        if (esAdminGlobal) {
+            botonesAccion += `
+                <button class="btn btn-warning btn-sm" onclick="editarPersonal(${u.id})" title="Editar">
+                    <img src="/static/img/lapiz.png" alt="editar">
+                </button>
+                <button class="btn ${botonColor} btn-sm" onclick="darDeBajaPersonal(${u.id})" title="${tituloBoton}">
+                    <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}">
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="eliminarPersonal(${u.id})" title="Eliminar">
+                    <img src="/static/img/x.png" alt="eliminar">
+                </button>
+            `;
+        }
+
         const fila = document.createElement("tr");
         fila.innerHTML = `
             <td>${inicio + idx + 1}</td>
@@ -136,18 +202,7 @@ function renderTabla() {
             <td>${escapeHtml(u.email)}</td>
             <td class="col-acciones">
                 <div class="d-flex justify-content-center flex-wrap gap-1">
-                    <button class="btn btn-info btn-sm" onclick="verDetallePersonal(${u.id})" title="Ver">
-                        <img src="/static/img/ojo.png" alt="ver">
-                    </button>
-                    <button class="btn btn-warning btn-sm" onclick="editarPersonal(${u.id})" title="Editar">
-                        <img src="/static/img/lapiz.png" alt="editar">
-                    </button>
-                    <button class="btn ${botonColor} btn-sm"  onclick="darDeBajaPersonal(${u.id})" title="${esActivo ? 'Dar de baja' : 'Dar de alta'}">
-                        <img src="/static/img/flecha-hacia-abajo.png" alt="estado" style="${rotacion}; ">
-                    </button>
-                    <button class="btn btn-danger btn-sm" onclick="eliminarPersonal(${u.id})" title="Eliminar">
-                        <img src="/static/img/x.png" alt="eliminar">
-                    </button>
+                    ${botonesAccion}
                 </div>
             </td>
         `;

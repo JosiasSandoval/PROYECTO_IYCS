@@ -17,13 +17,26 @@ reportes_bp = Blueprint('reportes', __name__)
 
 @reportes_bp.route('/parroquias', methods=['GET'])
 def route_listar_parroquia():
-
+    from flask import session
     try:
-        datos = listar_parroquia()
+        # Admin Local solo puede ver su parroquia en reportes
+        rol = session.get('rol_sistema', '').lower()
+        es_admin_global = session.get('es_admin_global', False)
+        idParroquia_usuario = session.get('idParroquia')
+        
+        if rol == 'administrador' and not es_admin_global:
+            # Admin Local: solo su parroquia
+            if idParroquia_usuario:
+                datos = [{'idParroquia': idParroquia_usuario}]
+            else:
+                datos = []
+        else:
+            # Admin Global u otros roles: todas las parroquias
+            datos = listar_parroquia()
+        
         return jsonify({'ok': True, 'datos': datos}), 200
 
     except Exception as e:
-
         print(f"Error en /parroquias: {e}")
         return jsonify({'ok': False, 'datos': [], 'mensaje': str(e)}), 500
 
@@ -45,13 +58,21 @@ def route_listar_acto():
 
 @reportes_bp.route('/reservas', methods=['GET'])
 def route_reporte_reservas():
-
+    from flask import session
     try:
         idParroquia = request.args.get('idParroquia') or request.args.get('id_parroquia')
         idActo = request.args.get('idActo') or request.args.get('id_acto')
         estado = request.args.get('estado')  
         fecha_inicio = request.args.get('fecha_inicio') or request.args.get('fechaInicio')
         fecha_fin = request.args.get('fecha_fin') or request.args.get('fechaFin')
+
+        # Admin Local: forzar su parroquia
+        rol = session.get('rol_sistema', '').lower()
+        es_admin_global = session.get('es_admin_global', False)
+        idParroquia_usuario = session.get('idParroquia')
+        
+        if rol == 'administrador' and not es_admin_global:
+            idParroquia = idParroquia_usuario  # Forzar su parroquia
 
         try:
             idParroquia = int(idParroquia) if idParroquia else None
@@ -62,10 +83,7 @@ def route_reporte_reservas():
         except:
             idActo = None
 
-
-
         resultados = reporte_reservas_por_acto(
-
             id_parroquia=idParroquia,
             id_acto=idActo,
             estado=estado,
@@ -91,7 +109,7 @@ def route_estadisticas():
     - Ingresos totales
     - Total de reservas
     """
-
+    from flask import session
     try:
 
         idParroquia = request.args.get('idParroquia') or request.args.get('id_parroquia')
@@ -99,6 +117,14 @@ def route_estadisticas():
         estado = request.args.get('estado')
         fecha_inicio = request.args.get('fecha_inicio') or request.args.get('fechaInicio')
         fecha_fin = request.args.get('fecha_fin') or request.args.get('fechaFin')
+
+        # Admin Local: forzar su parroquia
+        rol = session.get('rol_sistema', '').lower()
+        es_admin_global = session.get('es_admin_global', False)
+        idParroquia_usuario = session.get('idParroquia')
+        
+        if rol == 'administrador' and not es_admin_global:
+            idParroquia = idParroquia_usuario
 
         try:
             idParroquia = int(idParroquia) if idParroquia else None
@@ -186,12 +212,21 @@ def route_reporte_reservas_post():
 # ======================================================
 @reportes_bp.route('/pagos', methods=['GET'])
 def route_reporte_pagos():
+    from flask import session
     try:
         # Parámetros recibidos desde el frontend
         idParroquia = request.args.get('idParroquia')
         tipo = request.args.get('tipo')
         fecha_inicio = request.args.get('fecha_inicio')
         fecha_fin = request.args.get('fecha_fin')
+
+        # Admin Local: forzar su parroquia
+        rol = session.get('rol_sistema', '').lower()
+        es_admin_global = session.get('es_admin_global', False)
+        idParroquia_usuario = session.get('idParroquia')
+        
+        if rol == 'administrador' and not es_admin_global:
+            idParroquia = idParroquia_usuario
 
         # Convertir idParroquia a entero si existe
         try:

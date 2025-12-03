@@ -94,10 +94,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return false;
             }
 
-            // Asignación especial para sacerdote
-            reservaData.idSolicitante = idParroquiaReserva; // La parroquia es quien solicita
-            reservaData.idUsuario = idUsuarioSesion; // El sacerdote quien registra
+            // Asignación especial para sacerdote: idSolicitante = idParroquia
+            reservaData.idSolicitante = String(idParroquiaReserva); // La parroquia es quien solicita (convertir a string)
+            reservaData.idUsuario = String(idUsuarioSesion); // El sacerdote quien registra
+            reservaData.idParroquia = String(idParroquiaReserva); // Asegurar que idParroquia esté como string
             sessionStorage.setItem('reserva', JSON.stringify(reservaData));
+            
+            console.log('🔹 SACERDOTE - idSolicitante establecido como idParroquia:', reservaData.idSolicitante);
 
             // Mostrar información de la parroquia como solicitante
             const nombreParroquia = reservaData.nombreParroquia || 'Parroquia';
@@ -455,12 +458,22 @@ async function enviarReserva(data) {
         // -------------------------------------------------------
         mostrarMensaje('Registrando reserva principal (Paso 1/3)...', 'info');
 
+        // 🔹 CORRECCIÓN: Si es sacerdote, idSolicitante = idParroquia
+        let idSolicitanteFinal = data.idSolicitante;
+        const rolUsuario = document.body.dataset.rol?.toLowerCase() || '';
+        
+        if (rolUsuario === 'sacerdote') {
+            // Para sacerdote, el idSolicitante debe ser el idParroquia
+            idSolicitanteFinal = data.idParroquia || data.idSolicitante;
+            console.log('🔹 SACERDOTE: idSolicitante = idParroquia =', idSolicitanteFinal);
+        }
+
         const reservaPayload = {
             fecha: data.fecha,
             hora: data.hora,
             observaciones: data.observaciones || '',
             idUsuario: String(data.idUsuario),
-            idSolicitante: String(data.idSolicitante),
+            idSolicitante: String(idSolicitanteFinal),
             idActo: String(data.idActo),
             estadoReserva: estadoReserva,
             idParroquia: data.idParroquia,

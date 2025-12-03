@@ -89,6 +89,22 @@ def obtener_informacion_parroquia(idParroquia):
             """, (idParroquia,))
             fila = cursor.fetchone()
             if fila:
+                # Obtener sacerdotes de la parroquia
+                cursor.execute("""
+                    SELECT CONCAT(pe.nombPers, ' ', pe.apePatPers, ' ', pe.apeMatPers) AS nombre
+                    FROM parroquia_personal pp
+                    INNER JOIN personal pe ON pp.idPersonal = pe.idPersonal
+                    INNER JOIN usuario us ON pe.idUsuario = us.idUsuario
+                    INNER JOIN rol_usuario ru ON us.idUsuario = ru.idUsuario
+                    INNER JOIN rol r ON ru.idRol = r.idRol
+                    WHERE pp.idParroquia = %s 
+                    AND r.nombRol = 'Sacerdote'
+                    AND pp.vigenciaParrPers = TRUE
+                    ORDER BY pe.nombPers
+                """, (idParroquia,))
+                
+                sacerdotes = [{'nombre': row[0]} for row in cursor.fetchall()]
+                
                 return {
                     'nombParroquia': fila[0],
                     'historiaParroquia': fila[1],
@@ -100,7 +116,8 @@ def obtener_informacion_parroquia(idParroquia):
                     'color': fila[7],
                     'latParroquia': float(fila[8]) if fila[8] is not None else None,
                     'logParroquia': float(fila[9]) if fila[9] is not None else None,
-                    'estadoParroquia': fila[10]
+                    'estadoParroquia': fila[10],
+                    'sacerdotes': sacerdotes
                 }
             return None
     except Exception as e:
@@ -143,16 +160,35 @@ def obtener_parroquia_secretaria(idUsuario):
 # ======================================================
 # 🔹 LISTAR PARROQUIAS
 # ======================================================
-def listar_parroquia():
+def listar_parroquia(es_admin_global=True, idParroquia=None):
+    """
+    Lista parroquias según el tipo de administrador.
+    - Admin Global: Ve todas las parroquias
+    - Admin Local: Solo ve su parroquia
+    """
     try:
         conexion = obtener_conexion()
         with conexion.cursor() as cursor:
-            cursor.execute("""
-                SELECT idParroquia, nombParroquia, historiaParroquia, ruc,
-                       telefonoContacto, direccion, color,
-                       latParroquia, logParroquia, estadoParroquia
-                FROM PARROQUIA
-            """)
+            if es_admin_global:
+                # Admin Global: todas las parroquias
+                cursor.execute("""
+                    SELECT idParroquia, nombParroquia, historiaParroquia, ruc,
+                           telefonoContacto, direccion, color,
+                           latParroquia, logParroquia, estadoParroquia
+                    FROM PARROQUIA
+                """)
+            else:
+                # Admin Local: solo su parroquia
+                if not idParroquia:
+                    return []
+                cursor.execute("""
+                    SELECT idParroquia, nombParroquia, historiaParroquia, ruc,
+                           telefonoContacto, direccion, color,
+                           latParroquia, logParroquia, estadoParroquia
+                    FROM PARROQUIA
+                    WHERE idParroquia = %s
+                """, (idParroquia,))
+            
             resultados = [
                 {
                     'idParroquia': f[0],

@@ -49,41 +49,6 @@ CREATE TABLE PERSONAL (
     CONSTRAINT fk_personal_usuario FOREIGN KEY (idUsuario) REFERENCES USUARIO(idUsuario)
 );
 
--- =========================
--- AUDITORÍAS
--- =========================
-CREATE TABLE AUDITORIA_USUARIO (
-    idAuditoria INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    fechaHora DATETIME NOT NULL,
-    nombreTabla VARCHAR(50) NOT NULL,
-    tipoAccion VARCHAR(10) NOT NULL,
-    idRegistroAfectado INT NOT NULL,
-    nombreCampo VARCHAR(50) NULL,
-    valorAnterior VARCHAR(255) NULL,
-    valorNuevo VARCHAR(255) NULL
-);
-
-CREATE TABLE AUDITORIA_RESERVA (
-    idAuditoria INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    fechaHora DATETIME NOT NULL,
-    nombreTabla VARCHAR(50) NOT NULL,
-    tipoAccion VARCHAR(10) NOT NULL,
-    idRegistroAfectado INT NOT NULL,
-    nombreCampo VARCHAR(50) NULL,
-    valorAnterior VARCHAR(255) NULL,
-    valorNuevo VARCHAR(255) NULL
-);
-
-CREATE TABLE AUDITORIA_PARROQUIA (
-    idAuditoria INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    fechaHora DATETIME NOT NULL,
-    nombreTabla VARCHAR(50) NOT NULL,
-    tipoAccion VARCHAR(10) NOT NULL,
-    idRegistroAfectado INT NOT NULL,
-    nombreCampo VARCHAR(50) NULL,
-    valorAnterior VARCHAR(255) NULL,
-    valorNuevo VARCHAR(255) NULL
-);
 
 -- =========================
 -- ROLES Y PERMISOS
@@ -234,12 +199,12 @@ CREATE TABLE RESERVA (
 );
 
 CREATE TABLE DOCUMENTO_REQUISITO (
-
-    idDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,     -- MIME type, ej. 'image/png' o 'application/pdf'
+    idDocumento INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     f_subido DATE NULL,
     estadoCumplimiento VARCHAR(50) NOT NULL,
     aprobado BOOLEAN NOT NULL,
     vigenciaDocumento DATE NULL,
+    observacion TEXT NULL,
     idReserva INT NOT NULL,
     idActoRequisito INT NOT NULL,
     CONSTRAINT fk_docreq_reserva FOREIGN KEY (idReserva) REFERENCES RESERVA(idReserva),
@@ -324,18 +289,6 @@ CREATE TABLE CONFIGURACION_ACTO (
     estadoConfiguracion BOOLEAN NOT NULL,
     CONSTRAINT fk_configacto_acto FOREIGN KEY (idActo)
         REFERENCES ACTO_LITURGICO(idActo)
-);
-
-CREATE TABLE EXCEPCION_PERSONAL (
-    idExcepcion INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    nombreExcepcion VARCHAR(100) NOT NULL,
-    fechaInicioExcepcion DATE NOT NULL,
-    fechaFinExcepcion DATE,
-    motivoExcepcion VARCHAR(255) NOT NULL,
-    tipoExcepcion VARCHAR(100) NOT NULL,
-    estadoExcepcion BOOLEAN NOT NULL,
-    idPersonal INT NOT NULL,
-    CONSTRAINT fk_excepcion_personal FOREIGN KEY (idPersonal) REFERENCES PERSONAL(idPersonal)
 );
 
 CREATE TABLE NOTIFICACION (

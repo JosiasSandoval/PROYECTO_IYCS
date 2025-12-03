@@ -32,9 +32,11 @@ const manejarSolicitud = async (url, opciones = {}, mensajeError = "Error") => {
 
 const cargarMetodos = async () => {
   try {
-    const data = await manejarSolicitud("/api/pago/metodo", {}, "Error al obtener metodos de pago");
+    const data = await manejarSolicitud("/api/metodo_pago/metodo", {}, "Error al obtener metodos de pago");
     console.log("Datos recibidos de la API:", data); // 🔹 para depuración
-    metodos = Array.isArray(data) ? data.map(normalizar) : [];
+    // El backend retorna {ok: true, datos: [...]}
+    const datosArray = data.ok && data.datos ? data.datos : (Array.isArray(data) ? data : []);
+    metodos = datosArray.map(normalizar);
     metodosFiltrados = null;
     paginaActual = 1;
     renderTabla();
@@ -142,17 +144,17 @@ function cambiarPagina(pagina) {
 }
 
 const agregarMetodo = nombre => manejarSolicitud(
-  "/api/pago/agregar_metodo",
+  "/api/metodo_pago/agregar_metodo",
   {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nombre }),
+    body: JSON.stringify({ nombMetodo: nombre }),
   },
   "Error al agregar metodo"
 ).then(() => cargarMetodos());
 
 const actualizarMetodoAPI = (id, nombre) => manejarSolicitud(
-  `/api/pago/actualizar_metodo/${id}`,
+  `/api/metodo_pago/actualizar_metodo/${id}`,
   {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -164,10 +166,10 @@ const actualizarMetodoAPI = (id, nombre) => manejarSolicitud(
 const eliminarMetodo = async id => {
   if (!confirm("¿Está seguro de eliminar este metodo de pago?")) return;
   try {
-    const res = await fetch(`/api/pago/eliminar_metodo/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/metodo_pago/eliminar/${id}`, { method: "DELETE" });
     const data = await res.json();
-    if (!res.ok) alert(data.error || "Error al eliminar el cargo");
-    else alert(data.mensaje || "Metodo de pagoeliminado correctamente");
+    if (!res.ok || !data.ok) alert(data.mensaje || data.error || "Error al eliminar el metodo de pago");
+    else alert(data.mensaje || "Metodo de pago eliminado correctamente");
     cargarMetodos();
   } catch (err) {
     console.error("Error al eliminar metodo de pago", err);
@@ -180,15 +182,19 @@ async function darDeBaja(id) {
     const doc = metodos.find(d => d.id === id);
     if (!doc) return alert("Metodo de pago no encontrado");
     const nuevoEstado = !doc.estado;
-    const res = await fetch(`/api/pago/cambiar_estado_metodo/${id}`, {
+    const res = await fetch(`/api/metodo_pago/cambiar_estado_metodo/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado: nuevoEstado })
     });
     if (!res.ok) throw new Error("Error al cambiar estado");
     const data = await res.json();
-    doc.estado = data.nuevo_estado === true;
-    renderTabla();
+    if (data.ok) {
+      doc.estado = data.nuevo_estado === true || data.nuevo_estado === 1;
+      renderTabla();
+    } else {
+      alert(data.mensaje || "Error al actualizar estado");
+    }
   } catch (err) {
     console.error(err);
     alert("Error al actualizar estado");
@@ -208,15 +214,10 @@ btnBuscar.addEventListener("click", async () => {
     return;
   }
   try {
-    const res = await fetch(`/api/pago/busqueda_metodo/${encodeURIComponent(termino)}`);
-    if (res.status === 404) {
-      metodosFiltrados = [];
-      renderTabla();
-      return;
-    }
-    if (!res.ok) throw new Error("Error en búsqueda");
-    const data = await res.json();
-    metodosFiltrados = Array.isArray(data) ? data.map(normalizar) : [normalizar(data)];
+    // Búsqueda local en los métodos ya cargados
+    metodosFiltrados = metodos.filter(m => 
+      m.nombre.toLowerCase().includes(termino.toLowerCase())
+    );
     paginaActual = 1;
     renderTabla();
   } catch (err) {

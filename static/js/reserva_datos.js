@@ -21,6 +21,56 @@ async function cargarSacerdotes(idParroquia) {
 }
 
 // ================================================
+// CARGA AUTOMÁTICA DE SACERDOTE DISPONIBLE
+// ================================================
+async function cargarSacerdoteDisponible(idParroquia, fecha, hora, inputElement) {
+    if (!idParroquia || !fecha || !hora || !inputElement) return;
+    
+    try {
+        // Formatear hora si es necesario (asegurar formato HH:MM)
+        let horaFormateada = hora;
+        if (horaFormateada.length === 5 && horaFormateada.includes(':')) {
+            // Ya está en formato HH:MM
+        } else if (horaFormateada.length === 8 && horaFormateada.includes(':')) {
+            // Formato HH:MM:SS, tomar solo HH:MM
+            horaFormateada = horaFormateada.substring(0, 5);
+        }
+        
+        const resp = await fetch(`/api/usuario/sacerdote_disponible/${idParroquia}/${fecha}/${horaFormateada}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        const data = await resp.json();
+        if (data.success && data.sacerdote) {
+            // Llenar automáticamente el campo del sacerdote
+            inputElement.value = data.sacerdote;
+            inputElement.classList.add('is-valid');
+            console.log('✅ Sacerdote disponible asignado automáticamente:', data.sacerdote);
+            
+            // Mostrar indicador visual
+            const indicador = document.createElement('small');
+            indicador.className = 'text-success';
+            indicador.textContent = '✓ Sacerdote disponible asignado automáticamente';
+            indicador.style.display = 'block';
+            indicador.style.marginTop = '5px';
+            
+            // Remover indicador anterior si existe
+            const indicadorAnterior = inputElement.parentNode.querySelector('.text-success');
+            if (indicadorAnterior && indicadorAnterior !== indicador) {
+                indicadorAnterior.remove();
+            }
+            
+            inputElement.parentNode.appendChild(indicador);
+        } else {
+            console.log('⚠️ No hay sacerdotes disponibles para esa fecha y hora');
+            // No llenar el campo, el usuario deberá ingresarlo manualmente
+        }
+    } catch (err) {
+        console.error("Error cargando sacerdote disponible:", err);
+        // En caso de error, no hacer nada - el usuario puede ingresar manualmente
+    }
+}
+
+// ================================================
 // AUTOCOMPLETADO VISUAL
 // ================================================
 function mostrarSugerencias(input) {
@@ -399,6 +449,24 @@ function generarInputsParticipantes(listaParticipantes, container, reservaData =
 
             if (isSacerdote) {
                 input.addEventListener('input', () => mostrarSugerencias(input));
+                
+                // 🔹 AUTOCOMPLETAR SACERDOTE DISPONIBLE para Feligres y Secretaria
+                const rolUsuario = document.body.dataset.rol?.trim().toLowerCase();
+                const esFeligres = rolUsuario === 'feligres';
+                const esSecretaria = rolUsuario === 'secretaria';
+                
+                if (esFeligres || esSecretaria) {
+                    // Obtener fecha y hora de la reserva
+                    const reservaData = JSON.parse(sessionStorage.getItem('reserva') || '{}');
+                    const fechaReserva = reservaData.fecha;  // Se guarda como 'fecha' en reserva_acto.js
+                    const horaReserva = reservaData.hora;    // Se guarda como 'hora' en reserva_acto.js
+                    const idParroquia = reservaData.idParroquia;
+                    
+                    if (fechaReserva && horaReserva && idParroquia) {
+                        // Llamar al endpoint para obtener sacerdote disponible
+                        cargarSacerdoteDisponible(idParroquia, fechaReserva, horaReserva, input);
+                    }
+                }
             }
 
             formGroup.appendChild(label);
