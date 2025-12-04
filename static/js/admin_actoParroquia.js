@@ -124,15 +124,57 @@ function renderPaginacion(total) {
     paginacion.innerHTML = "";
     const pags = Math.ceil(total / elemPorPagina);
     if (pags <= 1) return;
+
     const ul = document.createElement("ul");
     ul.className = "pagination";
-    for (let i = 1; i <= pags; i++) {
+
+    // Helper para crear botones (normales o desactivados)
+    const crearLi = (contenido, pageNum, claseExtra = "") => {
         const li = document.createElement("li");
-        li.className = `page-item ${i === paginaActual ? "active" : ""}`;
-        li.innerHTML = `<button class="page-link">${i}</button>`;
-        li.onclick = () => { paginaActual = i; renderTabla(); };
-        ul.appendChild(li);
+        li.className = `page-item ${claseExtra}`;
+        
+        // Si es "...", lo mostramos como texto sin acción
+        if (contenido === "...") {
+            li.innerHTML = `<span class="page-link" style="color:#6c757d; cursor:default;">...</span>`;
+        } else {
+            // Botones normales
+            li.innerHTML = `<button class="page-link">${contenido}</button>`;
+            if (pageNum) {
+                li.onclick = () => { paginaActual = pageNum; renderTabla(); };
+            }
+        }
+        return li;
+    };
+
+    // 1. Botón "Anterior" (&laquo;)
+    ul.appendChild(crearLi("&laquo;", paginaActual - 1, paginaActual === 1 ? "disabled" : ""));
+
+    // 2. Lógica de Paginación Inteligente
+    // delta = cuántos números mostrar a los lados de la página actual
+    const delta = 1; 
+
+    for (let i = 1; i <= pags; i++) {
+        // Casos para MOSTRAR el número:
+        // 1. Es la primera página (1)
+        // 2. Es la última página (pags)
+        // 3. Está dentro del rango vecino (actual - delta  A  actual + delta)
+        if (i === 1 || i === pags || (i >= paginaActual - delta && i <= paginaActual + delta)) {
+            ul.appendChild(crearLi(i, i, i === paginaActual ? "active" : ""));
+        } 
+        // Casos para MOSTRAR LOS PUNTOS (...):
+        // Solo agregamos "..." si hay un hueco justo antes del rango vecino
+        else if (i === paginaActual - delta - 1) {
+            ul.appendChild(crearLi("...", null, "disabled"));
+        }
+        // O si hay un hueco justo después del rango vecino
+        else if (i === paginaActual + delta + 1) {
+            ul.appendChild(crearLi("...", null, "disabled"));
+        }
     }
+
+    // 3. Botón "Siguiente" (&raquo;)
+    ul.appendChild(crearLi("&raquo;", paginaActual + 1, paginaActual === pags ? "disabled" : ""));
+
     paginacion.appendChild(ul);
 }
 
