@@ -40,8 +40,19 @@ function reiniciarReserva() {
     limpiarSeleccionActo();
 
     const actoSelect = document.getElementById('acto-liturgico');
-    if (actoSelect) actoSelect.value = '';
+    if (actoSelect) {
+        actoSelect.value = '';
+        // Forzar actualización visual del select
+        actoSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // Limpiar horarios y configuración
+    horariosConfiguracion = [];
+    configuracionActo = { tiempoMinimoReserva: 0, tiempoMaximoReserva: null, tiempoDuracion: 60 };
+    
     pintarDiasDisponibles();
+    
+    console.log('✅ Reserva reiniciada completamente');
 }
 
 // ==============================

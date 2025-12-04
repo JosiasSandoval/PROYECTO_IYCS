@@ -63,7 +63,17 @@ async function realizarBusqueda() {
         const data = await response.json();
         
         if (data.success && data.datos && data.datos.length > 0) {
-            mostrarResultadosBusqueda(data.datos);
+            // Filtrar solo reservas PENDIENTE_PAGO o PENDIENTE_DOCUMENTO
+            const reservasFiltradas = data.datos.filter(r => 
+                r.estadoReserva === 'PENDIENTE_PAGO' || r.estadoReserva === 'PENDIENTE_DOCUMENTO'
+            );
+            
+            if (reservasFiltradas.length > 0) {
+                mostrarResultadosBusqueda(reservasFiltradas);
+            } else {
+                alert('No se encontraron reservas pendientes de documentos o pago');
+                ocultarResultadosBusqueda();
+            }
         } else {
             alert('No se encontraron reservas con ese criterio');
             ocultarResultadosBusqueda();
@@ -196,6 +206,9 @@ function renderizarListaRequisitos() {
     // Limpiar contenedor completamente
     container.innerHTML = '';
     
+    // Crear un contenedor temporal para construir el HTML completo
+    let htmlCompleto = '';
+    
     // Mostrar alerta de fecha límite si aplica
     if (reservaSeleccionada && reservaSeleccionada.fecha) {
         const fechaActo = new Date(reservaSeleccionada.fecha);
@@ -204,7 +217,7 @@ function renderizarListaRequisitos() {
         const hoy = new Date();
         
         if (hoy > fechaLimite) {
-            const alertaHTML = `
+            htmlCompleto += `
                 <div class="fecha-limite-alerta">
                     <div class="icono">⚠️</div>
                     <div class="texto">
@@ -213,12 +226,12 @@ function renderizarListaRequisitos() {
                     </div>
                 </div>
             `;
-            container.innerHTML = alertaHTML;
         }
     }
     
     if (requisitosActo.length === 0) {
-        container.innerHTML += '<p class="text-muted">No hay requisitos configurados para este acto.</p>';
+        htmlCompleto += '<p class="text-muted">No hay requisitos configurados para este acto.</p>';
+        container.innerHTML = htmlCompleto;
         return;
     }
     
@@ -229,8 +242,15 @@ function renderizarListaRequisitos() {
             d => d.idActoRequisito === requisito.idActoRequisito
         );
         
-        // Buscar el documento más reciente que NO esté rechazado
-        let docActivo = docsRequisito.find(d => d.estadoCumplimiento !== 'NO_CUMPLIDO');
+        // Prioridad: 1) cualquier PENDIENTE*, 2) CUMPLIDO, 3) NO_CUMPLIDO (para mostrar observación)
+        // Buscar primero documentos PENDIENTE (para aprobar) - cualquier variante
+        const estadosPendientes = ['PENDIENTE', 'PENDIENTE_REVISION', 'PENDIENTE_DOCUMENTO', 'PENDIENTE_PAGO'];
+        let docActivo = docsRequisito.find(d => estadosPendientes.includes(d.estadoCumplimiento));
+        
+        // Si no hay PENDIENTE, buscar CUMPLIDO (ya aprobado)
+        if (!docActivo) {
+            docActivo = docsRequisito.find(d => d.estadoCumplimiento === 'CUMPLIDO');
+        }
         
         // Si no hay documento activo, buscar el último rechazado para mostrar la observación
         let ultimoRechazado = null;
@@ -254,20 +274,24 @@ function renderizarListaRequisitos() {
     const fin = inicio + requisitosPorPagina;
     const requisitosPagina = requisitosConEstado.slice(inicio, fin);
     
-    let html = '';
-    
     // Renderizar requisitos de la página actual
     requisitosPagina.forEach(({ requisito, docActivo, ultimoRechazado }) => {
         const estadoCumplimiento = docActivo ? docActivo.estadoCumplimiento : 'NO_REGISTRADO';
+        // Normalizar variantes de estados pendientes que puede devolver el backend
+        const estadosPendientes = ['PENDIENTE', 'PENDIENTE_REVISION', 'PENDIENTE_DOCUMENTO', 'PENDIENTE_PAGO'];
+        const esPendiente = estadosPendientes.includes(estadoCumplimiento);
         const aprobado = docActivo ? docActivo.aprobado : 0;
         const observacion = docActivo ? (docActivo.observacion || '') : '';
         const fechaRecepcion = docActivo && docActivo.f_subido ? formatearFecha(docActivo.f_subido) : null;
+        
+        // Debug: Log para cada requisito
+        console.log(`📄 Requisito: ${requisito.nombreRequisito}, Estado: ${estadoCumplimiento}, DocActivo:`, docActivo ? docActivo.idDocumentoRequisito : 'N/A');
         
         let claseItem = 'requisito-item';
         if (estadoCumplimiento === 'CUMPLIDO') claseItem += ' documento-recibido';
         if (estadoCumplimiento === 'NO_CUMPLIDO') claseItem += ' documento-rechazado';
         
-        html += `
+        htmlCompleto += `
             <div class="${claseItem}">
                 <div class="requisito-header">
                     <div class="requisito-info">
@@ -276,7 +300,7 @@ function renderizarListaRequisitos() {
                     </div>
                     ${estadoCumplimiento === 'CUMPLIDO' ? 
                         '<span class="documento-estado estado-recibido">✓ APROBADO</span>' :
-                        estadoCumplimiento === 'PENDIENTE' ?
+                        esPendiente && docActivo ?
                         '<span class="documento-estado estado-recibido">⏳ RECIBIDO - PENDIENTE REVISIÓN</span>' :
                         '<span class="documento-estado estado-pendiente">○ PENDIENTE ENTREGA</span>'
                     }
@@ -315,29 +339,30 @@ function renderizarListaRequisitos() {
                             <div class="checkbox-wrapper">
                                 <input type="checkbox" 
                                        id="check_${requisito.idActoRequisito}" 
-                                       onchange="marcarDocumentoRecibido(${requisito.idActoRequisito}, this.checked)">
+                                       data-acto-requisito="${requisito.idActoRequisito}">
                                 <label for="check_${requisito.idActoRequisito}">
                                     📥 Marcar como Recibido
                                 </label>
                             </div>
                         </div>
-                    ` : estadoCumplimiento === 'PENDIENTE' ? `
-                        <!-- Documento recibido, ahora aprobar o rechazar -->
+                    ` : docActivo && docActivo.idDocumentoRequisito && estadoCumplimiento !== 'CUMPLIDO' ? `
+                        <!-- Documento recibido, ahora aprobar o rechazar (independiente del estado mientras NO esté CUMPLIDO) -->
                         <div class="documento-control">
-                            <button class="btn btn-success btn-sm" onclick="aprobarDocumentoDirecto(${docActivo.idDocumentoRequisito})">
+                            <button class="btn btn-success btn-sm" id="btn_aprobar_${docActivo.idDocumentoRequisito}">
                                 ✅ Aprobar Documento
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="mostrarCampoRechazo(${docActivo.idDocumentoRequisito})">
+                            <button class="btn btn-danger btn-sm" id="btn_rechazar_${docActivo.idDocumentoRequisito}">
                                 ❌ Rechazar Documento
                             </button>
                         </div>
-                        <div class="observacion-wrapper" id="obs_${docActivo.idDocumentoRequisito}">
+                        <div class="observacion-wrapper" id="obs_${docActivo.idDocumentoRequisito}" style="display: none; margin-top: 10px; padding: 15px; background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;">
                             <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #e74c3c;">
                                 Motivo del Rechazo (el feligrés verá este mensaje):
                             </label>
                             <textarea placeholder="Ej: El documento está borroso, falta firma, documento vencido, etc." 
-                                      id="textarea_${docActivo.idDocumentoRequisito}"></textarea>
-                            <div style="margin-top: 10px;">
+                                      id="textarea_${docActivo.idDocumentoRequisito}"
+                                      style="width: 100%; min-height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: vertical;"></textarea>
+                            <div style="margin-top: 10px; display: flex; gap: 10px;">
                                 <button class="btn btn-danger btn-sm" onclick="confirmarRechazo(${docActivo.idDocumentoRequisito})">
                                     Confirmar Rechazo
                                 </button>
@@ -346,7 +371,7 @@ function renderizarListaRequisitos() {
                                 </button>
                             </div>
                         </div>
-                    ` : estadoCumplimiento === 'CUMPLIDO' ? `
+                    ` : estadoCumplimiento === 'CUMPLIDO' && docActivo ? `
                         <div style="color: #27ae60; font-weight: 600; padding: 10px; background-color: #e8f8f5; border-radius: 6px;">
                             ✓ Documento aprobado correctamente
                         </div>
@@ -356,38 +381,56 @@ function renderizarListaRequisitos() {
         `;
     });
     
-    // Agregar el HTML de los requisitos
-    container.innerHTML += html;
-    
     // Agregar controles de paginación si hay más de una página
     if (totalPaginas > 1) {
-        let paginacionHTML = '<div class="paginacion-requisitos">';
+        htmlCompleto += '<div class="paginacion-requisitos">';
         
         // Botón anterior
         if (paginaActual > 1) {
-            paginacionHTML += `<button class="btn btn-secondary btn-sm" onclick="cambiarPagina(${paginaActual - 1})">« Anterior</button>`;
+            htmlCompleto += `<button class="btn btn-secondary btn-sm" onclick="cambiarPagina(${paginaActual - 1})">« Anterior</button>`;
         }
         
         // Números de página
-        paginacionHTML += '<span class="info-pagina">Página ' + paginaActual + ' de ' + totalPaginas + '</span>';
+        htmlCompleto += '<span class="info-pagina">Página ' + paginaActual + ' de ' + totalPaginas + '</span>';
         
         // Botón siguiente
         if (paginaActual < totalPaginas) {
-            paginacionHTML += `<button class="btn btn-secondary btn-sm" onclick="cambiarPagina(${paginaActual + 1})">Siguiente »</button>`;
+            htmlCompleto += `<button class="btn btn-secondary btn-sm" onclick="cambiarPagina(${paginaActual + 1})">Siguiente »</button>`;
         }
         
-        paginacionHTML += '</div>';
-        container.innerHTML += paginacionHTML;
+        htmlCompleto += '</div>';
     }
+    
+    // Asignar todo el HTML de una vez para evitar problemas con event listeners
+    container.innerHTML = htmlCompleto;
     
     // Asegurar que los event listeners estén configurados después de renderizar
     configurarEventosDocumentos();
+    
+    // Debug: Verificar que los botones y checkboxes estén disponibles
+    const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="check_"]');
+    const botonesAprobar = document.querySelectorAll('button[onclick^="aprobarDocumentoDirecto"], button[id^="btn_aprobar_"]');
+    const botonesRechazar = document.querySelectorAll('button[onclick^="mostrarCampoRechazo"], button[id^="btn_rechazar_"]');
+    
+    console.log('✅ Requisitos renderizados:', requisitosPagina.length);
+    console.log('✅ Checkboxes encontrados:', checkboxes.length);
+    console.log('✅ Botones aprobar encontrados:', botonesAprobar.length);
+    console.log('✅ Botones rechazar encontrados:', botonesRechazar.length);
+    
+    // Debug adicional: Listar todos los estados de los documentos
+    requisitosPagina.forEach(({ requisito, docActivo }) => {
+        if (docActivo) {
+            console.log(`  - ${requisito.nombreRequisito}: ${docActivo.estadoCumplimiento} (ID: ${docActivo.idDocumentoRequisito})`);
+        } else {
+            console.log(`  - ${requisito.nombreRequisito}: NO_REGISTRADO`);
+        }
+    });
 }
 
 // ============================================================
 // CAMBIAR PÁGINA DE REQUISITOS
 // ============================================================
-function cambiarPagina(nuevaPagina) {
+window.cambiarPagina = function(nuevaPagina) {
     paginaActual = nuevaPagina;
     renderizarListaRequisitos();
     
@@ -398,12 +441,22 @@ function cambiarPagina(nuevaPagina) {
 // ============================================================
 // MARCAR DOCUMENTO COMO RECIBIDO (SOLO RECEPCIÓN)
 // ============================================================
-async function marcarDocumentoRecibido(idActoRequisito, checked) {
-    if (!checked || !reservaSeleccionada) return;
+window.marcarDocumentoRecibido = async function(idActoRequisito, checked) {
+    if (!checked || !reservaSeleccionada) {
+        // Si se desmarca, no hacer nada
+        return;
+    }
+    
+    // Obtener el checkbox para poder desmarcarlo si es necesario
+    const checkbox = document.getElementById(`check_${idActoRequisito}`);
+    if (!checkbox) {
+        console.error('Checkbox no encontrado:', `check_${idActoRequisito}`);
+        return;
+    }
     
     if (!confirm('¿Confirma que recibió este documento físicamente?')) {
         // Desmarcar el checkbox
-        document.getElementById(`check_${idActoRequisito}`).checked = false;
+        checkbox.checked = false;
         return;
     }
     
@@ -423,28 +476,37 @@ async function marcarDocumentoRecibido(idActoRequisito, checked) {
         
         if (data.success) {
             alert('✅ Documento registrado como RECIBIDO. Ahora debe aprobarlo o rechazarlo.');
+            // Recargar la lista de requisitos para actualizar la vista
             await cargarRequisitosYDocumentos(reservaSeleccionada.idReserva, reservaSeleccionada.idActo);
         } else {
             alert('❌ Error al registrar documento: ' + (data.mensaje || 'Error desconocido'));
             // Desmarcar el checkbox
-            document.getElementById(`check_${idActoRequisito}`).checked = false;
+            checkbox.checked = false;
         }
         
     } catch (error) {
         console.error('Error al marcar documento:', error);
         alert('Error al procesar el documento');
         // Desmarcar el checkbox
-        document.getElementById(`check_${idActoRequisito}`).checked = false;
+        checkbox.checked = false;
     }
 }
 
 // ============================================================
 // APROBAR DOCUMENTO DIRECTAMENTE
 // ============================================================
-async function aprobarDocumentoDirecto(idDocumentoRequisito) {
+window.aprobarDocumentoDirecto = async function(idDocumentoRequisito) {
+    console.log('🔵 Intentando aprobar documento:', idDocumentoRequisito);
+    
+    if (!idDocumentoRequisito) {
+        alert('❌ Error: No se proporcionó el ID del documento');
+        return;
+    }
+    
     if (!confirm('¿Está seguro de aprobar este documento?')) return;
     
     try {
+        console.log('📤 Enviando solicitud de aprobación...');
         const response = await fetch('/api/documento_requisito/aprobar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -455,6 +517,7 @@ async function aprobarDocumentoDirecto(idDocumentoRequisito) {
         });
         
         const data = await response.json();
+        console.log('📥 Respuesta del servidor:', data);
         
         if (data.success) {
             // Mostrar mensaje según si se confirmó la reserva
@@ -465,6 +528,7 @@ async function aprobarDocumentoDirecto(idDocumentoRequisito) {
             }
             
             // Recargar requisitos y documentos para actualizar la vista
+            console.log('🔄 Recargando requisitos y documentos...');
             await cargarRequisitosYDocumentos(reservaSeleccionada.idReserva, reservaSeleccionada.idActo);
             
             // Recargar información completa de la reserva para obtener el estado actualizado
@@ -481,13 +545,20 @@ async function aprobarDocumentoDirecto(idDocumentoRequisito) {
                 }
                 actualizarEstadoReservaEnUI(estadoFinal);
             }
+            
+            // Auto-actualizar el calendario si está disponible
+            if (typeof window.recargarCalendario === 'function') {
+                window.recargarCalendario();
+            }
+            
+            console.log('✅ Documento aprobado y vista actualizada');
         } else {
             alert('❌ Error: ' + (data.mensaje || 'Error desconocido'));
         }
         
     } catch (error) {
-        console.error('Error al aprobar documento:', error);
-        alert('Error al aprobar el documento');
+        console.error('❌ Error al aprobar documento:', error);
+        alert('Error al aprobar el documento: ' + error.message);
     }
 }
 
@@ -551,29 +622,32 @@ function actualizarEstadoReservaEnUI(estadoReserva) {
 // ============================================================
 // MOSTRAR CAMPO DE RECHAZO
 // ============================================================
-function mostrarCampoRechazo(idDocumentoRequisito) {
+window.mostrarCampoRechazo = function(idDocumentoRequisito) {
     const wrapper = document.getElementById(`obs_${idDocumentoRequisito}`);
     if (wrapper) {
-        wrapper.classList.add('visible');
-        document.getElementById(`textarea_${idDocumentoRequisito}`).focus();
+        wrapper.style.display = 'block';
+        const textarea = document.getElementById(`textarea_${idDocumentoRequisito}`);
+        if (textarea) {
+            textarea.focus();
+        }
     }
 }
 
 // ============================================================
 // CANCELAR RECHAZO
 // ============================================================
-function cancelarRechazo(idDocumentoRequisito) {
+window.cancelarRechazo = function(idDocumentoRequisito) {
     const wrapper = document.getElementById(`obs_${idDocumentoRequisito}`);
     const textarea = document.getElementById(`textarea_${idDocumentoRequisito}`);
     
-    if (wrapper) wrapper.classList.remove('visible');
+    if (wrapper) wrapper.style.display = 'none';
     if (textarea) textarea.value = '';
 }
 
 // ============================================================
 // CONFIRMAR RECHAZO CON OBSERVACIÓN
 // ============================================================
-async function confirmarRechazo(idDocumentoRequisito) {
+window.confirmarRechazo = async function(idDocumentoRequisito) {
     const observacion = document.getElementById(`textarea_${idDocumentoRequisito}`).value.trim();
     
     if (!observacion) {
@@ -688,6 +762,11 @@ async function aprobarDocumentoIndividual(idDocumentoRequisito) {
                 }
                 actualizarEstadoReservaEnUI(estadoFinal);
             }
+            
+            // Auto-actualizar el calendario si está disponible
+            if (typeof window.recargarCalendario === 'function') {
+                window.recargarCalendario();
+            }
         } else {
             alert('❌ Error: ' + (data.mensaje || 'Error desconocido'));
         }
@@ -728,6 +807,11 @@ async function rechazarDocumento(idDocumentoRequisito) {
         if (data.success) {
             alert('❌ Documento rechazado');
             await cargarRequisitosYDocumentos(reservaSeleccionada.idReserva, reservaSeleccionada.idActo);
+            
+            // Auto-actualizar el calendario si está disponible
+            if (typeof window.recargarCalendario === 'function') {
+                window.recargarCalendario();
+            }
         } else {
             alert('❌ Error: ' + (data.mensaje || 'Error desconocido'));
         }
@@ -750,8 +834,43 @@ function configurarEventos() {
 // CONFIGURAR EVENTOS DE DOCUMENTOS (después de renderizar)
 // ============================================================
 function configurarEventosDocumentos() {
-    // Esta función se llama después de renderizar para asegurar que los elementos existan
-    // Los event listeners se configuran mediante onclick en el HTML generado
+    // Adjuntar listeners programáticos a todos los elementos dinámicos
+    
+    // Configurar checkboxes para marcar como recibido
+    const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="check_"]');
+    checkboxes.forEach(checkbox => {
+        if (!checkbox.hasAttribute('data-listener-attached')) {
+            checkbox.setAttribute('data-listener-attached', 'true');
+            checkbox.addEventListener('change', function(e) {
+                const idActo = this.dataset.actoRequisito || this.id.replace('check_', '');
+                marcarDocumentoRecibido(parseInt(idActo), this.checked);
+            });
+        }
+    });
+    
+    // Configurar botones de aprobar
+    const botonesAprobar = document.querySelectorAll('button[id^="btn_aprobar_"]');
+    botonesAprobar.forEach(boton => {
+        if (!boton.hasAttribute('data-listener-attached')) {
+            boton.setAttribute('data-listener-attached', 'true');
+            boton.addEventListener('click', function(e) {
+                const idDoc = parseInt(this.id.replace('btn_aprobar_', ''));
+                aprobarDocumentoDirecto(idDoc);
+            });
+        }
+    });
+    
+    // Configurar botones de rechazar
+    const botonesRechazar = document.querySelectorAll('button[id^="btn_rechazar_"]');
+    botonesRechazar.forEach(boton => {
+        if (!boton.hasAttribute('data-listener-attached')) {
+            boton.setAttribute('data-listener-attached', 'true');
+            boton.addEventListener('click', function(e) {
+                const idDoc = parseInt(this.id.replace('btn_rechazar_', ''));
+                mostrarCampoRechazo(idDoc);
+            });
+        }
+    });
 }
 
 function volverABusqueda() {
@@ -795,6 +914,9 @@ function getBadgeClassDocumento(estado) {
         'NO_CUMPLIDO': 'badge-rechazado',
         'CUMPLIDO': 'badge-confirmado',
         'PENDIENTE': 'badge-pendiente',
+        'PENDIENTE_REVISION': 'badge-pendiente',
+        'PENDIENTE_DOCUMENTO': 'badge-pendiente',
+        'PENDIENTE_PAGO': 'badge-pendiente',
         'NO_REGISTRADO': 'badge-no-registrado'
     };
     return badges[estado] || 'badge-pendiente';

@@ -841,4 +841,86 @@ async function mostrarModalEliminarHorario(evento) {
     modal.show();
 }
 
+// ================= EXPORTAR FUNCIONES GLOBALMENTE ===================
+// Exponer funciones para uso desde módulos y scripts externos
+window.mostrarDatosDelDia = mostrarDatosDelDia;
+window.mostrarModalAgregarHorario = mostrarModalAgregarHorario;
+window.mostrarModalAgregarHorarioEspecifico = mostrarModalAgregarHorarioEspecifico;
+window.mostrarModalAgregarHorariosMultiples = mostrarModalAgregarHorariosMultiples;
+window.mostrarModalEliminarHorario = mostrarModalEliminarHorario;
+
+// Crear objeto con funciones auxiliares
+window.calendarioFunctions = {
+    mostrarDatosDelDia,
+    mostrarModalAgregarHorario,
+    mostrarModalAgregarHorarioEspecifico,
+    mostrarModalAgregarHorariosMultiples,
+    mostrarModalEliminarHorario,
+    // Función para recargar horarios después de agregar/eliminar
+    async recargarHorarios() {
+        if (!window.calendarioState || !window.calendarioState.calendarHorarios) {
+            console.warn('⚠️ No hay calendario de horarios para recargar');
+            return;
+        }
+        
+        try {
+            // Importar dinámicamente la función de carga de datos
+            const { cargarDatosCalendario } = await import('./calendario/calendario-data-loader.js');
+            
+            // Recargar horarios disponibles
+            const datos = await cargarDatosCalendario({
+                rol: window.calendarioState.rol,
+                idUsuario: window.calendarioState.idUsuario,
+                idParroquia: window.calendarioState.idParroquia,
+                esGestionHorarios: true
+            });
+            
+            // Actualizar estado
+            window.calendarioState.horarios = datos;
+            
+            // Procesar horarios a eventos
+            const diasMap = { 'DOM': 0, 'LUN': 1, 'MAR': 2, 'MIÉ': 3, 'MIE': 3, 'JUE': 4, 'VIE': 5, 'SÁB': 6, 'SAB': 6 };
+            
+            const eventosHorarios = datos
+                .filter(d => d.tipo === 'horario')
+                .map(h => ({
+                    id: h.id,
+                    title: h.titulo,
+                    daysOfWeek: [diasMap[h.diaSemana?.toUpperCase()] || 0],
+                    startTime: h.hora,
+                    endTime: calcularHoraFinSimple(h.hora, 60),
+                    backgroundColor: '#22c55e',
+                    borderColor: '#22c55e',
+                    extendedProps: {
+                        idActo: h.idActo,
+                        idActoParroquia: h.idActoParroquia,
+                        costoBase: h.costoBase,
+                        tipo: 'horario',
+                        diaSemana: h.diaSemana,
+                        hora: h.hora
+                    }
+                }));
+            
+            // Actualizar calendario
+            window.calendarioState.calendarHorarios.removeAllEvents();
+            window.calendarioState.calendarHorarios.addEventSource(eventosHorarios);
+            
+            console.log(`✅ ${eventosHorarios.length} horarios recargados`);
+        } catch (error) {
+            console.error('❌ Error recargando horarios:', error);
+        }
+    }
+};
+
+// Función auxiliar para calcular hora de fin
+function calcularHoraFinSimple(horaInicio, duracionMinutos) {
+    const [horas, minutos] = horaInicio.split(':').map(Number);
+    const totalMinutos = horas * 60 + minutos + duracionMinutos;
+    const horasFin = Math.floor(totalMinutos / 60);
+    const minutosFin = totalMinutos % 60;
+    return `${String(horasFin).padStart(2, '0')}:${String(minutosFin).padStart(2, '0')}`;
+}
+
 console.log("✅ Módulo calendario-modals.js cargado correctamente");
+console.log("🌐 Funciones globales disponibles: mostrarDatosDelDia, calendarioFunctions");
+

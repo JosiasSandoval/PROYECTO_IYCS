@@ -114,7 +114,7 @@ def disponibilidad_acto_parroquia(idParroquia,idActo):
             conexion.close()
 
 def obtener_actos_con_horarios_parroquia(idParroquia):
-    """Obtiene todos los actos de una parroquia con sus horarios"""
+    """Obtiene todos los horarios de una parroquia (aplanados, un registro por horario)"""
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
@@ -133,8 +133,8 @@ def obtener_actos_con_horarios_parroquia(idParroquia):
             """, (idParroquia,))
             
             filas = cursor.fetchall()
-            # Agrupar por acto
-            actos_dict = {}
+            resultados = []
+            
             for fila in filas:
                 idActo = fila[0]
                 nombActo = fila[1]
@@ -143,14 +143,6 @@ def obtener_actos_con_horarios_parroquia(idParroquia):
                 diaSemana = fila[4]
                 horaInicioActo = fila[5]
                 
-                if idActo not in actos_dict:
-                    actos_dict[idActo] = {
-                        'id': idActo,
-                        'acto': nombActo,
-                        'costoBase': costoBase,
-                        'horarios': []
-                    }
-                
                 # Convertir hora a string si es necesario
                 hora_str = str(horaInicioActo)
                 if hasattr(horaInicioActo, 'strftime'):
@@ -158,13 +150,17 @@ def obtener_actos_con_horarios_parroquia(idParroquia):
                 elif isinstance(horaInicioActo, str) and len(horaInicioActo) > 5:
                     hora_str = horaInicioActo[:5]
                 
-                actos_dict[idActo]['horarios'].append({
+                # Devolver cada horario como un registro individual
+                resultados.append({
+                    'idActo': idActo,
+                    'nombreActo': nombActo,
+                    'costoBase': costoBase,
                     'idActoParroquia': idActoParroquia,
                     'diaSemana': diaSemana,
                     'horaInicioActo': hora_str
                 })
             
-            return list(actos_dict.values())
+            return resultados
     except Exception as e:
         print(f'Error al obtener actos con horarios: {e}')
         return []

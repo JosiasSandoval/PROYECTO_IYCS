@@ -200,21 +200,31 @@ async function cargarReservas() {
                 if (estado.includes('PENDIENTE')) {
                     let mensajeInfo = '';
                     
+                    // Verificar si es MISA (no necesita documentos)
+                    const esMisa = dato.nombreActo && dato.nombreActo.toLowerCase().includes('misa');
+                    
                     if (estado.includes('PENDIENTE_PAGO')) {
                         accionesHTML = accionesHTML + `
                             <button class="btn-accion pagar" onclick="pagarReserva(${dato.idReserva})">Pagar</button>
                             <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
-                        // Mensaje informativo sobre documentos físicos
-                        mensajeInfo = `<div class="mensaje-info-pago" style="font-size: 0.9rem; color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffc107;">
-                            <strong>ℹ️ Información:</strong> Los documentos de los requisitos se entregan 100% en físico en la parroquia.
-                        </div>`;
+                        
+                        // Solo mostrar mensaje de documentos si NO es misa
+                        if (!esMisa) {
+                            mensajeInfo = `<div class="mensaje-info-pago" style="font-size: 0.9rem; color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffc107;">
+                                <strong>ℹ️ Información:</strong> Los documentos de los requisitos se entregan 100% en físico en la parroquia.
+                            </div>`;
+                        }
                     } else if (estado.includes('PENDIENTE_DOCUMENTO')) {
                         // PENDIENTE_DOCUMENTO: solo Ver y Cancelar (documentos se entregan físicamente)
                         accionesHTML = accionesHTML + `
                             <button class="btn-accion cancelar" onclick="cancelarReserva(${dato.idReserva})">Cancelar</button>`;
-                        mensajeInfo = `<div class="mensaje-info-pago" style="font-size: 0.9rem; color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffc107;">
-                            <strong>ℹ️ Información:</strong> Entregue los documentos físicamente en la parroquia para completar su reserva.
-                        </div>`;
+                        
+                        // Solo mostrar mensaje si NO es misa
+                        if (!esMisa) {
+                            mensajeInfo = `<div class="mensaje-info-pago" style="font-size: 0.9rem; color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffc107;">
+                                <strong>ℹ️ Información:</strong> Entregue los documentos físicamente en la parroquia para completar su reserva.
+                            </div>`;
+                        }
                     } else {
                         // Para otros estados pendientes, solo mostrar cancelar
                         accionesHTML = accionesHTML + `
@@ -296,6 +306,12 @@ async function cargarReservas() {
             });
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const json = await resp.json();
+            if (json.ok) {
+                // Auto-actualizar el calendario si está disponible
+                if (typeof window.recargarCalendario === 'function') {
+                    window.recargarCalendario();
+                }
+            }
             return json.ok;
         } catch (e) {
             console.error('Error al cambiar estado de reserva:', e);
@@ -389,6 +405,10 @@ async function cargarReservas() {
             if (data.ok) {
                 alert(`Reserva cancelada correctamente. Nuevo estado: ${data.nuevo_estado || 'CANCELADO'}`);
                 cargarReservas();
+                // Auto-actualizar el calendario si está disponible
+                if (typeof window.recargarCalendario === 'function') {
+                    window.recargarCalendario();
+                }
             } else {
                 alert(`No se pudo cancelar: ${data.mensaje || 'Error desconocido'}`);
             }
@@ -973,6 +993,10 @@ window.aprobarDocumento = async function (idReserva) {
                 alert('Acciones procesadas correctamente.');
                 cerrarModal();
                 cargarReservas();
+                // Auto-actualizar el calendario si está disponible
+                if (typeof window.recargarCalendario === 'function') {
+                    window.recargarCalendario();
+                }
 
             } catch (err) {
                 console.error('Error al procesar documentos:', err);

@@ -46,8 +46,15 @@ def registrar_pago_reserva(idPago, idReserva, monto):
                 (idPago, idReserva, monto)
             )
             conexion.commit()
-
-            return {'ok': True, 'mensaje': 'Pago de reserva registrado'}
+            
+            # Después de registrar el pago, cambiar el estado de la reserva
+            from app.reserva.controlador_reserva import cambiar_estado_reserva
+            exito, nuevo_estado = cambiar_estado_reserva(idReserva, accion='continuar')
+            
+            if exito:
+                return {'ok': True, 'mensaje': f'Pago registrado. Estado: {nuevo_estado}'}
+            else:
+                return {'ok': True, 'mensaje': 'Pago registrado (estado no actualizado)'}
 
     except Exception as e:
         print(f'Error al registrar pago reserva: {e}')

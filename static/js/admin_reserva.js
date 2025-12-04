@@ -158,6 +158,10 @@ async function cancelarReservaAPI(id) {
         if (data.ok) {
             alert("Reserva cancelada.");
             cargarReservasAPI();
+            // Auto-actualizar el calendario si está disponible
+            if (typeof window.recargarCalendario === 'function') {
+                window.recargarCalendario();
+            }
         } else {
             alert("Error: " + data.mensaje);
         }
