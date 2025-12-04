@@ -36,7 +36,151 @@ def registrar_pago(f_pago, montoTotal, metodoPago, numeroTransaccion, estadoPago
 # ===========================
 # REGISTRO DE PAGO RESERVAS
 # ===========================
-def registrar_pago_reserva(idPago, idReserva, monto):
+def es_misa_reserva(idReserva):
+    """Verifica si una reserva es de tipo Misa"""
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT al.nombActo
+                FROM reserva r
+                LEFT JOIN participantes_acto pa ON r.idReserva = pa.idReserva
+                LEFT JOIN acto_liturgico al ON pa.idActo = al.idActo
+                WHERE r.idReserva = %s
+                LIMIT 1
+            """, (idReserva,))
+            resultado = cursor.fetchone()
+            
+            if resultado and resultado[0]:
+                nombre_acto = str(resultado[0]).lower()
+                return 'misa' in nombre_acto
+            return False
+    except Exception as e:
+        print(f'Error verificando si es misa: {e}')
+        return False
+    finally:
+        if conexion:
+            conexion.close()
+
+def verificar_requisitos_cumplidos(idReserva):
+    """
+    Verifica si todos los requisitos de una reserva están cumplidos.
+    Un requisito está cumplido si tiene un documento con estado CUMPLIDO y aprobado=TRUE.
+    Si falta algún requisito o está rechazado → False
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Obtener el idActo de la reserva
+            cursor.execute("""
+                SELECT pa.idActo
+                FROM participantes_acto pa
+                WHERE pa.idReserva = %s
+                LIMIT 1
+            """, (idReserva,))
+            acto_result = cursor.fetchone()
+            
+            if not acto_result:
+                # No hay acto asociado, se considera sin requisitos
+                return True
+            
+            idActo = acto_result[0]
+            
+            # Obtener todos los requisitos del acto
+            cursor.execute("""
+                SELECT ar.idActoRequisito
+                FROM acto_requisito ar
+                WHERE ar.idActo = %s
+            """, (idActo,))
+            requisitos_acto = cursor.fetchall()
+            
+            if not requisitos_acto or len(requisitos_acto) == 0:
+                # No hay requisitos, se considera cumplido
+                return True
+            
+            # Para cada requisito, verificar que tenga un documento aprobado
+            for requisito in requisitos_acto:
+                idActoRequisito = requisito[0]
+                
+                # Verificar si existe un documento aprobado para este requisito
+                cursor.execute("""
+                    SELECT COUNT(*) 
+                    FROM DOCUMENTO_REQUISITO 
+                    WHERE idReserva = %s 
+                      AND idActoRequisito = %s 
+                      AND estadoCumplimiento = 'CUMPLIDO'
+                      AND aprobado = TRUE
+                """, (idReserva, idActoRequisito))
+                documentos_aprobados = cursor.fetchone()[0]
+                
+                if documentos_aprobados == 0:
+                    # Este requisito no tiene documento aprobado (no subido o rechazado)
+                    print(f"⚠️ Requisito {idActoRequisito} no cumplido para reserva {idReserva}")
+                    return False
+            
+            # Todos los requisitos tienen documentos aprobados
+            return True
+    except Exception as e:
+        print(f'Error verificando requisitos: {e}')
+        return False
+    finally:
+        if conexion:
+            conexion.close()
+
+def actualizar_estado_reserva_despues_pago(idReserva, metodoPago, estadoPago):
+    """
+    Actualiza el estado de la reserva después del pago según las reglas:
+    - MISAS: Si pago APROBADO → CONFIRMADO
+    - OTROS ACTOS: Si pago APROBADO y requisitos cumplidos → CONFIRMADO
+                   Si pago APROBADO y requisitos NO cumplidos → PENDIENTE_DOCUMENTO
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            es_misa = es_misa_reserva(idReserva)
+            
+            if estadoPago == 'APROBADO':
+                if es_misa:
+                    # Misas: siempre CONFIRMADO cuando se paga
+                    cursor.execute("""
+                        UPDATE reserva
+                        SET estadoReserva = 'CONFIRMADO'
+                        WHERE idReserva = %s
+                    """, (idReserva,))
+                else:
+                    # Otros actos: verificar requisitos
+                    requisitos_cumplidos = verificar_requisitos_cumplidos(idReserva)
+                    if requisitos_cumplidos:
+                        cursor.execute("""
+                            UPDATE reserva
+                            SET estadoReserva = 'CONFIRMADO'
+                            WHERE idReserva = %s
+                        """, (idReserva,))
+                    else:
+                        cursor.execute("""
+                            UPDATE reserva
+                            SET estadoReserva = 'PENDIENTE_DOCUMENTO'
+                            WHERE idReserva = %s
+                        """, (idReserva,))
+            elif estadoPago == 'PENDIENTE':
+                # Pago pendiente: mantener PENDIENTE_PAGO
+                cursor.execute("""
+                    UPDATE reserva
+                    SET estadoReserva = 'PENDIENTE_PAGO'
+                    WHERE idReserva = %s
+                """, (idReserva,))
+            
+            conexion.commit()
+            return True
+    except Exception as e:
+        print(f'Error actualizando estado reserva después pago: {e}')
+        conexion.rollback()
+        return False
+    finally:
+        if conexion:
+            conexion.close()
+
+def registrar_pago_reserva(idPago, idReserva, monto, metodoPago=None, estadoPago=None):
     conexion = obtener_conexion()
     try:
         with conexion.cursor() as cursor:
@@ -47,14 +191,23 @@ def registrar_pago_reserva(idPago, idReserva, monto):
             )
             conexion.commit()
             
-            # Después de registrar el pago, cambiar el estado de la reserva
-            from app.reserva.controlador_reserva import cambiar_estado_reserva
-            exito, nuevo_estado = cambiar_estado_reserva(idReserva, accion='continuar')
+            # Obtener método y estado del pago si no se proporcionaron
+            if not metodoPago or not estadoPago:
+                cursor.execute("""
+                    SELECT metodoPago, estadoPago
+                    FROM pago
+                    WHERE idPago = %s
+                """, (idPago,))
+                pago_info = cursor.fetchone()
+                if pago_info:
+                    metodoPago = metodoPago or pago_info[0]
+                    estadoPago = estadoPago or pago_info[1]
             
-            if exito:
-                return {'ok': True, 'mensaje': f'Pago registrado. Estado: {nuevo_estado}'}
-            else:
-                return {'ok': True, 'mensaje': 'Pago registrado (estado no actualizado)'}
+            # Actualizar estado de la reserva según las reglas
+            if metodoPago and estadoPago:
+                actualizar_estado_reserva_despues_pago(idReserva, metodoPago, estadoPago)
+            
+            return {'ok': True, 'mensaje': 'Pago registrado correctamente'}
 
     except Exception as e:
         print(f'Error al registrar pago reserva: {e}')
@@ -213,20 +366,19 @@ def actualizar_estado_pago(idPago, nuevoEstado):
             if estado_actual == 'PENDIENTE' and nuevoEstado == 'APROBADO':
                 # Obtener todas las reservas asociadas a este pago
                 cursor.execute("""
-                    SELECT idReserva 
-                    FROM pago_reserva 
-                    WHERE idPago = %s
+                    SELECT pr.idReserva 
+                    FROM pago_reserva pr
+                    WHERE pr.idPago = %s
                 """, (idPago,))
                 reservas = cursor.fetchall()
                 
-                # Cambiar estado de cada reserva a PENDIENTE_DOCUMENTO
+                # Cambiar estado de cada reserva según el tipo de acto
+                from app.reserva.controlador_reserva import cambiar_estado_reserva
+                
                 for reserva in reservas:
                     idReserva = reserva[0]
-                    cursor.execute("""
-                        UPDATE reserva 
-                        SET estadoReserva = 'PENDIENTE_DOCUMENTO' 
-                        WHERE idReserva = %s
-                    """, (idReserva,))
+                    # Usar la función existente que ya tiene la lógica correcta
+                    cambiar_estado_reserva(idReserva, accion='continuar')
             
             conexion.commit()
             print(f'Estado del pago {idPago} actualizado a: {nuevoEstado}')

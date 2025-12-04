@@ -101,8 +101,12 @@ function renderizarReservas(reservas, mostrarTodas = false, checkboxesPreservar 
             checkedAttr = 'checked';
         }
         
+        // Obtener numParticipantes (1 = MISA, >1 = otros actos)
+        const numParticipantes = reserva.numParticipantes || 0;
+        const esMisa = numParticipantes === 1;
+        
         const reservaHTML = `
-            <div class="reserva-row" data-id="${id}" data-monto="${montoNumerico}" data-feligres="${nombreFeligres.toLowerCase()}" data-estado-pago="${reserva.estadoPago || 'SIN_PAGO'}" data-tiene-pago="${reserva.tienePagoReserva || false}">
+            <div class="reserva-row" data-id="${id}" data-monto="${montoNumerico}" data-feligres="${nombreFeligres.toLowerCase()}" data-estado-pago="${reserva.estadoPago || 'SIN_PAGO'}" data-tiene-pago="${reserva.tienePagoReserva || false}" data-num-participantes="${numParticipantes}" data-es-misa="${esMisa}">
               <input type="checkbox" class="reserva-checkbox" id="check-${id}" ${esPendiente ? 'data-pendiente="true"' : ''} ${checkedAttr}>
               <label for="check-${id}">${textoMostrar}${indicadorPago}</label>
               <span class="reserva-monto">S/ ${montoNumerico.toFixed(2)}</span>
@@ -470,7 +474,13 @@ btnSubmit.addEventListener('click', async e => {
             if (!respAprobar.ok || !dataAprobar.ok) {
                 return alert(dataAprobar.mensaje || 'Error al aprobar el pago.');
             }
-            alert('✅ Pago aprobado correctamente. Las reservas se actualizarán automáticamente (Misas: CONFIRMADO, Otros actos: PENDIENTE_DOCUMENTO).');
+            
+            // Mensaje según tipo de acto
+            alert('✅ Pago aprobado correctamente.\n\n' +
+                  '📋 Estado actualizado:\n' +
+                  '• Misas Individuales → CONFIRMADO\n' +
+                  '• Otros Actos → PENDIENTE_DOCUMENTO (si falta documentos)\n' +
+                  '• Otros Actos → CONFIRMADO (si documentos ya aprobados)');
             
             // Auto-actualizar el calendario si está disponible
             if (typeof window.recargarCalendario === 'function') {
@@ -538,22 +548,64 @@ btnSubmit.addEventListener('click', async e => {
 
         // El estado de la reserva se actualiza automáticamente en el backend después de registrar el pago_reserva
         // Según las reglas:
-        // - TARJETA (APROBADO): MISA = CONFIRMADO, OTROS = PENDIENTE_DOCUMENTO
+        // - TARJETA (APROBADO): MISA = CONFIRMADO, OTROS = Verifica documentos (PENDIENTE_DOCUMENTO si faltan, CONFIRMADO si están aprobados)
         // - YAPE/PLIN (PENDIENTE): Queda PENDIENTE_PAGO hasta que secretaria apruebe
         // - EFECTIVO (PENDIENTE): Queda PENDIENTE_PAGO hasta pago en oficina
+        
         if (metodo === 'tarjeta') {
-            alert('✅ Pago con tarjeta aprobado. Tu reserva ha sido actualizada.');
+            // Verificar qué tipos de actos se están pagando
+            let tieneMisas = false;
+            let tieneOtrosActos = false;
+            
+            for (const idRes of idReservas) {
+                const row = document.querySelector(`.reserva-row[data-id="${idRes}"]`);
+                if (row) {
+                    const esMisa = row.dataset.esMisa === 'true';
+                    if (esMisa) tieneMisas = true;
+                    else tieneOtrosActos = true;
+                }
+            }
+            
+            let mensaje = '✅ Pago con tarjeta APROBADO exitosamente.\n\n📋 Estado de tus reservas:\n\n';
+            
+            if (tieneMisas && !tieneOtrosActos) {
+                // Solo misas
+                mensaje += '🎉 MISAS → Estado: CONFIRMADO\n' +
+                          '✓ Ya puedes asistir en la fecha programada.';
+            } else if (!tieneMisas && tieneOtrosActos) {
+                // Solo otros actos
+                mensaje += '📄 OTROS ACTOS:\n' +
+                          '• Si YA subiste documentos aprobados → CONFIRMADO\n' +
+                          '• Si AÚN faltan documentos → PENDIENTE_DOCUMENTO\n\n' +
+                          'Verifica el estado en "Mis Reservas".';
+            } else {
+                // Ambos tipos
+                mensaje += '🎉 MISAS → CONFIRMADO (listas)\n\n' +
+                          '📄 OTROS ACTOS:\n' +
+                          '• Con documentos OK → CONFIRMADO\n' +
+                          '• Sin documentos → PENDIENTE_DOCUMENTO\n\n' +
+                          'Revisa cada reserva en "Mis Reservas".';
+            }
+            
+            alert(mensaje);
         } else if (metodo === 'yape' || metodo === 'plin') {
-            alert('📤 Comprobante enviado. Tu pago quedará PENDIENTE hasta que la secretaria lo apruebe. Revisa el estado en "Mis Reservas".');
+            alert('📤 Comprobante enviado correctamente.\n\n' +
+                  '⏳ Tu pago está PENDIENTE de aprobación por la secretaría.\n\n' +
+                  'Recibirás una notificación cuando sea aprobado.\n' +
+                  'Puedes revisar el estado en "Mis Reservas".');
         } else if (metodo === 'efectivo') {
             // Efectivo: el pago queda PENDIENTE, no se cambia el estado de la reserva
             // Para feligrés: desaparece de la lista (ya está filtrado)
             // Para secretaria: aparece con badge [Pago Pendiente]
             if (ROL_USUARIO.toUpperCase() === 'FELIGRES') {
-                alert('Pago registrado como EFECTIVO (PENDIENTE). Completa el pago en oficina.');
+                alert('💵 Pago registrado como EFECTIVO (PENDIENTE).\n\n' +
+                      '📍 Debes completar el pago en oficina antes de la fecha del servicio.\n\n' +
+                      'Dirección: Av. Principal 123, Chiclayo\n' +
+                      'Horario: Lun-Vie 9:00 AM - 6:00 PM');
                 window.location.href = '/cliente/mis_reservas';
             } else {
-                alert('Pago registrado como EFECTIVO (PENDIENTE). Aparecerá en la lista para aprobación.');
+                alert('💵 Pago EFECTIVO registrado correctamente.\n\n' +
+                      'Aparecerá en la lista con el indicador [Pago Pendiente] para aprobación cuando se complete el pago.');
                 window.location.reload(); // Recargar para mostrar el badge
             }
             return;

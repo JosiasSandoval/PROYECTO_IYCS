@@ -15,8 +15,10 @@ from app.acto_liturgico_requisito.controlador_requisito import (
     eliminar_requisito,
     verificar_relacion_requisito,
     obtener_documentos_reserva,
+    listar_todos_documentos_reserva,
     archivo_documento,
     aprobar_documentos_reserva_parcial,
+    aprobar_documento_individual,
     rechazar_documento
 )
 
@@ -52,7 +54,35 @@ def cambiar_estado_documento_route():
     return jsonify(resultado), 200
 
 # =============================
-#     DOCUMENTO — APROBAR
+#     DOCUMENTO — APROBAR INDIVIDUAL
+# =============================
+@requisito_bp.route('/aprobar', methods=['POST'])
+def aprobar_documento_individual_route():
+    """
+    Aprueba un documento individual por idDocumentoRequisito (que es el idDocumento en la BD).
+    """
+    data = request.get_json() or {}
+    # Aceptar tanto idDocumentoRequisito como idDocumento para compatibilidad
+    idDocumentoRequisito = data.get('idDocumentoRequisito') or data.get('idDocumento')
+    
+    if not idDocumentoRequisito:
+        return jsonify({"success": False, "mensaje": "Se requiere idDocumentoRequisito o idDocumento"}), 400
+    
+    print(f"🔵 Aprobando documento con ID: {idDocumentoRequisito}")
+    resultado = aprobar_documento_individual(idDocumentoRequisito)
+    print(f"📥 Resultado de aprobación: {resultado}")
+    
+    if resultado.get("ok"):
+        return jsonify({
+            "success": True, 
+            "mensaje": resultado.get("mensaje"),
+            "estadoReserva": resultado.get("estadoReserva")
+        }), 200
+    else:
+        return jsonify({"success": False, "mensaje": resultado.get("error") or resultado.get("mensaje")}), 400
+
+# =============================
+#     DOCUMENTO — APROBAR (POR RESERVA)
 # =============================
 @requisito_bp.route('/documento/aprobar/<int:idReserva>', methods=['POST'])
 def aprobar_documento_route(idReserva):
@@ -304,6 +334,12 @@ def eliminar_requisito_route(idRequisito):
 def obtener_documentos_reserva_route(idReserva):
     """Obtiene los documentos asociados a una reserva que están pendientes de revisión."""
     datos = obtener_documentos_reserva(idReserva)
+    return jsonify({"success": True, "mensaje": "Documentos encontrados correctamente", "datos": datos}), 200
+
+@requisito_bp.route('/listar/<int:idReserva>', methods=['GET'])
+def listar_documentos_reserva_route(idReserva):
+    """Lista todos los documentos de una reserva (sin filtrar por estado)."""
+    datos = listar_todos_documentos_reserva(idReserva)
     return jsonify({"success": True, "mensaje": "Documentos encontrados correctamente", "datos": datos}), 200
 
 @requisito_bp.route('/archivo/<int:idDocumento>', methods=['GET'])

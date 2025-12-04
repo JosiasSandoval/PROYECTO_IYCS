@@ -175,6 +175,104 @@ def aprobar_documentos_reserva_parcial(idReserva):
             conexion.close()
 
 
+def aprobar_documento_individual(idDocumentoRequisito):
+    """
+    Aprueba un documento individual y verifica si todos los documentos están aprobados.
+    Si todos están aprobados, actualiza el estado de la reserva a PENDIENTE_PAGO.
+    """
+    conexion = obtener_conexion()
+    try:
+        with conexion.cursor() as cursor:
+            # Obtener idReserva del documento
+            cursor.execute("""
+                SELECT idReserva, estadoCumplimiento, aprobado
+                FROM DOCUMENTO_REQUISITO
+                WHERE idDocumento = %s
+            """, (idDocumentoRequisito,))
+            doc = cursor.fetchone()
+            
+            if not doc:
+                return {"ok": False, "mensaje": "Documento no encontrado"}
+            
+            idReserva = doc[0]
+            estadoCumplimiento = doc[1]
+            ya_aprobado = doc[2]
+            
+            # Solo aprobar si no está ya aprobado
+            if not ya_aprobado:
+                # Actualizar documento a CUMPLIDO y aprobado
+                cursor.execute("""
+                    UPDATE DOCUMENTO_REQUISITO
+                    SET estadoCumplimiento = 'CUMPLIDO',
+                        aprobado = TRUE
+                    WHERE idDocumento = %s
+                """, (idDocumentoRequisito,))
+            else:
+                return {"ok": True, "mensaje": "Documento ya estaba aprobado", "estadoReserva": None}
+            
+            # Obtener el idActo de la reserva para verificar todos los requisitos
+            cursor.execute("""
+                SELECT pa.idActo
+                FROM participantes_acto pa
+                WHERE pa.idReserva = %s
+                LIMIT 1
+            """, (idReserva,))
+            acto_result = cursor.fetchone()
+            
+            if not acto_result:
+                return {"ok": False, "mensaje": "No se encontró el acto asociado a la reserva"}
+            
+            idActo = acto_result[0]
+            
+            # Obtener el total de requisitos del acto
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM acto_requisito
+                WHERE idActo = %s
+            """, (idActo,))
+            total_requisitos = cursor.fetchone()[0]
+            
+            # Verificar documentos aprobados para esta reserva (DESPUÉS de actualizar)
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM DOCUMENTO_REQUISITO 
+                WHERE idReserva = %s AND aprobado = TRUE
+            """, (idReserva,))
+            documentos_aprobados = cursor.fetchone()[0]
+            
+            estadoReserva = None
+            # Si todos los requisitos tienen documentos aprobados
+            # IMPORTANTE: documentos_aprobados ya incluye el que acabamos de aprobar
+            if total_requisitos > 0 and documentos_aprobados >= total_requisitos:
+                # Todos aprobados → cambiar estado de la reserva a PENDIENTE_PAGO
+                cursor.execute("""
+                    UPDATE RESERVA
+                    SET estadoReserva = 'PENDIENTE_PAGO'
+                    WHERE idReserva = %s
+                """, (idReserva,))
+                estadoReserva = 'PENDIENTE_PAGO'
+                mensaje = "Documento aprobado. ¡Todos los documentos han sido aprobados! La reserva ha sido actualizada a PENDIENTE_PAGO."
+            else:
+                pendientes = max(0, total_requisitos - documentos_aprobados)
+                mensaje = f"Documento aprobado. Quedan {pendientes} documento(s) pendiente(s)."
+            
+            print(f"📊 Debug aprobación: total_requisitos={total_requisitos}, documentos_aprobados={documentos_aprobados}, pendientes={max(0, total_requisitos - documentos_aprobados) if total_requisitos > 0 else 0}")
+            
+            conexion.commit()
+            return {
+                "ok": True, 
+                "mensaje": mensaje,
+                "estadoReserva": estadoReserva
+            }
+
+    except Exception as e:
+        conexion.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        if conexion:
+            conexion.close()
+
+
 def rechazar_documento(idDocumento, idReserva, observacion=""):
     conexion = obtener_conexion()
     try:
@@ -312,6 +410,7 @@ def obtener_documentos_reserva(idReserva):
             for fila in filas:
                 documentos.append({
                     'idDocumento': fila[0],
+                    'idDocumentoRequisito': fila[0],  # Alias para compatibilidad con frontend
                     'nombRequisito': fila[1],
                     'rutaArchivo': fila[2],
                     'tipoArchivo': fila[3],
@@ -324,6 +423,45 @@ def obtener_documentos_reserva(idReserva):
         return documentos
     except Exception as e:
         print(f'Error al obtener los documentos de la reserva: {e}')
+        return []
+    finally:
+        if conexion:
+            conexion.close()
+
+# OBTENER TODOS LOS DOCUMENTOS DE UNA RESERVA (sin filtrar por estado)
+# =========================================================
+def listar_todos_documentos_reserva(idReserva):
+    conexion = obtener_conexion()
+    try:
+        documentos = []
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT dr.idDocumento, rq.nombRequisito, dr.rutaArchivo, dr.tipoArchivo, dr.f_subido, dr.observacion,
+                       dr.estadoCumplimiento, dr.aprobado, dr.idActoRequisito
+                FROM DOCUMENTO_REQUISITO dr
+                INNER JOIN reserva re ON dr.idReserva=re.idReserva
+                INNER JOIN acto_requisito ar ON dr.idActoRequisito=ar.idActoRequisito
+                INNER JOIN requisito rq ON ar.idRequisito=rq.idRequisito
+                WHERE re.idReserva=%s
+                ORDER BY dr.f_subido DESC
+            """, (idReserva,))
+            filas = cursor.fetchall()
+            for fila in filas:
+                documentos.append({
+                    'idDocumento': fila[0],
+                    'idDocumentoRequisito': fila[0],  # Alias para compatibilidad con frontend
+                    'nombRequisito': fila[1],
+                    'rutaArchivo': fila[2],
+                    'tipoArchivo': fila[3],
+                    'f_subido': fila[4],
+                    'observacion': fila[5],
+                    'estadoCumplimiento': fila[6] if len(fila) > 6 else None,
+                    'aprobado': fila[7] if len(fila) > 7 else False,
+                    'idActoRequisito': fila[8] if len(fila) > 8 else None
+                })
+        return documentos
+    except Exception as e:
+        print(f'Error al listar los documentos de la reserva: {e}')
         return []
     finally:
         if conexion:

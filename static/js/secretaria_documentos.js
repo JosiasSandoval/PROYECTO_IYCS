@@ -339,7 +339,8 @@ function renderizarListaRequisitos() {
                             <div class="checkbox-wrapper">
                                 <input type="checkbox" 
                                        id="check_${requisito.idActoRequisito}" 
-                                       data-acto-requisito="${requisito.idActoRequisito}">
+                                       data-acto-requisito="${requisito.idActoRequisito}"
+                                       onchange="marcarDocumentoRecibido(${requisito.idActoRequisito}, this.checked)">
                                 <label for="check_${requisito.idActoRequisito}">
                                     📥 Marcar como Recibido
                                 </label>
@@ -348,10 +349,10 @@ function renderizarListaRequisitos() {
                     ` : docActivo && docActivo.idDocumentoRequisito && estadoCumplimiento !== 'CUMPLIDO' ? `
                         <!-- Documento recibido, ahora aprobar o rechazar (independiente del estado mientras NO esté CUMPLIDO) -->
                         <div class="documento-control">
-                            <button class="btn btn-success btn-sm" id="btn_aprobar_${docActivo.idDocumentoRequisito}">
+                            <button class="btn btn-success btn-sm" onclick="aprobarDocumentoDirecto(${docActivo.idDocumentoRequisito})">
                                 ✅ Aprobar Documento
                             </button>
-                            <button class="btn btn-danger btn-sm" id="btn_rechazar_${docActivo.idDocumentoRequisito}">
+                            <button class="btn btn-danger btn-sm" onclick="mostrarCampoRechazo(${docActivo.idDocumentoRequisito})">
                                 ❌ Rechazar Documento
                             </button>
                         </div>
@@ -404,13 +405,10 @@ function renderizarListaRequisitos() {
     // Asignar todo el HTML de una vez para evitar problemas con event listeners
     container.innerHTML = htmlCompleto;
     
-    // Asegurar que los event listeners estén configurados después de renderizar
-    configurarEventosDocumentos();
-    
     // Debug: Verificar que los botones y checkboxes estén disponibles
     const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="check_"]');
-    const botonesAprobar = document.querySelectorAll('button[onclick^="aprobarDocumentoDirecto"], button[id^="btn_aprobar_"]');
-    const botonesRechazar = document.querySelectorAll('button[onclick^="mostrarCampoRechazo"], button[id^="btn_rechazar_"]');
+    const botonesAprobar = document.querySelectorAll('button[onclick^="aprobarDocumentoDirecto"]');
+    const botonesRechazar = document.querySelectorAll('button[onclick^="mostrarCampoRechazo"]');
     
     console.log('✅ Requisitos renderizados:', requisitosPagina.length);
     console.log('✅ Checkboxes encontrados:', checkboxes.length);
@@ -511,8 +509,7 @@ window.aprobarDocumentoDirecto = async function(idDocumentoRequisito) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                idDocumentoRequisito: idDocumentoRequisito,
-                observacion: 'Aprobado'
+                idDocumentoRequisito: idDocumentoRequisito
             })
         });
         
@@ -521,8 +518,8 @@ window.aprobarDocumentoDirecto = async function(idDocumentoRequisito) {
         
         if (data.success) {
             // Mostrar mensaje según si se confirmó la reserva
-            if (data.estadoReserva === 'CONFIRMADO') {
-                alert('✅ ' + (data.mensaje || 'Documento aprobado. ¡Todos los documentos han sido aprobados! La reserva ha sido CONFIRMADA.'));
+            if (data.estadoReserva === 'PENDIENTE_PAGO') {
+                alert('✅ ' + (data.mensaje || 'Documento aprobado. ¡Todos los documentos han sido aprobados! La reserva ha sido actualizada a PENDIENTE_PAGO.'));
             } else {
                 alert('✅ Documento aprobado exitosamente');
             }
@@ -828,49 +825,6 @@ async function rechazarDocumento(idDocumentoRequisito) {
 // ============================================================
 function configurarEventos() {
     document.getElementById('btn-volver-busqueda')?.addEventListener('click', volverABusqueda);
-}
-
-// ============================================================
-// CONFIGURAR EVENTOS DE DOCUMENTOS (después de renderizar)
-// ============================================================
-function configurarEventosDocumentos() {
-    // Adjuntar listeners programáticos a todos los elementos dinámicos
-    
-    // Configurar checkboxes para marcar como recibido
-    const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="check_"]');
-    checkboxes.forEach(checkbox => {
-        if (!checkbox.hasAttribute('data-listener-attached')) {
-            checkbox.setAttribute('data-listener-attached', 'true');
-            checkbox.addEventListener('change', function(e) {
-                const idActo = this.dataset.actoRequisito || this.id.replace('check_', '');
-                marcarDocumentoRecibido(parseInt(idActo), this.checked);
-            });
-        }
-    });
-    
-    // Configurar botones de aprobar
-    const botonesAprobar = document.querySelectorAll('button[id^="btn_aprobar_"]');
-    botonesAprobar.forEach(boton => {
-        if (!boton.hasAttribute('data-listener-attached')) {
-            boton.setAttribute('data-listener-attached', 'true');
-            boton.addEventListener('click', function(e) {
-                const idDoc = parseInt(this.id.replace('btn_aprobar_', ''));
-                aprobarDocumentoDirecto(idDoc);
-            });
-        }
-    });
-    
-    // Configurar botones de rechazar
-    const botonesRechazar = document.querySelectorAll('button[id^="btn_rechazar_"]');
-    botonesRechazar.forEach(boton => {
-        if (!boton.hasAttribute('data-listener-attached')) {
-            boton.setAttribute('data-listener-attached', 'true');
-            boton.addEventListener('click', function(e) {
-                const idDoc = parseInt(this.id.replace('btn_rechazar_', ''));
-                mostrarCampoRechazo(idDoc);
-            });
-        }
-    });
 }
 
 function volverABusqueda() {

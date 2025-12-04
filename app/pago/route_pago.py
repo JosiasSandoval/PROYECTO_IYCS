@@ -71,10 +71,37 @@ def procesar_pago_reserva():
         if not datos.get('idReserva') or not datos.get('idPago') or not datos.get('monto'):
             return jsonify({'ok': False, 'mensaje': 'ID de reserva, ID de pago y monto son requeridos'}), 400
 
+        # Obtener método y estado del pago
+        metodoPago = datos.get('metodoPago', '').upper()
+        estadoPago = datos.get('estadoPago', '').upper()
+        
+        # Si no vienen en el form, obtenerlos de la BD
+        if not metodoPago or not estadoPago:
+            from app.bd_sistema import obtener_conexion
+            conexion = obtener_conexion()
+            try:
+                with conexion.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT metodoPago, estadoPago
+                        FROM pago
+                        WHERE idPago = %s
+                    """, (int(datos['idPago']),))
+                    pago_info = cursor.fetchone()
+                    if pago_info:
+                        metodoPago = metodoPago or (pago_info[0] or '')
+                        estadoPago = estadoPago or (pago_info[1] or 'PENDIENTE')
+            except Exception as e:
+                print(f'Error obteniendo info del pago: {e}')
+            finally:
+                if conexion:
+                    conexion.close()
+        
         resultado = registrar_pago_reserva(
             idReserva=int(datos['idReserva']),
             idPago=int(datos['idPago']),
-            monto=float(datos['monto'])
+            monto=float(datos['monto']),
+            metodoPago=metodoPago,
+            estadoPago=estadoPago
         )
         return jsonify(resultado), 201 if resultado['ok'] else 400
 

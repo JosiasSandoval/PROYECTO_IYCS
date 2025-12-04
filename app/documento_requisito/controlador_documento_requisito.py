@@ -31,12 +31,12 @@ def buscar_reservas(termino_busqueda):
                     COUNT(DISTINCT dr.idDocumento) AS totalDocumentosRegistrados,
                     COUNT(DISTINCT CASE WHEN dr.estadoCumplimiento = 'CUMPLIDO' AND dr.aprobado = 1 THEN dr.idDocumento END) AS documentosAprobados,
                     COUNT(DISTINCT CASE WHEN dr.estadoCumplimiento = 'NO_CUMPLIDO' THEN dr.idDocumento END) AS documentosRechazados
-                FROM reserva r
-                INNER JOIN feligres f ON r.idSolicitante = f.idFeligres
-                INNER JOIN parroquia p ON r.idParroquia = p.idParroquia
-                LEFT JOIN participantes_acto pa ON r.idReserva = pa.idReserva
-                LEFT JOIN acto_liturgico al ON pa.idActo = al.idActo
-                LEFT JOIN documento_requisito dr ON r.idReserva = dr.idReserva
+                FROM RESERVA r
+                INNER JOIN FELIGRES f ON r.idSolicitante = f.idFeligres
+                INNER JOIN PARROQUIA p ON r.idParroquia = p.idParroquia
+                LEFT JOIN PARTICIPANTES_ACTO pa ON r.idReserva = pa.idReserva
+                LEFT JOIN ACTO_LITURGICO al ON pa.idActo = al.idActo
+                LEFT JOIN DOCUMENTO_REQUISITO dr ON r.idReserva = dr.idReserva
                 WHERE 
                     r.idReserva LIKE %s 
                     OR CONCAT(f.nombFel, ' ', f.apePatFel, ' ', f.apeMatFel) LIKE %s
@@ -108,8 +108,8 @@ def obtener_requisitos_acto(idActo):
                     r.nombRequisito,
                     r.descripcion,
                     r.estadoRequisito
-                FROM acto_requisito ar
-                INNER JOIN requisito r ON ar.idRequisito = r.idRequisito
+                FROM ACTO_REQUISITO ar
+                INNER JOIN REQUISITO r ON ar.idRequisito = r.idRequisito
                 WHERE ar.idActo = %s
                 ORDER BY r.nombRequisito ASC
             """
@@ -160,9 +160,9 @@ def obtener_documentos_reserva(idReserva):
                     r.nombRequisito,
                     r.descripcion,
                     r.estadoRequisito
-                FROM documento_requisito dr
-                INNER JOIN acto_requisito ar ON dr.idActoRequisito = ar.idActoRequisito
-                INNER JOIN requisito r ON ar.idRequisito = r.idRequisito
+                FROM DOCUMENTO_REQUISITO dr
+                INNER JOIN ACTO_REQUISITO ar ON dr.idActoRequisito = ar.idActoRequisito
+                INNER JOIN REQUISITO r ON ar.idRequisito = r.idRequisito
                 WHERE dr.idReserva = %s
                 ORDER BY r.nombRequisito ASC
             """
@@ -216,7 +216,7 @@ def registrar_documento_fisico(datos):
             # Verificar si ya existe el registro
             query_check = """
                 SELECT idDocumento 
-                FROM documento_requisito 
+                FROM DOCUMENTO_REQUISITO 
                 WHERE idReserva = %s AND idActoRequisito = %s
             """
             cursor.execute(query_check, (idReserva, idActoRequisito))
@@ -225,7 +225,7 @@ def registrar_documento_fisico(datos):
             if existe:
                 # Actualizar fecha de recepción y observación
                 query_update = """
-                    UPDATE documento_requisito 
+                    UPDATE DOCUMENTO_REQUISITO 
                     SET f_subido = NOW(), 
                         observacion = %s,
                         estadoCumplimiento = 'PENDIENTE',
@@ -236,7 +236,7 @@ def registrar_documento_fisico(datos):
             else:
                 # Insertar nuevo registro
                 query_insert = """
-                    INSERT INTO documento_requisito 
+                    INSERT INTO DOCUMENTO_REQUISITO 
                     (idReserva, idActoRequisito, estadoCumplimiento, f_subido, observacion, aprobado)
                     VALUES (%s, %s, 'PENDIENTE', NOW(), %s, 0)
                 """
@@ -268,7 +268,7 @@ def aprobar_documento(datos):
             observacion = datos.get('observacion', '')
             
             query = """
-                UPDATE documento_requisito 
+                UPDATE DOCUMENTO_REQUISITO 
                 SET estadoCumplimiento = 'CUMPLIDO',
                     aprobado = 1,
                     observacion = %s
@@ -303,7 +303,7 @@ def rechazar_documento(datos):
             observacion = datos.get('observacion', 'Documento rechazado')
             
             query = """
-                UPDATE documento_requisito 
+                UPDATE DOCUMENTO_REQUISITO 
                 SET estadoCumplimiento = 'NO_CUMPLIDO',
                     aprobado = 0,
                     observacion = %s
@@ -338,8 +338,8 @@ def verificar_y_actualizar_estado_reserva(idReserva):
             # Obtener información de la reserva y el acto
             query_reserva = """
                 SELECT r.estadoReserva, pa.idActo
-                FROM reserva r
-                LEFT JOIN participantes_acto pa ON r.idReserva = pa.idReserva
+                FROM RESERVA r
+                LEFT JOIN PARTICIPANTES_ACTO pa ON r.idReserva = pa.idReserva
                 WHERE r.idReserva = %s
                 LIMIT 1
             """
@@ -358,7 +358,7 @@ def verificar_y_actualizar_estado_reserva(idReserva):
             # Obtener total de requisitos del acto
             query_requisitos = """
                 SELECT COUNT(*) as totalRequisitos
-                FROM acto_requisito ar
+                FROM ACTO_REQUISITO ar
                 WHERE ar.idActo = %s
             """
             cursor.execute(query_requisitos, (idActo,))
@@ -367,7 +367,7 @@ def verificar_y_actualizar_estado_reserva(idReserva):
             # Obtener documentos aprobados
             query_aprobados = """
                 SELECT COUNT(*) as totalAprobados
-                FROM documento_requisito dr
+                FROM DOCUMENTO_REQUISITO dr
                 WHERE dr.idReserva = %s 
                     AND dr.estadoCumplimiento = 'CUMPLIDO'
                     AND dr.aprobado = 1
@@ -378,7 +378,7 @@ def verificar_y_actualizar_estado_reserva(idReserva):
             # Verificar si hay documentos rechazados
             query_rechazados = """
                 SELECT COUNT(*) as totalRechazados
-                FROM documento_requisito dr
+                FROM DOCUMENTO_REQUISITO dr
                 WHERE dr.idReserva = %s 
                     AND dr.estadoCumplimiento = 'NO_CUMPLIDO'
             """
@@ -400,7 +400,7 @@ def verificar_y_actualizar_estado_reserva(idReserva):
             # Actualizar estado de reserva si hay cambio
             if nuevo_estado and nuevo_estado != estado_actual:
                 query_update = """
-                    UPDATE reserva 
+                    UPDATE RESERVA 
                     SET estadoReserva = %s
                     WHERE idReserva = %s
                 """
@@ -434,7 +434,7 @@ def aprobar_todos_documentos(idReserva, observacion_general=''):
     try:
         with conexion.cursor() as cursor:
             query = """
-                UPDATE documento_requisito 
+                UPDATE DOCUMENTO_REQUISITO 
                 SET estadoCumplimiento = 'CUMPLIDO',
                     aprobado = 1,
                     observacion = CONCAT(COALESCE(observacion, ''), ' ', %s)

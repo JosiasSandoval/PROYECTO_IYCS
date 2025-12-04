@@ -107,7 +107,7 @@
                     </div>
 
                       <!-- FORMULARIO GENERAL -->
-            <form class="formulario-pago" id="form-pago">
+            <form class="formulario-pago" id="form-pago" novalidate>
                 <input type="hidden" id="idReservasSeleccionadas" name="idReservasSeleccionadas">
                 
                 <!-- Este div es el contenedor CRÍTICO para el scroll interno.
@@ -198,15 +198,24 @@
 
                     <!-- ============ EFECTIVO ============ -->
                     <div class="form-section" data-metodo="efectivo" id="section-efectivo">
-                        <h4 class="subtitulo-seccion">Pago en Efectivo</h4>
+                        <h4 class="subtitulo-seccion">💵 Pago en Efectivo</h4>
 
                         <div class="info-metodo">
-                            <p>Realiza el pago en nuestras oficinas o al momento del servicio</p>
-
-                            <div class="info-efectivo">
-                                <p><strong>Dirección:</strong> Av. Principal 123, Chiclayo</p>
-                          <p><strong>Horario:</strong> Lun-Vie 9:00 AM - 6:00 PM</p>
-                                <p class="nota-pago">El pago debe realizarse antes de la fecha del servicio</p>
+                            <p><strong>📍 Dirección de la parroquia:</strong> Av. Principal 123, Chiclayo</p>
+                            <p><strong>🕐 Horario de atención:</strong> Lunes a Viernes 9:00 AM - 5:00 PM</p>
+                            
+                            <div class="info-efectivo" style="margin-top: 15px;">
+                                <p><strong>ℹ️ Instrucciones:</strong></p>
+                                <ul style="padding-left: 20px; margin-top: 8px;">
+                                    <li>Acércate a la parroquia durante el horario de atención</li>
+                                    <li>Presenta tu DNI y menciona el número de tu reserva</li>
+                                    <li>Realiza el pago en la oficina de secretaría</li>
+                                    <li>Solicita tu comprobante de pago</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="nota-pago" style="margin-top: 15px; padding: 12px; background-color: #fff3cd; border-radius: 4px; border-left: 4px solid #f39c12;">
+                                <strong>⏳ Importante:</strong> El pago quedará registrado como PENDIENTE hasta que la secretaria confirme su recepción.
                             </div>
                         </div>
                     </div>
@@ -271,7 +280,55 @@
   <!-- SCRIPTS -->
   <script src="/static/js/header.js"></script>
   <script src="/static/js/barra_lateral.js"></script>
-  <script src="/static/js/pago.js"></script>
+  <script src="/static/js/pago_new.js"></script>
+
+  <style>
+    .badge-pendiente {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background-color: #fff3cd;
+      border: 1px solid #f39c12;
+      font-size: 0.9em;
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    }
+    
+    .btn-success:hover {
+      background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
+    }
+    
+    .mensaje-info {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-style: italic;
+    }
+    
+    .mensaje-error {
+      text-align: center;
+      padding: 20px;
+      color: #e74c3c;
+      background-color: #ffe6e6;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    
+    #filtro-container {
+      display: none;
+      margin-bottom: 15px;
+    }
+    
+    #filtro-reservas {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+  </style>
 
 </body>
 </html>

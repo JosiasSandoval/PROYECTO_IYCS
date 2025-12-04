@@ -360,35 +360,50 @@ def cambiar_estado_reserva(idReserva, accion='continuar', motivo_cancelacion=Non
                 nuevo_estado = 'PENDIENTE_PAGO'
             elif estado_actual == 'PENDIENTE_PAGO':
                 # Después de pagar:
-                # - Si es MISA (numParticipantes=1): va directo a CONFIRMADO
-                # - Si son otros actos: verificar si tiene documentos aprobados
+                # IMPORTANTE: Solo cambia estado si hay un pago APROBADO
+                # Verificar si existe un pago aprobado para esta reserva
                 cursor.execute("""
-                    SELECT al.numParticipantes 
-                    FROM RESERVA r
-                    INNER JOIN ACTO_PARROQUIA ap ON r.idActoParroquia = ap.idActoParroquia
-                    INNER JOIN ACTO_LITURGICO al ON ap.idActo = al.idActo
-                    WHERE r.idReserva = %s
+                    SELECT COUNT(*) 
+                    FROM pago_reserva pr
+                    INNER JOIN pago p ON pr.idPago = p.idPago
+                    WHERE pr.idReserva = %s AND p.estadoPago = 'APROBADO'
                 """, (idReserva,))
-                num_participantes_result = cursor.fetchone()
-                num_participantes = num_participantes_result[0] if num_participantes_result else 0
+                tiene_pago_aprobado = cursor.fetchone()[0] > 0
                 
-                if num_participantes == 1:
-                    # Es misa individual -> directo a CONFIRMADO
-                    nuevo_estado = 'CONFIRMADO'
+                if not tiene_pago_aprobado:
+                    # Si no hay pago aprobado, mantener en PENDIENTE_PAGO
+                    nuevo_estado = 'PENDIENTE_PAGO'
                 else:
-                    # Otros actos -> verificar si tiene documentos aprobados
+                    # Hay pago aprobado: determinar siguiente estado
+                    # - Si es MISA (numParticipantes=1): va directo a CONFIRMADO
+                    # - Si son otros actos: verificar si tiene documentos aprobados
                     cursor.execute("""
-                        SELECT COUNT(*) FROM documento_requisito 
-                        WHERE idReserva = %s AND estadoCumplimiento = 'NO_CUMPLIDO'
+                        SELECT al.numParticipantes 
+                        FROM RESERVA r
+                        INNER JOIN ACTO_PARROQUIA ap ON r.idActoParroquia = ap.idActoParroquia
+                        INNER JOIN ACTO_LITURGICO al ON ap.idActo = al.idActo
+                        WHERE r.idReserva = %s
                     """, (idReserva,))
-                    docs_no_cumplidos = cursor.fetchone()[0]
+                    num_participantes_result = cursor.fetchone()
+                    num_participantes = num_participantes_result[0] if num_participantes_result else 0
                     
-                    if docs_no_cumplidos > 0:
-                        # Tiene documentos pendientes -> PENDIENTE_DOCUMENTO
-                        nuevo_estado = 'PENDIENTE_DOCUMENTO'
-                    else:
-                        # Todos los documentos están aprobados -> CONFIRMADO
+                    if num_participantes == 1:
+                        # Es misa individual -> directo a CONFIRMADO
                         nuevo_estado = 'CONFIRMADO'
+                    else:
+                        # Otros actos -> verificar si tiene documentos aprobados
+                        cursor.execute("""
+                            SELECT COUNT(*) FROM documento_requisito 
+                            WHERE idReserva = %s AND estadoCumplimiento = 'NO_CUMPLIDO'
+                        """, (idReserva,))
+                        docs_no_cumplidos = cursor.fetchone()[0]
+                        
+                        if docs_no_cumplidos > 0:
+                            # Tiene documentos pendientes -> PENDIENTE_DOCUMENTO
+                            nuevo_estado = 'PENDIENTE_DOCUMENTO'
+                        else:
+                            # Todos los documentos están aprobados -> CONFIRMADO
+                            nuevo_estado = 'CONFIRMADO'
             elif estado_actual == 'CONFIRMADO':
                 # Sacerdote finaliza el acto
                 nuevo_estado = 'ATENDIDO'              
@@ -658,7 +673,8 @@ def get_reservas_feligres(idUsuario):
                     'idParroquia': fila[10], 
                     'nombreSolicitante': fila[11],
                     'tienePagoReserva': fila[12],
-                    'estadoPago': fila[13]
+                    'estadoPago': fila[13],
+                    'numParticipantes': fila[14] if len(fila) > 14 else 0
                 })
             return resultados
     except Exception as e:
@@ -711,7 +727,8 @@ def get_reservas_parroquia(idUsuario):
                     al.idActo,       -- Necesario para reprogramación
                     re.idParroquia,  -- Necesario para reprogramación
                     CASE WHEN pr.idPagoReserva IS NOT NULL THEN TRUE ELSE FALSE END AS tienePagoReserva,
-                    COALESCE(p.estadoPago, 'SIN_PAGO') AS estadoPago
+                    COALESCE(p.estadoPago, 'SIN_PAGO') AS estadoPago,
+                    al.numParticipantes  -- Número de participantes (1=MISA, >1=otros actos)
                 FROM reserva re
                 INNER JOIN feligres f ON f.idFeligres = re.idSolicitante
                 INNER JOIN parroquia pa ON re.idParroquia = pa.idParroquia
@@ -746,7 +763,8 @@ def get_reservas_parroquia(idUsuario):
                     'idActo': fila[10],        # <--- ¡IMPORTANTE!
                     'idParroquia': fila[11],   # <--- ¡IMPORTANTE!
                     'tienePagoReserva': bool(fila[12]),
-                    'estadoPago': fila[13] if len(fila) > 13 else 'SIN_PAGO'
+                    'estadoPago': fila[13] if len(fila) > 13 else 'SIN_PAGO',
+                    'numParticipantes': fila[14] if len(fila) > 14 else 0
                 })
             return resultados
     except Exception as e:
