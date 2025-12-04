@@ -176,8 +176,8 @@ def obtener_horarios_bloqueados(idParroquia, fecha):
                 LEFT JOIN configuracion_acto ca ON pa.idActo = ca.idActo
                 WHERE r.idParroquia = %s 
                 AND r.f_reserva = %s
-                AND r.estadoReserva NOT IN ('CANCELADA', 'RECHAZADA', 'CANCELADO', 'RECHAZADO', 'PENDIENTE_DOCUMENTO')
-                AND r.estadoReserva IN ('PENDIENTE_PAGO', 'CONFIRMADO', 'ATENDIDO', 'RESERVA_PARROQUIA')
+                AND r.estadoReserva NOT IN ('CANCELADA', 'RECHAZADA', 'CANCELADO', 'RECHAZADO')
+                AND r.estadoReserva IN ('PENDIENTE_PAGO', 'CONFIRMADO', 'ATENDIDO', 'RESERVA_PARROQUIA',, 'PENDIENTE_DOCUMENTO')
                 AND (al.nombActo IS NULL OR LOWER(al.nombActo) NOT LIKE '%%misa%%')
             """, (idParroquia, fecha))
             
