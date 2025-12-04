@@ -1,0 +1,129 @@
+/* =====================================================
+   ESTILOS PERSONALIZADOS PARA EVENTOS DEL CALENDARIO
+   Colores simples y profesionales
+   ===================================================== */
+
+/* Estilo base para todos los eventos de reserva */
+.fc-event.evento-reserva {
+    border-width: 2px !important;
+    border-style: solid !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+/* Hover effect */
+.fc-event.evento-reserva:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+/* Estilos por estado - Colores simples */
+
+/* PENDIENTE_PAGO - Naranja suave */
+.fc-event.estado-pendiente_pago {
+    background-color: #fb923c !important;
+    border-color: #ea580c !important;
+}
+
+/* PENDIENTE_DOCUMENTO - Amarillo suave */
+.fc-event.estado-pendiente_documento {
+    background-color: #fbbf24 !important;
+    border-color: #d97706 !important;
+}
+
+/* PENDIENTE_REVISION - Azul suave */
+.fc-event.estado-pendiente_revision {
+    background-color: #60a5fa !important;
+    border-color: #3b82f6 !important;
+}
+
+/* CONFIRMADO - Verde suave */
+.fc-event.estado-confirmado {
+    background-color: #34d399 !important;
+    border-color: #10b981 !important;
+}
+
+/* ATENDIDO - Gris */
+.fc-event.estado-atendido {
+    background-color: #9ca3af !important;
+    border-color: #6b7280 !important;
+}
+
+/* CANCELADA - Rojo suave */
+.fc-event.estado-cancelada,
+.fc-event.estado-cancelado {
+    background-color: #f87171 !important;
+    border-color: #ef4444 !important;
+    opacity: 0.7 !important;
+}
+
+/* RESERVA_PARROQUIA - Morado suave */
+.fc-event.estado-reserva_parroquia {
+    background-color: #a78bfa !important;
+    border-color: #8b5cf6 !important;
+}
+
+/* Texto siempre blanco */
+.fc-event-title,
+.fc-event-time {
+    color: white !important;
+    font-size: 0.85rem !important;
+}
+
+/* Asegurar que los eventos sean visibles en vista mensual */
+.fc-daygrid-event {
+    padding: 2px 4px !important;
+    margin: 1px 0 !important;
+    border-radius: 3px !important;
+    min-height: 22px !important;
+}
+
+.fc-daygrid-event-harness {
+    margin-top: 1px !important;
+    margin-bottom: 1px !important;
+}
+
+/* Forzar display block para eventos */
+.fc-event,
+.fc-daygrid-event {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* IMPORTANTE: Sobrescribir cualquier estilo que oculte eventos */
+.fc-daygrid-day-events,
+.fc-daygrid-event-harness,
+.fc-daygrid-event {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Asegurar que el contenedor de eventos sea visible */
+.fc-daygrid-day-frame {
+    position: relative;
+    min-height: 80px; /* Altura mínima para ver eventos */
+}
+
+.fc-daygrid-day-top {
+    z-index: 2;
+}
+
+.fc-daygrid-day-events {
+    margin-top: 2px !important;
+    z-index: 1 !important;
+}
+
+/* Forzar altura de contenedor de día */
+.fc-daygrid-day {
+    min-height: 100px !important;
+}
+
+/* Día actual */
+.fc-day-today {
+    background-color: #fef3c7 !important;
+}

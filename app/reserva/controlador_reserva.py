@@ -359,8 +359,36 @@ def cambiar_estado_reserva(idReserva, accion='continuar', motivo_cancelacion=Non
                 # Secretaria aprueba documentos
                 nuevo_estado = 'PENDIENTE_PAGO'
             elif estado_actual == 'PENDIENTE_PAGO':
-                # Después de pagar, pasa a PENDIENTE_DOCUMENTO (documentos se entregan físicamente)
-                nuevo_estado = 'PENDIENTE_DOCUMENTO'
+                # Después de pagar:
+                # - Si es MISA (numParticipantes=1): va directo a CONFIRMADO
+                # - Si son otros actos: verificar si tiene documentos aprobados
+                cursor.execute("""
+                    SELECT al.numParticipantes 
+                    FROM RESERVA r
+                    INNER JOIN ACTO_PARROQUIA ap ON r.idActoParroquia = ap.idActoParroquia
+                    INNER JOIN ACTO_LITURGICO al ON ap.idActo = al.idActo
+                    WHERE r.idReserva = %s
+                """, (idReserva,))
+                num_participantes_result = cursor.fetchone()
+                num_participantes = num_participantes_result[0] if num_participantes_result else 0
+                
+                if num_participantes == 1:
+                    # Es misa individual -> directo a CONFIRMADO
+                    nuevo_estado = 'CONFIRMADO'
+                else:
+                    # Otros actos -> verificar si tiene documentos aprobados
+                    cursor.execute("""
+                        SELECT COUNT(*) FROM documento_requisito 
+                        WHERE idReserva = %s AND estadoCumplimiento = 'NO_CUMPLIDO'
+                    """, (idReserva,))
+                    docs_no_cumplidos = cursor.fetchone()[0]
+                    
+                    if docs_no_cumplidos > 0:
+                        # Tiene documentos pendientes -> PENDIENTE_DOCUMENTO
+                        nuevo_estado = 'PENDIENTE_DOCUMENTO'
+                    else:
+                        # Todos los documentos están aprobados -> CONFIRMADO
+                        nuevo_estado = 'CONFIRMADO'
             elif estado_actual == 'CONFIRMADO':
                 # Sacerdote finaliza el acto
                 nuevo_estado = 'ATENDIDO'              

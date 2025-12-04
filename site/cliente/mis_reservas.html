@@ -6,6 +6,7 @@
     <title>LITBOOK | Mis reservas</title>
     <link rel="stylesheet" href="/static/css/mis_reservas.css">
     <link rel="stylesheet" href="/static/css/calendario.css">
+    <link rel="stylesheet" href="/static/css/calendario-eventos.css">
 
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.css" rel="stylesheet">
@@ -40,10 +41,8 @@
                     <!-- Filtros para secretaria -->
                     <div id="filtros-superiores" style="margin-bottom: 20px;"></div>
                     
-                    <div class="fechas">
-                        <div class="acciones-calendario">
-                            <!-- Aquí va el FullCalendar --> 
-                        </div>
+                    <div class="fechas" style="min-height: 600px; background: white; padding: 10px;">
+                        <!-- FullCalendar se renderizará aquí -->
                     </div>
                 </div>
 
@@ -156,7 +155,23 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="/static/js/mis_reservas.js"></script>
-    <script src="/static/js/calendario.js"></script>
+    <!-- Diagnóstico del contenedor -->
+    <script>
+        console.log('🔍 DIAGNÓSTICO DEL CONTENEDOR:');
+        const contenedor = document.querySelector('.fechas');
+        console.log('Contenedor .fechas encontrado:', contenedor);
+        if (contenedor) {
+            console.log('Dimensiones:', {
+                width: contenedor.offsetWidth,
+                height: contenedor.offsetHeight,
+                display: window.getComputedStyle(contenedor).display,
+                visibility: window.getComputedStyle(contenedor).visibility
+            });
+        }
+        console.log('FullCalendar global disponible:', typeof FullCalendar !== 'undefined');
+    </script>
+    <!-- Nuevo sistema modular de calendario -->
+    <script type="module" src="/static/js/calendario/calendario-core.js"></script>
     <script src="/static/js/calendario-modals.js"></script>
 
 </body>

@@ -314,13 +314,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     console.log("📊 Datos cargados desde API:", datosEjemplo.length);
     console.log("📋 Primeras 2 reservas:", datosEjemplo.slice(0, 2));
     
-    // Filtrar por estado CONFIRMADO y ATENDIDO para feligres y sacerdote (no para secretaria)
+    // Filtrar SOLO reservas NO canceladas (mostrar todas menos CANCELADA)
     if (rol === 'feligres' || rol === 'sacerdote') {
         const antesFilter = datosEjemplo.length;
         datosEjemplo = datosEjemplo.filter(r => 
-            r.estado === 'CONFIRMADO' || r.estado === 'ATENDIDO'
+            r.estado !== 'CANCELADA' && r.estado !== 'CANCELADO'
         );
-        console.log(`🔍 Filtrado por estado: ${antesFilter} → ${datosEjemplo.length}`);
+        console.log(`🔍 Filtrado excluyendo canceladas: ${antesFilter} → ${datosEjemplo.length}`);
+        console.log(`📊 Estados presentes:`, [...new Set(datosEjemplo.map(r => r.estado))]);
     }
     
     datosFiltrados = [...datosEjemplo];
@@ -598,10 +599,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                     ? datosEjemplo
                     : datosEjemplo.filter(r => r.titulo === valor);
                 
-                // Mantener filtro de estado para sacerdote
+                // Mantener filtro excluyendo canceladas para sacerdote
                 if (rol === 'sacerdote') {
                     datosTemp = datosTemp.filter(r => 
-                        r.estado === 'CONFIRMADO' || r.estado === 'ATENDIDO'
+                        r.estado !== 'CANCELADA' && r.estado !== 'CANCELADO'
                     );
                 }
                 

@@ -470,7 +470,13 @@ btnSubmit.addEventListener('click', async e => {
             if (!respAprobar.ok || !dataAprobar.ok) {
                 return alert(dataAprobar.mensaje || 'Error al aprobar el pago.');
             }
-            alert('✅ Pago aprobado correctamente. Las reservas pasan a PENDIENTE_DOCUMENTO.');
+            alert('✅ Pago aprobado correctamente. Las reservas se actualizarán automáticamente (Misas: CONFIRMADO, Otros actos: PENDIENTE_DOCUMENTO).');
+            
+            // Auto-actualizar el calendario si está disponible
+            if (typeof window.recargarCalendario === 'function') {
+                window.recargarCalendario();
+            }
+            
             window.location.reload();
             return;
         } catch (error) {
@@ -485,7 +491,7 @@ btnSubmit.addEventListener('click', async e => {
 
     if (metodo === 'efectivo') estadoPago = 'PENDIENTE';
     else if (metodo === 'yape' || metodo === 'plin') {
-        estadoPago = 'APROBADO';
+        estadoPago = 'PENDIENTE';
         archivoComprobante = document.getElementById('file-comprobante')?.files[0];
         const codigoYape = document.getElementById('yape-codigo')?.value?.trim();
         const codigoPlin = document.getElementById('plin-codigo')?.value?.trim();
@@ -530,19 +536,15 @@ btnSubmit.addEventListener('click', async e => {
             if (!respDetalle.ok || !dataDetalle.ok) return alert(dataDetalle.mensaje || `Error al asociar reserva ${idRes}.`);
         }
 
-        // Si es tarjeta, plin o yape: cambiar estado de reserva a PENDIENTE_DOCUMENTO
-        // (los documentos se entregan físicamente, por eso no se confirma aún)
-        if (metodo === 'tarjeta' || metodo === 'plin' || metodo === 'yape') {
-            for (const idRes of idReservas) {
-                const respEstado = await fetch(`/api/reserva/cambiar_estado/${idRes}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ accion: 'continuar' })
-                });
-                const dataEstado = await respEstado.json();
-                if (!respEstado.ok || !dataEstado.ok) return alert(dataEstado.mensaje || `No se pudo actualizar reserva ${idRes}.`);
-            }
-            alert('Pago realizado correctamente. La reserva está pendiente de entrega de documentos físicos en la parroquia.');
+        // El estado de la reserva se actualiza automáticamente en el backend después de registrar el pago_reserva
+        // Según las reglas:
+        // - TARJETA (APROBADO): MISA = CONFIRMADO, OTROS = PENDIENTE_DOCUMENTO
+        // - YAPE/PLIN (PENDIENTE): Queda PENDIENTE_PAGO hasta que secretaria apruebe
+        // - EFECTIVO (PENDIENTE): Queda PENDIENTE_PAGO hasta pago en oficina
+        if (metodo === 'tarjeta') {
+            alert('✅ Pago con tarjeta aprobado. Tu reserva ha sido actualizada.');
+        } else if (metodo === 'yape' || metodo === 'plin') {
+            alert('📤 Comprobante enviado. Tu pago quedará PENDIENTE hasta que la secretaria lo apruebe. Revisa el estado en "Mis Reservas".');
         } else if (metodo === 'efectivo') {
             // Efectivo: el pago queda PENDIENTE, no se cambia el estado de la reserva
             // Para feligrés: desaparece de la lista (ya está filtrado)
