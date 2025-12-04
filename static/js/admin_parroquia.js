@@ -1,40 +1,56 @@
-const tabla = document.querySelector("#tablaDocumentos tbody");
-const paginacion = document.getElementById("paginacionContainer");
-const inputDocumento = document.getElementById("inputDocumento"); // Input de búsqueda
-
-// Crear UN SOLO MODAL para todo (Agregar, Editar, Ver)
-const modalFormulario = crearModalFormulario(); 
-
+// =======================================================
+// VARIABLES GLOBALES (Solo estado, no elementos DOM)
+// =======================================================
 let parroquias = [];           
 let parroquiasFiltradas = null; 
 let paginaActual = 1;
 const elementosPorPagina = 7;
 let ordenActual = { campo: null, ascendente: true };
-let esAdminGlobal = false;  // Flag para tipo de admin
+let esAdminGlobal = false;  
 let idParroquiaUsuario = null;
 
-// ================== INICIALIZACIÓN ==================
+// Variables para elementos del DOM (se llenan al cargar)
+let tabla, paginacion, inputDocumento, modalFormulario;
+
+// =======================================================
+// INICIALIZACIÓN (DOMContentLoaded)
+// =======================================================
 document.addEventListener("DOMContentLoaded", async () => {
-    // Detectar tipo de administrador
+    console.log("🚀 Iniciando administrador de parroquias...");
+
+    // 1. Referencias al DOM (Ahora es seguro hacerlo)
+    tabla = document.querySelector("#tablaDocumentos tbody");
+    paginacion = document.getElementById("paginacionContainer");
+    inputDocumento = document.getElementById("inputDocumento");
+
+    // 2. Inyectar el Modal en el HTML
+    modalFormulario = crearModalFormulario(); 
+
+    // 3. Detectar Permisos
     await detectarTipoAdmin();
     
+    // 4. Configurar Buscador y Cargar Datos
     configurarBuscadorPrincipal();
     cargarParroquias();
 
-    document.getElementById("btn_buscar").addEventListener("click", filtrarDatos);
-    inputDocumento.addEventListener("keyup", (e) => { if(e.key === "Enter") filtrarDatos(); });
+    // 5. Eventos Generales
+    document.getElementById("btn_buscar")?.addEventListener("click", filtrarDatos);
+    inputDocumento?.addEventListener("keyup", (e) => { if(e.key === "Enter") filtrarDatos(); });
 
-    // Solo admin global puede agregar
+    // 6. Botón "Nuevo" (Solo Admin Global)
+    const btnGuardarMain = document.getElementById("btn_guardar"); // El botón verde de la tabla
     if (esAdminGlobal) {
-        document.getElementById("btn_guardar").addEventListener("click", (e) => {
-            e.preventDefault(); 
-            abrirModalFormulario("agregar");
-        });
+        if (btnGuardarMain) {
+            btnGuardarMain.addEventListener("click", (e) => {
+                e.preventDefault(); 
+                abrirModalFormulario("agregar");
+            });
+        }
     } else {
-        // Ocultar botón para admin local
-        document.getElementById("btn_guardar").style.display = 'none';
+        if (btnGuardarMain) btnGuardarMain.style.display = 'none';
     }
 
+    // Cerrar lista de búsqueda al hacer clic fuera
     document.addEventListener("click", (e) => {
         const lista = document.getElementById("listaBusquedaPrincipal");
         const wrapper = document.querySelector(".search-container");
@@ -43,6 +59,92 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 });
+
+/* -------------------------------------------------------
+   LÓGICA DEL FORMULARIO Y GUARDADO (CRÍTICO)
+   ------------------------------------------------------- */
+function recolectarDatos() {
+    // Obtenemos valores
+    const lat = document.getElementById("pLat").value;
+    const log = document.getElementById("pLog").value;
+    const nombre = document.getElementById("pNombre").value;
+    const email = document.getElementById("pEmail").value;
+
+    // Validación básica antes de enviar
+    if(!nombre || !email) {
+        alert("El nombre y el email son obligatorios.");
+        return null;
+    }
+
+    const datos = {
+        nombParroquia: nombre,
+        ruc: document.getElementById("pRuc").value,
+        direccion: document.getElementById("pDireccion").value,
+        telefonoContacto: document.getElementById("pTelefono").value,
+        email: email,
+        f_creacion: document.getElementById("pFecha").value,
+        historiaParroquia: document.getElementById("pHistoria").value,
+        descripcionBreve: document.getElementById("pDescripcion").value,
+        color: document.getElementById("pColor").value,
+        // Convertir a float o null para que el backend lo reciba limpio
+        latParroquia: lat ? parseFloat(lat) : null,
+        logParroquia: log ? parseFloat(log) : null
+    };
+
+    console.log("📦 Datos recolectados para enviar:", datos);
+    return datos;
+}
+
+// Función Unificada para Abrir Modal
+function abrirModalFormulario(modo, p = null) {
+    const modal = document.getElementById("modalForm");
+    const form = document.getElementById("formParroquia");
+    const titulo = document.getElementById("modalTitulo");
+    const btnGuardarModal = document.getElementById("btnGuardarModal"); // ID único para el botón del modal
+    const btnCancelar = document.getElementById("btnCancelar");
+    
+    // Resetear
+    form.reset();
+    
+    // Habilitar/Deshabilitar según modo
+    const inputs = form.querySelectorAll("input, textarea, select");
+    const esLectura = (modo === 'ver');
+    inputs.forEach(input => input.disabled = esLectura);
+
+    if (esLectura) {
+        titulo.textContent = "Detalle de Parroquia";
+        btnGuardarModal.style.display = "none";
+        btnCancelar.textContent = "Cerrar";
+        if(p) llenarDatosModal(p);
+    } else {
+        btnGuardarModal.style.display = "inline-block";
+        btnCancelar.textContent = "Cancelar";
+        
+        // Clonamos el botón para eliminar event listeners viejos (truco para evitar envíos dobles)
+        const newBtn = btnGuardarModal.cloneNode(true);
+        btnGuardarModal.parentNode.replaceChild(newBtn, btnGuardarModal);
+        
+        if(modo === "agregar") {
+            titulo.textContent = "Nueva Parroquia";
+            // Asignar evento al nuevo botón
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const data = recolectarDatos();
+                if(data) agregarParroquiaAPI(data).then(() => cerrarModal('modalForm'));
+            });
+        } else if (modo === "editar" && p) {
+            titulo.textContent = "Editar Parroquia";
+            llenarDatosModal(p);
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const data = recolectarDatos();
+                if(data) actualizarParroquiaAPI(p.id, data).then(() => cerrarModal('modalForm'));
+            });
+        }
+    }
+    
+    modal.classList.add('activo');
+}
 
 /* -------------------------------------------------------
    DETECTAR TIPO DE ADMINISTRADOR
@@ -55,9 +157,7 @@ async function detectarTipoAdmin() {
         esAdminGlobal = data.es_admin_global || false;
         idParroquiaUsuario = data.idParroquia;
         
-        console.log('🔑 Tipo Admin:', esAdminGlobal ? 'GLOBAL' : 'LOCAL', '| Parroquia:', idParroquiaUsuario);
-        
-        // Mostrar badge visual
+        console.log('🔑 Tipo Admin:', esAdminGlobal ? 'GLOBAL' : 'LOCAL');
         mostrarBadgeAdmin();
     } catch (error) {
         console.error('Error detectando tipo admin:', error);
@@ -65,108 +165,97 @@ async function detectarTipoAdmin() {
     }
 }
 
-/* -------------------------------------------------------
-   MOSTRAR BADGE VISUAL
-   ------------------------------------------------------- */
 function mostrarBadgeAdmin() {
     const titulo = document.querySelector('.titulo-seccion');
     if (!titulo) return;
     
+    // Evitar duplicados si se llama varias veces
+    const existingBadge = titulo.querySelector('.admin-badge');
+    if(existingBadge) existingBadge.remove();
+
     const badge = document.createElement('span');
+    badge.className = 'admin-badge';
     badge.style.cssText = 'margin-left:15px; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:bold;';
     
     if (esAdminGlobal) {
-        badge.textContent = '🌐 Administrador Global';
+        badge.textContent = '🌐 Global';
         badge.style.background = '#28a745';
         badge.style.color = '#fff';
     } else {
-        badge.textContent = '📍 Administrador Local';
+        badge.textContent = '📍 Local';
         badge.style.background = '#ffc107';
         badge.style.color = '#000';
-        
-        // Mostrar nota informativa
-        const nota = document.createElement('div');
-        nota.className = 'alert-info';
-        nota.style.cssText = 'background:#d1ecf1; border:1px solid #bee5eb; color:#0c5460; padding:12px; border-radius:4px; margin:10px 0;';
-        nota.innerHTML = '<strong>ℹ️ Nota:</strong> Como administrador local, solo puedes ver la información de tu parroquia. No puedes crear, editar o eliminar parroquias.';
-        titulo.parentElement.insertBefore(nota, titulo.nextSibling);
     }
-    
     titulo.appendChild(badge);
 }
 
-/* -------------------------------------------------------
-   LÓGICA BUSCADOR PREDICTIVO
-   ------------------------------------------------------- */
-function configurarBuscadorPrincipal() {
-    if (!inputDocumento) return;
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "search-container";
-    inputDocumento.parentNode.insertBefore(wrapper, inputDocumento);
-    wrapper.appendChild(inputDocumento);
-
-    const lista = document.createElement("div");
-    lista.id = "listaBusquedaPrincipal";
-    lista.className = "dropdown-list";
-    wrapper.appendChild(lista);
-
-    const actualizarLista = () => {
-        const texto = inputDocumento.value.toLowerCase().trim();
-        lista.innerHTML = "";
-        
-        if (!parroquias || parroquias.length === 0) return;
-
-        let coincidencias;
-        if (!texto) {
-            coincidencias = parroquias; 
-        } else {
-            coincidencias = parroquias.filter(p => 
-                p.nombre.toLowerCase().startsWith(texto) || 
-                (p.ruc && p.ruc.startsWith(texto))
-            );
-        }
-
-        if (coincidencias.length === 0) {
-            lista.classList.remove("active");
-        } else {
-            coincidencias.slice(0, 8).forEach(p => {
-                const item = document.createElement("div");
-                item.className = "dropdown-item";
-                item.innerHTML = `${p.nombre} <small class="text-muted" style="color:#888">(${p.ruc || 'S/R'})</small>`;
-                item.addEventListener("click", () => {
-                    inputDocumento.value = p.nombre; 
-                    lista.classList.remove("active");
-                });
-                lista.appendChild(item);
-            });
-            lista.classList.add("active");
-        }
-    };
-
-    inputDocumento.addEventListener("input", actualizarLista);
-    inputDocumento.addEventListener("focus", actualizarLista);
-}
-
-function filtrarDatos() {
-    const termino = inputDocumento.value.trim().toLowerCase();
-    if (!termino) {
-        parroquiasFiltradas = null;
-    } else {
-        parroquiasFiltradas = parroquias.filter(p => 
-            p.nombre.toLowerCase().startsWith(termino) || 
-            (p.ruc && p.ruc.startsWith(termino))
-        );
+/* -------------------------
+   API HANDLERS
+   ------------------------- */
+const manejarSolicitud = async (url, opciones = {}, mensajeError = "Error") => {
+  try {
+    const res = await fetch(url, opciones);
+    const data = await res.json(); // Leemos JSON primero para ver errores del backend
+    if (!res.ok || data.ok === false) {
+        throw new Error(data.mensaje || mensajeError);
     }
-    paginaActual = 1;
-    renderTabla();
-}
+    return data;
+  } catch (err) {
+    console.error(mensajeError, err);
+    alert(err.message); // Mostrar el mensaje que manda el Python
+    throw err;
+  }
+};
+
+const cargarParroquias = async () => {
+  try {
+      const data = await manejarSolicitud("/api/parroquia/", {}, "Error al obtener parroquias");
+      const items = data.datos || data; 
+      parroquias = Array.isArray(items) ? items.map(normalizar) : [];
+      parroquiasFiltradas = null;
+      paginaActual = 1;
+      renderTabla();
+  } catch (e) { console.error(e); }
+};
+
+const agregarParroquiaAPI = (data) => manejarSolicitud(
+  "/api/parroquia/agregar", 
+  { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) },
+  "Error al guardar la parroquia"
+).then(() => {
+    alert("✅ Parroquia guardada correctamente");
+    cargarParroquias();
+});
+
+const actualizarParroquiaAPI = (id, data) => manejarSolicitud(
+  `/api/parroquia/actualizar/${id}`,
+  { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) },
+  "Error al actualizar"
+).then(() => {
+    alert("✅ Parroquia actualizada correctamente");
+    cargarParroquias();
+});
+
+const eliminarParroquia = async (id) => {
+  if (!confirm("¿Está seguro de eliminar esta parroquia?")) return;
+  try {
+    await manejarSolicitud(`/api/parroquia/eliminar/${id}`, { method: "DELETE" }, "Error al eliminar");
+    cargarParroquias();
+  } catch (err) { console.error(err); }
+};
+
+const cambiarEstado = async (id) => {
+    if(!confirm("¿Seguro de cambiar el estado?")) return;
+    try {
+        await manejarSolicitud(`/api/parroquia/cambiar_estado/${id}`, { method: "PUT" }, "Error estado");
+        cargarParroquias();
+    } catch(e) {}
+};
 
 /* -------------------------
-   NORMALIZACIÓN Y API
+   RENDERIZADO Y NORMALIZACIÓN
    ------------------------- */
 function normalizar(p) {
-  // Mapeo robusto de campos de la BD a variables JS
   const id = p.id ?? p.idParroquia ?? null;
   const nombre = p.nombre ?? p.nombParroquia ?? "";
   const ruc = p.ruc ?? "";
@@ -175,7 +264,6 @@ function normalizar(p) {
   const telefono = p.telefono ?? p.telefonoContacto ?? "";
   const fecha = p.f_creacion ?? "";
   
-  // Campos adicionales de la tabla completa
   const historia = p.historia ?? p.historiaParroquia ?? "";
   const descripcion = p.descripcion ?? p.descripcionBreve ?? "";
   const color = p.color ?? "#ffffff";
@@ -186,36 +274,9 @@ function normalizar(p) {
   if (p.estado === 1 || p.estado === true || p.estadoParroquia === true || p.estadoParroquia === 1) {
     estado = true;
   }
-  // Retornamos objeto plano con TODAS las propiedades
   return { id, nombre, ruc, direccion, email, telefono, fecha, historia, descripcion, color, lat, log, estado }; 
 }
 
-const manejarSolicitud = async (url, opciones = {}, mensajeError = "Error") => {
-  try {
-    const res = await fetch(url, opciones);
-    if (!res.ok) throw new Error(mensajeError);
-    return await res.json();
-  } catch (err) {
-    console.error(mensajeError, err);
-    alert(mensajeError);
-    throw err;
-  }
-};
-
-const cargarParroquias = async () => {
-  try {
-      const data = await manejarSolicitud("/api/parroquia/", {}, "Error al obtener parroquias");
-      const items = data.datos || data; 
-      parroquias = Array.isArray(items) ? items.map(normalizar) : [];
-      parroquiasFiltrados = null;
-      paginaActual = 1;
-      renderTabla();
-  } catch (e) { console.error(e); }
-};
-
-/* -------------------------
-   RENDERIZADO TABLA
-   ------------------------- */
 function renderTabla() {
   tabla.innerHTML = "";
   const lista = parroquiasFiltradas ?? parroquias;
@@ -226,6 +287,7 @@ function renderTabla() {
       return;
   }
 
+  // Ordenamiento
   if (ordenActual.campo) {
     lista.sort((a, b) => {
       const valorA = (a[ordenActual.campo] || "").toString().toLowerCase();
@@ -236,6 +298,7 @@ function renderTabla() {
     });
   }
 
+  // Paginación
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const fin = inicio + elementosPorPagina;
   const itemsPagina = lista.slice(inicio, fin);
@@ -246,21 +309,19 @@ function renderTabla() {
     const rotacion = esActivo ? "" : "transform: rotate(180deg);";
     const titleEstado = esActivo ? "Dar de baja" : "Dar de alta";
     
-    // Resaltar si es su parroquia (admin local)
+    // Resaltar para admin local
     const estuParroquia = !esAdminGlobal && p.id === idParroquiaUsuario;
     const estiloFila = estuParroquia ? 'background-color: #fff3cd;' : '';
 
     const fila = document.createElement("tr");
     fila.style.cssText = estiloFila;
     
-    // Botones según tipo de admin
     let botonesAccion = `
       <button class="btn btn-info btn-sm" onclick="verDetalle(${p.id})" title="Ver Detalle">
         <img src="/static/img/ojo.png" alt="ver">
       </button>
     `;
     
-    // Solo admin global puede editar, cambiar estado y eliminar
     if (esAdminGlobal) {
       botonesAccion += `
         <button class="btn btn-warning btn-sm" onclick="editarParroquia(${p.id})" title="Editar">
@@ -275,7 +336,6 @@ function renderTabla() {
       `;
     }
     
-    // La tabla muestra solo lo esencial
     fila.innerHTML = `
       <td class="col-id">${inicio + index + 1}</td>
       <td class="col-nombre">${p.nombre}</td>
@@ -309,48 +369,76 @@ const renderPaginacion = (total) => {
   };
 
   ul.appendChild(crearItem("&laquo;", paginaActual > 1 ? () => { paginaActual--; renderTabla(); } : null, paginaActual === 1 ? "disabled" : ""));
-
   for (let i = 1; i <= totalPaginas; i++) {
       ul.appendChild(crearItem(i, () => { paginaActual = i; renderTabla(); }, i === paginaActual ? "active" : ""));
   }
-
   ul.appendChild(crearItem("&raquo;", paginaActual < totalPaginas ? () => { paginaActual++; renderTabla(); } : null, paginaActual === totalPaginas ? "disabled" : ""));
   paginacion.appendChild(ul);
 };
 
 /* -------------------------
-   ACCIONES (API)
+   BUSCADOR
    ------------------------- */
-const agregarParroquiaAPI = (data) => manejarSolicitud(
-  "/api/parroquia/agregar", 
-  { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) },
-  "Error al guardar"
-).then(() => cargarParroquias());
+function configurarBuscadorPrincipal() {
+    if (!inputDocumento) return;
 
-const actualizarParroquiaAPI = (id, data) => manejarSolicitud(
-  `/api/parroquia/actualizar/${id}`,
-  { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) },
-  "Error al actualizar"
-).then(() => cargarParroquias());
+    const wrapper = document.createElement("div");
+    wrapper.className = "search-container";
+    if(inputDocumento.parentNode) inputDocumento.parentNode.insertBefore(wrapper, inputDocumento);
+    wrapper.appendChild(inputDocumento);
 
-const cambiarEstado = async (id) => {
-    if(!confirm("¿Seguro de cambiar el estado?")) return;
-    try {
-        await manejarSolicitud(`/api/parroquia/cambiar_estado/${id}`, { method: "PUT" }, "Error estado");
-        cargarParroquias();
-    } catch(e) {}
-};
+    const lista = document.createElement("div");
+    lista.id = "listaBusquedaPrincipal";
+    lista.className = "dropdown-list";
+    wrapper.appendChild(lista);
 
-const eliminarParroquia = async (id) => {
-  if (!confirm("¿Está seguro de eliminar esta parroquia?")) return;
-  try {
-    await manejarSolicitud(`/api/parroquia/eliminar/${id}`, { method: "DELETE" }, "Error al eliminar");
-    cargarParroquias();
-  } catch (err) { console.error(err); }
-};
+    const actualizarLista = () => {
+        const texto = inputDocumento.value.toLowerCase().trim();
+        lista.innerHTML = "";
+        
+        if (!parroquias || parroquias.length === 0) return;
+
+        let coincidencias = !texto ? parroquias : parroquias.filter(p => 
+            p.nombre.toLowerCase().startsWith(texto) || (p.ruc && p.ruc.startsWith(texto))
+        );
+
+        if (coincidencias.length === 0) {
+            lista.classList.remove("active");
+        } else {
+            coincidencias.slice(0, 8).forEach(p => {
+                const item = document.createElement("div");
+                item.className = "dropdown-item";
+                item.innerHTML = `${p.nombre} <small class="text-muted">(${p.ruc || 'S/R'})</small>`;
+                item.addEventListener("click", () => {
+                    inputDocumento.value = p.nombre; 
+                    lista.classList.remove("active");
+                    filtrarDatos();
+                });
+                lista.appendChild(item);
+            });
+            lista.classList.add("active");
+        }
+    };
+
+    inputDocumento.addEventListener("input", actualizarLista);
+    inputDocumento.addEventListener("focus", actualizarLista);
+}
+
+function filtrarDatos() {
+    const termino = inputDocumento.value.trim().toLowerCase();
+    if (!termino) {
+        parroquiasFiltradas = null;
+    } else {
+        parroquiasFiltradas = parroquias.filter(p => 
+            p.nombre.toLowerCase().startsWith(termino) || (p.ruc && p.ruc.startsWith(termino))
+        );
+    }
+    paginaActual = 1;
+    renderTabla();
+}
 
 /* -------------------------
-   MODAL ÚNICO PARA TODO (AGREGAR, EDITAR, VER)
+   MODAL HTML INJECTION
    ------------------------- */
 function crearModalFormulario() {
   const html = `
@@ -363,7 +451,6 @@ function crearModalFormulario() {
         </div>
         <div class="modal-body">
           <form id="formParroquia" autocomplete="off">
-            
             <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
                 <div class="mb-3" style="flex:1; min-width:200px;">
                     <label class="form-label">Nombre *</label>
@@ -374,7 +461,6 @@ function crearModalFormulario() {
                     <input id="pRuc" class="form-control" required>
                 </div>
             </div>
-
             <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
                 <div class="mb-3" style="flex:1; min-width:200px;">
                     <label class="form-label">Dirección *</label>
@@ -385,7 +471,6 @@ function crearModalFormulario() {
                     <input id="pTelefono" class="form-control" required>
                 </div>
             </div>
-
             <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
                 <div class="mb-3" style="flex:1; min-width:200px;">
                     <label class="form-label">Email *</label>
@@ -396,17 +481,14 @@ function crearModalFormulario() {
                     <input id="pFecha" type="date" class="form-control" required>
                 </div>
             </div>
-
             <div class="mb-3">
-                <label class="form-label">Historia de la Parroquia</label>
+                <label class="form-label">Historia</label>
                 <textarea id="pHistoria" class="form-control" rows="2"></textarea>
             </div>
-
             <div class="mb-3">
                 <label class="form-label">Descripción Breve</label>
                 <textarea id="pDescripcion" class="form-control" rows="2"></textarea>
             </div>
-
             <div class="row" style="display:flex; gap:15px; flex-wrap:wrap;">
                  <div class="mb-3" style="flex:1; min-width:100px;">
                     <label class="form-label">Color</label>
@@ -421,10 +503,9 @@ function crearModalFormulario() {
                     <input id="pLog" class="form-control" type="number" step="any">
                 </div>
             </div>
-            
             <div class="modal-footer">
                 <button type="button" class="btn-modal btn-modal-secondary" id="btnCancelar" onclick="cerrarModal('modalForm')">Cancelar</button>
-                <button type="submit" class="btn-modal btn-modal-primary" id="btnGuardar">Guardar</button>
+                <button type="submit" class="btn-modal btn-modal-primary" id="btnGuardarModal">Guardar</button>
             </div>
           </form>
         </div>
@@ -433,61 +514,6 @@ function crearModalFormulario() {
   </div>`;
   document.body.insertAdjacentHTML('beforeend', html);
   return document.getElementById("modalForm");
-}
-
-function cerrarModal(id) { document.getElementById(id).classList.remove('activo'); }
-
-// Función Unificada para Abrir Modal (Agregar, Editar, Ver)
-function abrirModalFormulario(modo, p = null) {
-    const modal = document.getElementById("modalForm");
-    const form = document.getElementById("formParroquia");
-    const titulo = document.getElementById("modalTitulo");
-    const btnGuardar = document.getElementById("btnGuardar");
-    const btnCancelar = document.getElementById("btnCancelar");
-    
-    // 1. Resetear formulario y eventos
-    form.reset();
-    form.onsubmit = null;
-    
-    // 2. Configurar Inputs (Habilitar/Deshabilitar según modo)
-    const inputs = form.querySelectorAll("input, textarea, select");
-    const esLectura = (modo === 'ver');
-    
-    inputs.forEach(input => {
-        input.disabled = esLectura;
-    });
-
-    // 3. Configurar Botones y Títulos
-    if (esLectura) {
-        titulo.textContent = "Detalle de Parroquia";
-        btnGuardar.style.display = "none"; // Ocultar botón guardar
-        btnCancelar.textContent = "Cerrar"; // Botón cancelar ahora dice Cerrar
-        
-        if(p) llenarDatosModal(p); // Llenar con datos para ver
-
-    } else {
-        btnGuardar.style.display = "inline-block";
-        btnCancelar.textContent = "Cancelar";
-        
-        if(modo === "agregar") {
-            titulo.textContent = "Nueva Parroquia";
-            form.onsubmit = (e) => {
-                e.preventDefault();
-                const data = recolectarDatos();
-                agregarParroquiaAPI(data).then(() => cerrarModal('modalForm'));
-            };
-        } else if (modo === "editar" && p) {
-            titulo.textContent = "Editar Parroquia";
-            llenarDatosModal(p);
-            form.onsubmit = (e) => {
-                e.preventDefault();
-                const data = recolectarDatos();
-                actualizarParroquiaAPI(p.id, data).then(() => cerrarModal('modalForm'));
-            };
-        }
-    }
-    
-    modal.classList.add('activo');
 }
 
 function llenarDatosModal(p) {
@@ -501,42 +527,24 @@ function llenarDatosModal(p) {
         let fecha = p.fecha;
         if(fecha.includes(' ')) fecha = fecha.split(' ')[0]; 
         document.getElementById("pFecha").value = fecha;
+    } else {
+        document.getElementById("pFecha").value = new Date().toISOString().split('T')[0];
     }
 
-    // Campos adicionales
     document.getElementById("pHistoria").value = p.historia || "";
     document.getElementById("pDescripcion").value = p.descripcion || "";
-    document.getElementById("pColor").value = p.color || "#ffffff";
+    document.getElementById("pColor").value = p.color || "#000000";
     document.getElementById("pLat").value = p.lat || "";
     document.getElementById("pLog").value = p.log || "";
 }
 
-function recolectarDatos() {
-    return {
-        nombParroquia: document.getElementById("pNombre").value,
-        ruc: document.getElementById("pRuc").value,
-        direccion: document.getElementById("pDireccion").value,
-        telefonoContacto: document.getElementById("pTelefono").value,
-        email: document.getElementById("pEmail").value,
-        f_creacion: document.getElementById("pFecha").value,
-        historiaParroquia: document.getElementById("pHistoria").value,
-        descripcionBreve: document.getElementById("pDescripcion").value,
-        color: document.getElementById("pColor").value,
-        latParroquia: document.getElementById("pLat").value || null,
-        logParroquia: document.getElementById("pLog").value || null
-    };
+function cerrarModal(id) { 
+    document.getElementById(id).classList.remove('activo'); 
 }
 
-// Helpers globales
-window.editarParroquia = (id) => {
-    const p = parroquias.find(x => x.id === id);
-    if(p) abrirModalFormulario("editar", p);
-};
-
-window.verDetalle = (id) => {
-    const p = parroquias.find(x => x.id === id);
-    if(p) abrirModalFormulario("ver", p); // Ahora llama al mismo modal en modo lectura
-};
-
+// Helpers globales para onclick HTML
+window.editarParroquia = (id) => { const p = parroquias.find(x => x.id === id); if(p) abrirModalFormulario("editar", p); };
+window.verDetalle = (id) => { const p = parroquias.find(x => x.id === id); if(p) abrirModalFormulario("ver", p); };
 window.cambiarEstado = cambiarEstado;
 window.eliminarParroquia = eliminarParroquia;
+window.cerrarModal = cerrarModal;

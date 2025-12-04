@@ -1,5 +1,5 @@
 from app.bd_sistema import obtener_conexion
-
+from datetime import datetime
 # ======================================================
 # 🔹 OBTENER DATOS PARA EL MAPA
 # ======================================================
@@ -216,25 +216,52 @@ def listar_parroquia(es_admin_global=True, idParroquia=None):
 # ======================================================
 # 🔹 AGREGAR PARROQUIA
 # ======================================================
-def agregar_parroquia(nombParroquia, historiaParroquia, ruc,
-                      telefonoContacto, direccion, color,
-                      latParroquia, logParroquia):
+def agregar_parroquia(nombParroquia, historiaParroquia, descripcionBreve, 
+                      f_creacion, ruc, telefonoContacto, email, 
+                      direccion, color, latParroquia, logParroquia):
+    conexion = obtener_conexion()
     try:
-        conexion = obtener_conexion()
         with conexion.cursor() as cursor:
-            cursor.execute("""
+            sql = """
                 INSERT INTO PARROQUIA (
-                    nombParroquia, historiaParroquia, ruc,
-                    telefonoContacto, direccion, color,
-                    latParroquia, logParroquia, estadoParroquia
-                ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, TRUE)
-            """, (nombParroquia, historiaParroquia, ruc,
-                  telefonoContacto, direccion, color,
-                  latParroquia, logParroquia))
+                    nombParroquia, 
+                    historiaParroquia, 
+                    descripcionBreve, 
+                    f_creacion, 
+                    ruc,
+                    telefonoContacto, 
+                    email, 
+                    direccion, 
+                    color, 
+                    latParroquia, 
+                    logParroquia, 
+                    estadoParroquia
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE)
+            """
+            # Si f_creacion viene vacío, usamos la fecha de hoy para evitar error 0000-00-00
+            if not f_creacion:
+                f_creacion = datetime.now().date()
+
+            cursor.execute(sql, (
+                nombParroquia, 
+                historiaParroquia, 
+                descripcionBreve, 
+                f_creacion, 
+                ruc,
+                telefonoContacto, 
+                email, 
+                direccion, 
+                color,
+                latParroquia, 
+                logParroquia
+            ))
+        
         conexion.commit()
         return True
     except Exception as e:
         print(f'Error al registrar parroquia: {e}')
+        if conexion:
+            conexion.rollback()
         return False
     finally:
         if conexion:
