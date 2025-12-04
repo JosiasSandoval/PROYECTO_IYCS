@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from app.parroquia.controlador_parroquia import (
     get_obtener_mapa_datos,
     ubicar_parroquia,
@@ -75,32 +75,41 @@ def listar():
 # ======================================================
 @parroquia_bp.route('/agregar', methods=['POST'])
 def agregar():
-    from flask import session
-    # Solo admin global puede agregar parroquias
+    # Validación de rol
     es_admin_global = session.get('es_admin_global', False)
     if not es_admin_global:
         return jsonify({'ok': False, 'mensaje': 'Solo administradores globales pueden agregar parroquias'}), 403
     
     try:
         datos = request.get_json()
+        print("📦 Datos recibidos:", datos) # Para depurar en consola
+
+        # Validaciones básicas de campos NOT NULL
+        if not datos.get('latParroquia') or not datos.get('logParroquia'):
+             return jsonify({'ok': False, 'mensaje': 'Debe seleccionar una ubicación en el mapa (Lat/Log).'})
+
         resultado = agregar_parroquia(
-            datos.get('nombParroquia'),
-            datos.get('historiaParroquia'),
-            datos.get('ruc'),
-            datos.get('telefonoContacto'),
-            datos.get('direccion'),
-            datos.get('color'),
-            datos.get('latParroquia'),
-            datos.get('logParroquia')
+            nombParroquia=datos.get('nombParroquia'),
+            historiaParroquia=datos.get('historiaParroquia'),
+            descripcionBreve=datos.get('descripcionBreve'), # Faltaba este
+            f_creacion=datos.get('f_creacion'),             # Faltaba este (Fecha del input)
+            ruc=datos.get('ruc'),
+            telefonoContacto=datos.get('telefonoContacto'),
+            email=datos.get('email'),                       # Faltaba este (NOT NULL)
+            direccion=datos.get('direccion'),
+            color=datos.get('color'),
+            latParroquia=datos.get('latParroquia'),
+            logParroquia=datos.get('logParroquia')
         )
+
         if resultado:
             return jsonify({'ok': True, 'mensaje': 'Parroquia agregada correctamente'})
         else:
-            return jsonify({'ok': False, 'mensaje': 'Error al agregar la parroquia'})
-    except Exception as e:
-        print(f'Error al agregar parroquia: {e}')
-        return jsonify({'ok': False, 'mensaje': 'Error interno'}), 500
+            return jsonify({'ok': False, 'mensaje': 'Error al guardar en la base de datos'})
 
+    except Exception as e:
+        print(f'Error ruta agregar parroquia: {e}')
+        return jsonify({'ok': False, 'mensaje': f'Error interno: {str(e)}'}), 500
 
 # ======================================================
 # CAMBIAR ESTADO DE PARROQUIA (SOLO ADMIN GLOBAL)
